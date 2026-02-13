@@ -749,8 +749,8 @@ function CepEventBrowserContent() {
         className="grid gap-0"
         style={{ gridTemplateColumns: `${leftWidth ?? 0}px 12px minmax(0, 1fr)` }}
       >
-        <section className="br-section p-4">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
+        <section className="br-section p-3">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <select
               value={ackedFilter}
               onChange={(event) => setAckedFilter(event.target.value as typeof ackedFilter)}
@@ -855,7 +855,7 @@ function CepEventBrowserContent() {
           </div>
         </div>
 
-        <aside className="br-section space-y-4 overflow-y-auto custom-scrollbar max-h-[610px] p-4">
+        <aside className="br-section space-y-3 overflow-y-auto custom-scrollbar max-h-[610px] p-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="cep-event-detail-label">Event detail</p>

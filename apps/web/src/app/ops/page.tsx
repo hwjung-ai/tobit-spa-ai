@@ -828,7 +828,7 @@ export default function OpsPage() {
 
           <div className="flex gap-0">
             <div
-              className={`h-[80vh] flex-col gap-4 ${shouldShowSidebar ? "flex" : "hidden"} flex-shrink-0`}
+              className={`h-[80vh] flex-col gap-3 ${shouldShowSidebar ? "flex" : "hidden"} flex-shrink-0`}
               style={{width: shouldShowSidebar ? `${leftSidebarWidth}px` : "0"}}
             >
               <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border bg-surface-base shadow-inner shadow-black/40 dark:border-border">
@@ -968,7 +968,7 @@ export default function OpsPage() {
             )}
 
             <section
-              className="flex flex-col gap-4 rounded-3xl border p-4 shadow-inner shadow-black/40 bg-surface-base dark:border-border flex-1"
+              className="flex flex-col gap-3 rounded-3xl border p-3 shadow-inner shadow-black/40 bg-surface-base dark:border-border flex-1"
             >
               <header className="page-header">
                 <div className="flex flex-wrap items-center justify-between gap-4">

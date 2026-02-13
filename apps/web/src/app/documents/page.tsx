@@ -876,9 +876,9 @@ function DocumentsPageContent() {
               ) : null}
             </div>
             {documentsError ? (
-              <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{documentsError}</p>
+              <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{documentsError}</p>
             ) : null}
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-2">
               {documents.length === 0 ? (
                 <p className="text-sm text-muted-standard">No documents yet.</p>
               ) : null}
@@ -886,7 +886,7 @@ function DocumentsPageContent() {
                 <div
                   key={document.id}
                   className={cn(
-                    "group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition cursor-pointer text-foreground",
+                    "group relative flex flex-col gap-1 rounded-2xl border px-3 py-2 transition cursor-pointer text-foreground",
                     selectedDocumentId === document.id
                       ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
                       : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:border-sky-500",
@@ -938,7 +938,7 @@ function DocumentsPageContent() {
             <div className="resize-handle-grip" />
           </div>
 
-          <div className="space-y-6 flex-1">
+          <div className="space-y-4 flex-1">
             <section className="container-section text-foreground">
               <form onSubmit={handleUpload} className="flex flex-col gap-3">
                 <label className="ml-6 text-sm text-foreground">
@@ -962,7 +962,7 @@ function DocumentsPageContent() {
                 </div>
               </form>
             </section>
-            <section className="group rounded-2xl border p-5 bg-surface-elevated dark:border-border">
+            <section className="group rounded-2xl border p-3 bg-surface-elevated dark:border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="section-title">Document detail</h3>
@@ -990,7 +990,7 @@ function DocumentsPageContent() {
               </div>
               {selectedDocument ? (
                 <>
-                  <div className="mt-4 grid gap-3 text-xs text-muted-standard">
+                  <div className="mt-3 grid gap-2 text-xs text-muted-standard">
                     <div>
                       <p>Size: {formattedSize(selectedDocument.size)}</p>
                       <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
@@ -1009,13 +1009,13 @@ function DocumentsPageContent() {
               ) : null}
             </section>
 
-            <section className="rounded-2xl border p-5 bg-surface-elevated dark:border-border">
+            <section className="rounded-2xl border p-3 bg-surface-elevated dark:border-border">
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
                   void startStream();
                 }}
-                className="space-y-4"
+                className="space-y-3"
               >
                 <div className="flex items-center justify-between gap-3">
                   <label className="flex-1 text-sm text-foreground">
@@ -1085,7 +1085,7 @@ function DocumentsPageContent() {
                 {streamChunks.map((chunk, idx) => (
                   <div
                     key={`${chunk.type}-${idx}`}
-                    className="space-y-2 br-card border p-4 text-sm bg-surface-elevated dark:bg-slate-950"
+                    className="space-y-2 br-card border p-3 text-sm bg-surface-elevated dark:bg-slate-950"
                   >
                     <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-slate-800 dark:text-slate-50">
                       {chunkTypeLabel[chunk.type] ?? chunk.type}
@@ -1106,7 +1106,7 @@ function DocumentsPageContent() {
                   </div>
                 ))}
                 {references.length > 0 && (
-                  <section className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                  <section className="rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
                     <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
                       <span>근거 문서 ({references.length}건)</span>
                     </div>
@@ -1187,7 +1187,7 @@ function DocumentsPageContent() {
                     </div>
                   </section>
                 )}
-                <section className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                <section className="rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -1261,7 +1261,7 @@ function DocumentsPageContent() {
                     )}
                   </div>
                   {selectedDocHistoryEntry ? (
-                    <div className="group relative mt-4 rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                    <div className="group relative mt-3 rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
                       <div className="flex items-center justify-between">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
                           Answer

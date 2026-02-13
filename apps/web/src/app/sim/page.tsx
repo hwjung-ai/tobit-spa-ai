@@ -645,7 +645,7 @@ export default function SimPage() {
         <section className="flex gap-0 flex-1 overflow-hidden">
           {/* Left Panel - Scenario Builder */}
           <aside
-            className="space-y-4 container-panel min-h-[320px] overflow-y-auto custom-scrollbar flex-shrink-0"
+            className="space-y-3 container-panel min-h-[320px] overflow-y-auto custom-scrollbar flex-shrink-0"
             style={{ width: `${leftPanelWidth}px` }}
           >
             <h2 className="left-panel-title">Scenario Builder</h2>
@@ -1138,7 +1138,7 @@ export default function SimPage() {
             className="min-h-[320px] container-panel overflow-y-auto custom-scrollbar flex-shrink-0"
             style={{ width: `${rightPanelWidth}px` }}
           >
-            <div className="space-y-4">
+            <div className="space-y-3">
               <BuilderCopilotPanel
                 builderSlug="sim-workspace"
                 instructionPrompt={SIM_COPILOT_INSTRUCTION}
@@ -1158,7 +1158,7 @@ export default function SimPage() {
                 }}
                 inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
               />
-              <div className="space-y-3 br-card border p-4 text-sm bg-surface-elevated">
+              <div className="space-y-3 br-card border p-3 text-sm bg-surface-elevated">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-wider text-muted-standard">
                     Draft status

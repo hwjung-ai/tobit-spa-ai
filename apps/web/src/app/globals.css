@@ -1725,7 +1725,7 @@ html {
 }
 
 .container-section {
-  @apply rounded-2xl border p-5 shadow-sm;
+  @apply rounded-2xl border p-3 shadow-sm;
   border-color: var(--border);
   background-color: var(--surface-base);
 }
@@ -1735,7 +1735,7 @@ html {
 }
 
 .container-panel {
-  @apply rounded-3xl border p-6 shadow-md;
+  @apply rounded-3xl border p-4 shadow-md;
   border-color: var(--border);
   background-color: var(--surface-base);
 }
