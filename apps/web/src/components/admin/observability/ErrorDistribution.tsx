@@ -38,7 +38,7 @@ const colors: Record<string, string> = {
   other: "#94a3b8",
 };
 
-const colorList = ["var(--chart-error-color)", "#fb923c", "#facc15", "#a78bfa", "var(--chart-text-color)"];
+const colorList = ["var(--chart-error-color)", "var(--chart-accent-orange)", "var(--chart-accent-yellow)", "var(--chart-accent-purple)", "var(--chart-text-color)"];
 
 export default function ErrorDistribution() {
   const [data, setData] = useState<ErrorData | null>(null);
@@ -114,7 +114,7 @@ export default function ErrorDistribution() {
                     labelLine={false}
                     label={({ name, value }) => `${name} (${value})`}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="var(--chart-primary-color)"
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (

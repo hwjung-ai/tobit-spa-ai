@@ -116,7 +116,7 @@ interface BlockRendererProps {
   traceId?: string;
 }
 
-const lineColors = ["var(--chart-primary-color)", "var(--chart-success-color)", "#f97316", "#a855f7", "#f472b6"];
+const lineColors = ["var(--chart-primary-color)", "var(--chart-success-color)", "var(--chart-accent-orange)", "var(--chart-accent-purple)", "var(--chart-accent-pink)"];
 
 interface RenderedBlockTelemetry {
   block_type: string;

@@ -164,7 +164,7 @@ export default function SystemDashboard() {
               <Line
                 type="monotone"
                 dataKey="cpu_percent"
-                stroke="#a855f7"
+                stroke="var(--chart-accent-purple)"
                 name="CPU %"
                 strokeWidth={2}
                 dot={false}

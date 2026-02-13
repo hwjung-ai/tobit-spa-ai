@@ -126,6 +126,10 @@
   --chart-warning-color: #fbbf24; /* amber-400 */
   --chart-error-color: #f87171; /* red-400 */
   --chart-info-color: #38bdf8; /* sky-400 */
+  --chart-accent-orange: #fb923c; /* orange-400 */
+  --chart-accent-yellow: #facc15; /* yellow-400 */
+  --chart-accent-purple: #a78bfa; /* purple-400 */
+  --chart-accent-pink: #f472b6; /* pink-400 */
 }
 
 /* Light mode component variables */
@@ -151,6 +155,10 @@
   --chart-warning-color: #f59e0b; /* amber-500 */
   --chart-error-color: #ef4444; /* red-500 */
   --chart-info-color: #0ea5e9; /* sky-500 */
+  --chart-accent-orange: #f97316; /* orange-500 */
+  --chart-accent-yellow: #eab308; /* yellow-500 */
+  --chart-accent-purple: #a855f7; /* purple-500 */
+  --chart-accent-pink: #ec4899; /* pink-500 */
 }
 
 /* Note: @theme inline removed - using direct CSS variables instead */
