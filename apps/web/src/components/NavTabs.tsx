@@ -21,7 +21,7 @@ export default function NavTabs() {
     process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
   return (
-    <nav className="flex gap-4 text-sm uppercase tracking-wider text-muted-foreground" aria-label="Main navigation">
+    <nav className="flex gap-4 text-base uppercase tracking-wider text-muted-foreground" aria-label="Main navigation">
       {NAV_ITEMS.filter((item) =>
         item.adminOnly ? enableAdmin : true
       ).map((item) => {
@@ -34,7 +34,7 @@ export default function NavTabs() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "transition border-b-2 pb-1 hover:text-foreground",
+              "border-b-2 pb-1 font-semibold transition hover:text-foreground",
               isActive ? "border-primary-light text-foreground" : "border-transparent text-muted-foreground"
             )}
           >

@@ -19,13 +19,26 @@ import {
   JsonPreview,
 } from "../../components/cep-form-builder";
 import type {
-  CenterTab, TriggerType, CepRule, CepExecLog, CepDraft, DraftStatus,
-  Condition, Action,
+  CenterTab,
+  TriggerType,
+  CepRule,
+  CepExecLog,
+  CepDraft,
+  DraftStatus,
+  Condition,
+  Action,
 } from "../../lib/cep-builder/types";
 import {
-  normalizeBaseUrl, parseJsonObject, parseCepDraft,
-  tabOptions, DRAFT_STORAGE_PREFIX, FINAL_STORAGE_PREFIX, draftStatusLabels,
-  COPILOT_INSTRUCTION, computeCepDraftDiff, CEP_COPILOT_EXAMPLE_PROMPTS,
+  normalizeBaseUrl,
+  parseJsonObject,
+  parseCepDraft,
+  tabOptions,
+  DRAFT_STORAGE_PREFIX,
+  FINAL_STORAGE_PREFIX,
+  draftStatusLabels,
+  COPILOT_INSTRUCTION,
+  computeCepDraftDiff,
+  CEP_COPILOT_EXAMPLE_PROMPTS,
 } from "../../lib/cep-builder/utils";
 import { recordCopilotMetric } from "../../lib/copilot/metrics";
 
@@ -60,7 +73,9 @@ export default function CepBuilderPage() {
   const [draftPreviewJson, setDraftPreviewJson] = useState<string | null>(null);
   const [draftPreviewSummary, setDraftPreviewSummary] = useState<string | null>(null);
   const [draftDiff, setDraftDiff] = useState<string[] | null>(null);
-  const [draftHistory, setDraftHistory] = useState<Array<{ id: string; createdAt: string; draft: CepDraft }>>([]);
+  const [draftHistory, setDraftHistory] = useState<
+    Array<{ id: string; createdAt: string; draft: CepDraft }>
+  >([]);
   const [selectedCompareDraftId, setSelectedCompareDraftId] = useState<string | null>(null);
   const [lastAssistantRaw, setLastAssistantRaw] = useState("");
   const [lastParseStatus, setLastParseStatus] = useState<"idle" | "success" | "fail">("idle");
@@ -84,7 +99,7 @@ export default function CepBuilderPage() {
 
   const selectedRule = useMemo(
     () => rules.find((rule) => rule.rule_id === selectedId) ?? null,
-    [rules, selectedId]
+    [rules, selectedId],
   );
 
   const convertRuleToDraft = useCallback((rule: CepRule): CepDraft => {
@@ -105,9 +120,10 @@ export default function CepBuilderPage() {
         ? ((trigger as Record<string, unknown>).enrichments as Record<string, unknown>[])
         : [],
       actions: validActions,
-      references: typeof (actionSpec as Record<string, unknown>).references === "object"
-        ? ((actionSpec as Record<string, unknown>).references as Record<string, unknown>)
-        : {},
+      references:
+        typeof (actionSpec as Record<string, unknown>).references === "object"
+          ? ((actionSpec as Record<string, unknown>).references as Record<string, unknown>)
+          : {},
     };
   }, []);
 
@@ -168,10 +184,14 @@ export default function CepBuilderPage() {
         }
         return { ok: true, data: data?.data?.rule ?? null };
       } catch (error) {
-        return { ok: false, error: error instanceof Error ? error.message : "Network error", details: error };
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : "Network error",
+          details: error,
+        };
       }
     },
-    [apiBaseUrl, selectedRule]
+    [apiBaseUrl, selectedRule],
   );
 
   const actionEndpointLabel = useMemo(() => {
@@ -208,7 +228,9 @@ export default function CepBuilderPage() {
     }
     setLogsLoading(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/cep/rules/${selectedRule.rule_id}/exec-logs?limit=20`);
+      const response = await fetch(
+        `${apiBaseUrl}/cep/rules/${selectedRule.rule_id}/exec-logs?limit=20`,
+      );
       const payload = await response.json();
       setLogs(payload.data?.logs ?? []);
     } catch (error) {
@@ -261,7 +283,7 @@ export default function CepBuilderPage() {
       setRuleDescription(
         typeof (selectedRule.action_spec as Record<string, unknown>)?.description === "string"
           ? String((selectedRule.action_spec as Record<string, unknown>).description)
-          : ""
+          : "",
       );
       setTriggerType(selectedRule.trigger_type);
       setTriggerSpecText(JSON.stringify(selectedRule.trigger_spec ?? {}, null, 2));
@@ -274,7 +296,7 @@ export default function CepBuilderPage() {
           day: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-        })}`
+        })}`,
       );
       setStatusError(null);
       setSimulateResult(null);
@@ -334,7 +356,12 @@ export default function CepBuilderPage() {
     setRuleDescription(draft.description ?? "");
     const triggerPayload = draft.trigger ?? {};
     const draftTriggerType = (triggerPayload as Record<string, unknown>).type;
-    if (draftTriggerType === "metric" || draftTriggerType === "event" || draftTriggerType === "schedule" || draftTriggerType === "anomaly") {
+    if (
+      draftTriggerType === "metric" ||
+      draftTriggerType === "event" ||
+      draftTriggerType === "schedule" ||
+      draftTriggerType === "anomaly"
+    ) {
       setTriggerType(draftTriggerType);
     }
     setTriggerSpecText(JSON.stringify(triggerPayload ?? {}, null, 2));
@@ -411,21 +438,26 @@ export default function CepBuilderPage() {
 
     // 집계 설정 추출
     if (triggerSpec.aggregation && typeof triggerSpec.aggregation === "object") {
-      setFormAggregations([{
-        ...(triggerSpec.aggregation as Record<string, unknown>),
-        id: ((triggerSpec.aggregation as Record<string, unknown>).id as string)
-          || `agg-${Math.random().toString(36).substr(2, 9)}`
-      }]);
+      setFormAggregations([
+        {
+          ...(triggerSpec.aggregation as Record<string, unknown>),
+          id:
+            ((triggerSpec.aggregation as Record<string, unknown>).id as string) ||
+            `agg-${Math.random().toString(36).substr(2, 9)}`,
+        },
+      ]);
     } else {
       setFormAggregations([]);
     }
 
     // 보강 설정 추출
     if (triggerSpec.enrichments && Array.isArray(triggerSpec.enrichments)) {
-      setFormEnrichments((triggerSpec.enrichments as Record<string, unknown>[]).map((e) => ({
-        ...e,
-        id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`
-      })));
+      setFormEnrichments(
+        (triggerSpec.enrichments as Record<string, unknown>[]).map((e) => ({
+          ...e,
+          id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`,
+        })),
+      );
     } else {
       setFormEnrichments([]);
     }
@@ -433,16 +465,20 @@ export default function CepBuilderPage() {
     // 액션 설정 추출
     const actionSpec = selectedRule.action_spec as Record<string, unknown>;
     if (actionSpec.type === "multi_action" && Array.isArray(actionSpec.actions)) {
-      setFormActions((actionSpec.actions as Record<string, unknown>[]).map((a) => ({
-        ...a,
-        id: (a.id as string) || `action-${Math.random().toString(36).substr(2, 9)}`,
-        type: ((a.type as Action["type"]) || "webhook"),
-      })) as Action[]);
+      setFormActions(
+        (actionSpec.actions as Record<string, unknown>[]).map((a) => ({
+          ...a,
+          id: (a.id as string) || `action-${Math.random().toString(36).substr(2, 9)}`,
+          type: (a.type as Action["type"]) || "webhook",
+        })) as Action[],
+      );
     } else if (actionSpec && Object.keys(actionSpec).length > 0) {
-      setFormActions([{
-        ...actionSpec,
-        id: actionSpec.id || `action-${Math.random().toString(36).substr(2, 9)}`
-      } as unknown as Action]);
+      setFormActions([
+        {
+          ...actionSpec,
+          id: actionSpec.id || `action-${Math.random().toString(36).substr(2, 9)}`,
+        } as unknown as Action,
+      ]);
     } else {
       setFormActions([]);
     }
@@ -529,17 +565,16 @@ export default function CepBuilderPage() {
       composite_condition:
         formConditions.length > 0
           ? {
-            conditions: formConditions.map((c) => ({
-              field: c.field || "",
-              op: c.op || "==",
-              value: c.value,
-            })),
-            logic: formConditionLogic,
-          }
+              conditions: formConditions.map((c) => ({
+                field: c.field || "",
+                op: c.op || "==",
+                value: c.value,
+              })),
+              logic: formConditionLogic,
+            }
           : null,
 
-      window_config:
-        Object.keys(formWindowConfig).length > 0 ? formWindowConfig : null,
+      window_config: Object.keys(formWindowConfig).length > 0 ? formWindowConfig : null,
       aggregation: formAggregations.length > 0 ? formAggregations[0] : null,
       enrichments: formEnrichments,
       actions: formActions.map((a) => ({
@@ -858,7 +893,7 @@ export default function CepBuilderPage() {
             onClick={() => setTriggerType(type)}
             className={cn(
               "cep-builder-tab text-[10px]",
-              triggerType === type && "cep-builder-tab-active"
+              triggerType === type && "cep-builder-tab-active",
             )}
           >
             {type}
@@ -894,9 +929,7 @@ export default function CepBuilderPage() {
         </div>
       </div>
       <div className="cep-builder-status-box">
-        <span className="cep-builder-label">
-          {statusMessage}
-        </span>
+        <span className="cep-builder-label">{statusMessage}</span>
         <button
           onClick={handleSave}
           disabled={isSaving}
@@ -958,18 +991,15 @@ export default function CepBuilderPage() {
         onGroupByChange={setFormGroupByFields}
       />
 
-      <EnrichmentSection
-        enrichments={formEnrichments}
-        onEnrichmentsChange={setFormEnrichments}
-      />
+      <EnrichmentSection enrichments={formEnrichments} onEnrichmentsChange={setFormEnrichments} />
 
-      <ActionsSection
-        actions={formActions}
-        onActionsChange={setFormActions}
-      />
+      <ActionsSection actions={formActions} onActionsChange={setFormActions} />
 
       <div className="cep-builder-status-box p-4">
-        <div className="flex items-center justify-between cursor-pointer p-2 br-section" style={{backgroundColor: "var(--surface-base)"}}>
+        <div
+          className="flex items-center justify-between cursor-pointer p-2 br-section"
+          style={{ backgroundColor: "var(--surface-base)" }}
+        >
           <h3 className="section-title">JSON 미리보기</h3>
         </div>
         <div className="mt-3">
@@ -1024,7 +1054,9 @@ export default function CepBuilderPage() {
     <div className="space-y-4">
       <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
         Action endpoint:&nbsp;
-        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{actionEndpointLabel}</span>
+        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+          {actionEndpointLabel}
+        </span>
       </p>
       <div className="flex flex-col gap-2">
         <span className="cep-builder-label">Payload</span>
@@ -1057,15 +1089,16 @@ export default function CepBuilderPage() {
   const logsContent = (
     <div className="space-y-2 max-h-[420px] overflow-auto">
       {logsLoading ? (
-        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Loading logs…</p>
+        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+          Loading logs…
+        </p>
       ) : logs.length === 0 ? (
-        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>No executions yet.</p>
+        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+          No executions yet.
+        </p>
       ) : (
         logs.map((log) => (
-          <div
-            key={log.exec_id}
-            className="cep-builder-log-entry p-3 text-xs"
-          >
+          <div key={log.exec_id} className="cep-builder-log-entry p-3 text-xs">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>{new Date(log.triggered_at).toLocaleString("ko-KR")}</span>
               <span
@@ -1073,7 +1106,9 @@ export default function CepBuilderPage() {
                   "br-badge border px-2 py-0.5 uppercase tracking-wider",
                   log.status === "success" && "border-emerald-400 text-emerald-300",
                   log.status === "dry_run" && "bg-transparent text-slate-400 dark:text-slate-500",
-                  log.status !== "success" && log.status !== "dry_run" && "border-rose-500 text-rose-300"
+                  log.status !== "success" &&
+                    log.status !== "dry_run" &&
+                    "border-rose-500 text-rose-300",
                 )}
               >
                 {log.status}
@@ -1095,16 +1130,16 @@ export default function CepBuilderPage() {
     <div className="space-y-4">
       <div className="flex gap-3">
         {tabOptions.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "br-badge border px-3 py-1 text-[10px] uppercase tracking-wider transition",
-                activeTab === tab.id ? "bg-sky-500/10 border-sky-400 text-sky-400" : "bg-transparent"
-              )}
-            >
-              {tab.label}
-            </button>
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "br-badge border px-3 py-1 text-[10px] uppercase tracking-wider transition",
+              activeTab === tab.id ? "bg-sky-500/10 border-sky-400 text-sky-400" : "bg-transparent",
+            )}
+          >
+            {tab.label}
+          </button>
         ))}
       </div>
       {activeTab === "definition"
@@ -1128,7 +1163,9 @@ export default function CepBuilderPage() {
               <p>Last updated: {new Date(selectedRule.updated_at).toLocaleString("ko-KR")}</p>
             </div>
           ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400">Select a rule to see its metadata.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Select a rule to see its metadata.
+            </p>
           )}
         </div>
       ) : activeTab === "test" ? (
@@ -1136,30 +1173,32 @@ export default function CepBuilderPage() {
           {draftTestOk === true && simulateResult && (
             <div className="br-section border-emerald-500/50 bg-emerald-500/10 p-4 text-xs">
               <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Draft Simulation Result</p>
-                <span className="text-[10px] br-badge border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">Pass</span>
+                <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold">
+                  Draft Simulation Result
+                </p>
+                <span className="text-[10px] br-badge border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">
+                  Pass
+                </span>
               </div>
-              <pre
-                className="mt-2 max-h-60 overflow-auto br-section p-3 text-xs custom-scrollbar code-block"
-              >
+              <pre className="mt-2 max-h-60 overflow-auto br-section p-3 text-xs custom-scrollbar code-block">
                 {JSON.stringify(simulateResult, null, 2)}
               </pre>
             </div>
           )}
           <div className="cep-builder-status-box p-4 text-xs">
             <p className="cep-builder-label">Simulation result</p>
-            <pre
-              className="mt-2 max-h-40 overflow-auto br-card p-3 text-xs code-block"
-            >
-              {simulateResult ? JSON.stringify(simulateResult, null, 2) : "Run a simulation to inspect payload."}
+            <pre className="mt-2 max-h-40 overflow-auto br-card p-3 text-xs code-block">
+              {simulateResult
+                ? JSON.stringify(simulateResult, null, 2)
+                : "Run a simulation to inspect payload."}
             </pre>
           </div>
           <div className="cep-builder-status-box p-4 text-xs">
             <p className="cep-builder-label">Manual trigger result</p>
-            <pre
-              className="mt-2 max-h-40 overflow-auto br-card p-3 text-xs code-block"
-            >
-              {triggerResult ? JSON.stringify(triggerResult, null, 2) : "Trigger once to record an execution log."}
+            <pre className="mt-2 max-h-40 overflow-auto br-card p-3 text-xs code-block">
+              {triggerResult
+                ? JSON.stringify(triggerResult, null, 2)
+                : "Trigger once to record an execution log."}
             </pre>
           </div>
         </div>
@@ -1170,15 +1209,14 @@ export default function CepBuilderPage() {
             Click reload to refresh logs or trigger a rule to write entries.
           </p>
         </div>
-      )
-      }
-    </div >
+      )}
+    </div>
   );
 
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">CEP rules</p>
+        <p className="left-panel-title">CEP rules</p>
         <button
           onClick={handleNew}
           className="text-[10px] uppercase tracking-wider underline text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
@@ -1205,7 +1243,7 @@ export default function CepBuilderPage() {
               }}
               className={cn(
                 "cep-builder-rule-item",
-                selectedId === rule.rule_id && "cep-builder-rule-item-selected"
+                selectedId === rule.rule_id && "cep-builder-rule-item-selected",
               )}
             >
               <p className="font-semibold line-clamp-2 break-all">{rule.rule_name}</p>
@@ -1230,10 +1268,16 @@ export default function CepBuilderPage() {
         if (isComplete) {
           recordCopilotMetric("cep-builder", "parse_success");
           const snapshotId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          setDraftHistory((prev) => [
-            { id: snapshotId, createdAt: new Date().toISOString(), draft: result.draft as CepDraft },
-            ...prev,
-          ].slice(0, 8));
+          setDraftHistory((prev) =>
+            [
+              {
+                id: snapshotId,
+                createdAt: new Date().toISOString(),
+                draft: result.draft as CepDraft,
+              },
+              ...prev,
+            ].slice(0, 8),
+          );
         }
         setDraftApi(result.draft);
         setDraftStatus("draft_ready");
@@ -1258,26 +1302,26 @@ export default function CepBuilderPage() {
         }
       }
     },
-    [draftStatus]
+    [draftStatus],
   );
 
   const handleAssistantMessage = useCallback(
     (messageText: string) => {
       processAssistantDraft(messageText, false);
     },
-    [processAssistantDraft]
+    [processAssistantDraft],
   );
 
   const handleAssistantMessageComplete = useCallback(
     (messageText: string) => {
       processAssistantDraft(messageText, true);
     },
-    [processAssistantDraft]
+    [processAssistantDraft],
   );
 
   const selectedCompareDraft = useMemo(
     () => draftHistory.find((item) => item.id === selectedCompareDraftId) ?? null,
-    [draftHistory, selectedCompareDraftId]
+    [draftHistory, selectedCompareDraftId],
   );
 
   const compareDiffSummary = useMemo(() => {
@@ -1303,7 +1347,7 @@ export default function CepBuilderPage() {
         trigger_type: triggerType,
       },
     }),
-    [activeTab, draftStatus, ruleName, selectedRule, triggerType]
+    [activeTab, draftStatus, ruleName, selectedRule, triggerType],
   );
 
   const rightPane = (
@@ -1329,21 +1373,23 @@ export default function CepBuilderPage() {
         }}
         inputPlaceholder="CEP 룰 드래프트를 설명해 주세요..."
       />
-      <div
-        className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
-      >
+      <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Draft status</span>
+          <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Draft status
+          </span>
           <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
         </div>
-        {draftNotes ? <p className="text-sm text-slate-600 dark:text-slate-400">{draftNotes}</p> : null}
+        {draftNotes ? (
+          <p className="text-sm text-slate-600 dark:text-slate-400">{draftNotes}</p>
+        ) : null}
         {draftDiff && (
-          <div
-            className="space-y-1 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">Auto Diff</p>
+          <div className="space-y-1 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Auto Diff
+            </p>
             {draftDiff.map((item) => (
               <p key={item}>{item}</p>
             ))}
@@ -1405,20 +1451,20 @@ export default function CepBuilderPage() {
           </div>
         )}
         {draftPreviewSummary && draftPreviewJson ? (
-          <div
-            className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Preview</p>
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Preview
+            </p>
             <p className="text-sm text-slate-900 dark:text-slate-50">{draftPreviewSummary}</p>
             <pre className="max-h-48 overflow-auto rounded-xl bg-white p-2 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
               {draftPreviewJson}
             </pre>
           </div>
         ) : null}
-        <div
-          className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-        >
-          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Multi Draft Compare</p>
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Multi Draft Compare
+          </p>
           <select
             value={selectedCompareDraftId ?? ""}
             onChange={(event) => setSelectedCompareDraftId(event.target.value || null)}
@@ -1439,10 +1485,10 @@ export default function CepBuilderPage() {
             </div>
           )}
         </div>
-        <div
-          className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-        >
-          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Example Prompts</p>
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Example Prompts
+          </p>
           <div className="max-h-40 space-y-1 overflow-auto">
             {CEP_COPILOT_EXAMPLE_PROMPTS.map((prompt) => (
               <button
@@ -1457,9 +1503,7 @@ export default function CepBuilderPage() {
             ))}
           </div>
         </div>
-        <details
-          className="rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-        >
+        <details className="rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
           <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Debug
           </summary>
@@ -1467,27 +1511,33 @@ export default function CepBuilderPage() {
             <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Save target: {saveTarget ?? "none"}
             </p>
-            {lastSaveError ? <p className="text-xs text-rose-300">Save error: {lastSaveError}</p> : null}
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">Selected rule</p>
+            {lastSaveError ? (
+              <p className="text-xs text-rose-300">Save error: {lastSaveError}</p>
+            ) : null}
+            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Selected rule
+            </p>
             <p className="text-xs text-slate-600 dark:text-slate-400">
               {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
             </p>
             <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Parse status: {lastParseStatus}
             </p>
-            {lastParseError ? <p className="text-xs text-rose-300">Error: {lastParseError}</p> : null}
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">Last assistant raw</p>
-            <pre
-              className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-[10px] text-slate-900 dark:bg-slate-950 dark:text-slate-100"
-            >
+            {lastParseError ? (
+              <p className="text-xs text-rose-300">Error: {lastParseError}</p>
+            ) : null}
+            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Last assistant raw
+            </p>
+            <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-[10px] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
               <>
-                <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">Draft JSON</p>
-                <pre
-                  className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-[10px] text-slate-900 dark:bg-slate-950 dark:text-slate-100"
-                >
+                <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Draft JSON
+                </p>
+                <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-[10px] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
               </>
@@ -1499,13 +1549,18 @@ export default function CepBuilderPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="page-cep-builder min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
       <PageHeader
         title="Event Rule Maker"
         description="런타임 API와 연동되는 CEP 이벤트 규칙을 정의하고, 시뮬레이션하며, 트리거합니다."
       />
-      <main className="min-h-[calc(100vh-96px)] px-6 py-6">
-        <BuilderShell leftPane={leftPane} centerTop={centerTop} centerBottom={centerBottom} rightPane={rightPane} />
+      <main className="min-h-[calc(100vh-96px)] py-6">
+        <BuilderShell
+          leftPane={leftPane}
+          centerTop={centerTop}
+          centerBottom={centerBottom}
+          rightPane={rightPane}
+        />
       </main>
     </div>
   );

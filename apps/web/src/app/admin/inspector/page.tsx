@@ -582,30 +582,7 @@ function InspectorContent() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-6 px-6 py-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Inspector</h1>
-          <p className="mt-2 text-sm text-muted-standard">
-            Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/쿼리/렌더를 확인하는 전용 도구입니다.
-          </p>
-        </div>
-      </div>
-
       <div className="px-6 pb-6">
-      <div className="space-y-6">
-        <p className="insp-body">
-          Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/컬럼을 보여줍니다.
-        </p>
-        <p className="insp-body">
-          Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/쿼리/렌더를
-          확인하는 전용 도구입니다.
-        </p>
-        <p className="insp-label-small">
-          Assets/Settings 변경 후에는 반드시 Inspector에서 trace_id로 검증하고, 다시 실행한 trace를
-          사용해 상태를 확인하세요.
-        </p>
-      </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="insp-section">
           <div className="flex items-center justify-between">
@@ -695,13 +672,13 @@ function InspectorContent() {
                   onChange={(event) =>
                     setFilters((prev) => ({ ...prev, from: event.target.value }))
                   }
-                  className="flex-1 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
+                  className="flex-1 rounded-md border border-border bg-surface-base px-3 py-3 text-sm text-foreground outline-none transition focus:border-sky-500 dark:border-border dark:bg-surface-elevated dark:text-foreground dark:focus:border-sky-400"
                 />
                 <input
                   type="date"
                   value={filters.to}
                   onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
-                  className="flex-1 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
+                  className="flex-1 rounded-md border border-border bg-surface-base px-3 py-3 text-sm text-foreground outline-none transition focus:border-sky-500 dark:border-border dark:bg-surface-elevated dark:text-foreground dark:focus:border-sky-400"
                 />
               </div>
             </div>
@@ -709,7 +686,7 @@ function InspectorContent() {
           <div className="flex gap-3 justify-end">
             <button
               onClick={handleResetFilters}
-              className="rounded-md border border-slate-300 px-4 py-2 text-xs uppercase tracking-wider text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="rounded-md border border-border px-4 py-2 text-xs uppercase tracking-wider text-foreground transition hover:bg-surface-elevated dark:border-border dark:text-foreground dark:hover:bg-surface-elevated"
             >
               Reset
             </button>
@@ -848,7 +825,7 @@ function InspectorContent() {
             <button
               onClick={() => handleSearch(offset)}
               disabled={loading}
-              className="px-6 py-2 rounded-full text-xs uppercase tracking-wider opacity-50 bg-slate-100 dark:bg-slate-800"
+              className="px-6 py-2 rounded-full text-xs uppercase tracking-wider opacity-50 bg-surface-elevated dark:bg-surface-elevated"
             >
               {loading ? "불러오는 중..." : "Load More"}
             </button>
@@ -1345,7 +1322,7 @@ function InspectorContent() {
                                       mapping: { icon: "🗺️", color: "text-amber-400" },
                                       source: {
                                         icon: "💾",
-                                        color: "text-slate-500",
+                                        color: "text-muted-standard",
                                       },
                                       schema: { icon: "📊", color: "text-fuchsia-300" },
                                       resolver: { icon: "🔧", color: "text-orange-300" },
@@ -1364,7 +1341,7 @@ function InspectorContent() {
                                         key={type}
                                         className={cn(
                                           "flex items-center gap-1.5 px-2 py-1 rounded-md",
-                                          "bg-slate-50/60 border border-slate-300/50 text-xs",
+                                          "bg-surface-base/60 border border-border/50 text-xs",
                                         )}
                                         title={`${type}: ${value}`}
                                       >
@@ -1785,7 +1762,7 @@ function InspectorContent() {
                               }}
                               className={`px-3 py-1 rounded text-xs uppercase tracking-wider transition-colors ${
                                 flowViewMode === "timeline" ? " text-white" : ""
-                              } bg-slate-100 text-foreground`}
+                              } bg-surface-elevated text-foreground`}
                             >
                               Timeline
                             </button>
@@ -1797,7 +1774,7 @@ function InspectorContent() {
                               }}
                               className={`px-3 py-1 rounded text-xs uppercase tracking-wider transition-colors ${
                                 flowViewMode === "graph" ? " text-white" : ""
-                              } bg-slate-100 text-foreground`}
+                              } bg-surface-elevated text-foreground`}
                             >
                               Graph
                             </button>

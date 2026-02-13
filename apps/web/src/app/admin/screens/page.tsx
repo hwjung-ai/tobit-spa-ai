@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
-import { PageHeader } from "@/components/shared";
 import ScreenAssetPanel from "@/components/admin/ScreenAssetPanel";
 
 function ScreensPageContent() {
@@ -10,10 +9,6 @@ function ScreensPageContent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Screen Asset Management"
-        description="UI Screen 자산을 관리합니다 - 생성, 편집, 게시, 롤백"
-      />
       <main className="animate-in fade-in duration-700">
         <ScreenAssetPanel key={pathname} />
       </main>

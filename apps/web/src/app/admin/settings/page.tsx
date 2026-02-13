@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { PageHeader } from "@/components/shared";
 import { OperationSetting, fetchApi } from "../../../lib/adminUtils";
 import SettingsTable from "../../../components/admin/SettingsTable";
 import SettingEditModal from "../../../components/admin/SettingEditModal";
@@ -134,16 +133,8 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Page Header - Admin Style */}
             <header className="admin-page-header">
-                {/* Header with Title and Tabs */}
                 <div className="admin-page-header-content">
-                    <div className="admin-header-title-group">
-                        <h1 className="admin-page-title">Settings</h1>
-                        <p className="admin-page-description">
-                            운영 설정, LLM 구성, 런타임 API 인증 정책을 관리합니다.
-                        </p>
-                    </div>
                     <div className="admin-header-status">
                         <div className="inline-flex rounded-xl border p-1 bg-surface-elevated border-border">
                             <button
@@ -197,16 +188,16 @@ export default function SettingsPage() {
                 {/* Informational Banner */}
                 <div className="admin-page-banner admin-page-banner--warning">
                     <div className="flex items-center gap-5">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg bg-amber-500/20 text-amber-400">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg bg-amber-500/20 text-amber-700 dark:text-amber-400">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm font-bold tracking-tight mb-0.5 text-amber-300">Runtime Constraints Warning</p>
-                            <p className="text-xs leading-relaxed text-amber-200">
-                                Settings marked with 🔄 require a service restart. Changes to <span className="text-sky-400 ml-1">Published</span> values override
-                                <span className="text-amber-400 ml-1">Environment</span> and <span className="text-muted-standard ml-1">Default</span> configurations.
+                            <p className="mb-0.5 text-sm font-bold tracking-tight text-amber-900 dark:text-amber-300">Runtime Constraints Warning</p>
+                            <p className="text-xs leading-relaxed text-slate-700 dark:text-amber-200">
+                                Settings marked with 🔄 require a service restart. Changes to <span className="ml-1 text-sky-700 dark:text-sky-400">Published</span> values override
+                                <span className="ml-1 text-amber-700 dark:text-amber-400">Environment</span> and <span className="ml-1 text-muted-standard">Default</span> configurations.
                             </p>
                         </div>
                         <button

@@ -147,7 +147,8 @@ interface DocumentDetail extends DocumentItem {
 }
 
 const getBadgeStyle = (status: DocumentStatus): string => {
-  const base = "px-2.5 py-0.5 rounded-full text-tiny font-semibold uppercase tracking-wider border border-solid border";
+  const base =
+    "px-2.5 py-0.5 rounded-full text-tiny font-semibold uppercase tracking-wider border border-solid border";
   switch (status) {
     case "queued":
       return `${base} bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40`;
@@ -231,45 +232,42 @@ function DocumentsPageContent() {
     setSelectedDocHistoryId(entry.id);
   }, []);
 
-  const persistDocHistory = useCallback(
-    async (payload: DocumentHistoryPayload) => {
-      if (!payload.documentId || !payload.question) {
-        return;
-      }
-      try {
-        await authenticatedFetch("/history/", {
-          method: "POST",
-          body: JSON.stringify({
-            feature: "docs",
-            question: payload.question,
-            summary: payload.summary,
-            status: payload.status,
-            response: {
-              answer: payload.answer,
-            },
-            metadata: {
-              documentId: payload.documentId,
-              documentTitle: payload.documentTitle,
-              references: payload.references,
-              topK: payload.topK,
-              errorDetails: payload.errorDetails,
-            },
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to persist document history", error);
-      }
-    },
-    []
-  );
+  const persistDocHistory = useCallback(async (payload: DocumentHistoryPayload) => {
+    if (!payload.documentId || !payload.question) {
+      return;
+    }
+    try {
+      await authenticatedFetch("/history/", {
+        method: "POST",
+        body: JSON.stringify({
+          feature: "docs",
+          question: payload.question,
+          summary: payload.summary,
+          status: payload.status,
+          response: {
+            answer: payload.answer,
+          },
+          metadata: {
+            documentId: payload.documentId,
+            documentTitle: payload.documentTitle,
+            references: payload.references,
+            topK: payload.topK,
+            errorDetails: payload.errorDetails,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to persist document history", error);
+    }
+  }, []);
 
   const fetchDocHistory = useCallback(async () => {
     setDocHistoryLoading(true);
     setDocHistoryError(null);
     try {
-      const payload = await authenticatedFetch(
-        `/history/?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`
-      ) as { data: { history: DocsServerHistoryEntry[] } };
+      const payload = (await authenticatedFetch(
+        `/history/?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`,
+      )) as { data: { history: DocsServerHistoryEntry[] } };
       const rawHistory = (payload?.data?.history ?? []) as DocsServerHistoryEntry[];
       const hydrated = rawHistory
         .map(buildDocHistoryEntry)
@@ -277,7 +275,9 @@ function DocumentsPageContent() {
       setDocHistory(hydrated);
     } catch (error: unknown) {
       console.error("Failed to load document history", error);
-      setDocHistoryError(error instanceof Error ? error.message : "Failed to load document history");
+      setDocHistoryError(
+        error instanceof Error ? error.message : "Failed to load document history",
+      );
     } finally {
       setDocHistoryLoading(false);
     }
@@ -293,24 +293,25 @@ function DocumentsPageContent() {
     }
   }, []);
 
-  const fetchDocumentDetail = useCallback(
-    async (documentId: string) => {
-      const payload = await authenticatedFetch(`/api/documents/${documentId}`) as { data?: { document: DocumentDetail } };
-      const detail = payload?.data?.document || null;
-      setSelectedDocument(detail);
-      if (detail?.id) {
-        setSelectedDocumentId(detail.id);
-      }
-    },
-    []
-  );
+  const fetchDocumentDetail = useCallback(async (documentId: string) => {
+    const payload = (await authenticatedFetch(`/api/documents/${documentId}`)) as {
+      data?: { document: DocumentDetail };
+    };
+    const detail = payload?.data?.document || null;
+    setSelectedDocument(detail);
+    if (detail?.id) {
+      setSelectedDocumentId(detail.id);
+    }
+  }, []);
 
   const fetchDocuments = useCallback(async () => {
     setLoadingDocuments(true);
     setDocumentsError(null);
     try {
       // Backend has /api/documents/ endpoint
-      const payload = await authenticatedFetch("/api/documents/") as { data?: { documents: DocumentItem[] } };
+      const payload = (await authenticatedFetch("/api/documents/")) as {
+        data?: { documents: DocumentItem[] };
+      };
       // Handle ResponseEnvelope format
       const docs = payload?.data?.documents ?? [];
       setDocuments(docs);
@@ -379,7 +380,7 @@ function DocumentsPageContent() {
       params.set("documentId", documentId);
       router.replace(`/documents?${params.toString()}`);
     },
-    [fetchDocumentDetail, router, selectedDocumentId]
+    [fetchDocumentDetail, router, selectedDocumentId],
   );
 
   // Initialize from URL
@@ -408,7 +409,7 @@ function DocumentsPageContent() {
         window.history.replaceState(
           {},
           "",
-          `/documents/${selectedDocument?.id}${params.toString() ? `?${params.toString()}` : ""}`
+          `/documents/${selectedDocument?.id}${params.toString() ? `?${params.toString()}` : ""}`,
         );
       }
     }
@@ -451,7 +452,7 @@ function DocumentsPageContent() {
     setSelectedDocHistoryId((prev) =>
       prev && documentHistoryEntries.some((entry) => entry.id === prev)
         ? prev
-        : documentHistoryEntries[0].id
+        : documentHistoryEntries[0].id,
     );
   }, [documentHistoryEntries]);
 
@@ -471,7 +472,7 @@ function DocumentsPageContent() {
       setSelectedDocHistoryId((prev) => (prev === id ? null : prev));
       void deleteDocHistoryEntry(id);
     },
-    [deleteDocHistoryEntry]
+    [deleteDocHistoryEntry],
   );
 
   const persistDocumentState = useCallback(() => {
@@ -544,7 +545,14 @@ function DocumentsPageContent() {
       restoreUrlState();
     }
     setRestoredStateApplied(true);
-  }, [documents, fetchDocumentDetail, restoredStateApplied, restoreUrlState, selectDocument, selectedDocument]);
+  }, [
+    documents,
+    fetchDocumentDetail,
+    restoredStateApplied,
+    restoreUrlState,
+    selectDocument,
+    selectedDocument,
+  ]);
   const clearStream = () => {
     streamAbortController.current?.abort();
     streamAbortController.current = null;
@@ -554,7 +562,11 @@ function DocumentsPageContent() {
   };
 
   const mergeChunk = (payload: StreamChunk, previous: StreamChunk[]): StreamChunk[] => {
-    if (payload.type === "answer" && previous.length > 0 && previous[previous.length - 1].type === "answer") {
+    if (
+      payload.type === "answer" &&
+      previous.length > 0 &&
+      previous[previous.length - 1].type === "answer"
+    ) {
       const last = previous[previous.length - 1];
       const merged = {
         ...last,
@@ -633,12 +645,10 @@ function DocumentsPageContent() {
           setStreamChunks((prev) => mergeChunk(payload, prev));
           if (payload.type === "done") {
             setStreamStatus("idle");
-            const validReferences = (payload.meta?.references ?? []).filter(
-              (ref: Reference) => {
-                const id = ref.document_id?.trim();
-                return Boolean(id && id !== "undefined");
-              }
-            );
+            const validReferences = (payload.meta?.references ?? []).filter((ref: Reference) => {
+              const id = ref.document_id?.trim();
+              return Boolean(id && id !== "undefined");
+            });
             setReferences(validReferences);
             const finalAnswer = accumulatedAnswer.trim();
             const historySummary = summarizeDocAnswer(finalAnswer, questionText);
@@ -732,7 +742,7 @@ function DocumentsPageContent() {
       const query = params.toString();
       return `/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
     },
-    [selectedDocument]
+    [selectedDocument],
   );
 
   const buildReferencePdfHref = useCallback(
@@ -743,7 +753,7 @@ function DocumentsPageContent() {
       }
       return `/api/documents/${documentId}/viewer`;
     },
-    [selectedDocument]
+    [selectedDocument],
   );
 
   const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
@@ -759,7 +769,9 @@ function DocumentsPageContent() {
     formData.append("file", file);
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const url = baseUrl ? `${baseUrl.replace(/\/+$/, "")}/api/documents/upload` : "/api/documents/upload";
+      const url = baseUrl
+        ? `${baseUrl.replace(/\/+$/, "")}/api/documents/upload`
+        : "/api/documents/upload";
       const response = await fetch(url, {
         method: "POST",
         body: formData,
@@ -815,444 +827,486 @@ function DocumentsPageContent() {
         title="Documents"
         description="문서를 업로드하고 관리하며, 전문 검색과 벡터 유사도로 질의합니다."
         actions={
-          <button
-            onClick={fetchDocuments}
-            className="btn-secondary"
-          >
+          <button onClick={fetchDocuments} className="btn-secondary">
             Refresh list
           </button>
         }
       />
       <main className="min-h-[calc(100vh-96px)] space-y-6 py-6">
-      <div className="-mt-2 grid gap-6 lg:grid-cols-[320px_1fr]">
-        <aside
-          className="rounded-2xl border border-border p-5 bg-surface-elevated"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="section-title">Library</h2>
-            {loadingDocuments ? (
-              <span className="text-xs text-muted-standard">Loading...</span>
-            ) : null}
-          </div>
-          {documentsError ? (
-            <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{documentsError}</p>
-          ) : null}
-          <div className="mt-4 space-y-3">
-            {documents.length === 0 ? (
-              <p className="text-sm text-muted-standard">No documents yet.</p>
-            ) : null}
-            {documents.map((document) => (
-              <div
-                key={document.id}
-                className={cn(
-                  "group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition cursor-pointer text-foreground",
-                  selectedDocumentId === document.id
-                    ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
-                    : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:border-sky-500"
-                )}
-                role="button"
-                tabIndex={0}
-                onClick={() => selectDocument(document.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    selectDocument(document.id);
-                  }
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-left text-sm font-semibold">{document.filename}</span>
-                  <span className={getBadgeStyle(document.status)}>
-                    {document.status}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-standard">{formatTimestamp(document.updated_at)}</p>
-                <button
-                  type="button"
-                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    deleteDocument(document.id);
-                  }}
-                  aria-label="Delete document"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <div className="space-y-6">
-          <section className="container-section text-foreground">
-        <form onSubmit={handleUpload} className="flex flex-col gap-3">
-          <label className="ml-6 text-sm text-foreground">
-            Select a file (txt/pdf/docx)
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="mt-2 block w-full input-container text-sm"
-            />
-          </label>
-          {uploadError ? (
-            <p className="text-xs text-rose-600 dark:text-rose-400">{uploadError}</p>
-          ) : null}
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={uploading}
-            >
-              {uploading ? "Uploading…" : "문서 업로드"}
-            </button>
-            <span className="text-xs uppercase tracking-wider text-muted-standard">
-              API: /api/documents/upload
-            </span>
-          </div>
-        </form>
-      </section>
-          <section
-            className="group rounded-2xl border p-5 bg-surface-elevated dark:border-border"
-          >
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          <aside className="container-section">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="section-title">Document detail</h3>
-                <p className="text-sm text-foreground">
-                  {selectedDocument ? selectedDocument.filename : "Select a document to view metadata"}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedDocument ? (
-                  <span className={getBadgeStyle(selectedDocument.status)}>
-                    {selectedDocument.status}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
-                  onClick={handleDeleteSelectedDocument}
-                  aria-label="Delete document"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            {selectedDocument ? (
-              <>
-                <div className="mt-4 grid gap-3 text-xs text-muted-standard">
-                  <div>
-                    <p>Size: {formattedSize(selectedDocument.size)}</p>
-                    <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
-                    <p>Chunks indexed: {selectedDocument.chunk_count}</p>
-                  </div>
-                  <div>
-                    <p>Updated: {formatTimestamp(selectedDocument.updated_at)}</p>
-                    {selectedDocument.error_message ? (
-                      <p className="text-rose-600 dark:text-rose-400">Error: {selectedDocument.error_message}</p>
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </section>
-
-          <section
-            className="rounded-2xl border p-5 bg-surface-elevated dark:border-border"
-          >
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void startStream();
-              }}
-              className="space-y-4"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <label className="flex-1 text-sm text-foreground">
-                  Ask a question
-                  <input
-                    value={queryValue}
-                    onChange={(event) => setQueryValue(event.target.value)}
-                    placeholder="질문 예: 이 문서의 핵심 요약은?"
-                    className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition input-container"
-                    disabled={!selectedDocument || selectedDocument.status !== "done"}
-                  />
-                </label>
-                <div className="flex flex-col gap-2 text-xs text-muted-standard">
-                  <span>Top K chunks</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={topK}
-                    onChange={(event) => setTopK(Number(event.target.value))}
-                    className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition input-container"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={!selectedDocument || selectedDocument.status !== "done" || streamStatus === "streaming"}
-                >
-                  {streamStatus === "streaming" ? (
-                    <div className="flex items-center gap-2">
-                      <span className="animate-pulse">Streaming</span>
-                      <span className="animate-bounce">▶</span>
-                    </div>
-                  ) : "메시지 전송"}
-                </button>
-                <span
-                  className={cn(
-                    "text-xs uppercase tracking-wider",
-                    streamStatus === "error" ? "text-rose-600 dark:text-rose-400" : "text-muted-standard"
-                  )}
-                >
-                  {streamStatus === "streaming" ? "SSE live" : streamStatus === "idle" ? "Ready" : "Error"}
-                </span>
-              </div>
-              {streamError ? <p className="text-xs text-rose-600 dark:text-rose-400">{streamError}</p> : null}
-            </form>
-            <div className="mt-4 space-y-3">
-              {streamChunks.length === 0 ? (
-                <p className="text-sm text-muted-standard">Streaming answers will appear here.</p>
+              <h2 className="left-panel-title">Library</h2>
+              {loadingDocuments ? (
+                <span className="text-xs text-muted-standard">Loading...</span>
               ) : null}
-              {streamChunks.map((chunk, idx) => (
+            </div>
+            {documentsError ? (
+              <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{documentsError}</p>
+            ) : null}
+            <div className="mt-4 space-y-3">
+              {documents.length === 0 ? (
+                <p className="text-sm text-muted-standard">No documents yet.</p>
+              ) : null}
+              {documents.map((document) => (
                 <div
-                  key={`${chunk.type}-${idx}`}
-                  className="space-y-2 br-card border p-4 text-sm bg-surface-elevated dark:bg-slate-950"
+                  key={document.id}
+                  className={cn(
+                    "group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition cursor-pointer text-foreground",
+                    selectedDocumentId === document.id
+                      ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
+                      : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:border-sky-500",
+                  )}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => selectDocument(document.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectDocument(document.id);
+                    }
+                  }}
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-slate-800 dark:text-slate-50">
-                    {chunkTypeLabel[chunk.type] ?? chunk.type}
-                  </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">{chunk.text}</p>
-                  {chunk.meta ? (
-                    <div className="text-xs text-muted-standard">
-                      <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
-                      <p>
-                        {chunk.meta.chunks
-                          .map((item) => `${item.chunk_id}${item.page ? ` (${item.page}p)` : ""}`)
-                          .join(", ")}
-                      </p>
-                    </div>
-                  ) : null}
+                  <div className="flex items-center justify-between">
+                    <span className="text-left text-sm font-semibold">{document.filename}</span>
+                    <span className={getBadgeStyle(document.status)}>{document.status}</span>
+                  </div>
+                  <p className="text-xs text-muted-standard">
+                    {formatTimestamp(document.updated_at)}
+                  </p>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      deleteDocument(document.id);
+                    }}
+                    aria-label="Delete document"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
-              {references.length > 0 && (
-                <section
-                  className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
-                >
-                  <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    <span>근거 문서 ({references.length}건)</span>
-                  </div>
-                  <div className="space-y-3">
-                    {references.map((reference, index) => {
-                      const href = buildReferencePdfHref(reference);
-                      const viewerHref = buildReferenceViewerHref(reference);
-                      const content = (
-                        <>
-                          <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                            <span className="text-slate-900 dark:text-slate-50">{reference.document_title}</span>
-                            <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
-                          </div>
-                          <p className="mt-2 text-xs line-clamp-3 text-slate-900 dark:text-slate-50">{reference.snippet}</p>
-                          {reference.score != null ? (
-                            <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
-                          ) : null}
-                        </>
-                      );
-                      return href ? (
-                        <button
-                          key={`${reference.document_id}-${reference.chunk_id}-${index}`}
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              // Use fetchWithAuth for authenticated PDF fetch
-                              const { fetchWithAuth } = await import("@/lib/apiClient");
-                              const response = await fetchWithAuth(href);
+            </div>
+          </aside>
 
-                              console.log("PDF response status:", response.status, response.statusText);
-                              console.log("PDF response headers:", Object.fromEntries(response.headers.entries()));
-
-                              const blob = await response.blob();
-                              console.log("PDF blob type:", blob.type, "size:", blob.size);
-
-                              // Open PDF in modal - pass blob directly
-                              setPdfBlob(blob);
-                              setPdfFilename(reference.document_title || "document.pdf");
-                              setPdfInitialPage(reference.page || 1);
-                              setPdfHighlightSnippet(reference.snippet || undefined);
-                              setPdfViewerHref(viewerHref);
-                              setPdfModalOpen(true);
-                            } catch (error) {
-                              console.error('Failed to open document:', error);
-                            }
-                          }}
-                          className="block rounded-2xl border px-4 py-3 transition cursor-pointer border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-                        >
-                          {content}
-                        </button>
-                      ) : (
-                        <div
-                          key={`${reference.document_id}-${reference.chunk_id}`}
-                          className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-                          title="문서 정보가 부족하여 원문을 열 수 없습니다"
-                        >
-                          {content}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-              <section
-                className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Document history</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Select a prior question to review its answer.</p>
-                  </div>
-                  {docHistoryLoading ? <span className="text-xs text-slate-600 dark:text-slate-400">Loading…</span> : null}
-                </div>
-                {docHistoryError ? (
-                  <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{docHistoryError}</p>
+          <div className="space-y-6">
+            <section className="container-section text-foreground">
+              <form onSubmit={handleUpload} className="flex flex-col gap-3">
+                <label className="ml-6 text-sm text-foreground">
+                  Select a file (txt/pdf/docx)
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="mt-2 block w-full input-container text-sm"
+                  />
+                </label>
+                {uploadError ? (
+                  <p className="text-xs text-rose-600 dark:text-rose-400">{uploadError}</p>
                 ) : null}
-                <div className="mt-4 space-y-2">
-                  {documentHistoryEntries.length === 0 ? (
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {selectedDocument ? "No documented questions yet." : "Select a document to view history."}
-                    </p>
-                  ) : (
-                    documentHistoryEntries.map((entry) => {
-                      const isSelected = entry.id === selectedDocHistoryId;
-                      return (
-                        <div
-                          key={entry.id}
-                          className={cn(
-                            "group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer text-slate-900 dark:text-slate-50",
-                            isSelected
-                              ? "border-sky-500 bg-sky-500/10"
-                              : "border-slate-200 bg-slate-50 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500"
-                          )}
-                        >
-                          <div
-                            onClick={() => setSelectedDocHistoryId(entry.id)}
-                            className="text-left"
-                          >
-                            <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
-                              <span>{entry.status === "error" ? "Error" : "OK"}</span>
-                              <div className="flex items-center gap-2">
-                                <span>{formatTimestamp(entry.createdAt)}</span>
-                                <button
-                                  type="button"
-                                  aria-label={`Delete history entry ${entry.question}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handleRemoveDocHistory(entry.id);
-                                  }}
-                                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
-                                  title="Delete history"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">{entry.question}</p>
-                            <p className="text-[12px] text-slate-600 dark:text-slate-400">{entry.summary}</p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                <div className="flex items-center justify-between gap-3">
+                  <button type="submit" className="btn-primary" disabled={uploading}>
+                    {uploading ? "Uploading…" : "문서 업로드"}
+                  </button>
+                  <span className="text-xs uppercase tracking-wider text-muted-standard">
+                    API: /api/documents/upload
+                  </span>
                 </div>
-                {selectedDocHistoryEntry ? (
-                  <div
-                    className="group relative mt-4 rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
+              </form>
+            </section>
+            <section className="group rounded-2xl border p-5 bg-surface-elevated dark:border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="section-title">Document detail</h3>
+                  <p className="text-sm text-foreground">
+                    {selectedDocument
+                      ? selectedDocument.filename
+                      : "Select a document to view metadata"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedDocument ? (
+                    <span className={getBadgeStyle(selectedDocument.status)}>
+                      {selectedDocument.status}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                    onClick={handleDeleteSelectedDocument}
+                    aria-label="Delete document"
                   >
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">Answer</p>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-600 dark:text-slate-400">{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
-                        <button
-                          type="button"
-                          aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
-                          onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
-                          className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
-                          title="Delete history"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                    ✕
+                  </button>
+                </div>
+              </div>
+              {selectedDocument ? (
+                <>
+                  <div className="mt-4 grid gap-3 text-xs text-muted-standard">
+                    <div>
+                      <p>Size: {formattedSize(selectedDocument.size)}</p>
+                      <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
+                      <p>Chunks indexed: {selectedDocument.chunk_count}</p>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
-                      {selectedDocHistoryEntry.answer || "No answer recorded."}
+                    <div>
+                      <p>Updated: {formatTimestamp(selectedDocument.updated_at)}</p>
+                      {selectedDocument.error_message ? (
+                        <p className="text-rose-600 dark:text-rose-400">
+                          Error: {selectedDocument.error_message}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </section>
+
+            <section className="rounded-2xl border p-5 bg-surface-elevated dark:border-border">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void startStream();
+                }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <label className="flex-1 text-sm text-foreground">
+                    Ask a question
+                    <input
+                      value={queryValue}
+                      onChange={(event) => setQueryValue(event.target.value)}
+                      placeholder="질문 예: 이 문서의 핵심 요약은?"
+                      className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition input-container"
+                      disabled={!selectedDocument || selectedDocument.status !== "done"}
+                    />
+                  </label>
+                  <div className="flex flex-col gap-2 text-xs text-muted-standard">
+                    <span>Top K chunks</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={topK}
+                      onChange={(event) => setTopK(Number(event.target.value))}
+                      className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition input-container"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={
+                      !selectedDocument ||
+                      selectedDocument.status !== "done" ||
+                      streamStatus === "streaming"
+                    }
+                  >
+                    {streamStatus === "streaming" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="animate-pulse">Streaming</span>
+                        <span className="animate-bounce">▶</span>
+                      </div>
+                    ) : (
+                      "메시지 전송"
+                    )}
+                  </button>
+                  <span
+                    className={cn(
+                      "text-xs uppercase tracking-wider",
+                      streamStatus === "error"
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-muted-standard",
+                    )}
+                  >
+                    {streamStatus === "streaming"
+                      ? "SSE live"
+                      : streamStatus === "idle"
+                        ? "Ready"
+                        : "Error"}
+                  </span>
+                </div>
+                {streamError ? (
+                  <p className="text-xs text-rose-600 dark:text-rose-400">{streamError}</p>
+                ) : null}
+              </form>
+              <div className="mt-4 space-y-3">
+                {streamChunks.length === 0 ? (
+                  <p className="text-sm text-muted-standard">Streaming answers will appear here.</p>
+                ) : null}
+                {streamChunks.map((chunk, idx) => (
+                  <div
+                    key={`${chunk.type}-${idx}`}
+                    className="space-y-2 br-card border p-4 text-sm bg-surface-elevated dark:bg-slate-950"
+                  >
+                    <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-slate-800 dark:text-slate-50">
+                      {chunkTypeLabel[chunk.type] ?? chunk.type}
+                    </span>
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                      {chunk.text}
                     </p>
-                    {selectedDocHistoryEntry.references.length > 0 ? (
-                      <div className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-                        <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">References</p>
-                        <div className="mt-2 space-y-2">
-                          {selectedDocHistoryEntry.references.map((reference) => {
-                            const viewerHref = buildReferenceViewerHref(reference);
-                            const viewerUrl = buildReferencePdfHref(reference);
-
-                            const content = (
-                              <>
-                                <p className="text-slate-900 dark:text-slate-50">{reference.document_title}</p>
-                                <p className="text-slate-600 dark:text-slate-400">{reference.snippet}</p>
-                                {reference.page != null ? (
-                                  <p className="mt-1 text-tiny text-sky-600 dark:text-sky-400">
-                                    페이지 {reference.page}
-                                  </p>
-                                ) : null}
-                              </>
-                            );
-
-                            return viewerUrl ? (
-                              <button
-                                key={`${reference.document_id}-${reference.chunk_id}`}
-                                type="button"
-                                onClick={async () => {
-                                  try {
-                                    const { fetchWithAuth } = await import('@/lib/apiClient');
-                                    const response = await fetchWithAuth(viewerUrl);
-                                    const blob = await response.blob();
-                                    // Open PDF in modal - pass blob directly
-                                    setPdfBlob(blob);
-                                    setPdfFilename(reference.document_title || "document.pdf");
-                                    setPdfInitialPage(reference.page || 1);
-                                    setPdfHighlightSnippet(reference.snippet || undefined);
-                                    setPdfViewerHref(viewerHref);
-                                    setPdfModalOpen(true);
-                                  } catch (error) {
-                                    console.error('Failed to open document:', error);
-                                  }
-                                }}
-                                className="block rounded-xl border px-3 py-2 text-xs transition cursor-pointer w-full text-left border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-                              >
-                                {content}
-                              </button>
-                            ) : (
-                              <div
-                                key={`${reference.document_id}-${reference.chunk_id}`}
-                                className="rounded-xl border px-3 py-2 text-xs opacity-60 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-                              >
-                                {content}
-                              </div>
-                            );
-                          })}
-                        </div>
+                    {chunk.meta ? (
+                      <div className="text-xs text-muted-standard">
+                        <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
+                        <p>
+                          {chunk.meta.chunks
+                            .map((item) => `${item.chunk_id}${item.page ? ` (${item.page}p)` : ""}`)
+                            .join(", ")}
+                        </p>
                       </div>
                     ) : null}
                   </div>
-                ) : null}
-              </section>
-            </div>
-          </section>
-        </div>
-      </div>
+                ))}
+                {references.length > 0 && (
+                  <section className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                    <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      <span>근거 문서 ({references.length}건)</span>
+                    </div>
+                    <div className="space-y-3">
+                      {references.map((reference, index) => {
+                        const href = buildReferencePdfHref(reference);
+                        const viewerHref = buildReferenceViewerHref(reference);
+                        const content = (
+                          <>
+                            <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                              <span className="text-slate-900 dark:text-slate-50">
+                                {reference.document_title}
+                              </span>
+                              <span>
+                                {reference.page != null
+                                  ? `${reference.page}페이지`
+                                  : "페이지 미확인"}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs line-clamp-3 text-slate-900 dark:text-slate-50">
+                              {reference.snippet}
+                            </p>
+                            {reference.score != null ? (
+                              <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">
+                                유사도 {(reference.score * 100).toFixed(1)}%
+                              </p>
+                            ) : null}
+                          </>
+                        );
+                        return href ? (
+                          <button
+                            key={`${reference.document_id}-${reference.chunk_id}-${index}`}
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                // Use fetchWithAuth for authenticated PDF fetch
+                                const { fetchWithAuth } = await import("@/lib/apiClient");
+                                const response = await fetchWithAuth(href);
 
-      {/* PDF Viewer Modal */}
+                                console.log(
+                                  "PDF response status:",
+                                  response.status,
+                                  response.statusText,
+                                );
+                                console.log(
+                                  "PDF response headers:",
+                                  Object.fromEntries(response.headers.entries()),
+                                );
+
+                                const blob = await response.blob();
+                                console.log("PDF blob type:", blob.type, "size:", blob.size);
+
+                                // Open PDF in modal - pass blob directly
+                                setPdfBlob(blob);
+                                setPdfFilename(reference.document_title || "document.pdf");
+                                setPdfInitialPage(reference.page || 1);
+                                setPdfHighlightSnippet(reference.snippet || undefined);
+                                setPdfViewerHref(viewerHref);
+                                setPdfModalOpen(true);
+                              } catch (error) {
+                                console.error("Failed to open document:", error);
+                              }
+                            }}
+                            className="block rounded-2xl border px-4 py-3 transition cursor-pointer border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                          >
+                            {content}
+                          </button>
+                        ) : (
+                          <div
+                            key={`${reference.document_id}-${reference.chunk_id}`}
+                            className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                            title="문서 정보가 부족하여 원문을 열 수 없습니다"
+                          >
+                            {content}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+                <section className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        Document history
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Select a prior question to review its answer.
+                      </p>
+                    </div>
+                    {docHistoryLoading ? (
+                      <span className="text-xs text-slate-600 dark:text-slate-400">Loading…</span>
+                    ) : null}
+                  </div>
+                  {docHistoryError ? (
+                    <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">
+                      {docHistoryError}
+                    </p>
+                  ) : null}
+                  <div className="mt-4 space-y-2">
+                    {documentHistoryEntries.length === 0 ? (
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {selectedDocument
+                          ? "No documented questions yet."
+                          : "Select a document to view history."}
+                      </p>
+                    ) : (
+                      documentHistoryEntries.map((entry) => {
+                        const isSelected = entry.id === selectedDocHistoryId;
+                        return (
+                          <div
+                            key={entry.id}
+                            className={cn(
+                              "group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer text-slate-900 dark:text-slate-50",
+                              isSelected
+                                ? "border-sky-500 bg-sky-500/10"
+                                : "border-slate-200 bg-slate-50 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500",
+                            )}
+                          >
+                            <div
+                              onClick={() => setSelectedDocHistoryId(entry.id)}
+                              className="text-left"
+                            >
+                              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
+                                <span>{entry.status === "error" ? "Error" : "OK"}</span>
+                                <div className="flex items-center gap-2">
+                                  <span>{formatTimestamp(entry.createdAt)}</span>
+                                  <button
+                                    type="button"
+                                    aria-label={`Delete history entry ${entry.question}`}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleRemoveDocHistory(entry.id);
+                                    }}
+                                    className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                                    title="Delete history"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">
+                                {entry.question}
+                              </p>
+                              <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                                {entry.summary}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  {selectedDocHistoryEntry ? (
+                    <div className="group relative mt-4 rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
+                          Answer
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-600 dark:text-slate-400">
+                            {formatTimestamp(selectedDocHistoryEntry.createdAt)}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
+                            onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
+                            className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                            title="Delete history"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
+                        {selectedDocHistoryEntry.answer || "No answer recorded."}
+                      </p>
+                      {selectedDocHistoryEntry.references.length > 0 ? (
+                        <div className="mt-3 text-xs text-slate-600 dark:text-slate-400">
+                          <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            References
+                          </p>
+                          <div className="mt-2 space-y-2">
+                            {selectedDocHistoryEntry.references.map((reference) => {
+                              const viewerHref = buildReferenceViewerHref(reference);
+                              const viewerUrl = buildReferencePdfHref(reference);
+
+                              const content = (
+                                <>
+                                  <p className="text-slate-900 dark:text-slate-50">
+                                    {reference.document_title}
+                                  </p>
+                                  <p className="text-slate-600 dark:text-slate-400">
+                                    {reference.snippet}
+                                  </p>
+                                  {reference.page != null ? (
+                                    <p className="mt-1 text-tiny text-sky-600 dark:text-sky-400">
+                                      페이지 {reference.page}
+                                    </p>
+                                  ) : null}
+                                </>
+                              );
+
+                              return viewerUrl ? (
+                                <button
+                                  key={`${reference.document_id}-${reference.chunk_id}`}
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      const { fetchWithAuth } = await import("@/lib/apiClient");
+                                      const response = await fetchWithAuth(viewerUrl);
+                                      const blob = await response.blob();
+                                      // Open PDF in modal - pass blob directly
+                                      setPdfBlob(blob);
+                                      setPdfFilename(reference.document_title || "document.pdf");
+                                      setPdfInitialPage(reference.page || 1);
+                                      setPdfHighlightSnippet(reference.snippet || undefined);
+                                      setPdfViewerHref(viewerHref);
+                                      setPdfModalOpen(true);
+                                    } catch (error) {
+                                      console.error("Failed to open document:", error);
+                                    }
+                                  }}
+                                  className="block rounded-xl border px-3 py-2 text-xs transition cursor-pointer w-full text-left border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                                >
+                                  {content}
+                                </button>
+                              ) : (
+                                <div
+                                  key={`${reference.document_id}-${reference.chunk_id}`}
+                                  className="rounded-xl border px-3 py-2 text-xs opacity-60 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                                >
+                                  {content}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </section>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* PDF Viewer Modal */}
         <PdfViewerModal
           isOpen={pdfModalOpen}
           onClose={() => {
@@ -1275,7 +1329,9 @@ function DocumentsPageContent() {
 // Wrapper component with Suspense boundary for useSearchParams
 export default function DocumentsPage() {
   return (
-    <Suspense fallback={<div className="p-4 text-slate-600 dark:text-slate-400">Loading documents...</div>}>
+    <Suspense
+      fallback={<div className="p-4 text-slate-600 dark:text-slate-400">Loading documents...</div>}
+    >
       <DocumentsPageContent />
     </Suspense>
   );

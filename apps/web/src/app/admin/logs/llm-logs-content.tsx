@@ -316,11 +316,11 @@ export default function LlmLogsContent() {
                 </div>
 
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Call Type</label>
+                    <label className="llm-filter-label">Call Type</label>
                     <select
                         value={callTypeFilter}
                         onChange={(e) => setCallTypeFilter(e.target.value as FilterCallType)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
+                        className="llm-filter-input w-full"
                     >
                         <option value="all">All Types</option>
                         <option value="planner">Planner</option>
@@ -330,11 +330,11 @@ export default function LlmLogsContent() {
                 </div>
 
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Feature</label>
+                    <label className="llm-filter-label">Feature</label>
                     <select
                         value={featureFilter}
                         onChange={(e) => setFeatureFilter(e.target.value as FilterFeature)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
+                        className="llm-filter-input w-full"
                     >
                         <option value="all">All Features</option>
                         <option value="ops">OPS</option>
@@ -345,11 +345,11 @@ export default function LlmLogsContent() {
             </div>
 
             {/* Logs Table */}
-            <div className=" rounded-xl border  overflow-hidden" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
+            <div className="llm-stat-card rounded-xl border overflow-hidden">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-                        <span className="ml-3  text-sm" style={{color: "var(--muted-foreground)"}}>Loading logs...</span>
+                        <span className="ml-3 text-sm text-muted-standard">Loading logs...</span>
                     </div>
                 ) : error ? (
                     <div className="text-center py-20">

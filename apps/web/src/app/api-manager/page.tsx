@@ -1377,22 +1377,15 @@ export default function ApiManagerPage() {
 
   const testResultsArea = (
     <div className="space-y-4">
-      <p
-        className="text-sm font-semibold uppercase tracking-normal text-slate-600 dark:text-slate-400"
-      >
+      <p className="text-sm font-semibold uppercase tracking-normal text-slate-600 dark:text-slate-400">
         Execution result
       </p>
       {selectedApi?.logic_type === "workflow" ? (
         workflowResult ? (
-          <div
-            className="space-y-3 rounded-2xl border p-4 text-sm border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
-          >
+          <div className="ui-box space-y-3 p-4 text-sm text-muted-standard">
             <div className="space-y-2">
               {workflowSteps.map((step) => (
-                <div
-                  key={step.node_id}
-                  className="rounded-2xl border p-3 text-xs border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-                >
+                <div key={step.node_id} className="ui-subbox p-3 text-xs text-foreground">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">
                       [{step.node_type}] {step.node_id}
@@ -1417,19 +1410,13 @@ export default function ApiManagerPage() {
               ))}
             </div>
             <div>
-              <p
-                className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-              >
+              <p className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
                 Final output
               </p>
-              <pre
-                className="mt-2 max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50"
-              >
+              <pre className="code-block mt-2 max-h-60 text-xs custom-scrollbar">
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
-              <p
-                className="mt-2 text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-              >
+              <p className="mt-2 text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
                 References: {workflowReferences.length}
               </p>
             </div>
@@ -1440,9 +1427,7 @@ export default function ApiManagerPage() {
           </p>
         )
       ) : executionResult ? (
-        <div
-          className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-400"
-        >
+        <div className="ui-box space-y-3 p-4 text-sm text-muted-standard">
           <div className="flex items-center justify-between">
             <div>
               <p>Rows: {executionResult.row_count}</p>
@@ -1456,20 +1441,14 @@ export default function ApiManagerPage() {
             </button>
           </div>
           {showJsonResult ? (
-            <pre
-              className="max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50"
-            >
+            <pre className="code-block max-h-60 text-xs custom-scrollbar">
               {JSON.stringify(executionResult, null, 2)}
             </pre>
           ) : executionColumns.length === 0 ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              No columns returned.
-            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">No columns returned.</p>
           ) : (
             <div className="overflow-auto custom-scrollbar">
-              <table
-                className="min-w-full text-left text-xs text-slate-700 dark:text-slate-300"
-              >
+              <table className="min-w-full text-left text-xs text-slate-700 dark:text-slate-300">
                 <thead>
                   <tr>
                     {executionColumns.map((column) => (
@@ -1484,10 +1463,7 @@ export default function ApiManagerPage() {
                 </thead>
                 <tbody>
                   {executionRows.map((row, rowIndex) => (
-                    <tr
-                      key={`row-${rowIndex}`}
-                      className="bg-slate-100 dark:bg-slate-900"
-                    >
+                    <tr key={`row-${rowIndex}`} className="bg-slate-100 dark:bg-slate-900">
                       {executionColumns.map((column) => (
                         <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
                           <pre className="m-0 text-sm text-slate-900 dark:text-slate-50">
@@ -1503,44 +1479,30 @@ export default function ApiManagerPage() {
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-standard">
-          Execute the SQL to see results here.
-        </p>
+        <p className="text-sm text-muted-standard">Execute the SQL to see results here.</p>
       )}
-      <div
-        className="space-y-3 rounded-2xl border p-4 border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900/90"
-      >
+      <div className="ui-box space-y-3 p-4">
         <div className="flex items-center justify-between">
-          <p
-            className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-          >
+          <p className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
             Execution logs
           </p>
-          <span
-            className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-          >
+          <span className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
             {execLogs.length} entries
           </span>
         </div>
         {logsLoading ? (
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            Loading logs…
-          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Loading logs…</p>
         ) : execLogs.length === 0 ? (
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            No executions yet.
-          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">No executions yet.</p>
         ) : (
           <div className="space-y-2">
             {execLogs.map((log) => (
               <button
                 key={log.exec_id}
                 onClick={() => applyLogParams(log)}
-                className="w-full rounded-2xl border p-3 text-left text-xs transition border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
+                className="ui-subbox w-full p-3 text-left text-xs transition hover:bg-surface-base"
               >
-                <div
-                  className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400"
-                >
+                <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
                   <span>
                     {log.status.toUpperCase()} ·{" "}
                     {new Date(log.executed_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
@@ -1553,9 +1515,7 @@ export default function ApiManagerPage() {
                   by {log.executed_by ?? "ops-builder"}
                 </p>
                 {log.request_params ? (
-                  <pre
-                    className="mt-2 max-h-20 overflow-auto text-xs custom-scrollbar text-slate-600 dark:text-slate-400"
-                  >
+                  <pre className="mt-2 max-h-20 overflow-auto text-xs custom-scrollbar text-slate-600 dark:text-slate-400">
                     {JSON.stringify(log.request_params, null, 2)}
                   </pre>
                 ) : null}
@@ -1593,7 +1553,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                className="w-full input-container"
                 disabled={isSystemScope}
                 placeholder="e.g., User Management API"
               />
@@ -1614,7 +1574,7 @@ export default function ApiManagerPage() {
                     method: event.target.value as ApiDraft["method"],
                   }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                className="w-full input-container"
                 disabled={isSystemScope}
               >
                 <option value="GET">GET</option>
@@ -1629,7 +1589,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                className="w-full input-container"
                 disabled={isSystemScope}
                 placeholder="/api/endpoint"
               />
@@ -1654,13 +1614,9 @@ export default function ApiManagerPage() {
           </FormSection>
           {selectedDiscovered ? (
             <div className="api-container">
-              <p className="text-label">
-                Supported actions / constraints
-              </p>
+              <p className="text-label">Supported actions / constraints</p>
               {selectedDiscovered.summary ? (
-                <p className="text-primary">
-                  {selectedDiscovered.summary}
-                </p>
+                <p className="text-primary">{selectedDiscovered.summary}</p>
               ) : null}
               {discoveredConstraintLines.map((line, index) => (
                 <p key={index} className="text-muted-standard">
@@ -1740,9 +1696,7 @@ export default function ApiManagerPage() {
                   className="api-checkbox"
                   disabled={isSystemScope}
                 />
-                <span className="text-sm api-text-slate">
-                  Enable this API
-                </span>
+                <span className="text-sm api-text-slate">Enable this API</span>
               </label>
             </FormFieldGroup>
             <FormFieldGroup
@@ -1890,9 +1844,7 @@ export default function ApiManagerPage() {
           </div>
           {(bindingValidation.bindings.length > 0 || bindingValidation.errors.length > 0) && (
             <div className="api-container-base">
-              <p className="text-label">
-                Binding scan
-              </p>
+              <p className="text-label">Binding scan</p>
               {bindingValidation.bindings.length > 0 && (
                 <p className="mt-1 api-text-slate">
                   Detected:{" "}
@@ -1937,8 +1889,16 @@ export default function ApiManagerPage() {
                 }`}
                 style={
                   isExecuting
-                    ? { borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)" }
-                    : { borderColor: "rgb(14, 165, 233)", backgroundColor: "rgb(14, 165, 233)", color: "#fff" }
+                    ? {
+                        borderColor: "var(--border)",
+                        backgroundColor: "var(--surface-base)",
+                        color: "var(--muted-foreground)",
+                      }
+                    : {
+                        borderColor: "rgb(14, 165, 233)",
+                        backgroundColor: "rgb(14, 165, 233)",
+                        color: "#fff",
+                      }
                 }
                 onMouseEnter={(e) => {
                   if (!isExecuting) e.currentTarget.style.backgroundColor = "rgb(14, 101, 192)";
@@ -1956,14 +1916,24 @@ export default function ApiManagerPage() {
             className="rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition"
             style={
               isSaving || isSystemScope
-                ? { borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)" }
-                : { borderColor: "rgb(16, 185, 129)", backgroundColor: "rgb(16, 185, 129)", color: "#fff" }
+                ? {
+                    borderColor: "var(--border)",
+                    backgroundColor: "var(--surface-base)",
+                    color: "var(--muted-foreground)",
+                  }
+                : {
+                    borderColor: "rgb(16, 185, 129)",
+                    backgroundColor: "rgb(16, 185, 129)",
+                    color: "#fff",
+                  }
             }
             onMouseEnter={(e) => {
-              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "rgb(5, 150, 105)";
+              if (!isSaving && !isSystemScope)
+                e.currentTarget.style.backgroundColor = "rgb(5, 150, 105)";
             }}
             onMouseLeave={(e) => {
-              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "rgb(16, 185, 129)";
+              if (!isSaving && !isSystemScope)
+                e.currentTarget.style.backgroundColor = "rgb(16, 185, 129)";
             }}
           >
             {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
@@ -1971,31 +1941,15 @@ export default function ApiManagerPage() {
         </div>
       </div>
       {showLogicResult && activeTab === "logic" && (
-        <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+        <div className="api-border-top mt-4 pt-4">
           <div className="flex items-center justify-between mb-2">
-            <span
-              className="text-xs uppercase tracking-normal "
-              style={{ color: "var(--muted-foreground)" }}
-            >
-              Query Result
-            </span>
-            <button
-              onClick={() => setShowLogicResult(false)}
-              className="text-xs "
-              style={{ color: "rgb(71, 85, 105)" }}
-            >
+            <span className="text-label">Query Result</span>
+            <button onClick={() => setShowLogicResult(false)} className="text-xs api-text-slate">
               Close
             </button>
           </div>
           {executionResult ? (
-            <div
-              className="space-y-3 rounded-2xl border p-4 text-sm "
-              style={{
-                borderColor: "var(--border)",
-                color: "rgb(71, 85, 105)",
-                backgroundColor: "var(--surface-base)",
-              }}
-            >
+            <div className="api-result-box">
               <div className="flex items-center justify-between">
                 <div>
                   <p>Rows: {executionResult.row_count}</p>
@@ -2003,17 +1957,13 @@ export default function ApiManagerPage() {
                 </div>
                 <button
                   onClick={() => setShowJsonResult((prev) => !prev)}
-                  className="text-xs uppercase tracking-normal underline"
-                  style={{ color: "var(--muted-foreground)" }}
+                  className="text-xs uppercase tracking-normal underline text-muted-standard"
                 >
                   {showJsonResult ? "Hide JSON" : "Show JSON"}
                 </button>
               </div>
               {showJsonResult ? (
-                <pre
-                  className="max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar"
-                  style={{ color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
-                >
+                <pre className="max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar text-primary bg-surface-base">
                   {JSON.stringify(executionResult, null, 2)}
                 </pre>
               ) : executionColumns.length === 0 ? (
@@ -2031,11 +1981,7 @@ export default function ApiManagerPage() {
                         {executionColumns.map((column) => (
                           <th
                             key={column}
-                            className="border-b px-2 py-1 uppercase tracking-normal "
-                            style={{
-                              borderColor: "var(--border)",
-                              color: "var(--muted-foreground)",
-                            }}
+                            className="border-b px-2 py-1 uppercase tracking-normal border-variant text-muted-standard"
                           >
                             {column}
                           </th>
@@ -2054,7 +2000,7 @@ export default function ApiManagerPage() {
                         >
                           {executionColumns.map((column) => (
                             <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
-                              <pre className="m-0 text-sm " style={{ color: "var(--foreground)" }}>
+                              <pre className="m-0 text-sm text-primary">
                                 {String(row[column] ?? "")}
                               </pre>
                             </td>
@@ -2067,9 +2013,7 @@ export default function ApiManagerPage() {
               )}
             </div>
           ) : (
-            <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
-              No result available.
-            </p>
+            <p className="text-sm text-muted-standard">No result available.</p>
           )}
         </div>
       )}
@@ -2090,32 +2034,26 @@ export default function ApiManagerPage() {
           </span>
         </p>
       ) : null}
-      <label
-        className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-      >
+      <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
         Params JSON
         <textarea
           value={testParams}
           onChange={(event) => setTestParams(event.target.value)}
-          className="mt-2 h-32 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 custom-scrollbar"
+          className="mt-2 h-32 w-full input-container custom-scrollbar"
         />
       </label>
       {isWorkflowApi ? (
-        <label
-          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-        >
+        <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
           Input JSON (optional)
           <textarea
             value={testInput}
             onChange={(event) => setTestInput(event.target.value)}
-            className="mt-2 h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 custom-scrollbar"
+            className="mt-2 h-24 w-full input-container custom-scrollbar"
           />
         </label>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
-        <label
-          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-        >
+        <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
           Limit
           <input
             type="number"
@@ -2123,24 +2061,22 @@ export default function ApiManagerPage() {
             max={1000}
             value={testLimit}
             onChange={(event) => setTestLimit(event.target.value)}
-            className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+            className="mt-2 w-full input-container"
           />
         </label>
-        <label
-          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-        >
+        <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
           Executed by
           <input
             value={executedBy}
             onChange={(event) => setExecutedBy(event.target.value)}
-            className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+            className="mt-2 w-full input-container"
             placeholder="ops-builder"
           />
         </label>
         <div className="flex items-end">
           <button
             onClick={handleExecute}
-            className="w-full rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-normal transition bg-slate-100 text-slate-900 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 dark:hover:bg-slate-800"
+            className="w-full btn-secondary text-sm font-semibold"
             disabled={!selectedId || isExecuting || (!isSqlApi && !isWorkflowApi && !isHttpApi)}
           >
             {isExecuting ? "Executing…" : isWorkflowApi ? "Execute Workflow" : "Execute API"}
@@ -2183,14 +2119,10 @@ export default function ApiManagerPage() {
         testResultsArea
       ) : (
         <>
-          <p
-            className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-          >
+          <p className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
             Metadata (Current Editor)
           </p>
-          <div
-            className="space-y-2 rounded-2xl border p-3 text-sm border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-300"
-          >
+          <div className="ui-subbox space-y-2 p-3 text-sm text-muted-standard">
             <p>
               Endpoint:{" "}
               <span className="text-slate-900 dark:text-slate-50">
@@ -2202,9 +2134,7 @@ export default function ApiManagerPage() {
               <span className="text-sky-400 font-mono">{logicTypeLabels[logicType]}</span>
             </p>
             {selectedApi && (
-              <p
-                className="border-t pt-2 text-xs border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
-              >
+              <p className="border-t pt-2 text-xs border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400">
                 Editing: {selectedApi.api_name} ({selectedApi.api_id})
               </p>
             )}
@@ -2218,11 +2148,7 @@ export default function ApiManagerPage() {
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3
-          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-        >
-          API 목록
-        </h3>
+        <h3 className="left-panel-title">API 목록</h3>
         <div className="flex gap-2 text-xs uppercase tracking-normal">
           {(["custom"] as ScopeType[])
             .concat(enableSystemApis ? (["system"] as ScopeType[]) : [])
@@ -2244,9 +2170,7 @@ export default function ApiManagerPage() {
       {scope === "system" && enableSystemApis ? (
         <>
           <div className="space-y-2">
-            <div
-              className="flex items-center justify-between text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-            >
+            <div className="flex items-center justify-between text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-2">
                 {(["discovered", "registered"] as SystemView[]).map((view) => (
                   <button
@@ -2271,9 +2195,7 @@ export default function ApiManagerPage() {
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Discovered from source (OpenAPI). These are not DB-registered APIs.
                 </p>
-                <div
-                  className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-                >
+                <div className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
                   Last fetch:{" "}
                   <span className="text-slate-700 dark:text-slate-300">
                     {discoveredFetchAt
@@ -2307,9 +2229,7 @@ export default function ApiManagerPage() {
                     Server list unavailable. Showing local cache only.
                   </div>
                 ) : null}
-                <div
-                  className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
-                >
+                <div className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
                   Last fetch:{" "}
                   <span className="text-slate-700 dark:text-slate-300">
                     {systemFetchAt
@@ -2350,15 +2270,9 @@ export default function ApiManagerPage() {
                 </button>
               </div>
               {discoveredError ? <p className="text-xs text-rose-400">{discoveredError}</p> : null}
-              <div
-                className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
-              >
-                <table
-                  className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300"
-                >
-                  <thead
-                    className="sticky top-0 bg-slate-100 dark:bg-slate-900"
-                  >
+              <div className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+                <table className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300">
+                  <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900">
                     <tr>
                       {["method", "path", "summary", "tags", "source"].map((column) => (
                         <th
@@ -2373,10 +2287,7 @@ export default function ApiManagerPage() {
                   <tbody>
                     {filteredDiscoveredEndpoints.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={5}
-                          className="px-3 py-3 text-slate-600 dark:text-slate-400"
-                        >
+                        <td colSpan={5} className="px-3 py-3 text-slate-600 dark:text-slate-400">
                           No discovered endpoints found.
                         </td>
                       </tr>
@@ -2406,14 +2317,14 @@ export default function ApiManagerPage() {
                           >
                             <td className="px-2 py-2 whitespace-nowrap">{endpoint.method}</td>
                             <td className="px-2 py-2 whitespace-nowrap">{endpoint.path}</td>
-                            <td className="px-2 py-2 whitespace-nowrap">{endpoint.summary ?? "-"}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">
+                              {endpoint.summary ?? "-"}
+                            </td>
                             <td className="px-2 py-2 whitespace-nowrap">
                               {endpoint.tags?.join(", ") || "-"}
                             </td>
                             <td className="px-2 py-2 whitespace-nowrap">
-                              <span
-                                className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400"
-                              >
+                              <span className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400">
                                 {endpoint.source}
                               </span>
                             </td>
@@ -2445,15 +2356,9 @@ export default function ApiManagerPage() {
                 </div>
               </div>
               {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
-              <div
-                className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
-              >
-                <table
-                  className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300"
-                >
-                  <thead
-                    className="sticky top-0 bg-slate-100 dark:bg-slate-900"
-                  >
+              <div className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+                <table className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300">
+                  <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900">
                     <tr>
                       {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map(
                         (column) => (
@@ -2470,10 +2375,7 @@ export default function ApiManagerPage() {
                   <tbody>
                     {filteredSystemApis.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={6}
-                          className="px-3 py-3 text-slate-600 dark:text-slate-400"
-                        >
+                        <td colSpan={6} className="px-3 py-3 text-slate-600 dark:text-slate-400">
                           No registered APIs found.
                         </td>
                       </tr>
@@ -2506,9 +2408,7 @@ export default function ApiManagerPage() {
                               })}
                             </td>
                             <td className="px-2 py-2 whitespace-nowrap">
-                              <span
-                                className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400"
-                              >
+                              <span className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400">
                                 {api.source}
                               </span>
                             </td>
@@ -2554,9 +2454,7 @@ export default function ApiManagerPage() {
           />
           <div className="space-y-2 max-h-[360px] overflow-auto custom-scrollbar">
             {filteredApis.length === 0 ? (
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                검색 결과 없음
-              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">검색 결과 없음</p>
             ) : (
               filteredApis.map((api) => (
                 <button
@@ -2570,9 +2468,7 @@ export default function ApiManagerPage() {
                 >
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <span
-                        className="text-xs uppercase min-w-8 text-slate-600 dark:text-slate-400"
-                      >
+                      <span className="text-xs uppercase min-w-8 text-slate-600 dark:text-slate-400">
                         {api.method}
                       </span>
                       <span className="font-semibold truncate">{api.api_name}</span>

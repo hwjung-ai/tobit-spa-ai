@@ -140,7 +140,7 @@ const toCsv = (rows: CepEventSummary[]): string => {
         const str = value == null ? "" : String(value);
         return `"${str.replace(/"/g, '""')}"`;
       })
-      .join(",")
+      .join(","),
   );
   return [header, ...lines].join("\n");
 };
@@ -273,7 +273,7 @@ function CepEventBrowserContent() {
         },
       },
     ],
-    []
+    [],
   );
 
   const defaultColDef = useMemo<ColDef>(
@@ -282,15 +282,12 @@ function CepEventBrowserContent() {
       filter: true,
       resizable: true,
     }),
-    []
+    [],
   );
 
   const eventsQueryKey = useMemo(
-    () => [
-      "cep-events",
-      { ackedFilter, severityFilter, ruleFilter, sinceFilter, untilFilter },
-    ],
-    [ackedFilter, severityFilter, ruleFilter, sinceFilter, untilFilter]
+    () => ["cep-events", { ackedFilter, severityFilter, ruleFilter, sinceFilter, untilFilter }],
+    [ackedFilter, severityFilter, ruleFilter, sinceFilter, untilFilter],
   );
 
   const summaryQuery = useQuery({
@@ -396,7 +393,7 @@ function CepEventBrowserContent() {
         setSelectedEvent(null);
       }
     },
-    [apiBaseUrl]
+    [apiBaseUrl],
   );
 
   const handleRowClick = useCallback(
@@ -406,7 +403,7 @@ function CepEventBrowserContent() {
       }
       fetchEventDetail(event.data.event_id);
     },
-    [fetchEventDetail]
+    [fetchEventDetail],
   );
 
   const handleAck = useCallback(async () => {
@@ -456,7 +453,9 @@ function CepEventBrowserContent() {
     // - 자동 재연결 (기본값: 3초)
 
     // Use Next.js API proxy for SSE to avoid firewall issues
-    const streamUrl = !apiBaseUrl ? `/sse-proxy/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+    const streamUrl = !apiBaseUrl
+      ? `/sse-proxy/cep/events/stream`
+      : `${apiBaseUrl}/cep/events/stream`;
 
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
@@ -506,11 +505,17 @@ function CepEventBrowserContent() {
 
         const handleAckEvent = (event: MessageEvent) => {
           try {
-            const data = JSON.parse(event.data) as { event_id: string; ack: boolean; ack_at?: string | null };
+            const data = JSON.parse(event.data) as {
+              event_id: string;
+              ack: boolean;
+              ack_at?: string | null;
+            };
             queryClient.setQueryData<CepEventSummary[]>(eventsQueryKey, (prev) => {
               const current = prev ?? [];
               const next = current.map((item) =>
-                item.event_id === data.event_id ? { ...item, ack: data.ack, ack_at: data.ack_at ?? null } : item
+                item.event_id === data.event_id
+                  ? { ...item, ack: data.ack, ack_at: data.ack_at ?? null }
+                  : item,
               );
               if (ackedFilter === "unacked") {
                 return next.filter((item) => !item.ack);
@@ -596,7 +601,7 @@ function CepEventBrowserContent() {
   }, [isResizing]);
 
   return (
-    <div className="space-y-6 builder-shell builder-text text-slate-900 dark:text-slate-50">
+    <div className="page-cep-events space-y-6 builder-shell builder-text text-slate-900 dark:text-slate-50">
       <PageHeader
         title="CEP Event Browser"
         description="알림 발화 이력과 ACK 상태를 확인합니다. (SSE 갱신)"
@@ -619,14 +624,10 @@ function CepEventBrowserContent() {
         </section>
       ) : runDetail ? (
         <section className="space-y-3 br-section border bg-surface-elevated px-5 py-4 dark:border-border">
-          {runError ? (
-            <p className="text-sm text-rose-300">
-              {runError}
-            </p>
-          ) : null}
+          {runError ? <p className="text-sm text-rose-300">{runError}</p> : null}
           {runDetail.found ? (
             <>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="cep-event-detail-label">Exec Log ID</p>
                   <p className="cep-event-detail-value">{runDetail.exec_log_id ?? "—"}</p>
@@ -641,12 +642,16 @@ function CepEventBrowserContent() {
                 </div>
                 <div>
                   <p className="cep-event-detail-label">Created</p>
-                  <p className="cep-event-detail-value">{runDetail.created_at ? formatTimestamp(runDetail.created_at) : "—"}</p>
+                  <p className="cep-event-detail-value">
+                    {runDetail.created_at ? formatTimestamp(runDetail.created_at) : "—"}
+                  </p>
                 </div>
                 <div>
                   <p className="cep-event-detail-label">Condition</p>
                   <p className="cep-event-detail-value">
-                    {runDetail.condition_evaluated == null ? "—" : String(runDetail.condition_evaluated)}
+                    {runDetail.condition_evaluated == null
+                      ? "—"
+                      : String(runDetail.condition_evaluated)}
                   </p>
                 </div>
                 <div>
@@ -660,29 +665,55 @@ function CepEventBrowserContent() {
                   <table className="min-w-full text-left text-xs">
                     <thead>
                       <tr>
-                        {["endpoint", "method", "value_path", "op", "threshold", "extracted_value", "evaluated", "status", "error"].map(
-                          (column) => (
-                            <th
-                              key={column}
-                              className="border-b px-2 py-1 font-semibold uppercase tracking-wider border-border"
-                            >
-                              {column}
-                            </th>
-                          )
-                        )}
+                        {[
+                          "endpoint",
+                          "method",
+                          "value_path",
+                          "op",
+                          "threshold",
+                          "extracted_value",
+                          "evaluated",
+                          "status",
+                          "error",
+                        ].map((column) => (
+                          <th
+                            key={column}
+                            className="border-b px-2 py-1 font-semibold uppercase tracking-wider border-border"
+                          >
+                            {column}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="px-2 py-1">{runDetail.evidence?.runtime_endpoint as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.method as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.value_path as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.op as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.threshold as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.extracted_value as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{String(runDetail.evidence?.condition_evaluated ?? "—")}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.fetch_status as ReactNode ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.fetch_error as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.runtime_endpoint as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.method as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.value_path as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.op as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.threshold as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.extracted_value as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {String(runDetail.evidence?.condition_evaluated ?? "—")}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.fetch_status as ReactNode) ?? "—"}
+                        </td>
+                        <td className="px-2 py-1">
+                          {(runDetail.evidence?.fetch_error as ReactNode) ?? "—"}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -693,7 +724,9 @@ function CepEventBrowserContent() {
                   <summary className="cursor-pointer uppercase tracking-wider cep-event-detail-label">
                     Raw references
                   </summary>
-                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap">{runDetail.raw}</pre>
+                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap">
+                    {runDetail.raw}
+                  </pre>
                 </details>
               ) : null}
             </>
@@ -701,7 +734,8 @@ function CepEventBrowserContent() {
             <div className="text-sm">
               <p className="font-semibold text-foreground">CEP run not found</p>
               <p>
-                Tenant: {runDetail.tenant_id ?? "unknown"}, exec_log_id: {runDetail.exec_log_id ?? "없음"}, simulation_id:{" "}
+                Tenant: {runDetail.tenant_id ?? "unknown"}, exec_log_id:{" "}
+                {runDetail.exec_log_id ?? "없음"}, simulation_id:{" "}
                 {runDetail.simulation_id ?? "없음"}
               </p>
               {runDetail.message ? <p>{runDetail.message}</p> : null}
@@ -712,7 +746,7 @@ function CepEventBrowserContent() {
 
       <div
         className="grid gap-0"
-        style={{gridTemplateColumns: `${leftWidth ?? 0}px 12px minmax(0, 1fr)`}}
+        style={{ gridTemplateColumns: `${leftWidth ?? 0}px 12px minmax(0, 1fr)` }}
       >
         <section className="br-section p-4">
           <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -779,17 +813,12 @@ function CepEventBrowserContent() {
               <option value="csv">CSV</option>
               <option value="json">JSON</option>
             </select>
-            <button
-              onClick={handleExport}
-              className="cep-event-action-btn rounded-xl"
-            >
+            <button onClick={handleExport} className="cep-event-action-btn rounded-xl">
               Export
             </button>
           </div>
           {eventsQuery.error ? (
-            <p className="mb-3 text-sm text-rose-400">
-              {normalizeError(eventsQuery.error)}
-            </p>
+            <p className="mb-3 text-sm text-rose-400">{normalizeError(eventsQuery.error)}</p>
           ) : null}
           <div className="ag-theme-cep h-[540px] w-full br-section">
             <AgGridReact<CepEventSummary>

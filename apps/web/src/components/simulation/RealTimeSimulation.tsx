@@ -238,15 +238,12 @@ export default function RealTimeSimulation({
         }))
       : [];
 
-  const sectionClass = "rounded-2xl border p-5 shadow-sm";
-  const cardClass = "rounded-lg border p-4";
+  const sectionClass = "ui-box";
+  const cardClass = "ui-subbox";
 
   return (
     <div className="space-y-6">
-      <section
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-        className={sectionClass}
-      >
+      <section className={sectionClass}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
@@ -277,7 +274,7 @@ export default function RealTimeSimulation({
                   backgroundColor: "rgba(var(--error-rgb), 0.1)",
                   color: "var(--error)",
                 }}
-                className="rounded-md border px-4 py-2 text-sm font-semibold hover:opacity-80"
+                className="rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80"
               >
                 Stop
               </button>
@@ -290,7 +287,7 @@ export default function RealTimeSimulation({
                   backgroundColor: "rgba(var(--success-rgb), 0.1)",
                   color: "var(--success)",
                 }}
-                className="rounded-md border px-4 py-2 text-sm font-semibold hover:opacity-80"
+                className="rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80"
               >
                 Restart
               </button>

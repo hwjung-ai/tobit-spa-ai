@@ -7,6 +7,7 @@ import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
 import { type TraceSummaryRow } from "@/lib/apiClientTypes";
+import { cn } from "@/lib/utils";
 
 import { useQuery } from "@tanstack/react-query";
 

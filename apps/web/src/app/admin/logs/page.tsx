@@ -161,13 +161,6 @@ export default function LogsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="mb-2 text-lg font-semibold text-foreground">System Logs</h2>
-        <p className="text-sm text-muted-foreground">
-          View system logs including query history, execution traces, audit logs, LLM calls, and server logs.
-        </p>
-      </div>
-
       <div className="flex flex-wrap gap-2">
         {LOG_TABS.map((tab) => {
           const active = logType === tab.type;

@@ -13,17 +13,17 @@ export default function ObservabilityPage() {
   return (
     <div className="space-y-6">
       {/* Tab Navigation - Standard Tab Group */}
-      <div className="inline-flex rounded-xl border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/70 p-1">
+      <div className="inline-flex rounded-xl border border-border bg-surface-elevated p-1">
         <button
           onClick={() => setActiveTab("system")}
           className={cn(
             "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
             activeTab === "system"
               ? "bg-sky-600 text-white"
-              : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+              : "bg-transparent text-foreground hover:bg-surface-elevated"
           )}
         >
-          System
+          System Monitoring
         </button>
         <button
           onClick={() => setActiveTab("cep")}
@@ -31,14 +31,11 @@ export default function ObservabilityPage() {
             "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
             activeTab === "cep"
               ? "bg-emerald-600 text-white"
-              : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+              : "bg-transparent text-foreground hover:bg-surface-elevated"
           )}
         >
-          CEP
+          Event Rule Monitoring
         </button>
-        <div className="ml-auto text-tiny uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {activeTab === "system" ? "Trace & Regression KPIs" : "Rules & Channels & Events"}
-        </div>
       </div>
 
       {/* Tab Content */}

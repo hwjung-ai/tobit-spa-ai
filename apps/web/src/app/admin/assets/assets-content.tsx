@@ -68,16 +68,6 @@ export default function AssetsPageContent() {
 
     return (
         <div className="space-y-6">
-            {/* Page Header - Admin Style */}
-            <header className="admin-page-header">
-                <div className="admin-header-title-group">
-                    <h1 className="admin-page-title">Assets</h1>
-                    <p className="admin-page-description">
-                        중앙 자산 레지스트리에서 프롬프트, 매핑, 정책, 쿼리, 소스, 리졸버를 관리합니다.
-                    </p>
-                </div>
-            </header>
-
             {/* Control Bar */}
             <div className="flex justify-between items-center rounded-2xl border bg-surface-elevated border-border p-4 backdrop-blur-sm">
                 <div className="flex gap-6">

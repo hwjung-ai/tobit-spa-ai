@@ -108,15 +108,12 @@ export default function FunctionComparison({
     "cost",
   ];
 
-  const sectionClass = "rounded-2xl border p-5 shadow-sm";
-  const cardClass = "rounded-lg border p-4";
+  const sectionClass = "ui-box";
+  const cardClass = "ui-subbox";
 
   return (
     <div className="space-y-6">
-      <section
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-        className={sectionClass}
-      >
+      <section className={sectionClass}>
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
@@ -129,8 +126,7 @@ export default function FunctionComparison({
           <button
             onClick={() => void runComparison()}
             disabled={loading}
-            style={{ backgroundColor: "var(--primary)" }}
-            className="rounded-md px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-primary px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Running..." : "Re-run"}
           </button>
@@ -138,14 +134,7 @@ export default function FunctionComparison({
       </section>
 
       {loading ? (
-        <section
-          style={{
-            borderColor: "var(--border)",
-            backgroundColor: "var(--surface-overlay)",
-            color: "var(--muted-foreground)",
-          }}
-          className={cn(sectionClass, "text-center")}
-        >
+        <section className={cn(sectionClass, "text-center text-muted-standard")}>
           Running comparison...
         </section>
       ) : error ? (
@@ -157,10 +146,7 @@ export default function FunctionComparison({
         </section>
       ) : (
         <>
-          <section
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-            className={sectionClass}
-          >
+          <section className={sectionClass}>
             <h2
               style={{ color: "var(--muted-foreground)" }}
               className="text-sm font-semibold uppercase tracking-wider"
@@ -182,11 +168,7 @@ export default function FunctionComparison({
 
           <div className="grid gap-4 lg:grid-cols-2">
             {kpiNames.map((kpi) => (
-              <section
-                key={kpi}
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-                className={sectionClass}
-              >
+              <section key={kpi} className={sectionClass}>
                 <h2
                   style={{ color: "var(--muted-foreground)" }}
                   className="text-sm font-semibold uppercase tracking-wider"
@@ -208,10 +190,7 @@ export default function FunctionComparison({
             ))}
           </div>
 
-          <section
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-            className={sectionClass}
-          >
+          <section className={sectionClass}>
             <h2
               style={{ color: "var(--muted-foreground)" }}
               className="text-sm font-semibold uppercase tracking-wider"

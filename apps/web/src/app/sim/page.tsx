@@ -584,18 +584,14 @@ export default function SimPage() {
         title="Simulation Workspace"
         description="질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다."
       />
-      <main className="min-h-[calc(100vh-96px)] px-6 py-6">
+      <main className="min-h-[calc(100vh-96px)] py-6">
         {/* Main Content Grid */}
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
           {/* Left Panel - Scenario Builder */}
-          <aside
-            className="space-y-4 container-section min-h-[320px]"
-          >
-            <h2 className="section-title">Scenario Builder</h2>
+          <aside className="space-y-4 container-section min-h-[320px]">
+            <h2 className="left-panel-title">Scenario Builder</h2>
 
-            <label
-              className="block br-card border p-3 text-label"
-            >
+            <label className="block br-card border p-3 text-label">
               질문
               <textarea
                 data-testid="simulation-question-input"
@@ -613,9 +609,7 @@ export default function SimPage() {
             </label>
 
             <div className="br-card border bg-surface-elevated p-3">
-              <p className="text-label">
-                템플릿
-              </p>
+              <p className="text-label">템플릿</p>
               <div className="mt-2 grid gap-2">
                 {templates.map((template) => (
                   <button
@@ -625,30 +619,18 @@ export default function SimPage() {
                     onClick={() => applyTemplate(template)}
                     className="br-card border px-3 py-2 text-left transition border bg-surface-base text-foreground hover:border-primary"
                   >
-                    <p className="text-sm font-semibold text-foreground">
-                      {template.name}
-                    </p>
-                    <p className="text-xs text-muted-standard">
-                      {template.description}
-                    </p>
+                    <p className="text-sm font-semibold text-foreground">{template.name}</p>
+                    <p className="text-xs text-muted-standard">{template.description}</p>
                   </button>
                 ))}
               </div>
               {selectedTemplate ? (
-                <div
-                  className="mt-3 br-card border px-3 py-2 border-emerald-500 bg-emerald-500/15"
-                >
-                  <p
-                    className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
-                  >
+                <div className="mt-3 br-card border px-3 py-2 border-emerald-500 bg-emerald-500/15">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     Applied Template
                   </p>
-                  <p className="mt-1 text-sm text-foreground">
-                    {selectedTemplate.name}
-                  </p>
-                  <p className="text-xs text-muted-standard">
-                    {selectedTemplate.description}
-                  </p>
+                  <p className="mt-1 text-sm text-foreground">{selectedTemplate.name}</p>
+                  <p className="text-xs text-muted-standard">{selectedTemplate.description}</p>
                 </div>
               ) : (
                 <p className="mt-2 text-xs text-muted-standard">
@@ -657,9 +639,7 @@ export default function SimPage() {
               )}
             </div>
 
-            <label
-              className="block br-card border p-3 text-label"
-            >
+            <label className="block br-card border p-3 text-label">
               시나리오 유형
               <select
                 className="mt-2 w-full input-container"
@@ -672,9 +652,7 @@ export default function SimPage() {
               </select>
             </label>
 
-            <label
-              className="block br-card border p-3 text-label"
-            >
+            <label className="block br-card border p-3 text-label">
               Service
               <select
                 className="mt-2 w-full input-container"
@@ -690,9 +668,7 @@ export default function SimPage() {
               </select>
             </label>
 
-            <label
-              className="block br-card border p-3 text-label"
-            >
+            <label className="block br-card border p-3 text-label">
               Horizon
               <input
                 className="mt-2 w-full input-container"
@@ -702,9 +678,7 @@ export default function SimPage() {
             </label>
 
             <div className="br-card border bg-surface-elevated p-3">
-              <p className="text-label">
-                가정값
-              </p>
+              <p className="text-label">가정값</p>
               {Object.entries(assumptions).map(([key, value]) => {
                 const meta = assumptionMeta[key];
                 if (!meta) return null;
@@ -714,9 +688,7 @@ export default function SimPage() {
                     className="block rounded-2xl border px-3 py-2 border bg-surface-base dark:border-slate-800 dark:bg-slate-900"
                   >
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs text-foreground">
-                        {meta.label}
-                      </span>
+                      <span className="text-xs text-foreground">{meta.label}</span>
                       <span className="text-xs text-muted-standard">
                         {value}
                         {meta.unit}
@@ -742,9 +714,7 @@ export default function SimPage() {
             </div>
 
             <div className="br-card border bg-surface-elevated p-3">
-              <p className="text-label">
-                전략 선택
-              </p>
+              <p className="text-label">전략 선택</p>
               {(Object.keys(strategyMeta) as Strategy[]).map((s) => (
                 <button
                   key={s}
@@ -752,7 +722,9 @@ export default function SimPage() {
                   onClick={() => setStrategy(s)}
                   className={cn(
                     "rounded-2xl border px-3 py-2 text-left transition",
-                    strategy === s ? "bg-sky-600 border-sky-600 text-white" : "border bg-surface-base text-foreground dark:border-slate-800 dark:bg-slate-900",
+                    strategy === s
+                      ? "bg-sky-600 border-sky-600 text-white"
+                      : "border bg-surface-base text-foreground dark:border-slate-800 dark:bg-slate-900",
                     strategy !== s && "hover:border-sky-600",
                   )}
                 >
@@ -772,7 +744,10 @@ export default function SimPage() {
                     </span>
                   </div>
                   <p
-                    className={cn("mt-1 text-xs", strategy === s ? "text-white" : "text-muted-standard")}
+                    className={cn(
+                      "mt-1 text-xs",
+                      strategy === s ? "text-white" : "text-muted-standard",
+                    )}
                   >
                     {strategyMeta[s].desc}
                   </p>
@@ -792,7 +767,11 @@ export default function SimPage() {
                 onClick={handleRun}
                 disabled={loading || servicesLoading || !question.trim() || !service.trim()}
               >
-                {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
+                {loading
+                  ? "Running..."
+                  : servicesLoading
+                    ? "Loading Services..."
+                    : "Run Simulation"}
               </button>
               {!question.trim() ? (
                 <p className="mt-2 text-sm text-muted-standard">
@@ -832,10 +811,7 @@ export default function SimPage() {
           <main className="space-y-4">
             {/* KPI Summary Section */}
             <section className="container-section">
-              <h2
-                data-testid="simulation-kpi-summary"
-                className="section-title"
-              >
+              <h2 data-testid="simulation-kpi-summary" className="section-title">
                 KPI Summary
               </h2>
               {!result ? (
@@ -844,9 +820,7 @@ export default function SimPage() {
                 </p>
               ) : (
                 <>
-                  <p className="mt-3 text-sm text-foreground">
-                    {result.summary}
-                  </p>
+                  <p className="mt-3 text-sm text-foreground">{result.summary}</p>
                   <p className="mt-1 text-xs text-muted-standard">
                     Confidence: {result.simulation.confidence.toFixed(2)} (
                     {getConfidenceLabel(result.simulation.confidence)})
@@ -868,9 +842,7 @@ export default function SimPage() {
                           key={kpi.kpi}
                           className="br-card border p-3 border bg-surface-elevated dark:bg-slate-950"
                         >
-                          <p
-                            className="text-xs uppercase tracking-wider text-muted-standard"
-                          >
+                          <p className="text-xs uppercase tracking-wider text-muted-standard">
                             {formatKpiLabel(kpi.kpi)}
                           </p>
                           <p className="mt-1 text-sm text-foreground">
@@ -879,7 +851,9 @@ export default function SimPage() {
                           <p
                             className={cn(
                               "text-sm font-semibold",
-                              changePct >= 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
+                              changePct >= 0
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-emerald-600 dark:text-emerald-400",
                             )}
                           >
                             {changePct >= 0 ? "+" : ""}
@@ -897,14 +871,10 @@ export default function SimPage() {
             <section className="container-section">
               <h2 className="section-title">Comparison Charts</h2>
               {!result ? (
-                <p className="mt-3 text-sm text-muted-standard">
-                  실행 후 차트가 표시됩니다.
-                </p>
+                <p className="mt-3 text-sm text-muted-standard">실행 후 차트가 표시됩니다.</p>
               ) : (
                 <div className="mt-4 grid gap-4">
-                  <div
-                    className="h-64 br-card border p-2 border bg-surface-elevated dark:bg-slate-950"
-                  >
+                  <div className="h-64 br-card border p-2 border bg-surface-elevated dark:bg-slate-950">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={chartData}
@@ -938,9 +908,7 @@ export default function SimPage() {
                     </ResponsiveContainer>
                   </div>
 
-                  <div
-                    className="h-64 br-card border p-2 border bg-surface-elevated dark:bg-slate-950"
-                  >
+                  <div className="h-64 br-card border p-2 border bg-surface-elevated dark:bg-slate-950">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={chartData}
@@ -964,9 +932,7 @@ export default function SimPage() {
                   </div>
 
                   {compareData.length > 0 ? (
-                    <div
-                      className="h-56 br-card border p-2 border bg-surface-elevated"
-                    >
+                    <div className="h-56 br-card border p-2 border bg-surface-elevated">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={compareData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-muted)" />
@@ -999,9 +965,7 @@ export default function SimPage() {
             </section>
 
             {/* Evidence Panel */}
-            <section
-              className="container-panel min-h-[220px]"
-            >
+            <section className="container-panel min-h-[220px]">
               <h2 className="section-title">Algorithm & Evidence</h2>
               {!result ? (
                 <p className="mt-3 text-sm text-muted-standard">
@@ -1023,9 +987,7 @@ export default function SimPage() {
                   ) : null}
                   <p>{result.simulation.explanation}</p>
                   <div>
-                    <p
-                      className="text-xs uppercase tracking-wider text-muted-standard"
-                    >
+                    <p className="text-xs uppercase tracking-wider text-muted-standard">
                       Recommended Actions
                     </p>
                     <ul className="mt-1 list-disc pl-5">
@@ -1034,11 +996,7 @@ export default function SimPage() {
                       ))}
                     </ul>
                   </div>
-                  <pre
-                    className="code-block"
-                  >
-                    {JSON.stringify(result.references, null, 2)}
-                  </pre>
+                  <pre className="code-block">{JSON.stringify(result.references, null, 2)}</pre>
                   {result.simulation.warnings.length > 0 ? (
                     <ul className="list-disc pl-5 text-amber-600 dark:text-amber-400">
                       {result.simulation.warnings.map((warning) => (
@@ -1051,9 +1009,7 @@ export default function SimPage() {
             </section>
 
             {/* Backtest Report Section */}
-            <section
-              className="container-panel"
-            >
+            <section className="container-panel">
               <h2 className="section-title">Backtest Report</h2>
               {!backtest ? (
                 <p className="mt-3 text-sm text-muted-standard">
@@ -1061,42 +1017,26 @@ export default function SimPage() {
                 </p>
               ) : (
                 <div className="mt-3 grid gap-3 text-sm text-foreground">
-                  <div
-                    className="br-card border p-3 bg-surface-elevated dark:bg-slate-950"
-                  >
-                    <p className="text-xs text-muted-standard">
-                      R2
-                    </p>
+                  <div className="br-card border p-3 bg-surface-elevated dark:bg-slate-950">
+                    <p className="text-xs text-muted-standard">R2</p>
                     <p className="text-lg font-semibold text-foreground">
                       {backtest.metrics.r2.toFixed(4)}
                     </p>
                   </div>
-                  <div
-                    className="br-card border p-3 bg-surface-elevated"
-                  >
-                    <p className="text-xs text-muted-standard">
-                      MAPE
-                    </p>
+                  <div className="br-card border p-3 bg-surface-elevated">
+                    <p className="text-xs text-muted-standard">MAPE</p>
                     <p className="text-lg font-semibold text-foreground">
                       {(backtest.metrics.mape * 100).toFixed(2)}%
                     </p>
                   </div>
-                  <div
-                    className="br-card border p-3 bg-surface-elevated"
-                  >
-                    <p className="text-xs text-muted-standard">
-                      RMSE
-                    </p>
+                  <div className="br-card border p-3 bg-surface-elevated">
+                    <p className="text-xs text-muted-standard">RMSE</p>
                     <p className="text-lg font-semibold text-foreground">
                       {backtest.metrics.rmse.toFixed(3)}
                     </p>
                   </div>
-                  <div
-                    className="br-card border p-3 bg-surface-elevated"
-                  >
-                    <p className="text-xs text-muted-standard">
-                      Coverage@90%
-                    </p>
+                  <div className="br-card border p-3 bg-surface-elevated">
+                    <p className="text-xs text-muted-standard">Coverage@90%</p>
                     <p className="text-lg font-semibold text-foreground">
                       {(backtest.metrics.coverage_90 * 100).toFixed(2)}%
                     </p>
@@ -1107,9 +1047,7 @@ export default function SimPage() {
           </main>
 
           {/* Right Panel - AI Copilot */}
-          <aside
-            className="min-h-[320px] container-panel xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto"
-          >
+          <aside className="min-h-[320px] container-panel xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
             <div className="space-y-4">
               <BuilderCopilotPanel
                 builderSlug="sim-workspace"
@@ -1130,13 +1068,9 @@ export default function SimPage() {
                 }}
                 inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
               />
-              <div
-                className="space-y-3 br-card border p-4 text-sm bg-surface-elevated"
-              >
+              <div className="space-y-3 br-card border p-4 text-sm bg-surface-elevated">
                 <div className="flex items-center justify-between">
-                  <span
-                    className="text-xs uppercase tracking-wider text-muted-standard"
-                  >
+                  <span className="text-xs uppercase tracking-wider text-muted-standard">
                     Draft status
                   </span>
                   <span className="text-sm font-semibold text-foreground">
@@ -1147,11 +1081,7 @@ export default function SimPage() {
                         : "Idle"}
                   </span>
                 </div>
-                {draftNotes ? (
-                  <p className="text-sm text-foreground">
-                    {draftNotes}
-                  </p>
-                ) : null}
+                {draftNotes ? <p className="text-sm text-foreground">{draftNotes}</p> : null}
                 <div className="grid gap-2">
                   <button
                     type="button"
@@ -1181,37 +1111,23 @@ export default function SimPage() {
                   </button>
                 </div>
                 {simDraft ? (
-                  <div
-                    className="space-y-2 br-card border p-3 bg-surface-elevated"
-                  >
-                    <p
-                      className="text-xs uppercase tracking-wider text-muted-standard"
-                    >
+                  <div className="space-y-2 br-card border p-3 bg-surface-elevated">
+                    <p className="text-xs uppercase tracking-wider text-muted-standard">
                       Draft JSON
                     </p>
-                    <pre
-                      className="code-block"
-                    >
-                      {JSON.stringify(simDraft, null, 2)}
-                    </pre>
+                    <pre className="code-block">{JSON.stringify(simDraft, null, 2)}</pre>
                   </div>
                 ) : (
                   <p className="text-xs text-muted-standard">
                     No SIM draft yet. Ask Copilot to generate one.
                   </p>
                 )}
-                <details
-                  className="debug-section"
-                >
-                  <summary
-                    className="cursor-pointer text-xs uppercase tracking-wider text-muted-standard"
-                  >
+                <details className="debug-section">
+                  <summary className="cursor-pointer text-xs uppercase tracking-wider text-muted-standard">
                     Debug
                   </summary>
                   <div className="mt-2 space-y-1">
-                    <p
-                      className="text-xs uppercase tracking-wider text-muted-standard"
-                    >
+                    <p className="text-xs uppercase tracking-wider text-muted-standard">
                       Parse status: {lastParseStatus}
                     </p>
                     {lastParseError ? (
@@ -1219,16 +1135,10 @@ export default function SimPage() {
                         Error: {lastParseError}
                       </p>
                     ) : null}
-                    <p
-                      className="text-xs uppercase tracking-wider text-muted-standard"
-                    >
+                    <p className="text-xs uppercase tracking-wider text-muted-standard">
                       Last assistant raw
                     </p>
-                    <pre
-                      className="code-block"
-                    >
-                      {lastAssistantRaw || "없음"}
-                    </pre>
+                    <pre className="code-block">{lastAssistantRaw || "없음"}</pre>
                   </div>
                 </details>
               </div>

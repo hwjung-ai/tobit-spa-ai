@@ -1400,6 +1400,12 @@ html {
   color: var(--foreground);
 }
 
+/* Left panel title standard (for sidebar/aside headers) */
+.left-panel-title {
+  @apply text-xs font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
 /* Standard Tab Button Classes */
 .tab-button {
   @apply px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg;

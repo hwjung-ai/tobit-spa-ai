@@ -12,6 +12,7 @@ import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import type { ColDef, RowClickedEvent } from "ag-grid-community";
 import { buildApiUrl, fetchApi } from "../../../lib/adminUtils";
+import { cn } from "@/lib/utils";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 
@@ -330,7 +331,7 @@ export default function ExplorerPage() {
     queryFn: async () => {
       const response = await fetchApi<{ tables: PostgresTable[] }>("/data/postgres/tables");
       // ResponseEnvelope.data is extracted by fetchApi, so response.data is already the inner data
-      // But the API returns ResponseEnvelope.success(data={tables: [...]})
+      // But, API returns ResponseEnvelope.success(data={tables: [...]})
       // So response.data.tables should exist
       return (response.data as { tables: PostgresTable[] })?.tables || [];
     },
@@ -545,7 +546,7 @@ export default function ExplorerPage() {
     return (
       <div className="min-h-screen px-4 py-6 md:px-6 md:py-8 bg-surface-base text-foreground">
         <h1 className="text-2xl font-semibold">Data Explorer</h1>
-        <p className="mt-4 text-sm text-muted-foreground">
+        <p className="mt-4 text-sm text-muted-standard">
           Data Explorer is disabled. Enable{" "}
           <code className="rounded px-2 py-1 text-xs bg-muted-background">
             NEXT_PUBLIC_ENABLE_DATA_EXPLORER
@@ -560,18 +561,18 @@ export default function ExplorerPage() {
     if (sourceTab === "postgres") {
       return (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs uppercase tracking-wider text-muted-standard">
             Tables
           </div>
           <input
             value={tableSearch}
             onChange={(event) => setTableSearch(event.target.value)}
             placeholder="Search tables"
-            className="w-full rounded-full border bg-transparent px-4 py-2 text-sm focus:border-sky-500 focus:outline-none border-border text-muted-foreground"
+            className="w-full rounded-full border bg-transparent px-4 py-2 text-sm focus:border-sky-500 focus:outline-none border-border text-muted-standard"
           />
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {tablesQuery.isLoading && (
-              <div className="flex items-center gap-2 py-4 text-muted-foreground">
+              <div className="flex items-center gap-2 py-4 text-muted-standard">
                 <div className="w-4 h-4 rounded-full border-2 border-t-sky-400 animate-spin border-border" />
                 <span className="text-xs">Loading tables...</span>
               </div>
@@ -600,11 +601,12 @@ export default function ExplorerPage() {
                       setSelectedTable(item);
                       previewTableMutation.mutate(fullName);
                     }}
-                  className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
+                    className={cn(
+                      "w-full rounded-xl border px-3 py-2 text-left text-sm",
                       active
                         ? "bg-sky-600 text-white border-sky-600"
-                        : "bg-transparent text-foreground border-border hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
+                        : "bg-transparent text-foreground border-border hover:bg-surface-elevated"
+                    )}
                   >
                     {fullName}
                   </button>
@@ -617,12 +619,12 @@ export default function ExplorerPage() {
     if (sourceTab === "neo4j") {
       return (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs uppercase tracking-wider text-muted-standard">
             Labels
           </div>
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {labelsQuery.isLoading && (
-              <div className="flex items-center gap-2 py-4 text-muted-foreground">
+              <div className="flex items-center gap-2 py-4 text-muted-standard">
                 <div className="w-4 h-4 rounded-full border-2 border-t-sky-400 animate-spin border-border" />
                 <span className="text-xs">Loading labels...</span>
               </div>
@@ -644,11 +646,12 @@ export default function ExplorerPage() {
                     setQueryText(statement);
                     runQueryMutation.mutate(statement);
                   }}
-                  className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
+                  className={cn(
+                    "w-full rounded-xl border px-3 py-2 text-left text-sm",
                     active
                       ? "bg-sky-600 text-white border-sky-600"
-                      : "bg-transparent text-foreground border-border hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
+                      : "bg-transparent text-foreground border-border hover:bg-surface-elevated"
+                  )}
                 >
                   {label}
                 </button>
@@ -660,26 +663,26 @@ export default function ExplorerPage() {
     }
     return (
       <div className="space-y-3">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">
+        <div className="text-xs uppercase tracking-wider text-muted-standard">
           Keys
         </div>
         <input
           value={redisPrefix}
           onChange={(event) => setRedisPrefix(event.target.value)}
           placeholder="Prefix (allowlist)"
-          className="w-full rounded-full border border-border bg-transparent px-4 py-2 text-sm text-muted-foreground focus:border-sky-500 focus:outline-none"
+          className="w-full rounded-full border border-border bg-transparent px-4 py-2 text-sm text-muted-standard focus:border-sky-500 focus:outline-none"
         />
         <input
           value={redisPattern}
           onChange={(event) => setRedisPattern(event.target.value)}
           placeholder="Pattern (optional)"
-          className="w-full rounded-full border border-border bg-transparent px-4 py-2 text-sm text-muted-foreground focus:border-sky-500 focus:outline-none"
+          className="w-full rounded-full border border-border bg-transparent px-4 py-2 text-sm text-muted-standard focus:border-sky-500 focus:outline-none"
         />
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-standard">
           <button
             type="button"
             onClick={() => setRedisCursor(0)}
-            className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-wider text-muted-foreground"
+            className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-wider text-muted-standard"
           >
             Scan
           </button>
@@ -687,7 +690,7 @@ export default function ExplorerPage() {
         </div>
         <div className="custom-scrollbar max-h-[320px] space-y-2 overflow-auto pr-1">
           {redisScanQuery.isLoading && (
-            <div className="flex items-center gap-2 py-4 text-muted-foreground">
+            <div className="flex items-center gap-2 py-4 text-muted-standard">
               <div className="w-4 h-4 rounded-full border-2 border-t-sky-400 animate-spin border-border" />
               <span className="text-xs">Scanning keys...</span>
             </div>
@@ -707,11 +710,12 @@ export default function ExplorerPage() {
                   setSelectedKey(key);
                   redisKeyMutation.mutate(key);
                 }}
-                className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
+                className={cn(
+                  "w-full rounded-xl border px-3 py-2 text-left text-sm",
                   active
                     ? "bg-sky-600 text-white border-sky-600"
-                    : "bg-transparent text-foreground border-border hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                    : "bg-transparent text-foreground border-border hover:bg-surface-elevated"
+                )}
               >
                 {key}
               </button>
@@ -724,20 +728,10 @@ export default function ExplorerPage() {
 
   return (
     <div className="py-6 tracking-tight builder-shell builder-text">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">Data Explorer</h1>
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">
-          Admin only
-        </div>
-      </div>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Read-only data access. Max {MAX_ROWS} rows.
-      </p>
-
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-tiny items-center uppercase tracking-wider text-muted-foreground">Source:</span>
-          <div className="inline-flex rounded-xl border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/70 p-1">
+          <span className="text-tiny items-center uppercase tracking-wider text-muted-standard">Source:</span>
+          <div className="inline-flex rounded-xl border border-border bg-surface-elevated p-1">
             <button
               type="button"
               onClick={() => setSourceTab("postgres")}
@@ -745,7 +739,7 @@ export default function ExplorerPage() {
                 "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "postgres"
                   ? "bg-sky-600 text-white"
-                  : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
               Postgres
@@ -757,7 +751,7 @@ export default function ExplorerPage() {
                 "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "neo4j"
                   ? "bg-sky-600 text-white"
-                  : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
               Neo4j
@@ -769,7 +763,7 @@ export default function ExplorerPage() {
                 "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "redis"
                   ? "bg-sky-600 text-white"
-                  : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
               Redis
@@ -778,8 +772,8 @@ export default function ExplorerPage() {
         </div >
         <div className="h-4 w-px mx-2 divider-vertical" />
         <div className="flex items-center gap-2">
-          <span className="text-tiny items-center uppercase tracking-wider text-muted-foreground">Mode:</span>
-          <div className="inline-flex rounded-xl border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/70 p-1">
+          <span className="text-tiny items-center uppercase tracking-wider text-muted-standard">Mode:</span>
+          <div className="inline-flex rounded-xl border border-border bg-surface-elevated p-1">
             <button
               type="button"
               onClick={() => setModeTab("browse")}
@@ -787,7 +781,7 @@ export default function ExplorerPage() {
                 "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 modeTab === "browse"
                   ? "bg-sky-600 text-white"
-                  : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
               Browse
@@ -799,7 +793,7 @@ export default function ExplorerPage() {
                 "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 modeTab === "query"
                   ? "bg-sky-600 text-white"
-                  : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                  : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
               {sourceTab === "redis" ? "Command" : "Query"}
@@ -827,12 +821,12 @@ export default function ExplorerPage() {
                         : "SELECT * FROM tb_cep_notification_log"
                   }
                 />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center justify-between text-xs text-muted-standard">
                   <span>Max {MAX_ROWS} rows</span>
                   <button
                     type="button"
                     onClick={() => runQueryMutation.mutate(queryText)}
-                    className="rounded-full border px-4 py-2 text-xs uppercase tracking-wider hover:border-sky-500 border-border text-muted-foreground"
+                    className="rounded-full border px-4 py-2 text-xs uppercase tracking-wider hover:border-sky-500 border-border text-muted-standard"
                   >
                     Run
                   </button>
@@ -841,7 +835,7 @@ export default function ExplorerPage() {
             )}
 
             <div className="space-y-3">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="text-xs uppercase tracking-wider text-muted-standard">
                 Results
               </div>
               <div className="ag-theme-cep h-[520px] w-full rounded-2xl border overflow-hidden border-border bg-surface-elevated">
@@ -855,7 +849,7 @@ export default function ExplorerPage() {
                 />
               </div>
               {statusMessage && (
-                <div className="mt-3 text-xs text-muted-foreground">{statusMessage}</div>
+                <div className="mt-3 text-xs text-muted-standard">{statusMessage}</div>
               )}
               {queryError && (
                 <div className="mt-2 rounded-2xl border border-rose-500/70 bg-rose-500/5 px-3 py-2 text-xs text-rose-200">
@@ -866,15 +860,16 @@ export default function ExplorerPage() {
             {sourceTab === "neo4j" && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Graph preview</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-standard">Graph preview</p>
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className={`rounded-full border px-3 py-1 text-tiny uppercase tracking-wider ${
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-tiny uppercase tracking-wider",
                         neo4jViewMode === "graph"
                           ? "bg-sky-600 text-white border-sky-600"
-                          : "bg-transparent text-muted-foreground border-border hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
+                          : "bg-transparent text-muted-standard border-border hover:bg-surface-elevated"
+                      )}
                       onClick={() => setNeo4jViewMode("graph")}
                       disabled={!graphAvailable}
                     >
@@ -882,11 +877,12 @@ export default function ExplorerPage() {
                     </button>
                     <button
                       type="button"
-                      className={`rounded-full border px-3 py-1 text-tiny uppercase tracking-wider ${
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-tiny uppercase tracking-wider",
                         neo4jViewMode === "table"
                           ? "bg-sky-600 text-white border-sky-600"
-                          : "bg-transparent text-muted-foreground border-border hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
+                          : "bg-transparent text-muted-standard border-border hover:bg-surface-elevated"
+                      )}
                       onClick={() => {
                         setNeo4jViewMode("table");
                         setHighlightedNodeIds(new Set());
@@ -898,11 +894,12 @@ export default function ExplorerPage() {
                     </button>
                     <button
                       type="button"
-                      className={`rounded-full border px-3 py-1 text-tiny uppercase tracking-wider ${
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-tiny uppercase tracking-wider",
                         neo4jViewMode === "value"
                           ? "bg-sky-600 text-white border-sky-600"
-                          : "bg-transparent text-muted-foreground border-border hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
+                          : "bg-transparent text-muted-standard border-border hover:bg-surface-elevated"
+                      )}
                       onClick={() => setNeo4jViewMode("value")}
                       disabled={!valueAvailable}
                     >
@@ -910,11 +907,11 @@ export default function ExplorerPage() {
                     </button>
                   </div>
                 </div>
-                <div className="text-tiny text-muted-foreground">
+                <div className="text-tiny text-muted-standard">
                   Nodes: {neo4jGraphPreview.nodes.length} · Relations: {neo4jGraphPreview.edges.length}
                 </div>
                 {neo4jGraphPreview.warnings.length > 0 && (
-                  <div className="space-y-1 text-tiny text-muted-foreground">
+                  <div className="space-y-1 text-tiny text-muted-standard">
                     {neo4jGraphPreview.warnings.map((warning, index) => (
                       <p key={`warning-${index}`}>{warning}</p>
                     ))}
@@ -931,15 +928,15 @@ export default function ExplorerPage() {
                         onNodeClick={handleGraphNodeClick}
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        Run a Neo4j query returning nodes & relationships to visualize the graph.
+                      <div className="flex h-full items-center justify-center text-sm text-muted-standard">
+                        Run a Neo4j query returning nodes & relationships to visualize graph.
                       </div>
                     )}
                   </div>
                 )}
                 {neo4jViewMode === "value" && valueAvailable && (
                   <div className="rounded-2xl border p-4 text-sm border-border text-foreground bg-surface-base">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">Scalar result</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-standard">Scalar result</p>
                     <p className="mt-2 text-lg font-semibold">{String(neo4jScalar)}</p>
                   </div>
                 )}
@@ -949,7 +946,7 @@ export default function ExplorerPage() {
         }
         rightPane={
           <div className="space-y-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">
+            <div className="text-xs uppercase tracking-wider text-muted-standard">
               Inspector
             </div>
             <div className="custom-scrollbar mt-3 max-h-[620px] overflow-auto rounded-xl border p-3 text-xs border-border text-foreground bg-surface-elevated">

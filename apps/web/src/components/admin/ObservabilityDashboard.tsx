@@ -139,10 +139,7 @@ export default function ObservabilityDashboard() {
   return (
     <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-[var(--surface-base)] p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Observability</h1>
-          <p className="text-sm " style={{color: "var(--muted-foreground)"}}>Trace & Regression 핵심 KPI를 한 화면에서 파악합니다.</p>
-        </div>
+        <div />
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}

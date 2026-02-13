@@ -114,23 +114,22 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threads]);
 
-  const fetchThreadDetail = useCallback(
-    async (threadId: string) => {
-      const payload = await authenticatedFetch<ThreadDetail | { data: ThreadDetail }>(`/threads/${threadId}`);
-      const detail = (payload as { data?: ThreadDetail }).data ?? (payload as ThreadDetail);
-      setActiveThread(detail);
-      setThreads((prev) => {
-        const existing = prev.find((thread) => thread.id === detail.id);
-        const updated = existing?.updated_at !== detail.updated_at;
-        const filtered = prev.filter((thread) => thread.id !== detail.id);
-        if (updated) {
-          return [detail, ...filtered];
-        }
-        return prev.map((thread) => (thread.id === detail.id ? detail : thread));
-      });
-    },
-    []
-  );
+  const fetchThreadDetail = useCallback(async (threadId: string) => {
+    const payload = await authenticatedFetch<ThreadDetail | { data: ThreadDetail }>(
+      `/threads/${threadId}`,
+    );
+    const detail = (payload as { data?: ThreadDetail }).data ?? (payload as ThreadDetail);
+    setActiveThread(detail);
+    setThreads((prev) => {
+      const existing = prev.find((thread) => thread.id === detail.id);
+      const updated = existing?.updated_at !== detail.updated_at;
+      const filtered = prev.filter((thread) => thread.id !== detail.id);
+      if (updated) {
+        return [detail, ...filtered];
+      }
+      return prev.map((thread) => (thread.id === detail.id ? detail : thread));
+    });
+  }, []);
 
   useEffect(() => {
     fetchThreads();
@@ -206,9 +205,9 @@ export default function Home() {
 
     let streamUrl: string;
     if (!apiBaseUrl) {
-      streamUrl = `/sse-proxy/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
+      streamUrl = `/sse-proxy/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ""}`;
     } else {
-      streamUrl = `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
+      streamUrl = `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ""}`;
     }
 
     const source = new EventSource(streamUrl);
@@ -218,7 +217,11 @@ export default function Home() {
       try {
         const payload = JSON.parse(event.data) as StreamChunk;
         setChunks((prev) => {
-          if (payload.type === "answer" && prev.length > 0 && prev[prev.length - 1].type === "answer") {
+          if (
+            payload.type === "answer" &&
+            prev.length > 0 &&
+            prev[prev.length - 1].type === "answer"
+          ) {
             const merged = {
               ...prev[prev.length - 1],
               text: prev[prev.length - 1].text + payload.text,
@@ -273,19 +276,19 @@ export default function Home() {
       setActiveThread((prev) =>
         prev
           ? {
-            ...prev,
-            messages: [
-              ...(prev.messages ?? []),
-              {
-                id: `local-${Date.now()}`,
-                thread_id: prev.id,
-                role: "user",
-                content: trimmedMessage,
-                created_at: new Date().toISOString(),
-              },
-            ],
-          }
-          : prev
+              ...prev,
+              messages: [
+                ...(prev.messages ?? []),
+                {
+                  id: `local-${Date.now()}`,
+                  thread_id: prev.id,
+                  role: "user",
+                  content: trimmedMessage,
+                  created_at: new Date().toISOString(),
+                },
+              ],
+            }
+          : prev,
       );
     }
   };
@@ -309,16 +312,10 @@ export default function Home() {
             </p>
           </div>
           <div className="page-header-actions">
-            <button
-              onClick={() => setHistoryVisible((prev) => !prev)}
-              className="btn-secondary"
-            >
+            <button onClick={() => setHistoryVisible((prev) => !prev)} className="btn-secondary">
               {historyVisible ? "Hide history" : "Show history"}
             </button>
-            <button
-              onClick={startNewConversation}
-              className="btn-primary"
-            >
+            <button onClick={startNewConversation} className="btn-primary">
               New conversation
             </button>
           </div>
@@ -329,24 +326,17 @@ export default function Home() {
         {historyVisible ? (
           <aside className="w-[320px] space-y-4 container-panel">
             <div className="flex items-center justify-between">
-              <p className="text-label">History</p>
+              <p className="left-panel-title">History</p>
               {loadingThreads ? (
                 <span className="text-sm text-muted-standard">Loading...</span>
               ) : null}
-              <button
-                onClick={fetchThreads}
-                className="btn-secondary"
-              >
+              <button onClick={fetchThreads} className="btn-secondary">
                 Refresh
               </button>
             </div>
-            {threadsError ? (
-              <p className="text-xs">로드 실패: {threadsError}</p>
-            ) : null}
+            {threadsError ? <p className="text-xs">로드 실패: {threadsError}</p> : null}
             <div className="space-y-3">
-              {threads.length === 0 ? (
-                <p className="text-sm">No conversations yet.</p>
-              ) : null}
+              {threads.length === 0 ? <p className="text-sm">No conversations yet.</p> : null}
               {threads.map((thread) => (
                 <div
                   key={thread.id}
@@ -354,13 +344,15 @@ export default function Home() {
                     "group relative flex w-full cursor-pointer flex-col br-card border px-3 py-3 transition",
                     activeThread?.id === thread.id
                       ? "border-sky-600 bg-sky-50 dark:border-sky-500 dark:bg-sky-900/20"
-                      : "border-border bg-surface-base hover:bg-surface-elevated dark:hover:bg-slate-800/80"
+                      : "border-border bg-surface-base hover:bg-surface-elevated dark:hover:bg-slate-800/80",
                   )}
                   onClick={() => selectThread(thread.id)}
                 >
                   <div className="text-left">
                     <p className="font-semibold text-sm">{thread.title}</p>
-                    <p className="text-xs text-muted-standard">{formatTimestamp(thread.updated_at)}</p>
+                    <p className="text-xs text-muted-standard">
+                      {formatTimestamp(thread.updated_at)}
+                    </p>
                   </div>
                   <button
                     className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border text-tiny text-rose-600 border-rose-400 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-500 dark:hover:bg-rose-950/30"
@@ -378,33 +370,35 @@ export default function Home() {
           </aside>
         ) : null}
 
-        <main className={cn("flex flex-1 flex-col gap-6 transition-all", !historyVisible && "w-full")}>
+        <main
+          className={cn("flex flex-1 flex-col gap-6 transition-all", !historyVisible && "w-full")}
+        >
           {/* Input Section */}
           <section className="container-section">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="form-field-label">
-                질문 입력
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="form-field-label min-w-[72px] shrink-0">질문 입력</span>
                 <input
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
-                  className="input-container"
+                  className="input-container flex-1"
                   placeholder="예: 새 프로젝트의 방향성을 요약해줘"
                 />
-              </label>
-              <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="btn-primary shrink-0"
                   disabled={!inputValue.trim() || status === "streaming"}
                 >
                   <span className={status === "streaming" ? "animate-pulse" : ""}>
                     {status === "streaming" ? "Streaming…" : "메시지 전송"}
                   </span>
                 </button>
+              </div>
+              <div className="flex justify-end">
                 <span
                   className={cn(
                     "text-xs uppercase tracking-wider",
-                    status === "streaming" && "animate-pulse"
+                    status === "streaming" && "animate-pulse",
                   )}
                 >
                   {status === "streaming" ? (
@@ -435,14 +429,22 @@ export default function Home() {
               {chunks.map((chunk, index) => (
                 <div
                   key={`${chunk.type}-${index}`}
-                  className={cn("space-y-1 br-card border p-3 text-sm", getBadgeClasses(chunk.type))}
+                  className={cn(
+                    "space-y-1 br-card border p-3 text-sm",
+                    getBadgeClasses(chunk.type),
+                  )}
                 >
                   <span
-                    className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs", getBadgeClasses(chunk.type))}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs",
+                      getBadgeClasses(chunk.type),
+                    )}
                   >
                     {chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                    {chunk.text}
+                  </p>
                   {chunk.thread_id ? (
                     <p className="text-xs text-muted-standard">Thread: {chunk.thread_id}</p>
                   ) : null}
@@ -464,7 +466,9 @@ export default function Home() {
             </div>
             <div className="mt-3 space-y-3">
               {references.length === 0 ? (
-                <p className="text-sm text-muted-standard">References from latest document chat will appear here.</p>
+                <p className="text-sm text-muted-standard">
+                  References from latest document chat will appear here.
+                </p>
               ) : (
                 references.map((reference) => (
                   <button
@@ -473,7 +477,9 @@ export default function Home() {
                     className="w-full br-card border bg-surface-elevated p-4 text-left transition hover:border-sky-500 dark:hover:border-sky-400"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-foreground">{reference.document_title}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {reference.document_title}
+                      </p>
                       <span className="text-tiny uppercase tracking-wider text-muted-standard">
                         {reference.page ? `Page ${reference.page}` : "Page unknown"}
                       </span>
@@ -502,14 +508,13 @@ export default function Home() {
             </div>
             <div className="mt-3 space-y-3">
               {messageFeed.length === 0 ? (
-                <p className="text-sm text-muted-standard">Select a thread or send a prompt to start.</p>
+                <p className="text-sm text-muted-standard">
+                  Select a thread or send a prompt to start.
+                </p>
               ) : (
                 messageFeed.map((message) =>
                   message.role === "user" ? (
-                    <div
-                      key={message.id}
-                      className="flex justify-end"
-                    >
+                    <div key={message.id} className="flex justify-end">
                       <div className="max-w-[70%] br-card border px-4 py-2 text-sm font-medium shadow-lg bg-sky-600 border-sky-500 text-white">
                         <p className="text-xs uppercase tracking-wider text-sky-100">
                           {message.role} · {formatTimestamp(message.created_at)}
@@ -531,7 +536,7 @@ export default function Home() {
                         {message.content}
                       </p>
                     </div>
-                  )
+                  ),
                 )
               )}
             </div>

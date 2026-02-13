@@ -29,12 +29,7 @@ export default function DashboardPage() {
     <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"} style={{ backgroundColor: isFullScreen ? "var(--background)" : undefined }}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>CEP Monitoring Dashboard</h1>
-          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-            Real-time monitoring of rules, channels, and system health
-          </p>
-        </div>
+        <div />
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
