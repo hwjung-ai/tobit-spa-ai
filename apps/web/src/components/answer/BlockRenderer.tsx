@@ -116,7 +116,7 @@ interface BlockRendererProps {
   traceId?: string;
 }
 
-const lineColors = ["#38bdf8", "#34d399", "#f97316", "#a855f7", "#f472b6"];
+const lineColors = ["var(--chart-primary-color)", "var(--chart-success-color)", "#f97316", "#a855f7", "#f472b6"];
 
 interface RenderedBlockTelemetry {
   block_type: string;
@@ -224,8 +224,8 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
   }, [traceId, blocks]);
   if (!blocks || blocks.length === 0) {
     return (
-      <div className="rounded-3xl border  /70 p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-        <p className="text-sm " style={{color: "var(--muted-foreground)"}}>No blocks to display yet.</p>
+      <div className="answer-block">
+        <p className="text-sm text-muted-foreground">No blocks to display yet.</p>
       </div>
     );
   }
@@ -240,7 +240,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
       {/* Render reference blocks first (at the top) */}
       {referenceBlocks.map((block, index) => {
         const title = block.title ? (
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+          <p className="mb-3 text-label">
             {block.title}
           </p>
         ) : null;
@@ -248,38 +248,38 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
         return (
           <section
             key={`reference-${index}`}
-            className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+            className="answer-section"
           >
             {title}
             <div className="mt-4 space-y-3">
               {block.items.map((reference, refIndex) => {
-                const cardClass = `block rounded-2xl border border-[var(--border)] bg-[var(--surface-overlay)] p-4 text-sm text-[var(--foreground-secondary)] transition ${
+                const cardClass = `block rounded-2xl border border-variant bg-surface-overlay p-4 text-sm text-muted-foreground transition ${
                   reference.url
-                    ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-[var(--surface-overlay)]"
-                    : "hover:border-[var(--border)]"
+                    ? "cursor-pointer hover:border-sky-500 hover:text-foreground"
+                    : "hover:border-variant"
                 }`;
                 const cardContent = (
                   <>
                     <div className="flex items-center justify-between">
                       <p className="font-semibold">{reference.title}</p>
-                      <span className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+                      <span className="text-label-sm">
                         {reference.kind ?? "reference"}
                       </span>
                     </div>
                     {reference.snippet ? (
-                      <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>{reference.snippet}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{reference.snippet}</p>
                     ) : null}
                     {reference.url && reference.kind === "document" ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                      <p className="mt-1 text-tiny uppercase tracking-wider text-sky-400 flex items-center gap-1">
                         📄 View document
                       </p>
                     ) : reference.url ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                      <p className="mt-1 text-tiny uppercase tracking-wider text-sky-400 flex items-center gap-1">
                         🔗 View source
                       </p>
                     ) : null}
                     {renderReferencePayload(reference.payload) ? (
-                      <pre className="mt-3 max-h-40 overflow-auto rounded-xl /80 px-3 py-2 text-xs " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
+                      <pre className="answer-code">
                         {renderReferencePayload(reference.payload)}
                       </pre>
                     ) : null}
@@ -358,7 +358,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
       {/* Render answer blocks after references */}
       {answerBlocks.map((block, index) => {
         const title = block.title ? (
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+          <p className="mb-3 text-label">
             {block.title}
           </p>
         ) : null;
@@ -371,10 +371,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
-                <div className="prose max-w-none prose-invert " style={{color: "var(--foreground)"}}>
+                <div className="prose max-w-none prose-invert answer-prose">
                   <ReactMarkdown>{block.content}</ReactMarkdown>
                 </div>
               </section>
@@ -384,10 +384,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
-                <p className="text-sm " style={{color: "var(--foreground)"}}>{block.text}</p>
+                <p className="text-sm text-foreground">{block.text}</p>
               </section>
             );
 
@@ -395,14 +395,14 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
                 <div className="mt-2 flex items-baseline gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+                  <p className="text-label">
                     {block.label}
                   </p>
-                  <p className="text-3xl font-semibold text-white">{block.value}</p>
+                  <p className="text-3xl font-semibold text-foreground">{block.value}</p>
                 </div>
               </section>
             );
@@ -416,7 +416,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 <div className="flex items-center justify-between">
                   {title}
@@ -425,7 +425,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       <button
                         type="button"
                         aria-label="Download as CSV"
-                        className="rounded border  px-2 py-0.5 text-[10px] uppercase tracking-wider  transition hover: hover:text-white" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+                        className="answer-button"
                         onClick={() => downloadTableAsCSV(columns, rows, block.title)}
                       >
                         CSV
@@ -433,7 +433,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       <button
                         type="button"
                         aria-label="Download as JSON"
-                        className="rounded border  px-2 py-0.5 text-[10px] uppercase tracking-wider  transition hover: hover:text-white" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+                        className="answer-button"
                         onClick={() => downloadTableAsJSON(columns, rows, block.title)}
                       >
                         JSON
@@ -442,20 +442,20 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                   )}
                 </div>
                 <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full text-left text-sm " style={{color: "var(--foreground-secondary)"}}>
+                  <table className="answer-table">
                     <thead>
                       <tr>
                         {columns.map((column) => (
                           <th
                             key={column}
                             scope="col"
-                            className="border-b  px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+                            className="answer-table-header"
                           >
                             {column}
                           </th>
                         ))}
                         {isCandidateTable ? (
-                          <th scope="col" className="border-b  px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
+                          <th scope="col" className="answer-table-header">
                             Action
                           </th>
                         ) : null}
@@ -472,7 +472,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                         return (
                           <tr
                             key={`${rowIndex}-${row.join("-")}`}
-                            className={rowIndex % 2 === 0 ? "bg-[var(--surface-overlay)]" : "bg-[var(--surface-overlay)]"}
+                            className="answer-table-row"
                           >
                             {row.map((cell, cellIndex) => (
                               <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2">
@@ -484,14 +484,14 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                                 {candidateAction ? (
                                   <button
                                     type="button"
-                                    className="rounded-full border  px-2 py-1 text-[10px] uppercase tracking-[0.3em]  transition hover: hover:text-white disabled:opacity-40" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
+                                    className="answer-button"
                                     disabled={!onAction}
                                     onClick={() => onAction?.(candidateAction)}
                                   >
                                     {candidateAction.label}
                                   </button>
                                 ) : (
-                                  <span className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+                                  <span className="text-label-sm">
                                     선택
                                   </span>
                                 )}
@@ -551,7 +551,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={block.title || "Chart"}>
                   <polyline
                     fill="none"
-                    stroke="#38bdf8"
+                    stroke="var(--chart-primary-color)"
                     strokeWidth="3"
                     points={polylinePoints}
                     strokeLinecap="round"
@@ -561,14 +561,14 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                     y1={height - padding}
                     x2={width - padding}
                     y2={height - padding}
-                    stroke="#0f172a"
+                    stroke="var(--chart-tooltip-bg)"
                   />
                   <line
                     x1={padding}
                     y1={padding}
                     x2={padding}
                     y2={height - padding}
-                    stroke="#0f172a"
+                    stroke="var(--chart-tooltip-bg)"
                   />
                   {normalizedPoints.map((point, idx) => {
                     const x =
@@ -585,7 +585,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                         cx={x}
                         cy={y}
                         r={3}
-                        fill="#38bdf8"
+                        fill="var(--chart-primary-color)"
                       />
                     );
                   })}
@@ -593,7 +593,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
               );
             } catch {
               chartContent = (
-                <div className="mt-4 rounded-2xl border border-dashed /80 /40 p-4 text-sm " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}>
+                <div className="answer-empty">
                   Chart rendering not enabled yet; see the table block below.
                 </div>
               );
@@ -601,7 +601,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
                 {chartContent}
@@ -614,25 +614,25 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
                 <div className="mt-4 h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
-                      <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
+                      <CartesianGrid stroke="var(--chart-grid-color)" strokeDasharray="3 3" />
                       <XAxis
                         dataKey="timestamp"
-                        tick={{ fill: "#94a3b8", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-text-color)", fontSize: 12 }}
                         tickFormatter={(value) => formatTimestampLabel(value)}
                       />
                       <YAxis
-                        tick={{ fill: "#94a3b8", fontSize: 12 }}
-                        stroke="#0f172a"
+                        tick={{ fill: "var(--chart-text-color)", fontSize: 12 }}
+                        stroke="var(--chart-tooltip-bg)"
                         allowDecimals={false}
                       />
                       <Tooltip
-                        contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155" }}
+                        contentStyle={{ backgroundColor: "var(--chart-tooltip-bg)", borderColor: "var(--chart-tooltip-border)" }}
                         labelFormatter={(value) => `Time: ${value}`}
                       />
                       {block.series.map((series, seriesIndex) => (
@@ -656,20 +656,20 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
                 <div className="flex items-center justify-between">
-                  <p className="text-sm " style={{color: "var(--muted-foreground)"}}>Dependency graph (up to 3 levels)</p>
+                  <p className="text-sm text-muted-foreground">Dependency graph (up to 3 levels)</p>
                   <button
                     type="button"
-                    className="rounded-full border  px-3 py-1 text-xs uppercase tracking-[0.3em]  transition hover: hover:text-white" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+                    className="answer-button"
                     onClick={() => setFullscreenGraph(block)}
                   >
                     전체 보기
                   </button>
                 </div>
-                <div className="mt-3 h-64 rounded-2xl border   shadow-inner" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <div className="mt-3 h-64 answer-code">
                   <GraphFlowRenderer block={block} />
                 </div>
                 {fullscreenGraph ? (
@@ -685,10 +685,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
-                <div className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>
+                <div className="mt-2 text-sm text-muted-foreground">
                   Nodes: {block.nodes.length} · Edges: {block.edges.length}
                   {block.meta?.truncated ? " · truncated" : ""}
                 </div>
@@ -700,10 +700,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
               >
                 {title}
-                <p className="mt-2 text-sm " style={{color: "var(--muted-foreground)"}}>Hops: {block.hop_count}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Hops: {block.hop_count}</p>
                 {block.nodes.length > 0 ? renderNodeTable(block.nodes, "Path nodes") : null}
                 {block.edges.length > 0 ? renderEdgeTable(block.edges) : null}
               </section>
@@ -713,16 +713,16 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
-                className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="answer-section"
                 data-testid="references-block"
               >
                 {title}
                 <div className="mt-4 space-y-3">
                   {block.items.map((reference, refIndex) => {
-                    const cardClass = `rounded-2xl border border-[var(--border)] bg-[var(--surface-overlay)] p-4 text-sm text-[var(--foreground-secondary)] transition ${
+                    const cardClass = `rounded-2xl border border-variant bg-surface-overlay p-4 text-sm text-muted-foreground transition ${
                       reference.url
-                        ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-[var(--surface-overlay)]"
-                        : "hover:border-[var(--border)]"
+                        ? "cursor-pointer hover:border-sky-500 hover:text-foreground"
+                        : "hover:border-variant"
                     }`;
 
                     console.log('[BlockRenderer] Rendering reference:', reference.title, 'URL:', reference.url);
@@ -730,24 +730,24 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       <>
                         <div className="flex items-center justify-between">
                           <p className="font-semibold">{reference.title}</p>
-                          <span className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+                          <span className="text-label-sm">
                             {reference.kind ?? "reference"}
                           </span>
                         </div>
                         {reference.snippet ? (
-                          <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>{reference.snippet}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{reference.snippet}</p>
                         ) : null}
                         {reference.url && reference.kind === "document" ? (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                          <p className="mt-1 text-tiny uppercase tracking-wider text-sky-400 flex items-center gap-1">
                             📄 View document
                           </p>
                         ) : reference.url ? (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                          <p className="mt-1 text-tiny uppercase tracking-wider text-sky-400 flex items-center gap-1">
                             🔗 View source
                           </p>
                         ) : null}
                         {renderReferencePayload(reference.payload) ? (
-                          <pre className="mt-3 max-h-40 overflow-auto rounded-xl /80 px-3 py-2 text-xs " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
+                          <pre className="answer-code">
                             {renderReferencePayload(reference.payload)}
                           </pre>
                         ) : null}
@@ -872,7 +872,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
           blockElement = (
             <section
               key={baseKey}
-              className="rounded-3xl border  /80 p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+              className="answer-section"
             >
               {title}
               <p className="text-sm text-rose-300">렌더링 오류: {errorMessage}</p>
@@ -888,14 +888,14 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
         return blockElement;
       })}
       {generalActions.length ? (
-        <section className="rounded-3xl border  /70 px-5 py-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-          <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Next actions</p>
+        <section className="answer-section">
+          <p className="text-label">Next actions</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {generalActions.map((action, index) => (
               <button
                 key={`${action.type}-${action.label}-${index}`}
                 type="button"
-                className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-[0.3em]  transition hover: hover:text-white disabled:opacity-40" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
+                className="answer-button"
                 disabled={!onAction}
                 onClick={() => onAction?.(action)}
               >
@@ -1023,19 +1023,19 @@ function GraphFlowRenderer({ block }: { block: GraphBlock }) {
 function GraphFullscreenOverlay({ block, onClose }: { block: GraphBlock; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6">
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-3xl border   shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-        <div className="flex items-center justify-between border-b  px-5 py-3" style={{borderColor: "var(--border)"}}>
+      <div className="flex h-full w-full flex-col overflow-hidden answer-block shadow-2xl">
+        <div className="flex items-center justify-between border-b px-5 py-3 answer-divider">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+            <p className="text-label">
               Graph overview
             </p>
-            <p className="text-sm " style={{color: "var(--foreground-secondary)"}}>
+            <p className="text-sm text-muted-foreground">
               {block.nodes.length} nodes · {block.edges.length} relations
             </p>
           </div>
           <button
             type="button"
-            className="rounded-full border  px-3 py-1 text-xs uppercase tracking-[0.3em]  transition hover: hover:text-white" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+            className="answer-button"
             onClick={onClose}
           >
             닫기
@@ -1054,19 +1054,19 @@ function renderNodeTable(nodes: NetworkNode[], heading = "Nodes") {
     new Map(nodes.map((node) => [node.id, node])).values()
   );
   return (
-    <div className="mt-3 overflow-x-auto rounded-2xl border  /30 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-      <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>{heading}</p>
-      <table className="min-w-full text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
+    <div className="mt-3 overflow-x-auto answer-code">
+      <p className="text-label">{heading}</p>
+      <table className="answer-table">
         <thead>
           <tr>
-            <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>ID</th>
-            <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>Type</th>
-            <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>Subtype</th>
+            <th scope="col" className="px-2 py-1 text-muted-foreground">ID</th>
+            <th scope="col" className="px-2 py-1 text-muted-foreground">Type</th>
+            <th scope="col" className="px-2 py-1 text-muted-foreground">Subtype</th>
           </tr>
         </thead>
         <tbody>
           {unique.map((node) => (
-            <tr key={node.id} className="border-t " style={{borderColor: "var(--border)"}}>
+            <tr key={node.id} className="answer-divider">
               <td className="px-2 py-1">{node.label ?? node.id}</td>
               <td className="px-2 py-1">{node.ci_type ?? "-"}</td>
               <td className="px-2 py-1">{node.ci_subtype ?? "-"}</td>
@@ -1080,19 +1080,19 @@ function renderNodeTable(nodes: NetworkNode[], heading = "Nodes") {
 
 function renderEdgeTable(edges: NetworkEdge[]) {
   return (
-    <div className="mt-3 overflow-x-auto rounded-2xl border  /30 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-      <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Edges</p>
-      <table className="min-w-full text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
+    <div className="mt-3 overflow-x-auto answer-code">
+      <p className="text-label">Edges</p>
+      <table className="answer-table">
         <thead>
           <tr>
-            <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>Source</th>
-            <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>Target</th>
-            <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>Type</th>
+            <th scope="col" className="px-2 py-1 text-muted-foreground">Source</th>
+            <th scope="col" className="px-2 py-1 text-muted-foreground">Target</th>
+            <th scope="col" className="px-2 py-1 text-muted-foreground">Type</th>
           </tr>
         </thead>
         <tbody>
           {edges.map((edge, index) => (
-            <tr key={`${edge.source}-${edge.target}-${index}`} className="border-t " style={{borderColor: "var(--border)"}}>
+            <tr key={`${edge.source}-${edge.target}-${index}`} className="answer-divider">
               <td className="px-2 py-1">{edge.source ?? "-"}</td>
               <td className="px-2 py-1">{edge.target ?? "-"}</td>
               <td className="px-2 py-1">{edge.type ?? "-"}</td>

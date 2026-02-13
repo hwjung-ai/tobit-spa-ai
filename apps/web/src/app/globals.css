@@ -114,6 +114,18 @@
   /* State-specific border colors (dark mode) */
   --border-success: #34d399; /* emerald-400 */
   --border-primary-hover: #38bdf8; /* sky-400 */
+
+  /* Chart-specific colors (dark mode) */
+  --chart-grid-color: #1e293b; /* slate-800 */
+  --chart-text-color: #94a3b8; /* slate-400 */
+  --chart-tooltip-bg: #0f172a; /* slate-900 */
+  --chart-tooltip-border: #1e293b; /* slate-800 */
+  --chart-primary-color: #38bdf8; /* sky-400 */
+  --chart-primary-alt: #0ea5e9; /* sky-500 */
+  --chart-success-color: #34d399; /* emerald-400 */
+  --chart-warning-color: #fbbf24; /* amber-400 */
+  --chart-error-color: #f87171; /* red-400 */
+  --chart-info-color: #38bdf8; /* sky-400 */
 }
 
 /* Light mode component variables */
@@ -127,6 +139,18 @@
   /* State-specific border colors (light mode) */
   --border-success: #10b981; /* emerald-500 */
   --border-primary-hover: #0284c7; /* sky-600 */
+
+  /* Chart-specific colors (light mode) */
+  --chart-grid-color: #e2e8f0; /* slate-200 */
+  --chart-text-color: #64748b; /* slate-500 */
+  --chart-tooltip-bg: #ffffff; /* white */
+  --chart-tooltip-border: #e2e8f0; /* slate-200 */
+  --chart-primary-color: #0ea5e9; /* sky-500 */
+  --chart-primary-alt: #0284c7; /* sky-600 */
+  --chart-success-color: #10b981; /* emerald-500 */
+  --chart-warning-color: #f59e0b; /* amber-500 */
+  --chart-error-color: #ef4444; /* red-500 */
+  --chart-info-color: #0ea5e9; /* sky-500 */
 }
 
 /* Note: @theme inline removed - using direct CSS variables instead */
@@ -756,6 +780,40 @@ html {
 }
 
 /* Component Theme Classes */
+
+/* Text Color Classes - For consistent text styling across components */
+.text-foreground {
+  color: var(--foreground);
+}
+
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+
+.text-muted-standard {
+  color: var(--muted-foreground);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-primary-light {
+  color: var(--primary-light);
+}
+
+.text-destructive {
+  color: var(--destructive);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
 .card {
   @apply rounded-lg border;
   border-color: var(--border);
@@ -855,7 +913,7 @@ html {
 }
 
 .draft-panel-label {
-  @apply text-[11px] uppercase tracking-normal;
+  @apply text-xs uppercase tracking-normal;
   color: var(--muted-foreground);
 }
 
@@ -866,17 +924,17 @@ html {
 }
 
 .draft-panel-item-label {
-  @apply text-[11px] font-semibold;
+  @apply text-xs font-semibold;
   color: var(--muted-foreground);
 }
 
 .draft-panel-item-description {
-  @apply text-[10px];
+  @apply text-xs;
   color: var(--muted-foreground);
 }
 
 .draft-panel-item-signature {
-  @apply text-[10px] text-sky-400;
+  @apply text-xs text-sky-400;
 }
 
 .dark .draft-panel-item-signature {
@@ -885,7 +943,7 @@ html {
 
 /* Draft Panel Buttons */
 .draft-panel-button {
-  @apply rounded-2xl px-3 py-2 text-[11px] font-semibold uppercase tracking-normal transition;
+  @apply rounded-2xl px-3 py-2 text-xs font-semibold uppercase tracking-normal transition;
   border: 1px solid var(--border);
   background-color: var(--surface-overlay);
   color: var(--foreground);
@@ -901,7 +959,7 @@ html {
 
 /* Alert Boxes - Error and Warning messages */
 .alert-box {
-  @apply space-y-1 rounded-2xl border px-3 py-2 text-[11px];
+  @apply space-y-1 rounded-2xl border px-3 py-2 text-xs;
 }
 
 .alert-error {
@@ -918,7 +976,7 @@ html {
 
 /* Code/Debug Blocks - Pre-formatted text containers */
 .code-block {
-  @apply rounded-xl p-2 text-[11px] overflow-auto;
+  @apply rounded-xl p-2 text-xs overflow-auto;
   background-color: var(--surface-base);
   color: var(--muted-foreground);
   max-height: 12rem;
@@ -930,7 +988,7 @@ html {
 
 /* Debug Section - Collapsible details panel */
 .debug-section {
-  @apply rounded-2xl p-3 text-[11px];
+  @apply rounded-2xl p-3 text-xs;
   border: 1px solid var(--border);
   background-color: var(--surface-elevated);
   color: var(--muted-foreground);
@@ -946,12 +1004,12 @@ html {
 }
 
 .debug-section-label {
-  @apply text-[10px] uppercase tracking-normal;
+  @apply text-xs uppercase tracking-normal;
   color: var(--muted-foreground);
 }
 
 .debug-section-value {
-  @apply text-[11px];
+  @apply text-xs;
   color: var(--muted-foreground);
 }
 
@@ -2298,6 +2356,10 @@ html {
   border-color: var(--border);
 }
 
+.border-border-muted {
+  border-color: var(--border-muted);
+}
+
 /* Background Color Variables */
 .bg-surface-base {
   background-color: var(--surface-base);
@@ -2312,8 +2374,97 @@ html {
   color: var(--foreground);
 }
 
+.text-primary {
+  color: var(--primary);
+}
+
+.text-primary-light {
+  color: var(--primary-light);
+}
+
 .text-muted-foreground {
   color: var(--muted-foreground);
+}
+
+.text-muted-standard {
+  color: var(--muted-foreground);
+}
+
+.text-foreground-secondary {
+  color: var(--foreground-secondary, var(--foreground));
+}
+
+/* Semantic background opacity classes (e.g., bg-success/40) */
+.bg-success\/40 {
+  background-color: rgba(22, 163, 74, 0.4); /* green-600 with 40% opacity */
+}
+
+.bg-error\/40 {
+  background-color: rgba(220, 38, 38, 0.4); /* red-600 with 40% opacity */
+}
+
+.text-success {
+  color: #16a34a; /* green-600 */
+}
+
+.text-error {
+  color: #dc2626; /* red-600 */
+}
+
+.text-warning {
+  color: #ca8a04; /* yellow-600 */
+}
+
+.text-success {
+  color: #16a34a; /* green-600 */
+}
+
+.bg-muted-background {
+  background-color: var(--muted-background);
+}
+
+/* Button variant classes */
+.btn-error {
+  border-color: var(--error);
+  background-color: rgba(var(--error-rgb), 0.1);
+  color: var(--error);
+}
+
+.btn-success {
+  border-color: var(--success);
+  background-color: rgba(22, 163, 74, 0.1);
+  color: var(--success);
+}
+
+.btn-warning {
+  border-color: var(--warning);
+  background-color: rgba(var(--warning-rgb), 0.1);
+  color: var(--warning);
+}
+
+/* Background opacity classes */
+.bg-success\/10 {
+  background-color: rgba(22, 163, 74, 0.1);
+}
+
+.bg-warning\/10 {
+  background-color: rgba(202, 138, 4, 0.1);
+}
+
+.bg-warning\/40 {
+  background-color: rgba(202, 138, 4, 0.4);
+}
+
+.border-success {
+  border-color: #10b981; /* emerald-500 */
+}
+
+.border-warning {
+  border-color: #f59e0b; /* amber-500 */
+}
+
+.border-variant {
+  border-color: var(--border);
 }
 
 /* Vertical Divider */
@@ -2883,4 +3034,99 @@ html {
   border-color: var(--border);
   color: var(--foreground-secondary);
   background-color: var(--surface-overlay);
+}
+
+/* ============================================================================
+ * ADDITIONAL UTILITY CLASSES (Phase 14 - UI Consistency)
+ * ============================================================================ */
+
+/* Background solid color utilities */
+.bg-primary {
+  background-color: var(--primary);
+}
+
+/* Additional text color utilities using CSS variables */
+.text-success {
+  color: #16a34a; /* green-600 */
+}
+
+.text-warning {
+  color: #ca8a04; /* yellow-600 */
+}
+
+.text-error {
+  color: #dc2626; /* red-600 */
+}
+
+.text-info {
+  color: var(--info);
+}
+
+/* Background opacity classes */
+.bg-success\/10 {
+  background-color: rgba(22, 163, 74, 0.1);
+}
+
+.bg-success\/40 {
+  background-color: rgba(22, 163, 74, 0.4);
+}
+
+.bg-warning\/10 {
+  background-color: rgba(202, 138, 4, 0.1);
+}
+
+.bg-warning\/40 {
+  background-color: rgba(202, 138, 4, 0.4);
+}
+
+.bg-error\/10 {
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+.bg-error\/40 {
+  background-color: rgba(220, 38, 38, 0.4);
+}
+
+/* Border color classes */
+.border-success {
+  border-color: #10b981; /* emerald-500 */
+}
+
+.border-warning {
+  border-color: #f59e0b; /* amber-500 */
+}
+
+.border-error {
+  border-color: #ef4444; /* rose-500 */
+}
+
+.border-info {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+/* Button variant classes */
+.btn-error {
+  @apply rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80;
+  border-color: var(--error);
+  background-color: rgba(var(--error-rgb), 0.1);
+  color: var(--error);
+}
+
+.btn-success {
+  @apply rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80;
+  border-color: var(--success);
+  background-color: rgba(22, 163, 74, 0.1);
+  color: var(--success);
+}
+
+.btn-warning {
+  @apply rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80;
+  border-color: var(--warning);
+  background-color: rgba(var(--warning-rgb), 0.1);
+  color: var(--warning);
+}
+
+/* Background utility using CSS variable */
+.bg-muted-background {
+  background-color: var(--muted-background);
 }

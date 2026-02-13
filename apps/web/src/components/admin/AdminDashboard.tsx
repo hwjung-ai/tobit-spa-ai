@@ -165,8 +165,8 @@ const AdminDashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="cpu_percent" stroke="#ef4444" name="CPU %" />
-                <Line type="monotone" dataKey="memory_percent" stroke="#f59e0b" name="Memory %" />
+                <Line type="monotone" dataKey="cpu_percent" stroke="var(--chart-error-color)" name="CPU %" />
+                <Line type="monotone" dataKey="memory_percent" stroke="var(--chart-warning-color)" name="Memory %" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -182,8 +182,8 @@ const AdminDashboard: React.FC = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="avg_response_time_ms" fill="#3b82f6" name="Avg Response (ms)" />
-                  <Bar dataKey="error_rate" fill="#ef4444" name="Error Rate" />
+                  <Bar dataKey="avg_response_time_ms" fill="var(--chart-primary-color)" name="Avg Response (ms)" />
+                  <Bar dataKey="error_rate" fill="var(--chart-error-color)" name="Error Rate" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -216,7 +216,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="flex h-screen " style={{ backgroundColor: "var(--surface-base)" }}>
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'}  text-white transition-all duration-300`} style={{ backgroundColor: "var(--surface-base)" }}>
+      <div className={`${sidebarOpen ? 'w-64' : 'w-20'}  text-foreground transition-all duration-300`} style={{ backgroundColor: "var(--surface-base)" }}>
         <div className="p-4 flex items-center justify-between">
           {sidebarOpen && <span className="font-bold text-lg">Admin</span>}
           <button

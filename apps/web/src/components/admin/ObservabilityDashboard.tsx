@@ -122,7 +122,7 @@ export default function ObservabilityDashboard() {
 
   if (error) {
     return (
-      <div className="rounded-3xl border border-rose-500/50 bg-rose-500/5 p-6 text-sm text-rose-200">
+      <div className="rounded-3xl border border-rose-500/50 bg-rose-500/5 p-6 text-sm text-rose-700 dark:text-rose-200">
         Observability dashboard failed: {error}
       </div>
     );
@@ -130,20 +130,20 @@ export default function ObservabilityDashboard() {
 
   if (!payload) {
     return (
-      <div className="rounded-3xl border   p-6 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="rounded-3xl border border-variant bg-surface-overlay p-6 text-sm text-foreground">
         Loading observability KPIs...
       </div>
     );
   }
 
   return (
-    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-[var(--surface-base)] p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
+    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-slate-950 p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
       <div className="flex items-center justify-between">
         <div />
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border  /80  hover: hover: transition-colors" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-variant bg-surface-base text-foreground hover:bg-surface-elevated transition-colors"
             title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
             {isFullScreen ? (
@@ -152,7 +152,7 @@ export default function ObservabilityDashboard() {
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
             )}
           </button>
-          <span className="text-sm uppercase tracking-[0.3em] text-sky-400">realtime</span>
+          <span className="text-sm uppercase tracking-wider text-sky-400">realtime</span>
         </div>
       </div>
 
@@ -160,30 +160,30 @@ export default function ObservabilityDashboard() {
         {summaryLabels.map((item, idx) => (
           <article
             key={item.label}
-            className="rounded-2xl border /70  p-5 text-white shadow-[0_10px_40px_rgba(15,23,42,0.5)]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+            className="rounded-2xl border border-variant bg-surface-overlay p-5 text-foreground dark:text-foreground shadow-[0_10px_40px_rgba(15,23,42,0.5)]"
           >
-            <p className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>{item.label}</p>
+            <p className="text-sm uppercase tracking-wider text-muted-foreground">{item.label}</p>
             <p className="mt-3 text-3xl font-semibold">{item.value}</p>
-            {idx === 0 && <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Goal ≥ 96%</p>}
+            {idx === 0 && <p className="text-xs text-muted-foreground">Goal ≥ 96%</p>}
           </article>
         ))}
       </section>
 
-      <section className="rounded-3xl border /80  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+      <section className="rounded-3xl border border-variant bg-surface-overlay p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Latency & Tool Health</h2>
-          <span className="text-xs " style={{color: "var(--muted-foreground)"}}>last 24h</span>
+          <h2 className="text-lg font-semibold text-foreground dark:text-foreground">Latency & Tool Health</h2>
+          <span className="text-xs text-muted-foreground">last 24h</span>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border /70 /40 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-            <p className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>p50 Latency</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
+          <div className="rounded-2xl border border-variant bg-surface-base p-4">
+            <p className="text-sm uppercase tracking-wider text-muted-foreground">p50 Latency</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground dark:text-foreground">
               {payload.latency.p50 ? `${payload.latency.p50} ms` : "—"}
             </p>
           </div>
-          <div className="rounded-2xl border /70 /40 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-            <p className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>p95 Latency</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
+          <div className="rounded-2xl border border-variant bg-surface-base p-4">
+            <p className="text-sm uppercase tracking-wider text-muted-foreground">p95 Latency</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground dark:text-foreground">
               {payload.latency.p95 ? `${payload.latency.p95} ms` : "—"}
             </p>
           </div>
@@ -191,51 +191,51 @@ export default function ObservabilityDashboard() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-3xl border /70  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <article className="rounded-3xl border border-variant bg-surface-overlay p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Regression trend</h2>
-            <span className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>last 7 days</span>
+            <h2 className="text-lg font-semibold text-foreground dark:text-foreground">Regression trend</h2>
+            <span className="text-sm uppercase tracking-wider text-muted-foreground">last 7 days</span>
           </div>
           {payload.regression_trend.length === 0 ? (
-            <div className="mt-4 text-sm " style={{color: "var(--muted-foreground)"}}>No regression runs in the last 7 days.</div>
+            <div className="mt-4 text-sm text-muted-foreground">No regression runs in the last 7 days.</div>
           ) : (
             <div className="mt-4 h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={payload.regression_trend} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
-                  <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                  <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                  <CartesianGrid stroke="var(--chart-grid-color)" strokeDasharray="3 3" />
+                  <XAxis dataKey="date" stroke="var(--chart-text-color)" tick={{ fontSize: 12 }} />
+                  <YAxis stroke="var(--chart-text-color)" tick={{ fontSize: 12 }} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b" }}
+                    contentStyle={{ backgroundColor: "var(--chart-tooltip-bg)", border: "1px solid var(--chart-tooltip-border)" }}
                     cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
                   />
                   <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                  <Bar dataKey="PASS" fill="#34d399" />
-                  <Bar dataKey="WARN" fill="#fbbf24" />
-                  <Bar dataKey="FAIL" fill="#f87171" />
+                  <Bar dataKey="PASS" fill="var(--chart-success-color)" />
+                  <Bar dataKey="WARN" fill="var(--chart-warning-color)" />
+                  <Bar dataKey="FAIL" fill="var(--chart-error-color)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           )}
-          <div className="mt-5 flex flex-wrap gap-3 text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
-            <span className="rounded-full border  px-3 py-1" style={{borderColor: "var(--border)"}}>Regression FAIL/WARN focus</span>
-            <span className="rounded-full border  px-3 py-1" style={{borderColor: "var(--border)"}}>Trend & RCA</span>
+          <div className="mt-5 flex flex-wrap gap-3 text-xs uppercase tracking-wider text-muted-foreground">
+            <span className="rounded-full border border-variant px-3 py-1">Regression FAIL/WARN focus</span>
+            <span className="rounded-full border border-variant px-3 py-1">Trend & RCA</span>
           </div>
         </article>
 
-        <article className="rounded-3xl border /70  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <article className="rounded-3xl border border-variant bg-surface-overlay p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Regression breakdown</h2>
-            <span className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>kpi</span>
+            <h2 className="text-lg font-semibold text-foreground dark:text-foreground">Regression breakdown</h2>
+            <span className="text-sm uppercase tracking-wider text-muted-foreground">kpi</span>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
+          <div className="mt-4 grid grid-cols-3 gap-3 text-xs uppercase tracking-wider text-muted-foreground">
             {(["PASS", "WARN", "FAIL"] as const).map((key) => (
-              <div key={key} className="rounded-2xl border /60 /40 p-4 text-center" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                <p className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{key}</p>
+              <div key={key} className="rounded-2xl border border-variant bg-surface-base p-4 text-center">
+                <p className="text-tiny text-muted-foreground">{key}</p>
                 <p
                   className={
                     "mt-2 text-3xl font-semibold " +
-                    (key === "FAIL" ? "text-rose-300" : key === "WARN" ? "text-amber-300" : "text-emerald-300")
+                    (key === "FAIL" ? "text-rose-600 dark:text-rose-300" : key === "WARN" ? "text-amber-600 dark:text-amber-300" : "text-emerald-600 dark:text-emerald-300")
                   }
                 >
                   {payload.regression_totals[key].toLocaleString()}
@@ -259,27 +259,27 @@ export default function ObservabilityDashboard() {
                     labelLine={false}
                     label={({ name, value }) => `${name} ${value}`}
                     outerRadius={60}
-                    fill="#8884d8"
+                    fill="var(--chart-primary-color)"
                     dataKey="value"
                   >
-                    <Cell fill="#34d399" />
-                    <Cell fill="#fbbf24" />
-                    <Cell fill="#f87171" />
+                    <Cell fill="var(--chart-success-color)" />
+                    <Cell fill="var(--chart-warning-color)" />
+                    <Cell fill="var(--chart-error-color)" />
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b" }} />
+                  <Tooltip contentStyle={{ backgroundColor: "var(--chart-tooltip-bg)", border: "1px solid var(--chart-tooltip-border)" }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           )}
 
-          <div className="mt-4 text-sm " style={{color: "var(--foreground-secondary)"}}>
+          <div className="mt-4 text-sm text-foreground">
             RCA Top Causes
-            <ul className="mt-2 space-y-2 text-xs " style={{color: "var(--muted-foreground)"}}>
+            <ul className="mt-2 space-y-2 text-xs text-muted-foreground">
               {payload.top_causes.length === 0 && <li>No causes collected yet.</li>}
               {payload.top_causes.map((cause) => (
                 <li key={cause.reason} className="flex justify-between">
                   <span className="truncate pr-2">{cause.reason}</span>
-                  <span className="text-emerald-300">{cause.count}</span>
+                  <span className="text-emerald-600 dark:text-emerald-300">{cause.count}</span>
                 </li>
               ))}
             </ul>

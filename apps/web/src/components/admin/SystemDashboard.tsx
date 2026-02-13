@@ -115,19 +115,19 @@ export default function SystemDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Status */}
         <div className={`p-6 rounded-2xl border ${getHealthColor(health?.status || "unknown")}`}>
-          <div className="text-[10px] uppercase tracking-[0.2em] font-bold mb-2">System Status</div>
+          <div className="text-tiny uppercase tracking-wider font-bold mb-2">System Status</div>
           <div className="text-3xl font-bold capitalize">{health?.status || "Unknown"}</div>
         </div>
 
         {/* Active Alerts */}
         <div className="p-6 rounded-2xl border bg-sky-500/10 border-sky-500/50 text-sky-400">
-          <div className="text-[10px] uppercase tracking-[0.2em] font-bold mb-2">Active Alerts</div>
+          <div className="text-tiny uppercase tracking-wider font-bold mb-2">Active Alerts</div>
           <div className="text-3xl font-bold">{alerts.length}</div>
         </div>
 
         {/* CPU Usage */}
         <div className="p-6 rounded-2xl border bg-purple-500/10 border-purple-500/50 text-purple-400">
-          <div className="text-[10px] uppercase tracking-[0.2em] font-bold mb-2">CPU Usage</div>
+          <div className="text-tiny uppercase tracking-wider font-bold mb-2">CPU Usage</div>
           <div className="text-3xl font-bold">
             {health?.resource?.cpu_percent ? health.resource.cpu_percent.toFixed(1) : "N/A"}
             <span className="text-lg ml-1">%</span>
@@ -136,7 +136,7 @@ export default function SystemDashboard() {
 
         {/* Memory Usage */}
         <div className="p-6 rounded-2xl border bg-amber-500/10 border-amber-500/50 text-amber-400">
-          <div className="text-[10px] uppercase tracking-[0.2em] font-bold mb-2">Memory Usage</div>
+          <div className="text-tiny uppercase tracking-wider font-bold mb-2">Memory Usage</div>
           <div className="text-3xl font-bold">
             {health?.resource?.memory_percent ? health.resource.memory_percent.toFixed(1) : "N/A"}
             <span className="text-lg ml-1">%</span>
@@ -146,17 +146,17 @@ export default function SystemDashboard() {
 
       {/* Resource Usage Chart */}
       {metrics.length > 0 && (
-        <div className=" border  rounded-2xl p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <h3 className="text-lg font-bold text-white mb-4">Resource Usage (Last 24 Hours)</h3>
+        <div className="border border-variant bg-surface-overlay rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-foreground mb-4">Resource Usage (Last 24 Hours)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={metrics}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="timestamp" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-tooltip-border)" />
+              <XAxis dataKey="timestamp" stroke="var(--chart-text-color)" />
+              <YAxis stroke="var(--chart-text-color)" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #475569",
+                  backgroundColor: "var(--chart-tooltip-bg)",
+                  border: "1px solid var(--chart-tooltip-border)",
                   borderRadius: "8px",
                 }}
               />
@@ -172,7 +172,7 @@ export default function SystemDashboard() {
               <Line
                 type="monotone"
                 dataKey="memory_percent"
-                stroke="#f59e0b"
+                stroke="var(--chart-warning-color)"
                 name="Memory %"
                 strokeWidth={2}
                 dot={false}
@@ -183,8 +183,8 @@ export default function SystemDashboard() {
       )}
 
       {/* Alerts Panel */}
-      <div className=" border  rounded-2xl p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-        <h3 className="text-lg font-bold text-white mb-4">System Alerts</h3>
+      <div className="border border-variant bg-surface-overlay rounded-2xl p-6">
+        <h3 className="text-lg font-bold text-foreground mb-4">System Alerts</h3>
 
         {alerts.length === 0 ? (
           <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-300 p-4 rounded-lg text-sm">
@@ -210,7 +210,7 @@ export default function SystemDashboard() {
                       {new Date(alert.timestamp).toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] font-bold px-2 py-1 rounded bg-white/10">
+                  <div className="text-tiny uppercase tracking-wider font-bold px-2 py-1 rounded bg-white/10">
                     {alert.severity}
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export default function SystemDashboard() {
       </div>
 
       {/* Last Updated */}
-      <div className="flex items-center justify-between text-xs  px-4" style={{color: "var(--muted-foreground)"}}>
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-4">
         <div>Last updated: {new Date().toLocaleTimeString()}</div>
         <div>Auto-refresh every 30 seconds</div>
       </div>
