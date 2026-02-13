@@ -178,7 +178,7 @@ export default function ActionTab() {
           <button
             onClick={() => setViewMode("list")}
             className={cn(
-              "rounded px-3 py-1.5 text-xs transition",
+              "rounded px-3 py-2 text-xs transition",
               viewMode === "list"
                 ? "bg-sky-600 text-white"
                 : "bg-surface-elevated text-foreground-secondary hover:bg-surface-overlay"
@@ -189,7 +189,7 @@ export default function ActionTab() {
           <button
             onClick={() => setViewMode("flow")}
             className={cn(
-              "rounded px-3 py-1.5 text-xs transition",
+              "rounded px-3 py-2 text-xs transition",
               viewMode === "flow"
                 ? "bg-sky-600 text-white"
                 : "bg-surface-elevated text-foreground-secondary hover:bg-surface-overlay"
@@ -341,7 +341,7 @@ export default function ActionTab() {
 
                         {catalogItem.api_manager_meta && (
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="rounded px-1.5 py-0.5 font-mono bg-violet-900/50 text-violet-300">
+                            <span className="rounded px-3 py-0.5 font-mono bg-violet-900/50 text-violet-300">
                               {catalogItem.api_manager_meta.method}
                             </span>
                             <span className="font-mono text-muted-foreground">{catalogItem.api_manager_meta.path}</span>

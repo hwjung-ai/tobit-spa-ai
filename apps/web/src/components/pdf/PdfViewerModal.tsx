@@ -563,7 +563,7 @@ export function PdfViewerModal({
             <button
               type="button"
               onClick={handleDownload}
-              className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-700 disabled:opacity-50"
+              className="rounded-lg bg-sky-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-sky-700 disabled:opacity-50"
               aria-label="PDF 다운로드"
             >
               다운로드
@@ -660,7 +660,7 @@ export function PdfViewerModal({
         </div>
 
         {/* Footer hints */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-surface-elevated/80 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-surface-elevated/80 px-4 py-2 text-xs text-muted-foreground backdrop-blur-sm">
           ESC로 닫기 • 방향키로 페이지 이동
         </div>
       </div>

@@ -179,7 +179,7 @@ export default function ConversationSummaryModal({
               <p className="text-sm text-rose-300">{error}</p>
               <button
                 onClick={fetchSummary}
-                className="mt-3 rounded-lg border border-rose-700 bg-rose-900/50 px-3 py-1.5 text-xs text-rose-200 transition hover:bg-rose-900"
+                className="mt-3 rounded-lg border border-rose-700 bg-rose-900/50 px-3 py-2 text-xs text-rose-200 transition hover:bg-rose-900"
               >
                 다시 시도
               </button>

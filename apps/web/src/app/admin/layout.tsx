@@ -57,7 +57,7 @@ export default function AdminLayout({
                                 key={tab.label}
                                 href={tab.href}
                                 className={cn(
-                                    "rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                                    "rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition",
                                     isActive
                                         ? "border-sky-600 bg-sky-600 text-white dark:border-sky-700 dark:bg-sky-700"
                                         : "border-slate-300 text-slate-700 hover:border-sky-500 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"

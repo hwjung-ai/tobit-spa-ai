@@ -736,7 +736,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setSourceTab("postgres")}
               className={cn(
-                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "postgres"
                   ? "bg-sky-600 text-white"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
@@ -748,7 +748,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setSourceTab("neo4j")}
               className={cn(
-                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "neo4j"
                   ? "bg-sky-600 text-white"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
@@ -760,7 +760,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setSourceTab("redis")}
               className={cn(
-                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "redis"
                   ? "bg-sky-600 text-white"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
@@ -778,7 +778,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setModeTab("browse")}
               className={cn(
-                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 modeTab === "browse"
                   ? "bg-sky-600 text-white"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
@@ -790,7 +790,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setModeTab("query")}
               className={cn(
-                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 modeTab === "query"
                   ? "bg-sky-600 text-white"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"

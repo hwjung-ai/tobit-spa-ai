@@ -176,7 +176,7 @@ function AssetDetailPageContent() {
                                     ? `/data/sources?asset_id=${asset.asset_id}`
                                     : `/data/resolvers?asset_id=${asset.asset_id}`
                             }
-                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-white text-slate-700 border-slate-300 hover:border-sky-600 hover:bg-sky-600 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:bg-sky-600"
+                            className="px-5 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-white text-slate-700 border-slate-300 hover:border-sky-600 hover:bg-sky-600 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:bg-sky-600"
                         >
                             Open in Data
                         </Link>
@@ -184,7 +184,7 @@ function AssetDetailPageContent() {
                     {asset.status === "draft" && (
                         <button
                             onClick={handleDelete}
-                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-error/15 text-error border-error/40 hover:bg-error/25 hover:border-error"
+                            className="px-5 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-error/15 text-error border-error/40 hover:bg-error/25 hover:border-error"
                         >
                             <div className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ function AssetDetailPageContent() {
                     {asset.status === "published" && (
                         <button
                             onClick={handleUnpublish}
-                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-warning/15 text-warning border-warning/40 hover:bg-warning/25 hover:border-warning"
+                            className="px-5 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-warning/15 text-warning border-warning/40 hover:bg-warning/25 hover:border-warning"
                         >
                             <div className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

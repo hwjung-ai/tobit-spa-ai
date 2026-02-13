@@ -427,7 +427,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             value={mcpServerUrl}
                                             onChange={(e) => setMcpServerUrl(e.target.value)}
                                             placeholder="e.g. http://localhost:3100/sse"
-                                            className="w-full px-3 py-2.5 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
+                                            className="w-full px-3 py-3 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                         />
                                     </div>
                                     <div className="w-[180px]">
@@ -435,7 +435,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         <select
                                             value={mcpTransport}
                                             onChange={(e) => setMcpTransport(e.target.value as "sse" | "streamable_http")}
-                                            className="w-full px-3 py-2.5 border rounded-lg text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
+                                            className="w-full px-3 py-3 border rounded-lg text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                         >
                                             <option value="sse">SSE</option>
                                             <option value="streamable_http">Streamable HTTP</option>
@@ -447,7 +447,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 <button
                                     onClick={handleMcpDiscover}
                                     disabled={mcpIsDiscovering || !mcpServerUrl.trim()}
-                                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
+                                    className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
                                 >
                                     {mcpIsDiscovering ? "Discovering..." : "Discover Tools"}
                                 </button>
@@ -507,7 +507,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                                         e.stopPropagation();
                                                                         handleMcpSelectSingle(tool);
                                                                     }}
-                                                                    className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
+                                                                    className="text-xs px-3 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
                                                                     title="Fill form with this tool's data"
                                                                 >
                                                                     Fill Form
@@ -529,7 +529,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             <button
                                                 onClick={handleMcpImportSelected}
                                                 disabled={mcpIsImporting}
-                                                className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
+                                                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
                                             >
                                                 {mcpIsImporting
                                                     ? "Importing..."

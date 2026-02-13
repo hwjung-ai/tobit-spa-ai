@@ -219,7 +219,7 @@ export default function StageCard({
             <button
               onClick={() => setShowInput(!showInput)}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition",
+                "flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition",
                 showInput
                   ? "bg-sky-500/10 text-sky-400 border border-sky-400/30"
                   : "bg-surface-elevated text-muted-foreground hover:bg-surface-elevated"
@@ -231,7 +231,7 @@ export default function StageCard({
             <button
               onClick={() => setShowOutput(!showOutput)}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition",
+                "flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition",
                 showOutput
                   ? "bg-purple-500/10 text-purple-400 border border-purple-400/30"
                   : "bg-surface-elevated text-muted-foreground hover:bg-surface-elevated"
@@ -282,21 +282,21 @@ export default function StageCard({
           <div className="flex gap-2 pt-2 border-t border-variant">
             <button
               onClick={() => handleAction("rerun")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-400/30 transition hover:bg-emerald-500/20"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-400/30 transition hover:bg-emerald-500/20"
             >
               <RotateCcw className="h-3 w-3" />
               Rerun
             </button>
             <button
               onClick={() => handleAction("debug")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
             >
               <Settings className="h-3 w-3" />
               Debug
             </button>
             <button
               onClick={() => handleAction("delete")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
             >
               <Trash2 className="h-3 w-3" />
               Delete

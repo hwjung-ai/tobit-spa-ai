@@ -45,7 +45,7 @@ export default function MobileBottomNav() {
               key={item.label}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 text-xs uppercase tracking-wider transition ${
+              className={`flex flex-col items-center gap-1 px-2 py-2 text-xs uppercase tracking-wider transition ${
                 isActive ? "text-primary-light" : "text-muted-foreground"
               }`}
             >

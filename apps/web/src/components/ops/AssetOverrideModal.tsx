@@ -286,7 +286,7 @@ export default function AssetOverrideModal({
                       key={type}
                       onClick={() => setSelectedAssetType(selectedAssetType === type ? null : type)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded text-xs transition",
+                        "flex items-center gap-2 px-3 py-2 rounded text-xs transition",
                         selectedAssetType === type ? config.color : "",
                         hasAssets
                           ? "bg-surface-elevated text-foreground-secondary cursor-pointer hover:bg-surface-base"

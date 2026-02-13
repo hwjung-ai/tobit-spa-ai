@@ -17,7 +17,7 @@ export default function ObservabilityPage() {
         <button
           onClick={() => setActiveTab("system")}
           className={cn(
-            "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+            "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
             activeTab === "system"
               ? "bg-sky-600 text-white"
               : "bg-transparent text-foreground hover:bg-surface-elevated"
@@ -28,7 +28,7 @@ export default function ObservabilityPage() {
         <button
           onClick={() => setActiveTab("cep")}
           className={cn(
-            "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+            "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
             activeTab === "cep"
               ? "bg-emerald-600 text-white"
               : "bg-transparent text-foreground hover:bg-surface-elevated"

@@ -148,7 +148,7 @@ export default function ToolsPageContent() {
                     <div className="divider-vertical h-6" />
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-tiny uppercase tracking-wider shadow-lg shadow-sky-900/20 active:scale-95"
+                        className="px-5 py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-tiny uppercase tracking-wider shadow-lg shadow-sky-900/20 active:scale-95"
                     >
                         + New Tool
                     </button>

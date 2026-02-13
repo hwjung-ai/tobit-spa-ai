@@ -341,7 +341,7 @@ export default function AssetImpactAnalyzer({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onExport?.(impactData)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition hover:opacity-80 bg-surface-elevated text-muted-foreground border border-border"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition hover:opacity-80 bg-surface-elevated text-muted-foreground border border-border"
             >
               <Download className="h-3 w-3" />
               Export

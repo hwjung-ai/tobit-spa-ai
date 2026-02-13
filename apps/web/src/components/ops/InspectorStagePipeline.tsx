@@ -109,7 +109,7 @@ function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
     <div
       onClick={handleClick}
       className={cn(
-        "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left cursor-pointer transition-all group",
+        "w-full flex items-center gap-2 px-2 py-2 rounded-md text-left cursor-pointer transition-all group",
         "bg-surface-overlay border-variant"
       )}
       title={`${config.label}: ${value}`}

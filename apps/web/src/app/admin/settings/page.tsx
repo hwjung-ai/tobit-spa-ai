@@ -140,7 +140,7 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => setActiveTab("all")}
                                 className={cn(
-                                    "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                    "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                                     activeTab === "all"
                                         ? "bg-sky-600 text-white"
                                         : "bg-transparent text-primary hover:bg-surface-elevated"
@@ -151,7 +151,7 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => setActiveTab("llm")}
                                 className={cn(
-                                    "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                    "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                                     activeTab === "llm"
                                         ? "bg-sky-600 text-white"
                                         : "bg-transparent text-primary hover:bg-surface-elevated"
@@ -162,7 +162,7 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => setActiveTab("auth")}
                                 className={cn(
-                                    "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                    "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                                     activeTab === "auth"
                                         ? "bg-sky-600 text-white"
                                         : "bg-transparent text-primary hover:bg-surface-elevated"
@@ -239,7 +239,7 @@ export default function SettingsPage() {
                         <p className="font-medium mb-4 text-sm text-rose-600 dark:text-rose-400">{(error as Error)?.message || "Unable to load settings"}</p>
                         <button
                             onClick={() => refetch()}
-                            className="px-8 py-2.5 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest bg-surface-elevated hover:bg-surface-base"
+                            className="px-8 py-3 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest bg-surface-elevated hover:bg-surface-base"
                         >
                             Retry Connection
                         </button>
@@ -263,7 +263,7 @@ export default function SettingsPage() {
                         <h3 className="text-label text-primary">Runtime API Auth Policy</h3>
                         <button
                             onClick={() => refetchPolicies()}
-                            className="px-3 py-1.5 text-label-sm rounded-lg border transition border-border-muted text-primary hover:text-primary-foreground"
+                            className="px-3 py-2 text-label-sm rounded-lg border transition border-border-muted text-primary hover:text-primary-foreground"
                         >
                             Refresh
                         </button>
@@ -330,7 +330,7 @@ export default function SettingsPage() {
                                                             handleSavePolicy(api.id, api.auth_mode, api.required_scopes)
                                                         }
                                                         disabled={savingPolicyId === api.id}
-                                                        className="px-3 py-1.5 text-xs rounded-md disabled:opacity-50 bg-sky-600 text-white"
+                                                        className="px-3 py-2 text-xs rounded-md disabled:opacity-50 bg-sky-600 text-white"
                                                     >
                                                         {savingPolicyId === api.id ? "Saving..." : "Save"}
                                                     </button>

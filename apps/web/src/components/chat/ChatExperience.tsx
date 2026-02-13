@@ -573,7 +573,7 @@ export default function ChatExperience({
               </span>
               <button
                 type="submit"
-                className="btn-primary rounded-full px-5 py-1.5 text-sm disabled:opacity-50"
+                className="btn-primary rounded-full px-5 py-2 text-sm disabled:opacity-50"
                 disabled={!inputValue.trim() || status === "streaming"}
               >
                 Send

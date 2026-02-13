@@ -204,14 +204,14 @@ export default function StageInOutPanel({
           <div className="flex items-center gap-2">
             <button
               onClick={toggleAllStages}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
             >
               {allExpanded ? "Collapse All" : "Expand All"}
               <ChevronDown className={`h-3 w-3 transition-transform ${allExpanded ? 'rotate-180' : ''}`} />
             </button>
             {compact && (
               <button
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border border-variant transition hover:opacity-80 bg-surface-elevated text-muted-foreground"
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border border-variant transition hover:opacity-80 bg-surface-elevated text-muted-foreground"
               >
                 <RotateCcw className="h-3 w-3" />
                 Reset

@@ -161,7 +161,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                "px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
                 activeTab === tab.id
                   ? "border-sky-500 text-sky-400"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -179,13 +179,13 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
             placeholder="Search templates..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 border border-variant bg-surface-elevated text-foreground-secondary rounded px-3 py-1.5 text-sm placeholder-slate-500 focus:outline-none focus:border-sky-500"
+            className="flex-1 border border-variant bg-surface-elevated text-foreground-secondary rounded px-3 py-2 text-sm placeholder-slate-500 focus:outline-none focus:border-sky-500"
           />
           {activeTab === "published" && allTags.length > 0 && (
             <select
               value={selectedTag || ""}
               onChange={(e) => setSelectedTag(e.target.value || null)}
-              className="border border-variant bg-surface-elevated text-foreground-secondary rounded px-3 py-1.5 text-sm"
+              className="border border-variant bg-surface-elevated text-foreground-secondary rounded px-3 py-2 text-sm"
             >
               <option value="">All Tags</option>
               {allTags.map((tag) => (
@@ -264,7 +264,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                             .map((tag) => (
                               <span
                                 key={tag}
-                                className="inline-flex px-1.5 py-0.5 rounded text-xs border border-variant bg-surface-elevated text-muted-foreground"
+                                className="inline-flex px-3 py-0.5 rounded text-xs border border-variant bg-surface-elevated text-muted-foreground"
                               >
                                 {tag}
                               </span>

@@ -6,10 +6,10 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles = {
-  default: 'inline-flex items-center rounded-full border border-transparent bg-sky-600 px-2.5 py-0.5 text-xs font-semibold text-white',
-  secondary: 'inline-flex items-center rounded-full border border-transparent bg-surface-elevated px-2.5 py-0.5 text-xs font-semibold text-white dark:bg-slate-800',
-  destructive: 'inline-flex items-center rounded-full border border-transparent bg-rose-600 px-2.5 py-0.5 text-xs font-semibold text-white',
-  outline: 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-foreground border-border',
+  default: 'inline-flex items-center rounded-full border border-transparent bg-sky-600 px-3 py-0.5 text-xs font-semibold text-white',
+  secondary: 'inline-flex items-center rounded-full border border-transparent bg-surface-elevated px-3 py-0.5 text-xs font-semibold text-white dark:bg-slate-800',
+  destructive: 'inline-flex items-center rounded-full border border-transparent bg-rose-600 px-3 py-0.5 text-xs font-semibold text-white',
+  outline: 'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-semibold text-foreground border-border',
 };
 
 export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(

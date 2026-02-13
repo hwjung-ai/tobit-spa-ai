@@ -128,7 +128,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key as "test" | "schema" | "config")}
                         className={cn(
-                            "flex-1 px-4 py-2.5 text-tiny font-bold uppercase tracking-widest transition-all",
+                            "flex-1 px-4 py-3 text-tiny font-bold uppercase tracking-widest transition-all",
                             activeTab === tab.key
                                 ? "text-sky-400 border-b-2 border-sky-400 bg-sky-400/5"
                                 : "text-muted-foreground hover:text-foreground"
@@ -159,7 +159,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                             onClick={handleTest}
                             disabled={isExecuting}
                             className={cn(
-                                "w-full py-2.5 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest shadow-lg shadow-sky-900/20",
+                                "w-full py-3 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest shadow-lg shadow-sky-900/20",
                                 isExecuting
                                     ? "bg-surface-elevated text-muted-foreground cursor-not-allowed"
                                     : "bg-sky-600 hover:bg-sky-500 text-white"
@@ -301,7 +301,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                         onClick={handlePublish}
                         disabled={isPublishing}
                         className={cn(
-                            "flex-1 py-2.5 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest",
+                            "flex-1 py-3 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest",
                             isPublishing
                                 ? "bg-surface-elevated text-muted-foreground cursor-not-allowed"
                                 : "bg-emerald-600 hover:bg-emerald-500 text-white"
@@ -312,7 +312,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                 )}
                 <button
                     onClick={onClose}
-                    className="flex-1 py-2.5 bg-surface-elevated hover:bg-surface-overlay rounded-lg transition-all font-bold text-tiny uppercase tracking-widest text-muted-foreground"
+                    className="flex-1 py-3 bg-surface-elevated hover:bg-surface-overlay rounded-lg transition-all font-bold text-tiny uppercase tracking-widest text-muted-foreground"
                 >
                     Close
                 </button>

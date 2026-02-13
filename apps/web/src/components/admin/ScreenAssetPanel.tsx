@@ -564,11 +564,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   <div className="flex gap-2 justify-end">
                     <Link
                       href={`/admin/screens/${screen.asset_id}`}
-                      className="px-3 py-1.5  hover:  rounded text-xs font-medium transition-colors text-center"
-                      style={{
-                        color: "var(--foreground-secondary)",
-                        backgroundColor: "var(--surface-elevated)",
-                      }}
+                      className="px-3 py-2 rounded text-xs font-medium transition-colors text-center text-foreground-secondary bg-surface-elevated hover:bg-surface-overlay"
                       data-testid={`btn-edit-${screen.asset_id}`}
                     >
                       Edit
@@ -578,7 +574,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                         onClick={() => {
                           handleDeleteScreen(screen.asset_id);
                         }}
-                        className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded text-xs font-medium transition-colors text-center"
+                        className="px-3 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded text-xs font-medium transition-colors text-center"
                         data-testid={`btn-delete-${screen.asset_id}`}
                       >
                         Delete
@@ -589,7 +585,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                         onClick={() => {
                           handlePublishScreen(screen.asset_id);
                         }}
-                        className="px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white rounded text-xs font-medium transition-colors text-center"
+                        className="px-3 py-2 bg-sky-700 hover:bg-sky-600 text-white rounded text-xs font-medium transition-colors text-center"
                         data-testid={`btn-publish-${screen.asset_id}`}
                       >
                         Publish
@@ -600,7 +596,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                         onClick={() => {
                           handleRollbackScreen(screen.asset_id);
                         }}
-                        className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors text-center"
+                        className="px-3 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors text-center"
                         data-testid={`btn-rollback-${screen.asset_id}`}
                       >
                         Rollback

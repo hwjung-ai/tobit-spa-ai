@@ -1340,7 +1340,7 @@ function InspectorContent() {
                                       <div
                                         key={type}
                                         className={cn(
-                                          "flex items-center gap-1.5 px-2 py-1 rounded-md",
+                                          "flex items-center gap-2 px-2 py-1 rounded-md",
                                           "bg-surface-base/60 border border-border/50 text-xs",
                                         )}
                                         title={`${type}: ${value}`}

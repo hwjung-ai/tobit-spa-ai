@@ -6,7 +6,7 @@ export default function DiffControls() {
       <div className="flex items-center gap-4">
         <div className="text-sm font-medium text-foreground-secondary">Compare Mode:</div>
         <div className="flex items-center gap-2">
-          <span className="text-sm px-3 py-1.5 rounded bg-surface-elevated text-foreground-secondary font-medium border border-variant">
+          <span className="text-sm px-3 py-2 rounded bg-surface-elevated text-foreground-secondary font-medium border border-variant">
             Draft vs Published
           </span>
         </div>

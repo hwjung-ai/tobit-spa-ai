@@ -260,7 +260,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
                       <p className="mt-1 text-sm text-muted-standard">{func.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {func.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full text-muted-foreground bg-surface-base border border-variant">
+                          <span key={tag} className="text-xs px-3 py-0.5 rounded-full text-muted-foreground bg-surface-base border border-variant">
                             {tag}
                           </span>
                         ))}
