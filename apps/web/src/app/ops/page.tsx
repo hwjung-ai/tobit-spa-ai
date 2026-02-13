@@ -832,21 +832,21 @@ export default function OpsPage() {
               style={{width: shouldShowSidebar ? `${leftSidebarWidth}px` : "0"}}
             >
               <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border bg-surface-base shadow-inner shadow-black/40 dark:border-border">
-                <div className="border-b px-4 py-3 border-border">
+                <div className="border-b px-3 py-2 border-border">
                   <div className="flex items-center justify-between">
                     <p className="left-panel-title">Query history</p>
                     {historyLoading ? (
                       <span className="text-xs text-muted-standard">Loading…</span>
                     ) : null}
                   </div>
-                  <p className="text-sm text-muted-standard">
+                  <p className="text-xs text-muted-standard">
                     최근 실행한 OPS 질의를 선택해 결과를 확인합니다.
                   </p>
                   {historyError ? (
-                    <p className="mt-1 text-sm text-rose-400">{historyError}</p>
+                    <p className="mt-1 text-xs text-rose-400">{historyError}</p>
                   ) : null}
                 </div>
-                <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto px-2 py-1 custom-scrollbar">
                   {history.length === 0 ? (
                     <p className="text-sm text-muted-standard">
                       질의를 실행하면 여기에 기록됩니다.
@@ -905,14 +905,14 @@ export default function OpsPage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-[0.45] flex-col rounded-3xl border p-4 bg-surface-base dark:border-border">
-                <div className="mb-3 space-y-1">
+              <div className="flex flex-[0.45] flex-col rounded-3xl border p-3 bg-surface-base dark:border-border">
+                <div className="mb-2 space-y-0.5">
                   <p className="left-panel-title">Run OPS query</p>
-                  <p className="text-sm text-muted-standard">
+                  <p className="text-xs text-muted-standard">
                     mode를 선택하고 질문을 작성한 뒤 실행하세요.
                   </p>
                 </div>
-                <div className="flex gap-1 flex-nowrap">
+                <div className="mt-2 flex gap-1 flex-nowrap">
                   {UI_MODES.map((modeEntry) => (
                     <button
                       key={modeEntry.id}
@@ -920,7 +920,7 @@ export default function OpsPage() {
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-slate-800",
                         uiMode === modeEntry.id
-                          ? "bg-sky-600 border-sky-600 text-white hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
+                          ? "bg-primary border-primary text-white hover:bg-sky-500 dark:hover:bg-sky-600"
                           : "border text-foreground dark:border-border",
                       )}
                     >
@@ -928,7 +928,7 @@ export default function OpsPage() {
                     </button>
                   ))}
                 </div>
-                <label className="mt-4 text-sm uppercase tracking-wider text-muted-standard">
+                <label className="mt-3 text-sm uppercase tracking-wider text-muted-standard">
                   Question
                   <textarea
                     rows={4}
@@ -938,7 +938,7 @@ export default function OpsPage() {
                     placeholder="예: 최근 배포 중단 이유 알려줘"
                   />
                 </label>
-                <div className="mt-4 flex flex-col gap-2">
+                <div className="mt-3 flex flex-col gap-2">
                   <button
                     onClick={runQuery}
                     className="btn-primary"
