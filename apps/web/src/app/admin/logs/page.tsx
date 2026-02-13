@@ -108,7 +108,7 @@ export default function LogsPage() {
     const columns = Object.keys(records[0]);
 
     return (
-      <div className="overflow-x-auto rounded-2xl border border-border bg-surface-base">
+      <div className="container-section overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border bg-surface-elevated">
@@ -137,7 +137,7 @@ export default function LogsPage() {
 
   const renderFileLog = (lines: string[]) => {
     return (
-      <div className="custom-scrollbar max-h-[600px] overflow-auto rounded-2xl border border-border bg-surface-base p-4 font-mono text-tiny">
+      <div className="container-section custom-scrollbar max-h-[600px] overflow-auto p-4 font-mono text-tiny">
         {lines.map((line, idx) => {
           const isError = line.includes("ERROR") || line.includes("error");
           const isWarning = line.includes("WARNING") || line.includes("WARN");
@@ -202,7 +202,7 @@ export default function LogsPage() {
       {logType === "llm-logs" ? (
         <LlmLogsContent />
       ) : (
-        <div className="space-y-4 rounded-2xl border border-border bg-surface-elevated p-4">
+        <div className="container-section space-y-4">
           {loading && (
             <div className="py-8 text-center text-sm text-muted-foreground">
               Loading logs...
