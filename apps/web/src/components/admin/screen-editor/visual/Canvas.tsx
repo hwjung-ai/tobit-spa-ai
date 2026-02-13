@@ -7,6 +7,7 @@ import GridCanvas from "./GridCanvas";
 import { Button } from "@/components/ui/button";
 import { PALETTE_DRAG_TYPE } from "./ComponentPalette";
 import { ComponentType } from "@/lib/ui-screen/screen.schema";
+import { cn } from "@/lib/utils";
 
 export default function Canvas() {
   const editorState = useEditorState();
@@ -57,19 +58,21 @@ export default function Canvas() {
 
       {/* Component List */}
       <div
-        className={`flex-1 overflow-y-auto p-3 space-y-2 transition-colors ${isDragOver ? "ring-2 ring-inset ring-sky-400/50" : ""
-          }`}
-        style={isDragOver ? { backgroundColor: "rgba(12, 74, 110, 0.3)" } : undefined}
+        className={cn(
+          "flex-1 overflow-y-auto p-3 space-y-2 transition-colors",
+          isDragOver && "bg-sky-900/30 ring-2 ring-inset ring-sky-400/50"
+        )}
         data-testid="canvas-list"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         {!hasComponents ? (
-          <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg`}
-            style={isDragOver ? { borderColor: "rgba(14, 165, 233, 1)", backgroundColor: "rgba(12, 74, 110, 0.2)" } : { borderColor: "var(--border-muted)" }}>
+          <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg transition-colors ${
+            isDragOver ? "canvas-drag-over" : "canvas-default"
+          }`}>
             <div className="space-y-2 p-6">
-              <p className="text-sm" style={isDragOver ? { color: "var(--primary-light)" } : { color: "var(--muted-foreground)" }}>
+              <p className={`text-sm ${isDragOver ? "canvas-drag-over-text" : "text-muted-foreground"}`}>
                 {isDragOver ? "Drop here to add" : "No components yet"}
               </p>
               <p className="text-xs">

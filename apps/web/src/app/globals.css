@@ -3428,3 +3428,47 @@ html {
 .transition-all-fast {
   transition: all 0.15s ease;
 }
+
+/* ============================================================================
+ * STATUS BADGE CLASSES (Phase 17 - UI Consistency)
+ * ============================================================================ */
+
+/* Status badge - Published/Success state */
+.status-badge-published {
+  @apply bg-emerald-500/15 border-emerald-500/50;
+  color: var(--success);
+}
+
+/* Status badge - Draft/Default state */
+.status-badge-draft {
+  @apply bg-slate-950/50;
+  color: var(--muted-foreground);
+  border-color: var(--border-muted);
+}
+
+/* Canvas drag-over state */
+.canvas-drag-over {
+  @apply border-sky-500 bg-sky-900/20;
+}
+
+.canvas-drag-over-text {
+  color: var(--primary-light);
+}
+
+/* Canvas default state */
+.canvas-default {
+  border-color: var(--border-muted);
+}
+
+/* Canvas component hover state for containers */
+.canvas-component-container {
+  transition: background-color 0.15s ease;
+}
+
+.canvas-component-container:hover:not(.is-dragging):not(.is-drag-over):not(.is-selected) {
+  background-color: var(--surface-base);
+}
+
+.canvas-component-container:not(:hover):not(.is-dragging):not(.is-drag-over):not(.is-selected) {
+  background-color: var(--surface-elevated);
+}
