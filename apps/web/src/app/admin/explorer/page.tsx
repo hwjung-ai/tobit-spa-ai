@@ -604,7 +604,7 @@ export default function ExplorerPage() {
                     className={cn(
                       "w-full rounded-xl border px-3 py-2 text-left text-sm",
                       active
-                        ? "bg-sky-600 text-white border-sky-600"
+                        ? "bg-sky-600 text-white border-sky-600 dark:bg-sky-700 dark:border-sky-600"
                         : "bg-transparent text-foreground border-border hover:bg-surface-elevated"
                     )}
                   >
@@ -649,7 +649,7 @@ export default function ExplorerPage() {
                   className={cn(
                     "w-full rounded-xl border px-3 py-2 text-left text-sm",
                     active
-                      ? "bg-sky-600 text-white border-sky-600"
+                      ? "bg-sky-600 text-white border-sky-600 dark:bg-sky-700 dark:border-sky-600"
                       : "bg-transparent text-foreground border-border hover:bg-surface-elevated"
                   )}
                 >
@@ -713,7 +713,7 @@ export default function ExplorerPage() {
                 className={cn(
                   "w-full rounded-xl border px-3 py-2 text-left text-sm",
                   active
-                    ? "bg-sky-600 text-white border-sky-600"
+                    ? "bg-sky-600 text-white border-sky-600 dark:bg-sky-700 dark:border-sky-600"
                     : "bg-transparent text-foreground border-border hover:bg-surface-elevated"
                 )}
               >
@@ -738,7 +738,7 @@ export default function ExplorerPage() {
               className={cn(
                 "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "postgres"
-                  ? "bg-sky-600 text-white"
+                  ? "bg-sky-600 text-white dark:bg-sky-700"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
@@ -750,7 +750,7 @@ export default function ExplorerPage() {
               className={cn(
                 "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "neo4j"
-                  ? "bg-sky-600 text-white"
+                  ? "bg-sky-600 text-white dark:bg-sky-700"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
@@ -762,7 +762,7 @@ export default function ExplorerPage() {
               className={cn(
                 "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 sourceTab === "redis"
-                  ? "bg-sky-600 text-white"
+                  ? "bg-sky-600 text-white dark:bg-sky-700"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
@@ -780,7 +780,7 @@ export default function ExplorerPage() {
               className={cn(
                 "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 modeTab === "browse"
-                  ? "bg-sky-600 text-white"
+                  ? "bg-sky-600 text-white dark:bg-sky-700"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
@@ -792,7 +792,7 @@ export default function ExplorerPage() {
               className={cn(
                 "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
                 modeTab === "query"
-                  ? "bg-sky-600 text-white"
+                  ? "bg-sky-600 text-white dark:bg-sky-700"
                   : "bg-transparent text-foreground hover:bg-surface-elevated"
               )}
             >
@@ -867,7 +867,7 @@ export default function ExplorerPage() {
                       className={cn(
                         "rounded-full border px-3 py-1 text-tiny uppercase tracking-wider",
                         neo4jViewMode === "graph"
-                          ? "bg-sky-600 text-white border-sky-600"
+                          ? "bg-sky-600 text-white border-sky-600 dark:bg-sky-700 dark:border-sky-600"
                           : "bg-transparent text-muted-standard border-border hover:bg-surface-elevated"
                       )}
                       onClick={() => setNeo4jViewMode("graph")}
@@ -880,7 +880,7 @@ export default function ExplorerPage() {
                       className={cn(
                         "rounded-full border px-3 py-1 text-tiny uppercase tracking-wider",
                         neo4jViewMode === "table"
-                          ? "bg-sky-600 text-white border-sky-600"
+                          ? "bg-sky-600 text-white border-sky-600 dark:bg-sky-700 dark:border-sky-600"
                           : "bg-transparent text-muted-standard border-border hover:bg-surface-elevated"
                       )}
                       onClick={() => {
@@ -897,7 +897,7 @@ export default function ExplorerPage() {
                       className={cn(
                         "rounded-full border px-3 py-1 text-tiny uppercase tracking-wider",
                         neo4jViewMode === "value"
-                          ? "bg-sky-600 text-white border-sky-600"
+                          ? "bg-sky-600 text-white border-sky-600 dark:bg-sky-700 dark:border-sky-600"
                           : "bg-transparent text-muted-standard border-border hover:bg-surface-elevated"
                       )}
                       onClick={() => setNeo4jViewMode("value")}

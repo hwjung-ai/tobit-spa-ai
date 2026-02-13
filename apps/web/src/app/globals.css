@@ -915,6 +915,10 @@ html {
   background-color: var(--primary);
 }
 
+.dark .button-primary {
+  background-color: var(--primary);
+}
+
 .button-secondary {
   @apply rounded-xl px-4 py-3 border;
   border-color: var(--border);
@@ -924,6 +928,39 @@ html {
 .dark .button-secondary {
   background-color: var(--surface-elevated);
   color: var(--foreground);
+}
+
+/* Alert/Success/Warning/Error backgrounds with dark mode */
+.alert-success {
+  @apply bg-green-50 border border-green-200;
+}
+
+.dark .alert-success {
+  @apply bg-green-950/30 border-green-900/50;
+}
+
+.alert-warning {
+  @apply bg-amber-50 border border-amber-200;
+}
+
+.dark .alert-warning {
+  @apply bg-amber-950/30 border-amber-900/50;
+}
+
+.alert-error {
+  @apply bg-red-50 border border-red-200;
+}
+
+.dark .alert-error {
+  @apply bg-red-950/30 border-red-900/50;
+}
+
+.alert-info {
+  @apply bg-blue-50 border border-blue-200;
+}
+
+.dark .alert-info {
+  @apply bg-blue-950/30 border-blue-900/50;
 }
 
 /* ============================================================================

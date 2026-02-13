@@ -399,7 +399,7 @@ export default function ActionTab() {
                     <div className="grid grid-cols-4 gap-2">
                       <button
                         onClick={handleSaveAction}
-                        className="rounded px-3 py-2 text-xs text-white bg-sky-600 hover:bg-sky-700 transition"
+                        className="rounded px-3 py-2 text-xs text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600 transition"
                       >
                         Save
                       </button>

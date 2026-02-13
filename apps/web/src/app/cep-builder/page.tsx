@@ -996,10 +996,7 @@ export default function CepBuilderPage() {
       <ActionsSection actions={formActions} onActionsChange={setFormActions} />
 
       <div className="cep-builder-status-box p-4">
-        <div
-          className="flex items-center justify-between cursor-pointer p-2 br-section"
-          style={{ backgroundColor: "var(--surface-base)" }}
-        >
+        <div className="flex items-center justify-between cursor-pointer p-2 br-section bg-surface-base">
           <h3 className="section-title">JSON 미리보기</h3>
         </div>
         <div className="mt-3">
@@ -1089,13 +1086,9 @@ export default function CepBuilderPage() {
   const logsContent = (
     <div className="space-y-2 max-h-[420px] overflow-auto">
       {logsLoading ? (
-        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
-          Loading logs…
-        </p>
+        <p className="text-xs text-muted-foreground">Loading logs…</p>
       ) : logs.length === 0 ? (
-        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
-          No executions yet.
-        </p>
+        <p className="text-xs text-muted-foreground">No executions yet.</p>
       ) : (
         logs.map((log) => (
           <div key={log.exec_id} className="cep-builder-log-entry p-3 text-xs">

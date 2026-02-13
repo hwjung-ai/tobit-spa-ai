@@ -190,7 +190,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                 ? 'bg-green-600 text-white'
                 : saveStatus === 'error'
                 ? 'bg-red-600 text-white'
-                : 'bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                : 'bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
           >
             <Save className="w-4 h-4" />

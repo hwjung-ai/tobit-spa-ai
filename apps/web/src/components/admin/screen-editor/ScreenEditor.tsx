@@ -6,11 +6,7 @@ import { useEditorState } from "@/lib/ui-screen/editor-state";
 import BuilderCopilotPanel from "@/components/chat/BuilderCopilotPanel";
 import UIScreenRenderer from "@/components/answer/UIScreenRenderer";
 import type { UIScreenBlock } from "@/components/answer/BlockRenderer";
-import {
-  extractJsonCandidates,
-  stripCodeFences,
-  tryParseJson,
-} from "@/lib/copilot/json-utils";
+import { extractJsonCandidates, stripCodeFences, tryParseJson } from "@/lib/copilot/json-utils";
 import { recordCopilotMetric } from "@/lib/copilot/metrics";
 import ScreenEditorHeader from "./ScreenEditorHeader";
 import ScreenEditorTabs from "./ScreenEditorTabs";
@@ -40,9 +36,26 @@ When the user asks to modify the screen, respond with:
 Always respond in the same language as the user's message.`;
 
 const ALLOWED_COMPONENT_TYPES = new Set([
-  "text", "table", "chart", "form", "button", "image", "card", "stat", "markdown",
-  "divider", "spacer", "container", "tabs", "badge", "alert", "row", "column",
-  "modal", "list", "accordion",
+  "text",
+  "table",
+  "chart",
+  "form",
+  "button",
+  "image",
+  "card",
+  "stat",
+  "markdown",
+  "divider",
+  "spacer",
+  "container",
+  "tabs",
+  "badge",
+  "alert",
+  "row",
+  "column",
+  "modal",
+  "list",
+  "accordion",
 ]);
 
 function validatePatchArray(patchArray: unknown[]): string[] {
@@ -56,7 +69,10 @@ function validatePatchArray(patchArray: unknown[]): string[] {
     const path = (entry as { path?: unknown }).path;
     const hasValue = Object.prototype.hasOwnProperty.call(entry, "value");
 
-    if (typeof op !== "string" || !["add", "remove", "replace", "move", "copy", "test"].includes(op)) {
+    if (
+      typeof op !== "string" ||
+      !["add", "remove", "replace", "move", "copy", "test"].includes(op)
+    ) {
       errors.push(`patch[${index}].op is invalid`);
     }
     if (typeof path !== "string" || !path.startsWith("/")) {
@@ -140,8 +156,8 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
   // Subscribe to specific state fields for re-renders
   const isDirty = draftModified;
-  const canPublish = status === "draft" &&
-    validationErrors.filter(e => e.severity === "error").length === 0;
+  const canPublish =
+    status === "draft" && validationErrors.filter((e) => e.severity === "error").length === 0;
 
   // Check authentication on mount
   useEffect(() => {
@@ -164,7 +180,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   }, [router]);
 
   const resolveLoadErrorMessage = (err: unknown) => {
-    const statusCode = typeof err === "object" && err !== null ? (err as Record<string, unknown>).statusCode : undefined;
+    const statusCode =
+      typeof err === "object" && err !== null
+        ? (err as Record<string, unknown>).statusCode
+        : undefined;
     if (statusCode === 404) {
       return "Screen asset not found or not accessible.";
     }
@@ -298,7 +317,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
       editorState.previewPatch();
       recordCopilotMetric("screen-editor", "parse_success");
     },
-    [editorState]
+    [editorState],
   );
 
   const schemaSummary = useMemo(() => {
@@ -307,9 +326,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
       return "No screen loaded";
     }
     const layoutType = activeScreen.layout?.type || "unknown";
-    const componentCount = Array.isArray(activeScreen.components) ? activeScreen.components.length : 0;
+    const componentCount = Array.isArray(activeScreen.components)
+      ? activeScreen.components.length
+      : 0;
     return `${layoutType} · ${componentCount} component${componentCount === 1 ? "" : "s"}`;
-     
   }, [editorState.screen, screen]);
 
   const proposedPatchSummary = useMemo(() => {
@@ -343,15 +363,13 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             screen_id: screen.screen_id,
             name: screen.name ?? null,
             layout_type: screen.layout?.type ?? null,
-            component_count: Array.isArray(screen.components)
-              ? screen.components.length
-              : 0,
+            component_count: Array.isArray(screen.components) ? screen.components.length : 0,
           }
         : null,
       draft_modified: draftModified,
       selected_component_id: selectedComponentId,
     }),
-    [draftModified, screen, selectedComponentId]
+    [draftModified, screen, selectedComponentId],
   );
 
   if (!authCheckDone || loading) {
@@ -385,7 +403,6 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     <div
       ref={containerRef}
       className="screen-editor-theme flex flex-col h-full"
-
       data-testid="screen-editor"
     >
       <div className="flex flex-1 gap-0 overflow-hidden">
@@ -412,18 +429,14 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           />
 
           {/* Errors */}
-          {validationErrors.length > 0 && (
-            <ScreenEditorErrors errors={validationErrors} />
-          )}
+          {validationErrors.length > 0 && <ScreenEditorErrors errors={validationErrors} />}
           {draftConflict.hasConflict && (
             <div
               className="mx-6 mt-3 rounded-md border border-amber-700/70 bg-amber-900/30 px-3 py-2 text-xs text-amber-100"
               data-testid="screen-editor-draft-conflict"
             >
               <div className="flex items-center justify-between gap-3">
-                <span>
-                  {draftConflict.message || "Draft conflict detected."}
-                </span>
+                <span>{draftConflict.message || "Draft conflict detected."}</span>
                 <div className="flex gap-2">
                   {draftConflict.autoMergedScreen && (
                     <button
@@ -446,8 +459,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                           await reloadFromServer();
                           setToast({ message: "Reloaded latest version", type: "success" });
                         } catch (err) {
-                          const message =
-                            err instanceof Error ? err.message : "Failed to reload";
+                          const message = err instanceof Error ? err.message : "Failed to reload";
                           setToast({ message, type: "error" });
                         }
                       })();
@@ -464,8 +476,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                           await forceSaveDraft();
                           setToast({ message: "Draft force-saved", type: "success" });
                         } catch (err) {
-                          const message =
-                            err instanceof Error ? err.message : "Force save failed";
+                          const message = err instanceof Error ? err.message : "Force save failed";
                           setToast({ message, type: "error" });
                         }
                       })();
@@ -505,7 +516,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           <div className="resize-handle-grip" />
         </div>
 
-        <div className="flex-shrink-0 flex flex-col border-l" style={{ width: `${rightPanelWidth}px`, borderColor: "var(--border)" }}>
+        <div
+          className="flex-shrink-0 flex flex-col border-l border-variant"
+          style={{ width: `${rightPanelWidth}px` }}
+        >
           <div className="flex items-center justify-between border-b px-4 py-3">
             <div>
               <p className="draft-panel-label">Schema</p>
@@ -528,7 +542,9 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                 <div className="draft-panel-section">
                   <p className="draft-panel-label">Patch Diff</p>
                   {proposedPatchSummary.map((line) => (
-                    <p key={line} className="text-xs">{line}</p>
+                    <p key={line} className="text-xs">
+                      {line}
+                    </p>
                   ))}
                 </div>
               )}
@@ -547,7 +563,6 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                     }
                   }}
                   className="draft-panel-button flex-1 bg-emerald-600 hover:bg-emerald-500 text-white"
-
                 >
                   Apply
                 </button>
@@ -574,11 +589,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
       {/* Toast */}
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
 
       {/* Publish Gate Modal */}

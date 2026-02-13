@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,7 +63,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
       className = "",
       error,
     },
-    ref
+    ref,
   ) => {
     const [isRawMode, setIsRawMode] = useState(false);
     const [rawValue, setRawValue] = useState("");
@@ -138,11 +139,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                           <DropdownMenuItem onClick={() => handleSelectPath("state", "")}>
                             <span className="text-xs">(root)</span>
                           </DropdownMenuItem>
-                          {renderPathTree(
-                            stateTree,
-                            "state",
-                            handleSelectPath
-                          )}
+                          {renderPathTree(stateTree, "state", handleSelectPath)}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                     </>
@@ -160,11 +157,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                           <DropdownMenuItem onClick={() => handleSelectPath("context", "")}>
                             <span className="text-xs">(root)</span>
                           </DropdownMenuItem>
-                          {renderPathTree(
-                            contextTree,
-                            "context",
-                            handleSelectPath
-                          )}
+                          {renderPathTree(contextTree, "context", handleSelectPath)}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                     </>
@@ -182,11 +175,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                           <DropdownMenuItem onClick={() => handleSelectPath("inputs", "")}>
                             <span className="text-xs">(root)</span>
                           </DropdownMenuItem>
-                          {renderPathTree(
-                            inputsTree,
-                            "inputs",
-                            handleSelectPath
-                          )}
+                          {renderPathTree(inputsTree, "inputs", handleSelectPath)}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                     </>
@@ -200,12 +189,12 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                 </DropdownMenuContent>
 
                 <button
-                  className={`w-full px-3 py-2 border rounded-md text-sm text-left flex items-center justify-between transition-colors ${
-                    error ? "border-red-500" : ""
-                  }`}
-                  style={error ? { backgroundColor: "var(--error-container)" } : { borderColor: "var(--border)", backgroundColor: "var(--background)" }}
-                  onMouseEnter={(e) => { if (!error) e.currentTarget.style.backgroundColor = "var(--surface-base)"; }}
-                  onMouseLeave={(e) => { if (!error) e.currentTarget.style.backgroundColor = "var(--background)"; }}
+                  className={cn(
+                    "w-full px-3 py-2 border rounded-md text-sm text-left flex items-center justify-between transition-colors",
+                    error
+                      ? "border-red-500 bg-error-container"
+                      : "border-variant bg-background hover:bg-surface-base",
+                  )}
                 >
                   <span>{displayLabel}</span>
                   <ChevronDown className="w-4 h-4" />
@@ -227,7 +216,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
     );
-  }
+  },
 );
 
 PathPicker.displayName = "PathPicker";
@@ -239,7 +228,7 @@ function renderPathTree(
   nodes: PathTreeNode[],
   source: string,
   onSelect: (source: string, path: string) => void,
-  parentPath: string = ""
+  parentPath: string = "",
 ): React.ReactNode {
   return nodes.map((node) => {
     const currentPath = parentPath ? `${parentPath}.${node.name}` : node.name;
@@ -262,10 +251,7 @@ function renderPathTree(
     } else {
       // Leaf node - render as menu item
       return (
-        <DropdownMenuItem
-          key={currentPath}
-          onClick={() => onSelect(source, currentPath)}
-        >
+        <DropdownMenuItem key={currentPath} onClick={() => onSelect(source, currentPath)}>
           <span className="text-sm">{node.name}</span>
         </DropdownMenuItem>
       );

@@ -1730,10 +1730,10 @@ export default function ApiManagerPage() {
                     onClick={() => setLogicType(type)}
                     disabled={!!selectedId}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""} ${
-                  logicType === type
-                    ? "border-sky-500 bg-sky-500 text-white"
-                    : "border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-                }`}
+                      logicType === type
+                        ? "border-sky-500 bg-sky-500 text-white"
+                        : "border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                    }`}
                   >
                     {logicTypeLabels[type]}
                   </button>
@@ -1916,26 +1916,21 @@ export default function ApiManagerPage() {
                   {JSON.stringify(executionResult, null, 2)}
                 </pre>
               ) : executionColumns.length === 0 ? (
-                <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
-                  No columns returned.
-                </p>
+                <p className="text-xs text-muted-foreground">No columns returned.</p>
               ) : (
                 <div className="overflow-auto custom-scrollbar">
-                  <table
-                    className="min-w-full text-left text-xs "
-                    style={{ color: "rgb(71, 85, 105)" }}
-                  >
+                  <table className="min-w-full text-left text-xs text-foreground">
                     <thead>
-                      <tr>
-                        {executionColumns.map((column) => (
-                          <th
-                            key={column}
-                            className="border-b px-2 py-1 uppercase tracking-normal border-variant text-muted-standard"
-                          >
-                            {column}
-                          </th>
-                        ))}
-                      </tr>
+                  <tr>
+                    {executionColumns.map((column) => (
+                      <th
+                        key={column}
+                        className="border-b px-2 py-1 uppercase tracking-normal border-variant text-muted-foreground"
+                      >
+                        {column}
+                      </th>
+                    ))}
+                  </tr>
                     </thead>
                     <tbody>
                       {executionRows.map((row, rowIndex) => (

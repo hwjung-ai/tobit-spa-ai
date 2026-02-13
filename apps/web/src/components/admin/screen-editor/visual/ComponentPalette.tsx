@@ -33,14 +33,19 @@ export default function ComponentPalette() {
 
   const filteredComponents = COMPONENT_REGISTRY.filter((desc) => {
     if (!searchTerm) return true;
-    return desc.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      desc.label.toLowerCase().includes(searchTerm.toLowerCase());
+    return (
+      desc.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      desc.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   // Check if selected component is a container
   const selectedContainer = useMemo(() => {
     if (!editorState.screen || !editorState.selectedComponentId) return null;
-    const component = findComponentById(editorState.screen.components, editorState.selectedComponentId);
+    const component = findComponentById(
+      editorState.screen.components,
+      editorState.selectedComponentId,
+    );
     if (component && CONTAINER_TYPES.has(component.type)) {
       return component;
     }
@@ -75,9 +80,8 @@ export default function ComponentPalette() {
         <Input
           placeholder="Search..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="h-8 text-xs"
-
           data-testid="palette-search"
         />
       </div>
@@ -86,7 +90,8 @@ export default function ComponentPalette() {
       {selectedContainer && (
         <div className="border-b px-3 py-2">
           <p className="text-xs">
-            Adding to: <span className="font-semibold">{selectedContainer.label || selectedContainer.id}</span>
+            Adding to:{" "}
+            <span className="font-semibold">{selectedContainer.label || selectedContainer.id}</span>
           </p>
         </div>
       )}
@@ -94,9 +99,7 @@ export default function ComponentPalette() {
       {/* Component List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {filteredComponents.length === 0 ? (
-          <div className="text-xs text-center py-4">
-            No components found
-          </div>
+          <div className="text-xs text-center py-4">No components found</div>
         ) : (
           filteredComponents.map((desc) => (
             <div
@@ -105,12 +108,11 @@ export default function ComponentPalette() {
               onDragStart={(e) => handleDragStart(e, desc.type as ComponentType)}
               onDragEnd={handleDragEnd}
               onClick={() => handleAddComponent(desc.type as ComponentType)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-xs font-medium border cursor-grab active:cursor-grabbing flex items-center gap-2 ${
-                draggingType === desc.type ? "opacity-50" : ""
-              }`}
-              style={Object.assign(
-                {},
-                draggingType === desc.type ? { borderColor: "rgba(14, 165, 233, 1)" } : { backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)", color: "var(--foreground-secondary)" }
+              className={cn(
+                "w-full text-left px-3 py-2 rounded-lg transition-colors text-xs font-medium border cursor-grab active:cursor-grabbing flex items-center gap-2",
+                draggingType === desc.type
+                  ? "opacity-50 border-sky-500"
+                  : "bg-surface-elevated border-variant text-foreground-secondary",
               )}
               data-testid={`palette-component-${desc.type}`}
             >
@@ -129,8 +131,7 @@ export default function ComponentPalette() {
         <p className="text-xs">
           {selectedContainer
             ? `Click or drag to add inside ${selectedContainer.type}`
-            : "Click or drag to add component"
-          }
+            : "Click or drag to add component"}
         </p>
       </div>
     </div>
