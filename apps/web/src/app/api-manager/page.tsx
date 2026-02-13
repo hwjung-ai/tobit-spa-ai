@@ -2423,7 +2423,7 @@ export default function ApiManagerPage() {
                       <span className="font-semibold truncate">{api.api_name}</span>
                       {((api.source === "local" && api.api_id !== "applied-draft-temp") ||
                         api.api_id.startsWith("local-")) && (
-                        <span className="rounded-full border border-amber-500/50 bg-amber-500/10 px-1.5 py-0.2 text-xs uppercase tracking-normal text-amber-400">
+                        <span className="rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-1 text-xs uppercase tracking-wider text-amber-400">
                           Local
                         </span>
                       )}

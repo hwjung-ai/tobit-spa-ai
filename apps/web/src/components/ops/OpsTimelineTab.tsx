@@ -135,7 +135,7 @@ export default function OpsTimelineTab({
   };
 
   const getDurationColor = (duration?: number) => {
-    if (!duration) return "text-[var(--muted-foreground)]";
+    if (!duration) return "text-muted-foreground";
     if (duration < 300) return "text-emerald-400";
     if (duration < 800) return "text-amber-400";
     return "text-rose-400";

@@ -1329,7 +1329,7 @@ function InspectorContent() {
                                       query: { icon: "🔍", color: "text-purple-400" },
                                     }[type] || {
                                       icon: "📄",
-                                      color: "text-[var(--muted-foreground)]",
+                                      color: "text-muted-foreground",
                                     };
 
                                     const displayValue = String(value)

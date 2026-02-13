@@ -156,9 +156,9 @@ export function PermissionManagementDashboard() {
       admin: "bg-red-100 text-red-800",
       manager: "bg-orange-100 text-orange-800",
       developer: "bg-sky-100 text-sky-800",
-      viewer: "bg-[var(--surface-elevated)] text-[var(--foreground)]",
+      viewer: "bg-surface-elevated text-foreground",
     };
-    return colors[role as keyof typeof colors] || "bg-[var(--surface-elevated)]";
+    return colors[role as keyof typeof colors] || "bg-surface-elevated";
   };
 
   const getPermissionStatusColor = (isGranted: boolean) => {

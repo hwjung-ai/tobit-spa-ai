@@ -76,14 +76,14 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
           <Tabs value={localMode} onValueChange={(val) => handleModeChange(val as "binding" | "static")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
-                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-[var(--foreground-secondary)]"
+                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-foreground-secondary"
 
                 value="binding"
               >
                 Binding
               </TabsTrigger>
               <TabsTrigger
-                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-[var(--foreground-secondary)]"
+                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-foreground-secondary"
 
                 value="static"
               >

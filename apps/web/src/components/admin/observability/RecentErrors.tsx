@@ -140,7 +140,7 @@ export default function RecentErrors() {
                   <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                     <span className="text-xs text-muted-foreground">{err.duration_ms}ms</span>
                     <svg
-                      className={`w-4 h-4 text-[var(--muted-foreground)] transition ${
+                      className={`w-4 h-4 text-muted-foreground transition ${
                         expandedId === err.exec_id ? "rotate-180" : ""
                       }`}
                       fill="none"

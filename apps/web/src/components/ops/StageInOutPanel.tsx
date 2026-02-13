@@ -182,7 +182,7 @@ export default function StageInOutPanel({
     const Icon = status && STATUS_ICONS[status as keyof typeof STATUS_ICONS] || Eye;
     return {
       Icon,
-      color: status && STATUS_COLORS[status as keyof typeof STATUS_COLORS] || "text-[var(--muted-foreground)]",
+      color: status && STATUS_COLORS[status as keyof typeof STATUS_COLORS] || "text-muted-foreground",
     };
   };
 

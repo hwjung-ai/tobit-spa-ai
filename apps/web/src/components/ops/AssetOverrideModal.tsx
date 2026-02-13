@@ -85,7 +85,7 @@ const ASSET_TYPES: Record<string, AssetTypeConfig> = {
   source: {
     label: "Source",
     icon: Database,
-    color: "bg-[var(--muted-background)] border-[var(--border)] text-[var(--foreground-secondary)]",
+    color: "bg-slate-100 border-variant text-foreground-secondary",
   },
   schema: {
     label: "Schema",
@@ -216,7 +216,7 @@ export default function AssetOverrideModal({
                   ? "bg-emerald-500/10 text-emerald-400"
                   : asset.status === "draft"
                     ? "bg-amber-500/10 text-amber-400"
-                    : "bg-[var(--muted-background)] text-[var(--muted-foreground)]",
+                    : "bg-slate-100 text-muted-foreground",
               )}
             >
               {asset.status}

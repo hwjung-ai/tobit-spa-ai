@@ -297,7 +297,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50"
               : ""
           }`}
-          style={asset.status !== "published" ? { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "rgba(51, 65, 85, 0.5)" } : undefined}>
+          className={asset.status !== "published" ? "bg-slate-900/30 text-muted-foreground border-slate-700/30" : ""}>
             {asset.status} (v{asset.version})
           </span>
         </div>

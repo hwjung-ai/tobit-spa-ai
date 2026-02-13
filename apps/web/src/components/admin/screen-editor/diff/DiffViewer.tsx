@@ -22,9 +22,9 @@ function getChangeTypeColor(changeType: string): string {
     case "modified":
       return "bg-amber-950/30 border-l-4 border-amber-500";
     case "unchanged":
-      return "bg-[var(--surface-base)] border-l-4 border-[var(--border)]";
+      return "bg-surface-base border-l-4 border-variant";
     default:
-      return "bg-[var(--surface-base)]";
+      return "bg-surface-base";
   }
 }
 

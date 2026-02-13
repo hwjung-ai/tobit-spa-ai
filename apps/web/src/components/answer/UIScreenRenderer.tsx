@@ -229,7 +229,7 @@ function toConditionalStyleRules(raw: unknown): ConditionalStyleRule[] {
 function badgeVariantClass(variant: string): string {
   const normalized = String(variant || "default").toLowerCase();
   if (normalized === "secondary") {
-    return "border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--foreground-secondary)]";
+    return "border-variant bg-surface-elevated text-foreground-secondary";
   }
   if (normalized === "success") {
     return "border-emerald-700 bg-emerald-900/50 text-emerald-200";
@@ -241,12 +241,12 @@ function badgeVariantClass(variant: string): string {
     return "border-rose-700 bg-rose-900/50 text-rose-200";
   }
   if (normalized === "outline") {
-    return "border-[var(--border)] bg-transparent text-[var(--foreground-secondary)]";
+    return "border-variant bg-transparent text-foreground-secondary";
   }
   if (normalized === "ghost") {
-    return "border-transparent bg-transparent text-[var(--foreground-secondary)]";
+    return "border-transparent bg-transparent text-foreground-secondary";
   }
-  return "border-[var(--border)] bg-[var(--surface-overlay)] text-[var(--foreground-secondary)]";
+  return "border-variant bg-surface-overlay text-foreground-secondary";
 }
 
 export default function UIScreenRenderer({
@@ -1684,7 +1684,7 @@ export default function UIScreenRenderer({
     if (comp.type === "divider") {
       const orientation = (props.orientation as string) || "horizontal";
       return (
-        <div key={comp.id} className={orientation === "vertical" ? "h-full w-px bg-[var(--surface-elevated)]" : "h-px w-full bg-[var(--surface-elevated)]"} data-testid={`component-divider-${comp.id}`} />
+        <div key={comp.id} className={orientation === "vertical" ? "h-full w-px bg-surface-elevated" : "h-px w-full bg-surface-elevated"} data-testid={`component-divider-${comp.id}`} />
       );
     }
 
@@ -1870,7 +1870,7 @@ export default function UIScreenRenderer({
     <UIScreenErrorBoundary>
       <div
         data-testid={`screen-renderer-${screenId}`}
-        className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-[var(--surface-base)] p-6 animate-in fade-in zoom-in-95 duration-300" : "relative"}
+        className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-surface-base p-6 animate-in fade-in zoom-in-95 duration-300" : "relative"}
         style={isFullScreen ? { ...scopedThemeVars, backgroundColor: "var(--background)" } : scopedThemeVars}
       >
         {/* Fullscreen Toggle */}

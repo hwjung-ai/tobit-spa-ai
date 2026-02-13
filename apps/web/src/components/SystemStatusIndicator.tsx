@@ -118,7 +118,7 @@ export default function SystemStatusIndicator() {
                 <div
                   key={i}
                   className={i === 0 ? "font-semibold" : "mt-0.5"}
-                  style={i === 0 ? {} : { color: "var(--muted-foreground)" }}
+                  className={i === 0 ? "" : "text-muted-foreground"}
                 >
                   {line}
                 </div>

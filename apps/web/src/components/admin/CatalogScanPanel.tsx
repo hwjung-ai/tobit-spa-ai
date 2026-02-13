@@ -54,7 +54,7 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
     completed: "bg-green-900/30 text-green-400",
     scanning: "bg-yellow-900/30 text-yellow-400",
     failed: "bg-red-900/30 text-red-400",
-    pending: "bg-[var(--surface-overlay)] text-[var(--muted-foreground)]",
+    pending: "bg-surface-overlay text-muted-foreground",
   };
 
   return (

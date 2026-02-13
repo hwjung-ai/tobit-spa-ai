@@ -313,16 +313,11 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   {/* Blank Option */}
                   <button
                     onClick={() => setSelectedTemplate(null)}
-                    className={`p-3 rounded border transition-all text-sm font-medium ${
+                    className={`p-3 rounded border transition-all text-sm font-medium bg-surface-overlay text-foreground-secondary border-variant ${
                       selectedTemplate === null
-                        ? "bg-sky-600 border-sky-400 text-white"
-                        : "   hover: hover:"
+                        ? "ring-2 ring-sky-500"
+                        : "hover:opacity-75"
                     }`}
-                    style={{
-                      backgroundColor: "var(--surface-overlay)",
-                      color: "var(--foreground-secondary)",
-                      borderColor: "var(--border)",
-                    }}
                     data-testid="template-blank"
                   >
                     <div className="font-semibold">Blank</div>
@@ -339,16 +334,11 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     <button
                       key={template.id}
                       onClick={() => setSelectedTemplate(template.id)}
-                      className={`p-3 rounded border transition-all text-sm font-medium ${
+                      className={`p-3 rounded border transition-all text-sm font-medium bg-surface-overlay text-foreground-secondary border-variant ${
                         selectedTemplate === template.id
-                          ? "bg-sky-600 border-sky-400 text-white"
-                          : "   hover: hover:"
+                          ? "ring-2 ring-sky-500"
+                          : "hover:opacity-75"
                       }`}
-                      style={{
-                        backgroundColor: "var(--surface-overlay)",
-                        color: "var(--foreground-secondary)",
-                        borderColor: "var(--border)",
-                      }}
                       data-testid={`template-${template.id}`}
                     >
                       <div className="font-semibold">{template.name}</div>
@@ -377,12 +367,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     setNewScreenData({ ...newScreenData, screen_id: e.target.value })
                   }
                   placeholder="e.g., dashboard_main"
-                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500"
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--foreground)",
-                    backgroundColor: "var(--surface-elevated)",
-                  }}
+                  className="w-full px-3 py-2 border rounded text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500"
                   data-testid="input-screen-id"
                 />
               </div>
@@ -422,12 +407,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     setNewScreenData({ ...newScreenData, description: e.target.value })
                   }
                   placeholder="e.g., Main dashboard for user overview"
-                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500 resize-none"
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--foreground)",
-                    backgroundColor: "var(--surface-elevated)",
-                  }}
+                  className="w-full px-3 py-2 border rounded text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500 resize-none"
                   rows={3}
                   data-testid="input-screen-description"
                 />
@@ -443,12 +423,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   value={newScreenData.tags}
                   onChange={(e) => setNewScreenData({ ...newScreenData, tags: e.target.value })}
                   placeholder='e.g., {"team":"ops","audience":"mobile"}'
-                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500 resize-none"
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--foreground)",
-                    backgroundColor: "var(--surface-elevated)",
-                  }}
+                  className="w-full px-3 py-2 border rounded text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500 resize-none"
                   rows={2}
                   data-testid="input-screen-tags"
                 />
@@ -486,13 +461,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
             setSearchTerm(e.target.value);
             updateUrlParams(e.target.value, filterStatus);
           }}
-          className="flex-1 px-4 py-2  border  rounded-lg  text-sm focus:outline-none focus:border-sky-500"
-          style={{
-            borderColor: "var(--border)",
-            color: "var(--foreground)",
-            backgroundColor: "var(--surface-elevated)",
-          }}
-          data-testid="input-search-screens"
+          className="flex-1 px-4 py-2 border rounded-lg text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500"
         />
       </div>
 

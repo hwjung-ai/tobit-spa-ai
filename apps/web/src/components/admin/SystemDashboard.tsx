@@ -88,7 +88,7 @@ export default function SystemDashboard() {
       case "critical":
         return "bg-rose-500/10 border-rose-500/50 text-rose-400";
       default:
-        return "bg-[var(--muted-background)] border-[var(--border)] text-[var(--muted-foreground)]";
+        return "bg-slate-100 border-variant text-muted-foreground";
     }
   };
 

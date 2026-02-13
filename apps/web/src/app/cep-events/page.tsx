@@ -244,7 +244,7 @@ function CepEventBrowserContent() {
           if (val === "HIGH" || val === "CRITICAL") className = "text-rose-400 font-bold";
           else if (val === "MEDIUM" || val === "WARN") className = "text-amber-400 font-bold";
           else if (val === "INFO" || val === "LOW") className = "text-sky-400";
-          else className = "text-[var(--muted-foreground)]";
+          else className = "text-muted-foreground";
           return <span className={className}>{val}</span>;
         },
       },

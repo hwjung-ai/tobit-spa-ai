@@ -425,7 +425,7 @@ export default function ScreenEditorTabs() {
         >
           <span>
             Active editors: {presenceCount}
-            <span className={`ml-3 ${collabConnected ? "text-emerald-400" : "text-[var(--foreground)]0"}`}>
+            <span className={`ml-3 ${collabConnected ? "text-emerald-400" : "text-foreground0"}`}>
               {collabConnected ? "Live sync connected" : "Live sync disconnected"}
             </span>
           </span>

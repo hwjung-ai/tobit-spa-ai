@@ -211,7 +211,7 @@ export default function RegressionWatchPanel() {
       case "FAIL":
         return "text-red-400 bg-red-950";
       default:
-        return "text-[var(--muted-foreground)] bg-[var(--surface-base)]";
+        return "text-muted-foreground bg-surface-base";
     }
   };
 

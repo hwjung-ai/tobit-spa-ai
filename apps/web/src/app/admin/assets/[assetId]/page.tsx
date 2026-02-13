@@ -118,7 +118,7 @@ function AssetDetailPageContent() {
                         </svg>
                     </div>
                     <h2 className="text-xl font-bold mb-2" style={{color: "rgb(15, 23, 42)"}}>Error Loading Asset</h2>
-                    <p className="mb-8 max-w-xl text-center text-[var(--muted-foreground)]" style={{color: "rgb(71, 85, 105)"}}>{(error as Error)?.message || "The requested asset could not be found or retrieved from the server."}</p>
+                    <p className="mb-8 max-w-xl text-center text-muted-foreground" style={{color: "rgb(71, 85, 105)"}}>{(error as Error)?.message || "The requested asset could not be found or retrieved from the server."}</p>
                     <Link
                         href={backUrl}
                         className="px-6 py-2 text-white rounded-lg transition-all font-medium inline-block"

@@ -74,7 +74,7 @@ export default function JsonEditor() {
         value={jsonText}
         onChange={e => handleJsonChange(e.target.value)}
         placeholder="Enter screen schema JSON here..."
-        className={`flex-1 font-mono text-xs bg-[var(--surface-elevated)] border-[var(--border)] resize-none ${hasJsonErrors ? "border-red-600" : ""
+        className={`flex-1 font-mono text-xs bg-surface-elevated border-variant resize-none ${hasJsonErrors ? "border-red-600" : ""
           }`}
         data-testid="json-textarea"
       />
@@ -85,7 +85,7 @@ export default function JsonEditor() {
           onClick={handleFormat}
           variant="outline"
           size="sm"
-          className="bg-[var(--surface-elevated)] text-[var(--foreground-secondary)] border-[var(--border)] hover:bg-[var(--surface-elevated)] hover:text-foreground"
+          className="bg-surface-elevated text-foreground-secondary border-variant hover:bg-surface-elevated hover:text-foreground"
           data-testid="btn-format-json"
         >
           Format

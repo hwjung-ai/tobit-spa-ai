@@ -626,7 +626,7 @@ html {
 
 /* Event Detail Section */
 .cep-event-detail {
-  @apply flex flex-col gap-1.5;
+  @apply flex flex-col gap-2;
 }
 
 .cep-event-detail-label {
@@ -641,7 +641,7 @@ html {
 
 /* Event Action Button */
 .cep-event-action-btn {
-  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium;
+  @apply inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium;
   background-color: var(--surface-elevated);
   color: var(--foreground);
   border: 1px solid var(--border);
@@ -919,7 +919,7 @@ html {
 
 /* Form Field Group - Reusable label + input wrapper */
 .form-field-group {
-  @apply flex flex-col gap-1.5;
+  @apply flex flex-col gap-2;
 }
 
 .form-field-label {
@@ -962,7 +962,7 @@ html {
 }
 
 .draft-panel-item {
-  @apply rounded-xl px-2 py-1.5;
+  @apply rounded-xl px-3 py-2;
   border: 1px solid var(--border);
   background-color: var(--surface-base);
 }
@@ -1152,7 +1152,7 @@ html {
 }
 
 .builder-label-small {
-  @apply text-[10px] uppercase tracking-normal;
+  @apply text-xs uppercase tracking-wider;
   color: var(--muted-foreground);
 }
 
@@ -1203,27 +1203,27 @@ html {
 }
 
 .builder-help-text-small {
-  @apply text-[11px];
+  @apply text-xs;
   color: var(--muted-foreground);
 }
 
 .builder-button-secondary {
-  @apply rounded-full border px-2 py-1 text-[10px];
+  @apply rounded-full border px-3 py-1.5 text-xs;
   border-color: var(--border-muted);
   background-color: var(--surface-overlay);
   color: var(--muted-foreground);
 }
 
 .builder-button-reset {
-  @apply rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-normal transition;
-  border-color: rgba(30, 41, 59, 0.5);
-  background-color: rgba(30, 41, 59, 0.8);
+  @apply rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wider transition;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
   color: var(--muted-foreground);
 }
 
 .builder-json-preview {
-  @apply max-h-40 overflow-auto rounded-xl p-3 text-[11px] font-mono;
-  background-color: rgba(15, 23, 42, 0.7);
+  @apply max-h-40 overflow-auto rounded-xl p-3 text-xs font-mono;
+  background-color: var(--surface-overlay);
   color: var(--muted-foreground);
 }
 
@@ -1389,7 +1389,7 @@ html {
 }
 
 .cep-text-muted-sm {
-  @apply text-[11px];
+  @apply text-xs;
   color: var(--muted-foreground);
 }
 
@@ -1534,7 +1534,7 @@ html {
 }
 
 .text-label-sm {
-  @apply text-[10px] font-semibold uppercase tracking-wider;
+  @apply text-xs font-semibold uppercase tracking-wider;
   color: var(--muted-foreground);
 }
 
@@ -1551,7 +1551,7 @@ html {
 
 /* Standard Tab Button Classes */
 .tab-button {
-  @apply px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
+  @apply px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
   color: var(--foreground);
 }
 
@@ -1652,7 +1652,7 @@ html {
 }
 
 .insp-label-small {
-  @apply text-[10px] font-semibold uppercase tracking-wider;
+  @apply text-xs font-semibold uppercase tracking-wider;
   color: var(--muted-foreground);
 }
 
@@ -1721,7 +1721,7 @@ html {
 
 /* Inspector Page - Status Badges */
 .insp-badge {
-  @apply inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider;
+  @apply inline-flex rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wider;
   border-color: var(--border-muted);
   background-color: var(--surface-elevated);
   color: var(--foreground);
@@ -1749,7 +1749,7 @@ html {
 
 /* Inspector Page - Tabs */
 .insp-tab {
-  @apply px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
+  @apply px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
   color: var(--foreground);
 }
 
@@ -2316,7 +2316,7 @@ html {
 
 /* Page Header Title Group */
 .page-header-title-group {
-  @apply flex flex-col gap-0.5;
+  @apply flex flex-col gap-1;
 }
 
 /* Page Header Title */
@@ -2838,7 +2838,7 @@ html {
 
 /* Answer Block Badge */
 .answer-badge {
-  @apply text-[10px] uppercase tracking-wider px-2 py-0.5 rounded;
+  @apply text-xs uppercase tracking-wider px-2 py-1 rounded;
   border-color: var(--border);
   background-color: var(--surface-elevated);
   color: var(--muted-foreground);
@@ -2856,12 +2856,12 @@ html {
 }
 
 .answer-text-sky {
-  @apply text-[10px] uppercase tracking-wider text-sky-400;
+  @apply text-xs uppercase tracking-wider text-sky-400;
 }
 
 /* Answer Block Button */
 .answer-button {
-  @apply rounded border px-2 py-0.5 text-[10px] uppercase tracking-wider transition;
+  @apply rounded border px-2 py-1 text-xs uppercase tracking-wider transition;
   border-color: var(--border);
   color: var(--muted-foreground);
 }
@@ -2948,7 +2948,7 @@ html {
 
 /* Answer Block Download Button */
 .answer-download-btn {
-  @apply rounded border px-2 py-0.5 text-[10px] uppercase tracking-wider transition;
+  @apply rounded border px-2 py-1 text-xs uppercase tracking-wider transition;
   border-color: var(--border);
   color: var(--muted-foreground);
 }
