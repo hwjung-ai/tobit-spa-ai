@@ -994,13 +994,19 @@ export default function UIScreenRenderer({
     if (comp.type === "button") {
       const label = comp.label || (props.label as string) || "Button";
       const disabled = !!props.disabled;
+      const buttonVariant = String(props.variant || "default").toLowerCase();
       const actionId = comp.actions?.[0]?.handler;
       const isLoadingAction = actionId ? !!(state.__loading as Record<string, boolean>)?.[actionId] : false;
       return (
         <button
           key={comp.id}
           type="button"
-          className="rounded-full border px-4 py-2 text-xs uppercase tracking-wider hover:border-sky-500 border-slate-200 dark:border-slate-700 text-foreground"
+          className={cn(
+            "br-btn px-4 py-2 text-xs uppercase tracking-wider transition-all",
+            buttonVariant === "primary"
+              ? "btn-primary-small"
+              : "border border-variant bg-surface-elevated text-foreground hover:bg-surface-base"
+          )}
           disabled={disabled || isLoadingAction}
           onClick={() => executeActions(comp.actions as UIActionPayload[])}
           data-testid={`component-button-${comp.id}`}
@@ -1015,7 +1021,7 @@ export default function UIScreenRenderer({
       return (
         <input
           key={comp.id}
-          className="w-full rounded-xl border border-variant px-3 py-2 text-sm text-foreground bg-surface-base"
+          className="input-container w-full"
           placeholder={props.placeholder as string}
           type={(props.inputType as string) || "text"}
           value={String(value)}
@@ -1037,21 +1043,21 @@ export default function UIScreenRenderer({
       return (
         <form
           key={comp.id}
-          className="space-y-3 rounded-2xl border border-variant bg-surface-overlay p-4"
+          className="container-card space-y-3 p-4"
           onSubmit={(e) => {
             e.preventDefault();
             void executeActions(comp.actions as UIActionPayload[]);
           }}
           data-testid={`component-form-${comp.id}`}
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {title}
           </div>
           <div className="space-y-3">{children.map((child) => renderComponent(child))}</div>
           <div className="pt-1">
             <button
               type="submit"
-              className="rounded-full border px-4 py-2 text-xs uppercase tracking-wider hover:border-sky-500 border-slate-200 dark:border-slate-700 text-foreground"
+              className="btn-primary-small br-btn"
             >
               {submitLabel}
             </button>
@@ -1168,9 +1174,9 @@ export default function UIScreenRenderer({
       };
 
       return (
-        <div key={comp.id} className="space-y-2" data-testid={`component-table-${comp.id}`}>
-          <table className="min-w-full border border-variant text-xs">
-            <thead className="bg-surface-base text-muted-foreground">
+        <div key={comp.id} className="container-card space-y-2 overflow-hidden" data-testid={`component-table-${comp.id}`}>
+          <table className="min-w-full border-collapse text-xs">
+            <thead className="bg-surface-elevated text-muted-foreground">
               <tr>
                 {columnsMeta.map((col) => {
                   const isSorted = currentTableState.sortKey === col.key;
@@ -1556,9 +1562,10 @@ export default function UIScreenRenderer({
       return (
         <span
           key={comp.id}
-          className={`inline-flex rounded-full border px-3 py-1 text-xs uppercase tracking-wider ${badgeVariantClass(
-            badgeVariant
-          )}`}
+          className={cn(
+            "br-badge px-3 py-1 text-xs font-semibold uppercase tracking-wider",
+            badgeVariantClass(badgeVariant)
+          )}
           style={badgeStyle}
           data-testid={`component-badge-${comp.id}`}
         >
@@ -1580,8 +1587,10 @@ export default function UIScreenRenderer({
                 <button
                   key={`${comp.id}-tab-${index}`}
                   type="button"
-                  className={`rounded-full px-3 py-1 text-xs uppercase tracking-wider ${index === activeIndex ? "bg-sky-600 text-white" : "border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                    }`}
+                  className={cn(
+                    "tab-button",
+                    index === activeIndex ? "tab-button-active" : "tab-button-inactive"
+                  )}
                   onClick={() => setActiveTabs((prev) => ({ ...prev, [comp.id]: index }))}
                 >
                   {(tabItem.label as string) || `Tab ${index + 1}`}
@@ -1650,7 +1659,7 @@ export default function UIScreenRenderer({
               <h3 className="text-sm font-semibold text-foreground">{(props.title as string) || comp.label}</h3>
               <button
                 type="button"
-                className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground"
                 onClick={() => executeActions(comp.actions as UIActionPayload[])}
               >
                 Close
@@ -1710,7 +1719,7 @@ export default function UIScreenRenderer({
         <div
           key={comp.id}
           className={`flex flex-row ${alignClass[align] || "items-stretch"} ${justifyClass[justify] || "justify-start"}`}
-          style={{gap: `${gap * 4}px`}}
+          style={{ gap: `${gap * 4}px` }}
           data-testid={`component-row-${comp.id}`}
         >
           {children.map((child) => (
@@ -1736,7 +1745,7 @@ export default function UIScreenRenderer({
         <div
           key={comp.id}
           className={`flex flex-col ${alignClass[align] || "items-stretch"}`}
-          style={{gap: `${gap * 4}px`}}
+          style={{ gap: `${gap * 4}px` }}
           data-testid={`component-column-${comp.id}`}
         >
           {children.map((child) => renderComponent(child))}
@@ -1779,7 +1788,7 @@ export default function UIScreenRenderer({
               <div
                 key={comp.id}
                 className="absolute"
-                style={{left: `${leftPercent}%`, width: `${widthPercent}%`, top: `${topPx}px`, height: `${heightPx}px`}}
+                style={{ left: `${leftPercent}%`, width: `${widthPercent}%`, top: `${topPx}px`, height: `${heightPx}px` }}
                 data-testid={`dashboard-item-${comp.id}`}
               >
                 <div className="w-full h-full p-2">
@@ -1893,7 +1902,7 @@ export default function UIScreenRenderer({
             className="mb-3 rounded-xl border border-variant bg-surface-overlay p-3 text-xs text-foreground-secondary/80"
             data-testid="auto-refresh-panel"
           >
-            <p className="mb-2 uppercase tracking-wider text-slate-500 dark:text-slate-400">Auto Refresh</p>
+            <p className="mb-2 uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">Auto Refresh</p>
             <div className="space-y-2">
               {autoRefreshConfigs.map((config) => {
                 const status = autoRefreshStatus[config.key];
@@ -1935,7 +1944,7 @@ export default function UIScreenRenderer({
             data-testid="action-log-panel"
           >
             <div className="mb-2 flex items-center justify-between">
-              <p className="uppercase tracking-wider text-slate-500 dark:text-slate-400">Action Log</p>
+              <p className="uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">Action Log</p>
               <button
                 type="button"
                 className="rounded border border-variant px-2 py-1 text-xs uppercase tracking-wider"

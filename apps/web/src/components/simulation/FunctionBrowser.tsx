@@ -166,7 +166,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
       case "basic": return "bg-emerald-500/20 text-emerald-300";
       case "intermediate": return "bg-sky-500/20 text-sky-300";
       case "advanced": return "bg-purple-500/20 text-purple-300";
-      default: return "bg-slate-500/20 text-slate-300";
+      default: return "bg-surface-elevated0/20 text-muted-foreground";
     }
   };
 
@@ -244,7 +244,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
                     "br-section p-4 text-left transition bg-surface-overlay border-variant",
                     selectedFunction?.id === func.id
                       ? "border-sky-500 bg-sky-500/10"
-                      : "hover:border-slate-400 dark:hover:border-slate-600"
+                      : "hover:border-slate-400 dark:hover:border-variant"
                   )}
                 >
                   <div className="flex items-start justify-between">

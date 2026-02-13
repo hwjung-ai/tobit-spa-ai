@@ -179,7 +179,7 @@ export function ApiKeyManagementPanel() {
     if (scope.includes("ci")) return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
     if (scope.includes("metric") || scope.includes("graph")) return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300";
     if (scope.includes("cep")) return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
-    return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300";
+    return "bg-slate-100 text-slate-800 dark:bg-surface-elevated dark:text-muted-foreground";
   };
 
   const activeKeysCount = apiKeys.filter(k => k.is_active).length;
@@ -322,8 +322,8 @@ export function ApiKeyManagementPanel() {
                 <p className="mb-3">
                   This is the only time you will see this key. Please save it in a secure location.
                 </p>
-                <div className="bg-white dark:bg-slate-950 p-3 rounded border border-amber-300 dark:border-amber-700 mb-3 flex items-center justify-between">
-                  <code className="text-sm font-mono break-all flex-1 text-slate-900 dark:text-slate-100">
+                <div className="bg-surface-base dark:bg-surface-base p-3 rounded border border-amber-300 dark:border-amber-700 mb-3 flex items-center justify-between">
+                  <code className="text-sm font-mono break-all flex-1 text-foreground dark:text-muted-foreground">
                     {showKeySecret ? createdKey : "•".repeat(32)}
                   </code>
                   <div className="flex gap-2 ml-2 flex-shrink-0">

@@ -156,7 +156,7 @@ const AdminDashboard: React.FC = () => {
       {metrics?.resources && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* CPU and Memory Chart */}
-          <div className="bg-slate-50 p-6 rounded-lg border">
+          <div className="bg-surface-elevated p-6 rounded-lg border">
             <h3 className="text-lg font-semibold mb-4">Resource Usage</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={metrics.resources.slice(-24)}>
@@ -173,7 +173,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* API Performance Chart */}
           {metrics?.api && (
-            <div className="bg-slate-50 p-6 rounded-lg border">
+            <div className="bg-surface-elevated p-6 rounded-lg border">
               <h3 className="text-lg font-semibold mb-4">API Performance</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={metrics.api.slice(-12)}>
@@ -247,7 +247,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <header className="bg-slate-50 border-b  px-8 py-4 flex items-center justify-between">
+        <header className="bg-surface-elevated border-b  px-8 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold ">Admin Dashboard</h1>
           <button
             onClick={fetchDashboardData}
@@ -306,7 +306,7 @@ const UserManagementPanel: React.FC = () => {
         <h2 className="text-xl font-bold">User Management</h2>
       </div>
 
-      <div className="bg-slate-50 rounded-lg border overflow-hidden">
+      <div className="bg-surface-elevated rounded-lg border overflow-hidden">
         <table className="w-full">
           <thead className=" border-b">
             <tr>
@@ -350,7 +350,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Monitoring</h2>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-slate-50 p-6 rounded-lg border">
+      <div className="bg-surface-elevated p-6 rounded-lg border">
         <h3 className="text-lg font-semibold mb-4">Resource Metrics</h3>
         <div className="space-y-3">
           <div>
@@ -413,7 +413,7 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => (
 const SettingsPanel: React.FC = () => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Settings</h2>
-    <div className="bg-slate-50 p-6 rounded-lg border">
+    <div className="bg-surface-elevated p-6 rounded-lg border">
       <p className="">Settings management interface coming soon...</p>
     </div>
   </div>

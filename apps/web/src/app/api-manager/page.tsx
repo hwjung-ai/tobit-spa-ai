@@ -16,6 +16,7 @@ import SQLQueryBuilder from "../../components/api-manager/SQLQueryBuilder";
 import PythonBuilder from "../../components/api-manager/PythonBuilder";
 import WorkflowBuilder from "../../components/api-manager/WorkflowBuilder";
 import DraftAssistantPanel from "../../components/api-manager/DraftAssistantPanel";
+import { cn } from "@/lib/utils";
 import type {
   ScopeType,
   CenterTab,
@@ -1377,7 +1378,7 @@ export default function ApiManagerPage() {
 
   const testResultsArea = (
     <div className="space-y-4">
-      <p className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+      <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
         Execution result
       </p>
       {selectedApi?.logic_type === "workflow" ? (
@@ -1410,19 +1411,19 @@ export default function ApiManagerPage() {
               ))}
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                 Final output
               </p>
               <pre className="code-block mt-2 max-h-60 text-xs custom-scrollbar">
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
-              <p className="mt-2 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <p className="mt-2 text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                 References: {workflowReferences.length}
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
             Execute the workflow to see results here.
           </p>
         )
@@ -1435,7 +1436,7 @@ export default function ApiManagerPage() {
             </div>
             <button
               onClick={() => setShowJsonResult((prev) => !prev)}
-              className="text-xs uppercase tracking-wider underline text-slate-600 dark:text-slate-400"
+              className="text-xs uppercase tracking-wider underline text-muted-foreground dark:text-muted-foreground"
             >
               {showJsonResult ? "Hide JSON" : "Show JSON"}
             </button>
@@ -1445,16 +1446,16 @@ export default function ApiManagerPage() {
               {JSON.stringify(executionResult, null, 2)}
             </pre>
           ) : executionColumns.length === 0 ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">No columns returned.</p>
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground">No columns returned.</p>
           ) : (
             <div className="overflow-auto custom-scrollbar">
-              <table className="min-w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <table className="min-w-full text-left text-xs text-foreground dark:text-muted-foreground">
                 <thead>
                   <tr>
                     {executionColumns.map((column) => (
                       <th
                         key={column}
-                        className="border-b px-2 py-1 uppercase tracking-wider border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
+                        className="border-b px-2 py-1 uppercase tracking-wider border-variant text-muted-foreground dark:border-variant dark:text-muted-foreground"
                       >
                         {column}
                       </th>
@@ -1463,10 +1464,10 @@ export default function ApiManagerPage() {
                 </thead>
                 <tbody>
                   {executionRows.map((row, rowIndex) => (
-                    <tr key={`row-${rowIndex}`} className="bg-slate-100 dark:bg-slate-900">
+                    <tr key={`row-${rowIndex}`} className="bg-surface-elevated dark:bg-surface-base">
                       {executionColumns.map((column) => (
                         <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
-                          <pre className="m-0 text-sm text-slate-900 dark:text-slate-50">
+                          <pre className="m-0 text-sm text-foreground dark:text-slate-50">
                             {String(row[column] ?? "")}
                           </pre>
                         </td>
@@ -1483,17 +1484,17 @@ export default function ApiManagerPage() {
       )}
       <div className="ui-box space-y-3 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Execution logs
           </p>
-          <span className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             {execLogs.length} entries
           </span>
         </div>
         {logsLoading ? (
-          <p className="text-xs text-slate-600 dark:text-slate-400">Loading logs…</p>
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground">Loading logs…</p>
         ) : execLogs.length === 0 ? (
-          <p className="text-xs text-slate-600 dark:text-slate-400">No executions yet.</p>
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground">No executions yet.</p>
         ) : (
           <div className="space-y-2">
             {execLogs.map((log) => (
@@ -1502,7 +1503,7 @@ export default function ApiManagerPage() {
                 onClick={() => applyLogParams(log)}
                 className="ui-subbox w-full p-3 text-left text-xs transition hover:bg-surface-base"
               >
-                <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center justify-between text-sm text-muted-foreground dark:text-muted-foreground">
                   <span>
                     {log.status.toUpperCase()} ·{" "}
                     {new Date(log.executed_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
@@ -1511,11 +1512,11 @@ export default function ApiManagerPage() {
                     {log.row_count} rows · {log.duration_ms} ms
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                <p className="mt-1 text-sm text-foreground dark:text-muted-foreground">
                   by {log.executed_by ?? "ops-builder"}
                 </p>
                 {log.request_params ? (
-                  <pre className="mt-2 max-h-20 overflow-auto text-xs custom-scrollbar text-slate-600 dark:text-slate-400">
+                  <pre className="mt-2 max-h-20 overflow-auto text-xs custom-scrollbar text-muted-foreground dark:text-muted-foreground">
                     {JSON.stringify(log.request_params, null, 2)}
                   </pre>
                 ) : null}
@@ -1719,7 +1720,7 @@ export default function ApiManagerPage() {
       {activeTab === "logic" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-normal text-muted-standard">
+            <p className="text-xs uppercase tracking-wider text-muted-standard">
               Logic ({logicTypeLabels[logicType]})
             </p>
             {!isSystemScope ? (
@@ -1729,10 +1730,10 @@ export default function ApiManagerPage() {
                     key={type}
                     onClick={() => setLogicType(type)}
                     disabled={!!selectedId}
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""} ${
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""} ${
                       logicType === type
                         ? "border-sky-500 bg-sky-500 text-white"
-                        : "border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                        : "border-variant bg-surface-elevated text-muted-foreground hover:bg-surface-elevated dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated"
                     }`}
                   >
                     {logicTypeLabels[type]}
@@ -1742,7 +1743,7 @@ export default function ApiManagerPage() {
                   type="button"
                   onClick={handleLogicUndo}
                   disabled={logicHistoryIndex <= 0}
-                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground dark:hover:bg-surface-elevated disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Undo
                 </button>
@@ -1750,7 +1751,7 @@ export default function ApiManagerPage() {
                   type="button"
                   onClick={handleLogicRedo}
                   disabled={logicHistoryIndex >= logicHistory.length - 1}
-                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground dark:hover:bg-surface-elevated disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Redo
                 </button>
@@ -1869,7 +1870,7 @@ export default function ApiManagerPage() {
                 disabled={isExecuting}
                 className={`rounded-full border px-5 py-2 text-sm font-bold uppercase tracking-wider transition ${
                   isExecuting
-                    ? "opacity-60 cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                    ? "opacity-60 cursor-not-allowed border-variant bg-surface-elevated text-muted-foreground dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground"
                     : "border-sky-500 bg-sky-500 text-white hover:bg-sky-700"
                 }`}
               >
@@ -1881,7 +1882,7 @@ export default function ApiManagerPage() {
             disabled={isSaving || isSystemScope}
             className={`rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition ${
               isSaving || isSystemScope
-                ? "opacity-60 cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                ? "opacity-60 cursor-not-allowed border-variant bg-surface-elevated text-muted-foreground dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground"
                 : "border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600"
             }`}
           >
@@ -1906,7 +1907,7 @@ export default function ApiManagerPage() {
                 </div>
                 <button
                   onClick={() => setShowJsonResult((prev) => !prev)}
-                  className="text-xs uppercase tracking-normal underline text-muted-standard"
+                  className="text-xs uppercase tracking-wider underline text-muted-standard"
                 >
                   {showJsonResult ? "Hide JSON" : "Show JSON"}
                 </button>
@@ -1925,7 +1926,7 @@ export default function ApiManagerPage() {
                     {executionColumns.map((column) => (
                       <th
                         key={column}
-                        className="border-b px-2 py-1 uppercase tracking-normal border-variant text-muted-foreground"
+                        className="border-b px-2 py-1 uppercase tracking-wider border-variant text-muted-foreground"
                       >
                         {column}
                       </th>
@@ -1938,8 +1939,8 @@ export default function ApiManagerPage() {
                           key={`row-${rowIndex}`}
                           className={
                             rowIndex % 2 === 0
-                              ? "bg-white dark:bg-slate-950"
-                              : "bg-white dark:bg-slate-950"
+                              ? "bg-surface-base dark:bg-surface-base"
+                              : "bg-surface-base dark:bg-surface-base"
                           }
                         >
                           {executionColumns.map((column) => (
@@ -1971,14 +1972,14 @@ export default function ApiManagerPage() {
   const testTabContent = (
     <div className="space-y-3">
       {selectedApi ? (
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground">
           Runtime URL:{" "}
-          <span className="font-mono text-xs text-slate-700 dark:text-slate-300">
+          <span className="font-mono text-xs text-foreground dark:text-muted-foreground">
             {`${apiBaseUrl}${selectedApi.endpoint}`}
           </span>
         </p>
       ) : null}
-      <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+      <label className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
         Params JSON
         <textarea
           value={testParams}
@@ -1987,7 +1988,7 @@ export default function ApiManagerPage() {
         />
       </label>
       {isWorkflowApi ? (
-        <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+        <label className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
           Input JSON (optional)
           <textarea
             value={testInput}
@@ -1997,7 +1998,7 @@ export default function ApiManagerPage() {
         </label>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+        <label className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
           Limit
           <input
             type="number"
@@ -2008,7 +2009,7 @@ export default function ApiManagerPage() {
             className="mt-2 w-full input-container"
           />
         </label>
-        <label className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+        <label className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
           Executed by
           <input
             value={executedBy}
@@ -2028,7 +2029,7 @@ export default function ApiManagerPage() {
         </div>
       </div>
       {selectedApi && selectedApi.logic_type === "script" ? (
-        <p className="text-xs text-slate-600 dark:text-slate-400">
+        <p className="text-xs text-muted-foreground dark:text-muted-foreground">
           Script APIs are saved for future execution support in MVP-5.
         </p>
       ) : null}
@@ -2043,11 +2044,7 @@ export default function ApiManagerPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
-              activeTab === tab.id
-                ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
-                : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-            }`}
+            className={cn("panel-tab", activeTab === tab.id ? "panel-tab-active" : "panel-tab-inactive")}
           >
             {tab.label}
           </button>
@@ -2063,13 +2060,13 @@ export default function ApiManagerPage() {
         testResultsArea
       ) : (
         <>
-          <p className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Metadata (Current Editor)
           </p>
           <div className="ui-subbox space-y-2 p-3 text-sm text-muted-standard">
             <p>
               Endpoint:{" "}
-              <span className="text-slate-900 dark:text-slate-50">
+              <span className="text-foreground dark:text-slate-50">
                 {definitionDraft.endpoint || "(new)"}
               </span>
             </p>
@@ -2078,7 +2075,7 @@ export default function ApiManagerPage() {
               <span className="text-sky-400 font-mono">{logicTypeLabels[logicType]}</span>
             </p>
             {selectedApi && (
-              <p className="border-t pt-2 text-xs border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400">
+              <p className="border-t pt-2 text-xs border-variant text-muted-foreground dark:border-variant dark:text-muted-foreground">
                 Editing: {selectedApi.api_name} ({selectedApi.api_id})
               </p>
             )}
@@ -2093,7 +2090,7 @@ export default function ApiManagerPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="left-panel-title">API 목록</h3>
-        <div className="flex gap-2 text-xs uppercase tracking-normal">
+        <div className="flex gap-2 text-xs uppercase tracking-wider">
           {(["custom"] as ScopeType[])
             .concat(enableSystemApis ? (["system"] as ScopeType[]) : [])
             .map((item) => (
@@ -2103,7 +2100,7 @@ export default function ApiManagerPage() {
                 className={`rounded-full border px-3 py-1 transition font-semibold text-sm ${
                   scope === item
                     ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
-                    : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    : "border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground dark:hover:bg-surface-elevated"
                 }`}
               >
                 {SCOPE_LABELS[item]}
@@ -2114,16 +2111,16 @@ export default function ApiManagerPage() {
       {scope === "system" && enableSystemApis ? (
         <>
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               <div className="flex items-center gap-2">
                 {(["discovered", "registered"] as SystemView[]).map((view) => (
                   <button
                     key={view}
                     onClick={() => setSystemView(view)}
-                    className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                    className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-wider transition ${
                       systemView === view
                         ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
-                        : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        : "border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground dark:hover:bg-surface-elevated"
                     }`}
                   >
                     {view}
@@ -2133,15 +2130,15 @@ export default function ApiManagerPage() {
             </div>
             {systemView === "discovered" ? (
               <>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                   Discovered endpoints are read-only.
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                   Discovered from source (OpenAPI). These are not DB-registered APIs.
                 </p>
-                <div className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   Last fetch:{" "}
-                  <span className="text-slate-700 dark:text-slate-300">
+                  <span className="text-foreground dark:text-muted-foreground">
                     {discoveredFetchAt
                       ? new Date(discoveredFetchAt).toLocaleString("ko-KR", {
                           timeZone: "Asia/Seoul",
@@ -2153,7 +2150,7 @@ export default function ApiManagerPage() {
                     className={
                       discoveredFetchStatus === "error"
                         ? "text-rose-300"
-                        : "text-slate-700 dark:text-slate-300"
+                        : "text-foreground dark:text-muted-foreground"
                     }
                   >
                     {discoveredFetchStatus}
@@ -2165,7 +2162,7 @@ export default function ApiManagerPage() {
               </>
             ) : (
               <>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                   Registered APIs are read-only.
                 </p>
                 {systemFetchStatus === "error" ? (
@@ -2173,9 +2170,9 @@ export default function ApiManagerPage() {
                     Server list unavailable. Showing local cache only.
                   </div>
                 ) : null}
-                <div className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   Last fetch:{" "}
-                  <span className="text-slate-700 dark:text-slate-300">
+                  <span className="text-foreground dark:text-muted-foreground">
                     {systemFetchAt
                       ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                       : "-"}
@@ -2185,7 +2182,7 @@ export default function ApiManagerPage() {
                     className={
                       systemFetchStatus === "error"
                         ? "text-rose-300"
-                        : "text-slate-700 dark:text-slate-300"
+                        : "text-foreground dark:text-muted-foreground"
                     }
                   >
                     {systemFetchStatus}
@@ -2204,24 +2201,24 @@ export default function ApiManagerPage() {
                   value={discoveredSearchTerm}
                   onChange={(event) => setDiscoveredSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-variant bg-surface-base text-foreground dark:border-variant dark:bg-surface-base dark:text-slate-50"
                 />
                 <button
                   onClick={loadDiscoveredEndpoints}
-                  className="ml-2 rounded-full border px-3 py-2 text-xs uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="ml-2 rounded-full border px-3 py-2 text-xs uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated"
                 >
                   Refresh
                 </button>
               </div>
               {discoveredError ? <p className="text-xs text-rose-400">{discoveredError}</p> : null}
-              <div className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
-                <table className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300">
-                  <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900">
+              <div className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-variant bg-surface-elevated dark:border-variant dark:bg-surface-base">
+                <table className="min-w-full table-auto text-left text-xs text-foreground dark:text-muted-foreground">
+                  <thead className="sticky top-0 bg-surface-elevated dark:bg-surface-base">
                     <tr>
                       {["method", "path", "summary", "tags", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b px-2 py-2 uppercase tracking-normal whitespace-nowrap border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
+                          className="border-b px-2 py-2 uppercase tracking-wider whitespace-nowrap border-variant text-muted-foreground dark:border-variant dark:text-muted-foreground"
                         >
                           {column}
                         </th>
@@ -2231,7 +2228,7 @@ export default function ApiManagerPage() {
                   <tbody>
                     {filteredDiscoveredEndpoints.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-3 py-3 text-slate-600 dark:text-slate-400">
+                        <td colSpan={5} className="px-3 py-3 text-muted-foreground dark:text-muted-foreground">
                           No discovered endpoints found.
                         </td>
                       </tr>
@@ -2243,8 +2240,8 @@ export default function ApiManagerPage() {
                             className={
                               selectedDiscovered?.path === endpoint.path &&
                               selectedDiscovered?.method === endpoint.method
-                                ? "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900 bg-sky-600/20 text-slate-900 dark:text-slate-50"
-                                : "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900"
+                                ? "cursor-pointer border-b transition border-variant hover:bg-surface-elevated dark:border-variant dark:hover:bg-surface-base bg-sky-600/20 text-foreground dark:text-slate-50"
+                                : "cursor-pointer border-b transition border-variant hover:bg-surface-elevated dark:border-variant dark:hover:bg-surface-base"
                             }
                             onClick={() => {
                               setSelectedDiscovered(endpoint);
@@ -2268,7 +2265,7 @@ export default function ApiManagerPage() {
                               {endpoint.tags?.join(", ") || "-"}
                             </td>
                             <td className="px-2 py-2 whitespace-nowrap">
-                              <span className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400">
+                              <span className="rounded-full border px-2 py-1 text-xs uppercase tracking-wider border-variant text-foreground dark:border-variant dark:text-muted-foreground">
                                 {endpoint.source}
                               </span>
                             </td>
@@ -2288,27 +2285,27 @@ export default function ApiManagerPage() {
                   value={systemSearchTerm}
                   onChange={(event) => setSystemSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-variant bg-surface-base text-foreground dark:border-variant dark:bg-surface-base dark:text-slate-50"
                 />
                 <div className="ml-2 flex items-center gap-2">
                   <button
                     onClick={() => loadApis(selectedId ?? undefined)}
-                    className="rounded-full border px-3 py-2 text-xs uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    className="rounded-full border px-3 py-2 text-xs uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated"
                   >
                     Refresh
                   </button>
                 </div>
               </div>
               {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
-              <div className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
-                <table className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300">
-                  <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900">
+              <div className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-variant bg-surface-elevated dark:border-variant dark:bg-surface-base">
+                <table className="min-w-full table-auto text-left text-xs text-foreground dark:text-muted-foreground">
+                  <thead className="sticky top-0 bg-surface-elevated dark:bg-surface-base">
                     <tr>
                       {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map(
                         (column) => (
                           <th
                             key={column}
-                            className="border-b px-2 py-2 uppercase tracking-normal whitespace-nowrap border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
+                            className="border-b px-2 py-2 uppercase tracking-wider whitespace-nowrap border-variant text-muted-foreground dark:border-variant dark:text-muted-foreground"
                           >
                             {column}
                           </th>
@@ -2319,7 +2316,7 @@ export default function ApiManagerPage() {
                   <tbody>
                     {filteredSystemApis.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-3 py-3 text-slate-600 dark:text-slate-400">
+                        <td colSpan={6} className="px-3 py-3 text-muted-foreground dark:text-muted-foreground">
                           No registered APIs found.
                         </td>
                       </tr>
@@ -2330,8 +2327,8 @@ export default function ApiManagerPage() {
                             key={api.api_id}
                             className={
                               selectedApi?.api_id === api.api_id
-                                ? "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900 bg-sky-600/20 text-slate-900 dark:text-slate-50"
-                                : "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900"
+                                ? "cursor-pointer border-b transition border-variant hover:bg-surface-elevated dark:border-variant dark:hover:bg-surface-base bg-sky-600/20 text-foreground dark:text-slate-50"
+                                : "cursor-pointer border-b transition border-variant hover:bg-surface-elevated dark:border-variant dark:hover:bg-surface-base"
                             }
                             onClick={() => {
                               setSelectedId(api.api_id);
@@ -2352,7 +2349,7 @@ export default function ApiManagerPage() {
                               })}
                             </td>
                             <td className="px-2 py-2 whitespace-nowrap">
-                              <span className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400">
+                              <span className="rounded-full border px-2 py-1 text-xs uppercase tracking-wider border-variant text-foreground dark:border-variant dark:text-muted-foreground">
                                 {api.source}
                               </span>
                             </td>
@@ -2368,7 +2365,7 @@ export default function ApiManagerPage() {
         </>
       ) : (
         <>
-          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-normal">
+          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-wider">
             {[
               { id: "all", label: "All" },
               { id: "sql", label: "SQL" },
@@ -2383,7 +2380,7 @@ export default function ApiManagerPage() {
                 className={`rounded-full border px-3 py-1 transition text-xs font-semibold ${
                   logicFilter === item.id
                     ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
-                    : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    : "border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground dark:hover:bg-surface-elevated"
                 }`}
               >
                 {item.label}
@@ -2394,11 +2391,11 @@ export default function ApiManagerPage() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="검색"
-            className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+            className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-variant bg-surface-base text-foreground dark:border-variant dark:bg-surface-base dark:text-slate-50"
           />
           <div className="space-y-2 max-h-[360px] overflow-auto custom-scrollbar">
             {filteredApis.length === 0 ? (
-              <p className="text-xs text-slate-600 dark:text-slate-400">검색 결과 없음</p>
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground">검색 결과 없음</p>
             ) : (
               filteredApis.map((api) => (
                 <button
@@ -2406,13 +2403,13 @@ export default function ApiManagerPage() {
                   onClick={() => setSelectedId(api.api_id)}
                   className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition flex items-center gap-3 whitespace-nowrap overflow-hidden ${
                     selectedId === api.api_id
-                      ? "border-sky-600 bg-sky-600/20 text-slate-900 dark:text-slate-50"
-                      : "border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                      ? "border-sky-600 bg-sky-600/20 text-foreground dark:text-slate-50"
+                      : "border-variant bg-surface-elevated text-foreground hover:bg-surface-elevated dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated"
                   }`}
                 >
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="text-xs uppercase min-w-8 text-slate-600 dark:text-slate-400">
+                      <span className="text-xs uppercase min-w-8 text-muted-foreground dark:text-muted-foreground">
                         {api.method}
                       </span>
                       <span className="font-semibold truncate">{api.api_name}</span>
@@ -2423,7 +2420,7 @@ export default function ApiManagerPage() {
                         </span>
                       )}
                     </div>
-                    <span className="text-xs truncate text-slate-600 dark:text-slate-400">
+                    <span className="text-xs truncate text-muted-foreground dark:text-muted-foreground">
                       {api.endpoint}
                     </span>
                   </div>
@@ -2435,7 +2432,7 @@ export default function ApiManagerPage() {
       )}
       <button
         onClick={handleNew}
-        className={`w-full rounded-2xl border px-3 py-2 text-xs uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 ${
+        className={`w-full rounded-2xl border px-3 py-2 text-xs uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated ${
           scope === "system" ? " cursor-not-allowed" : ""
         }`}
         disabled={scope === "system"}

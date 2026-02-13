@@ -236,7 +236,7 @@ export default function AssetImpactAnalyzer({
         <div className="overflow-x-auto">
           <table className="w-full border rounded-lg border-border">
             <thead>
-              <tr className="border-b bg-slate-500/40 border-border">
+              <tr className="border-b bg-surface-elevated0/40 border-border">
                 <th className="text-left p-3 text-sm font-medium text-foreground">Metric</th>
                 <th className="text-left p-3 text-sm font-medium text-foreground">
                   {version1}
@@ -395,7 +395,7 @@ export default function AssetImpactAnalyzer({
               Current Version: v{selectedVersion}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="rounded-lg p-4 bg-slate-500/50">
+              <div className="rounded-lg p-4 bg-surface-elevated0/50">
                 <div className="flex items-center gap-2 text-emerald-400">
                   <CheckCircle className="h-4 w-4" />
                   <span className="text-xs">Success Rate</span>
@@ -404,7 +404,7 @@ export default function AssetImpactAnalyzer({
                   {impactData.versions[selectedVersion].success_rate}%
                 </p>
               </div>
-              <div className="rounded-lg p-4 bg-slate-500/50">
+              <div className="rounded-lg p-4 bg-surface-elevated0/50">
                 <div className="flex items-center gap-2 text-sky-400">
                   <Clock className="h-4 w-4" />
                   <span className="text-xs">Avg Duration</span>
@@ -413,7 +413,7 @@ export default function AssetImpactAnalyzer({
                   {impactData.versions[selectedVersion].avg_duration_ms}ms
                 </p>
               </div>
-              <div className="rounded-lg p-4 bg-slate-500/50">
+              <div className="rounded-lg p-4 bg-surface-elevated0/50">
                 <div className="flex items-center gap-2 text-amber-400">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="text-xs">Errors</span>
@@ -422,7 +422,7 @@ export default function AssetImpactAnalyzer({
                   {impactData.versions[selectedVersion].error_count}
                 </p>
               </div>
-              <div className="rounded-lg p-4 bg-slate-500/50">
+              <div className="rounded-lg p-4 bg-surface-elevated0/50">
                 <div className="flex items-center gap-2 text-purple-400">
                   <Target className="h-4 w-4" />
                   <span className="text-xs">Quality Score</span>
@@ -448,7 +448,7 @@ export default function AssetImpactAnalyzer({
               {impactData.regression_risk.toUpperCase()}
             </div>
           </div>
-          <div className="rounded-lg p-4 bg-slate-500/50">
+          <div className="rounded-lg p-4 bg-surface-elevated0/50">
             <p className="text-sm mb-3 text-foreground">
               Based on performance metrics and error patterns, this version has a {impactData.regression_risk} risk of introducing regressions.
             </p>

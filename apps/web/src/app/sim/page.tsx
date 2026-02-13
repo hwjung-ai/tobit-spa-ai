@@ -633,7 +633,7 @@ export default function SimPage() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50"
+      className="min-h-screen bg-surface-elevated text-foreground dark:bg-surface-base dark:text-slate-50"
       style={{ userSelect: isResizingLeft || isResizingRight ? "none" : "auto" }}
     >
       <PageHeader
@@ -913,7 +913,7 @@ export default function SimPage() {
                       return (
                         <div
                           key={kpi.kpi}
-                          className="br-card p-3 bg-surface-elevated dark:bg-slate-950"
+                          className="br-card p-3 bg-surface-elevated dark:bg-surface-base"
                         >
                           <p className="text-xs uppercase tracking-wider text-muted-standard">
                             {formatKpiLabel(kpi.kpi)}
@@ -947,7 +947,7 @@ export default function SimPage() {
                 <p className="mt-3 text-sm text-muted-standard">실행 후 차트가 표시됩니다.</p>
               ) : (
                 <div className="mt-4 grid gap-4">
-                  <div className="h-64 br-card p-2 bg-surface-elevated dark:bg-slate-950">
+                  <div className="h-64 br-card p-2 bg-surface-elevated dark:bg-surface-base">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={chartData}
@@ -981,7 +981,7 @@ export default function SimPage() {
                     </ResponsiveContainer>
                   </div>
 
-                  <div className="h-64 br-card p-2 bg-surface-elevated dark:bg-slate-950">
+                  <div className="h-64 br-card p-2 bg-surface-elevated dark:bg-surface-base">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={chartData}
@@ -1090,7 +1090,7 @@ export default function SimPage() {
                 </p>
               ) : (
                 <div className="mt-3 grid gap-3 text-sm text-foreground">
-                  <div className="br-card p-3 bg-surface-elevated dark:bg-slate-950">
+                  <div className="br-card p-3 bg-surface-elevated dark:bg-surface-base">
                     <p className="text-xs text-muted-standard">R2</p>
                     <p className="text-lg font-semibold text-foreground">
                       {backtest.metrics.r2.toFixed(4)}

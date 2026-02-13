@@ -324,7 +324,7 @@ export default function RealTimeSimulation({
                   ? "bg-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                   : baseline.dataQuality?.using_fallback
                     ? "bg-amber-500/40 text-amber-600 dark:text-amber-400"
-                    : "border border-slate-300 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400"
+                    : "border border-variant bg-surface-base text-muted-foreground dark:border-variant dark:bg-surface-base dark:text-muted-foreground"
               )}
             >
               {baseline.dataQuality?.metrics_available

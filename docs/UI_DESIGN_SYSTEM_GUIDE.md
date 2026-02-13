@@ -1,1353 +1,403 @@
-# UI Design System Guide
+# UI Design System Guide (Final)
 
 > Project: tobit-spa-ai
-> Framework: Next.js 16 + React 19 + Tailwind CSS 4 + Radix UI
+> Scope: `apps/web` UI 전반
+> Framework: Next.js 16 + React 19 + Tailwind CSS v4 + shadcn/ui
 > Last Updated: 2026-02-13
 
 ---
 
-## 📋 Table of Contents
+## 1. 목적과 적용 범위
 
-1. [Consistency Fixes Applied](#consistency-fixes-applied)
-2. [Standard Patterns](#standard-patterns)
-3. [Color System](#color-system)
-4. [Typography](#typography)
-5. [Spacing & Layout](#spacing--layout)
-6. [Component Patterns](#component-patterns)
-7. [Dark Mode](#dark-mode)
-8. [Code Style Guidelines](#code-style-guidelines)
-9. [Universal Page Standards](#universal-page-standards)
-10. [ADMIN Page Standards](#admin-page-standards)
-11. [Visual Hierarchy Guidelines](#visual-hierarchy-guidelines) 🆕
-12. [Common Anti-Patterns](#common-anti-patterns) 🆕
-13. [Migration Checklist](#migration-checklist)
+이 문서는 `apps/web`의 **공통 UI 품질 기준**과 **구현 규칙**을 정의하는 정본입니다.
 
----
+상세 구현 예시(복붙 가능한 스니펫)는 `docs/UI_PATTERN_RECIPES.md`를 사용합니다.
 
-## ✅ Consistency Fixes Applied
+적용 범위:
+- 페이지 레이아웃, 공통 컴포넌트, 타이포그래피, 컬러, 간격, 상호작용
+- 라이트/다크 모드, 접근성, 상태 표현(로딩/빈 상태/에러)
+- 코드 리뷰 시 UI 일관성 검증 기준
 
-### Files Modified (2026-02-13) 🆕
+비적용 범위:
+- 기능별 비즈니스 로직
+- 작업 이력(Phase 로그) 나열
+- 장문 코드 레시피 (별도 문서로 분리)
 
-**Inline Style Removal Phase 16 (Latest):**
-- ✅ `UIScreenRenderer.tsx` - 20+ inline styles → CSS classes
-  - `style={{borderColor: "var(--border)"}}` → `border-variant`
-  - `style={{backgroundColor: "var(--surface-overlay)"}}` → `bg-surface-overlay`
-  - `style={{color: "var(--muted-foreground)"}}` → `text-muted-foreground`
-  - Tables, modals, accordions, tabs, key-value lists all normalized
-- ✅ `OrchestrationVisualization.tsx` - Complete rewrite with CSS classes
-  - All inline styles removed
-  - Consistent use of `text-foreground-secondary`, `bg-surface-*`, `border-variant`
-- ✅ `ThemeToggle.tsx` - All inline styles → CSS classes with hover states
-- ✅ `MobileBottomNav.tsx` - All inline styles → CSS classes
-- ✅ `dialog.tsx` - All inline styles → CSS classes
-- ✅ `drawer.tsx` - All inline styles → CSS classes
-- ✅ `textarea.tsx` - Inline styles → CSS classes
-- ✅ `PublishedScreensList.tsx` - All inline styles → CSS classes
-- ✅ `CatalogTable.tsx` - All inline styles → CSS classes
-- ✅ `globals.css` - Added new utility classes:
-  - `.text-primary-light` - Primary light color
-  - `.text-foreground-secondary` - Secondary foreground color
-  - `.border-border-muted` - Muted border color
-
-**CSS Variable Inline Usage & Tracking Standardization (Phase 15):**
-- ✅ `UIPanelRenderer.tsx` - Removed all `style={}` for border/background/text colors → CSS classes
-  - `style={{borderColor: "var(--border)"}}` → `border-variant`
-  - `style={{backgroundColor: "var(--surface-overlay)"}}` → `bg-surface-overlay`
-  - `style={{color: "var(--foreground-secondary)"}}` → `text-muted-foreground`
-- ✅ `BlockRenderer.tsx` - Removed CSS variable inline usage → CSS classes
-  - `border-[var(--border)]` → `border-variant`
-  - `bg-[var(--surface-overlay)]` → `bg-surface-overlay`
-  - `text-[var(--foreground-secondary)]` → `text-muted-foreground`
-- ✅ `api-manager/page.tsx` - All `tracking-normal` → `tracking-wider` for uppercase text
-
-**Tracking Values & Inline Styles Standardization (Phase 14):**
-- ✅ `OrchestrationSection.tsx` - All inline styles → CSS classes, `tracking-[0.2em]`/`[0.3em]` → `tracking-wider`
-- ✅ `InspectorStagePipeline.tsx` - 20+ inline styles → CSS classes, `tracking-[0.xem]` → `tracking-wider`
-- ✅ `ObservabilityDashboard.tsx` - 15+ inline styles → CSS classes, `tracking-[0.xem]` → `tracking-wider`
-- ✅ `SystemDashboard.tsx` - `tracking-[0.2em]` → `tracking-wider`, `text-[10px]` → `text-tiny`
-- ✅ `PerformanceMetrics.tsx` - `tracking-[0.1em]`/`[0.2em]` → `tracking-wider`
-- ✅ `SystemHealthChart.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `AlertChannelStatus.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `RecentErrors.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `RuleStatsCard.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `ErrorDistribution.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `DashboardPage.tsx` - `tracking-[0.3em]` → `tracking-wider`
-- ✅ `ExecutionTimeline.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `SpanNode.tsx` - `tracking-[0.2em]` → `tracking-wider`, inline style → CSS class
-- ✅ `RCAPanel.tsx` - `tracking-[0.1em]` → `tracking-wider`, inline styles → CSS classes
-- ✅ `CopilotPanel.tsx` - `tracking-[0.2em]` → `tracking-wider`
-- ✅ `PropertiesPanel.tsx` - `tracking-[0.1em]`/`[0.4em]` → `tracking-wider`, `text-[10px]` → `text-tiny`
-- ✅ `ComponentTreeView.tsx` - `tracking-[0.4em]` → `tracking-wider`, inline style → CSS class
-- ✅ `VisualEditor.tsx` - `tracking-[0.3em]` → `tracking-wider`, inline styles → CSS classes
-- ✅ `PublishedScreensList.tsx` - `tracking-[0.4em]` → `tracking-wider`
-- ✅ `BlockRenderer.tsx` - `tracking-[0.3em]` → `tracking-wider`, `text-[10px]` → `text-tiny`
-- ✅ `documents/page.tsx` - `tracking-[0.3em]` → `tracking-wider`, `text-[12px]` → `text-xs`
-
-**Key Patterns Fixed:**
-- All `tracking-[0.1em]`, `tracking-[0.2em]`, `tracking-[0.3em]`, `tracking-[0.4em]` → `tracking-wider`
-- All `style={{color: "var(--muted-foreground)"}}` → `text-muted-foreground` class
-- All `style={{color: "var(--foreground)"}}` → `text-foreground` class
-- All `style={{borderColor: "var(--border)"}}` → `border-variant` class
-- All `style={{backgroundColor: "var(--surface-...)"}}` → `bg-surface-*` classes
-
-**Answer Block & Core Components Inline Styles → CSS Classes:**
-- ✅ `BlockRenderer.tsx` - 40+ inline styles → CSS classes (`answer-section`, `answer-code`, `answer-button`, etc.)
-- ✅ `HttpFormBuilder.tsx` - 10+ inline styles → CSS classes (`api-input`, `api-select`, `api-textarea`, etc.)
-- ✅ `RealTimeSimulation.tsx` - Hardcoded border colors → CSS classes (`btn-error`, `btn-success`, `text-warning`)
-- ✅ `AssetTable.tsx` - `text-[10px]` → `text-tiny`, hardcoded colors → CSS variables
-- ✅ `ToolTable.tsx` - All inline styles removed, `tracking-[0.2em]` → `tracking-wider`
-
-**CSS Classes Used:**
-- `.answer-section`, `.answer-block`, `.answer-code`, `.answer-button`, `.answer-table`
-- `.text-label`, `.text-label-sm`, `.text-tiny`, `.text-muted-foreground`
-- `.api-input`, `.api-select`, `.api-textarea`
-- `.btn-error`, `.btn-success`, `.btn-warning`
-- `.border-variant`, `.bg-surface-elevated`, `.bg-surface-base`
-- `.insp-section`, `.text-label-sm`
-
-### Files Modified (2026-02-12)
-
-**Border Radius & Background Colors:**
-- ✅ `/apps/web/src/app/globals.css` - Added border-radius & background standard classes
-  - `.br-badge`, `.br-btn`, `.br-card`, `.br-section`, `.br-panel`
-  - `.bg-surface-base`, `.bg-surface-overlay`, `.bg-surface-elevated`
-  - `.container-card`, `.container-section`, `.container-panel`
-  - `.input-container`, `.code-block`, `.code-block-lg`
-
-**Consistency Classes Applied:**
-- ✅ `/apps/web/src/app/sim/page.tsx` - Applied `.container-section`, `.br-card`
-- ✅ `/apps/web/src/app/ops/page.tsx` - Applied `.container-section`, `.br-card`
-- ✅ `/apps/web/src/app/page.tsx` - Applied `.container-section`
-- ✅ `/apps/web/src/app/documents/page.tsx` - Applied `.container-section`
-- ✅ `/apps/web/src/app/login/page.tsx` - Applied `.container-panel`
-- ✅ `/apps/web/src/app/cep-events/page.tsx` - Applied `.br-section`
-- ✅ `/apps/web/src/app/cep-builder/page.tsx` - Applied `.br-card`
-
-**Inspector Page Hierarchy:**
-- ✅ `/apps/web/src/app/admin/inspector/page.tsx` - Applied inspector-specific classes
-  - `.insp-h1`, `.insp-h2`, `.insp-h3` - Heading hierarchy
-  - `.insp-body`, `.insp-body-secondary` - Body text hierarchy
-  - `.insp-label`, `.insp-label-small` - Label styles
-  - `.insp-section` - Section containers
-  - `.insp-input` - Input fields
-  - `.insp-button` - Primary buttons
-  - `.insp-mono` - Monospace text
-
-**Primary Colors & Letter Spacing:**
-- ✅ `/apps/web/src/app/globals.css` - Added consistency utility classes (btn-primary, text-label, etc.)
-- ✅ `/apps/web/src/app/documents/page.tsx` - Primary colors + letter spacing standardized
-- ✅ `/apps/web/src/app/sim/page.tsx` - Primary colors + letter spacing standardized
-- ✅ `/apps/web/src/app/ops/page.tsx` - Primary colors + letter spacing standardized
-- ✅ `/apps/web/src/app/cep-events/page.tsx` - Letter spacing standardized
-- ✅ `/apps/web/src/app/api-manager/page.tsx` - Letter spacing standardized
-- ✅ `/apps/web/src/app/admin/settings/page.tsx` - Letter spacing standardized
-- ✅ `/apps/web/src/app/layout.tsx` - Header background + letter spacing
-- ✅ `/apps/web/src/components/admin/CreateAssetModal.tsx` - Primary color dark mode added
-- ✅ `/apps/web/src/components/admin/CreateToolModal.tsx` - Primary color dark mode added
-- ✅ `/apps/web/src/components/admin/SourceAssetForm.tsx` - Primary color dark mode added
-- ✅ `/apps/web/src/components/admin/AssetForm.tsx` - Primary color dark mode added
-- ✅ `/apps/web/src/components/admin/CreateCatalogModal.tsx` - Primary color dark mode added
-- ✅ `/apps/web/src/app/admin/inspector/page.tsx` - Inspector page hierarchy + consistency fixed
-- ✅ `/apps/web/src/components/admin/screen-editor/ScreenEditorTabs.tsx` - Letter spacing standardized
-- ✅ `/apps/web/src/components/api-manager/WorkflowBuilder.tsx` - Primary colors standardized
-- ✅ `/apps/web/src/components/api-manager/PythonBuilder.tsx` - Primary colors standardized
-- ✅ `/apps/web/src/components/simulation/FunctionBrowser.tsx` - Letter spacing standardized
-- ✅ `/apps/web/src/components/answer/UIScreenRenderer.tsx` - Letter spacing standardized
-
-**Legacy Inline Style Cleanup:**
-- ✅ `globals.css` - Component-specific CSS variables added
-- ✅ `FormSection.tsx` - 100% 클래스 기반
-- ✅ `FormFieldGroup.tsx` - 100% 클래스 기반
-- ✅ `DraftAssistantPanel.tsx` - 99+ inline styles 제거
-- ✅ SQLQueryBuilder, WorkflowBuilder, PythonBuilder - inline styles 제거
-- ✅ CEP Form Builder (11개 파일) - inline styles 제거
-
-### Key Changes
-
-**Border Radius & Background Colors:**
-1. **Border Radius Standardization**
-   - `.br-badge` - `rounded-full` (badges, pills)
-   - `.br-btn` - `rounded-lg` (buttons)
-   - `.br-card` - `rounded-xl` (cards)
-   - `.br-section` - `rounded-2xl` (sections)
-   - `.br-panel` - `rounded-3xl` (large panels)
-
-2. **Background Color Standardization**
-   - `.bg-surface-base` - Primary surface (white/slate-950)
-   - `.bg-surface-overlay` - Overlay surface (slate-50/slate-950/50)
-   - `.bg-surface-elevated` - Elevated surface (slate-100/slate-900/40)
-
-3. **Container Classes** (Combined border-radius + background)
-   - `.container-card` - Card container (`.br-card` + surface styles)
-   - `.container-section` - Section container (`.br-section` + surface styles)
-   - `.container-panel` - Panel container (`.br-panel` + surface styles)
-
-4. **Input & Code Block Classes**
-   - `.input-container` - Standard input field with consistent styling
-   - `.code-block` - Code block with max-height: 12rem
-   - `.code-block-lg` - Large code block with max-height: 20rem
-
-**Primary Colors & Letter Spacing:**
-1. **Primary Color Standardization**
-   - All primary buttons now use `bg-sky-600` (not `bg-sky-500`)
-   - Hover states use `hover:bg-sky-500` (not `hover:bg-sky-400`)
-   - Dark mode: `dark:bg-sky-700 dark:hover:bg-sky-600`
-
-2. **Letter Spacing Standardization**
-   - All uppercase labels now use `tracking-wider` (not `tracking-[0.3em]`, `tracking-[0.2em]`, etc.)
-   - Removed hardcoded letter-spacing values
-   - Consistent `tracking-wider` for all uppercase labels, badges, buttons
-
-3. **New CSS Utility Classes** (globals.css)
-   - `.btn-primary` - Standard primary button
-   - `.btn-primary-small` - Small primary button
-   - `.btn-secondary` - Standard secondary button
-   - `.badge-primary`, `.badge-active` - Badge styles
-   - `.text-label`, `.text-label-sm`, `.text-label-normal` - Label text styles
-
-**Page Header Standardization:**
-- ✅ `components/shared/PageHeader.tsx` - Standard page header component (3 variants)
-- ✅ `/apps/web/src/app/globals.css` - Page header CSS classes added
-  - `.page-header`, `.page-header-title-group`, `.page-header-title`
-  - `.page-header-description`, `.page-header-actions`, `.page-header-divider`
-  - `.line-clamp-1`, `.line-clamp-2`, `.line-clamp-3`
-  - `.text-tiny`, `.tracking-label`
-  - `.border-variant`, `.bg-surface-base`, `.bg-surface-elevated`
-  - `.text-foreground`, `.text-muted-foreground`, `.divider-vertical`
-- ✅ `/apps/web/src/app/ops/page.tsx` - `PageHeader` component applied
-- ✅ `/apps/web/src/app/sim/page.tsx` - `PageHeader` component applied
-- ✅ `/apps/web/src/app/documents/page.tsx` - `PageHeader` component + actions applied
-- ✅ `/apps/web/src/app/api-manager/page.tsx` - `PageHeader` component applied
-- ✅ `/apps/web/src/app/cep-builder/page.tsx` - `PageHeader` component applied
-- ✅ `/apps/web/src/app/cep-events/page.tsx` - `PageHeader` component + actions applied
-- ✅ `/apps/web/src/app/admin/catalogs/page.tsx` - `PageHeader` component applied
-- ✅ `/apps/web/src/app/ui/screens/page.tsx` - `PageHeader` component applied
-- ✅ `/apps/web/src/app/documents/[documentId]/viewer/page.tsx` - All inline styles removed
-  - RGB colors → Tailwind classes
-  - `tracking-[0.3em]` → `tracking-wider`
-  - `text-[10px]` → `text-tiny`
-  - `style={{backgroundColor: ...}}` → CSS classes
-- ✅ `/apps/web/src/app/admin/tools/tools-content.tsx` - Inline styles removed
-  - `text-[10px]` → `text-tiny`
-  - `tracking-[0.2em]` → `tracking-wider`
-  - `var(--border)` → CSS classes
-- ✅ `/apps/web/src/app/admin/assets/[assetId]/page.tsx` - Inline styles removed
-  - RGB colors → Tailwind classes
-  - `tracking-[0.2em]` → `tracking-wider`
-  - `style={{color: ...}}` → CSS classes
-- ✅ `/apps/web/src/app/admin/assets/assets-content.tsx` - Inline styles removed
-  - `var(--surface-elevated)` → CSS classes
-- ✅ `/apps/web/src/app/ops/page.tsx` - Tracking standardized
-  - `tracking-[0.2em]` → `tracking-wider`
-  - `tracking-[0.3em]` → `tracking-wider`
-  - Line clamp inline styles → `.line-clamp-1`, `.line-clamp-2`
-
-### Key Changes (Page Header Standardization)
-
-1. **Page Header Component Created**
-   - `PageHeader` - Basic header with title + description + optional actions
-   - `PageHeaderWithDivider` - Header with bottom divider
-   - `PageHeaderCentered` - Centered header without actions
-   - All use consistent: `text-2xl font-semibold` for title, `text-sm` for description
-
-2. **Typography Standardization**
-   - `text-tiny` class for `text-[10px]` (10px labels)
-   - `tracking-wider` for all uppercase labels (replaced `tracking-[0.2em]`, `tracking-[0.3em]`)
-   - Line clamp utilities: `.line-clamp-1`, `.line-clamp-2`, `.line-clamp-3`
-
-3. **Inline Style Removal**
-   - All RGB color hardcoded styles → Tailwind classes
-   - All CSS variable inline styles → Tailwind classes
-   - Webkit box-orient styles → `.line-clamp-*` classes
-   - `.tab-button`, `.tab-button-active`, `.tab-button-inactive` - Tab styles
-   - `.page-section` - Standard page section
-   - `.input-standard` - Standard input field
-   - `.text-primary`, `.text-muted-standard`, `.text-disabled` - Text colors
-
-4. **Dark Mode Support**
-   - All pages now support light/dark mode
-   - Pattern: `dark:` prefix for dark variants
+원칙: 이 문서는 "규칙"만 유지합니다. 대규모 변경 이력은 Git 커밋/PR 설명으로 관리합니다.
 
 ---
 
-## 🎨 Standard Patterns
+## 2. 소스 오브 트루스
 
-### Utility Function Pattern
+UI 기준값은 아래 파일을 기준으로 합니다.
 
-**Always use `cn()` for className merging:**
+- CSS 토큰/유틸리티: `apps/web/src/app/globals.css`
+- TS 토큰 헬퍼: `apps/web/src/lib/design-tokens.ts`
+- 공용 유틸: `apps/web/src/lib/utils.ts` (`cn`)
+- 실전 패턴 레시피: `docs/UI_PATTERN_RECIPES.md`
 
-```typescript
+규칙:
+- 문서와 구현이 다르면, 우선 구현(`globals.css`)을 확인 후 문서를 즉시 동기화합니다.
+- 새 토큰/유틸을 추가하면 본 문서도 같은 커밋에서 업데이트합니다.
+
+---
+
+## 3. 핵심 규칙
+
+### 3.1 반드시 지킬 것 (MUST)
+
+- 색상은 **의미 기반(semantic)** 클래스 사용:
+  - `text-foreground`, `text-muted-foreground`
+  - `bg-surface-base`, `bg-surface-elevated`, `bg-surface-overlay`
+  - `border-variant`
+- 조건부 class 병합은 항상 `cn()` 사용
+- 모든 인터랙티브 요소는 `focus-visible` 상태 제공
+- 라이트/다크 모드 모두에서 가독성과 대비 보장
+- 상수화 가능한 스타일은 유틸리티 클래스로 승격
+
+### 3.2 피해야 할 것 (MUST NOT)
+
+- 하드코딩 팔레트 남용: `text-slate-*`, `bg-slate-*`, `border-slate-*`의 직접 반복 사용
+- 임의값 남용: `tracking-[0.27em]`, `text-[11px]`, `rounded-[7px]` 등
+- 정적 스타일을 `style={{ ... }}`로 반복 작성
+- 템플릿 리터럴 className 결합
+
+### 3.3 제한적 허용 (ALLOWED)
+
+- `style={{ ... }}`는 동적 계산이 필요한 경우에만 허용:
+  - 좌표/크기 계산, 캔버스/그래프 라이브러리 인터페이스, 런타임 위치값
+- 서드파티 라이브러리(AG Grid, Monaco, Recharts, React Flow)의 전용 스타일 API 사용
+
+---
+
+## 4. 디자인 토큰 기준
+
+### 4.1 Surface / Text / Border
+
+기본적으로 아래 의미 체계를 사용합니다.
+
+| 의미 | 클래스 |
+|---|---|
+| 기본 배경 | `bg-surface-base` |
+| 상승된 배경 | `bg-surface-elevated` |
+| 오버레이 배경 | `bg-surface-overlay` |
+| 기본 텍스트 | `text-foreground` |
+| 보조 텍스트 | `text-muted-foreground` |
+| 표준 경계선 | `border-variant` |
+
+### 4.2 상태 색상
+
+| 상태 | 클래스 (예시) |
+|---|---|
+| Primary | `bg-sky-600 hover:bg-sky-500` |
+| Success | `bg-emerald-600` 또는 `bg-green-600` |
+| Warning | `bg-amber-600` 또는 `bg-yellow-600` |
+| Error/Destructive | `bg-rose-600` 또는 `bg-red-600` |
+
+규칙:
+- 상태 색상은 의미와 매칭되어야 하며, 같은 의미에 다른 색을 혼용하지 않습니다.
+
+### 4.3 불투명도 표현
+
+Tailwind opacity modifier를 사용합니다.
+
+예시:
+- `bg-sky-500/34`
+- `bg-slate-950/60`
+- `border-emerald-500/50`
+
+---
+
+## 5. 타이포그래피
+
+### 5.1 텍스트 스케일
+
+| 용도 | 클래스 |
+|---|---|
+| Tiny 라벨 | `text-tiny` (또는 `text-[10px]` 금지, `text-tiny` 우선) |
+| 보조 텍스트 | `text-xs`, `text-sm` |
+| 본문 | `text-base` |
+| 섹션 타이틀 | `text-lg` |
+| 페이지 타이틀 | `text-2xl` |
+
+### 5.2 대문자 라벨 규칙
+
+- 대문자 텍스트는 `tracking-wider`를 표준으로 사용
+- `tracking-[0.xem]` 임의값 사용 금지
+
+---
+
+## 6. 간격, 반경, 그림자, 레이어
+
+### 6.1 간격 스케일
+
+기본 간격:
+- `gap-2` (8px)
+- `gap-3` (12px)
+- `gap-4` (16px)
+- `gap-6` (24px)
+
+권장 패딩:
+- 카드: `p-4`
+- 섹션: `p-5`
+- 대형 패널: `p-6`
+
+### 6.2 반경 스케일
+
+| 클래스 | 용도 |
+|---|---|
+| `.br-badge` | 배지/필 |
+| `.br-btn` | 버튼/인풋 |
+| `.br-card` | 카드 |
+| `.br-section` | 섹션 |
+| `.br-panel` | 대형 패널 |
+
+### 6.3 그림자 스케일
+
+- `shadow-sm`: 기본 컨테이너
+- `shadow-md`: 팝업/중간 강조
+- `shadow-lg`: 플로팅 UI
+- `shadow-2xl`: 강한 강조 다이얼로그
+
+임의 그림자(`shadow-[...]`)는 지양합니다.
+
+### 6.4 Z-Index 스케일
+
+- `z-10`: sticky
+- `z-20`: dropdown/tooltip
+- `z-30`: modal
+- `z-40`: toast/alert
+- `z-50`: 전역 최상위 오버레이
+
+---
+
+## 7. 표준 레이아웃 패턴
+
+### 7.1 페이지 기본 래퍼
+
+```tsx
+<div className="min-h-screen bg-surface-base text-foreground">
+  <main className="w-full px-4 pb-16 pt-4 md:px-6 md:pb-4">...</main>
+</div>
+```
+
+### 7.2 섹션/카드/패널
+
+- 섹션: `.container-section`
+- 카드: `.container-card`
+- 패널: `.container-panel`
+
+직접 클래스로 작성할 때도 위 클래스와 동일한 토큰 조합을 유지합니다.
+
+### 7.3 ADMIN 페이지
+
+ADMIN 페이지는 아래 순서를 기본으로 합니다.
+
+1. 페이지 헤더 (`title + description + actions`)
+2. 컨트롤 바(필터/검색/액션)
+3. 본문 섹션(테이블/폼/그래프)
+
+표준 헤더는 `PageHeader` 계열 컴포넌트를 우선 사용합니다.
+
+---
+
+## 8. 컴포넌트 구현 규칙
+
+### 8.1 버튼
+
+- Primary: `btn-primary` 또는 동등한 primary 토큰
+- Secondary/Ghost/Destructive는 의미에 맞는 변형 사용
+- hover/disabled/focus-visible 상태 누락 금지
+
+### 8.2 입력 컴포넌트
+
+- 기본 입력: `.input-container`
+- 텍스트 영역/셀렉트도 동일한 border, radius, focus ring 체계 유지
+
+### 8.3 코드 블록
+
+- 일반: `.code-block`
+- 대형: `.code-block-lg`
+
+### 8.4 테이블
+
+- 헤더/행 경계선은 `border-variant` 기준
+- 헤더 텍스트는 보조 톤 + 가독성 높은 굵기
+- hover 상태는 surface 계열로 통일
+
+### 8.5 빈 상태 / 로딩 상태
+
+- 빈 상태: 다음 행동(CTA) 포함
+- 로딩 상태: 스피너/스켈레톤 + 의미 있는 문구 제공
+
+### 8.6 리사이즈 핸들 (Split View)
+
+표준 클래스:
+- 컨테이너: `.resize-handle-col`
+- 그립: `.resize-handle-grip`
+- 활성 상태: `.is-active`
+
+규칙:
+- 폭은 `w-2` 기준
+- 페이지별 개별 hover 로직/시각 스타일 재정의 금지
+- 접근성 속성(`role="separator"`, `aria-orientation`) 제공
+
+### 8.7 탭 vs 선택 (중요)
+
+- `탭(Tab)`: 동일 페이지 내 **동등한 뷰/섹션 전환**
+  - 예: `Definition / Logic / Test`, `JSON Editor / Form Builder / Test / Logs`
+  - 공통 클래스: `nav-tab*`, `panel-tab*`, `panel-tab-trigger`
+- `선택(Selection)`: 현재 컨텍스트에서 **값/타입 선택**
+  - 예: `metric / event / schedule / anomaly`
+  - 공통 클래스: `choice-chip*`
+
+규칙:
+- 같은 역할의 UI는 페이지가 달라도 동일한 클래스 체계를 사용
+- hover/active 상태에서 대비(텍스트 가독성)가 깨지면 안 됨
+- 탭 활성 상태에서 글자 크기/두께가 갑자기 바뀌지 않도록 고정
+
+---
+
+## 9. 다크 모드 규칙
+
+- 색상은 항상 라이트/다크 쌍으로 설계합니다.
+- 다크 전용 하드코딩(`bg-slate-950` 단독 등) 금지
+- `globals.css` 변수 기반 클래스 사용을 우선합니다.
+
+예시:
+
+```tsx
+<div className="bg-surface-base text-foreground border border-variant" />
+```
+
+---
+
+## 10. 접근성 규칙
+
+- 키보드 포커스 가시성 필수 (`focus-visible`)
+- 클릭 가능한 비버튼 요소 사용 시 키보드 동작 보장
+- 아이콘 전용 버튼은 `aria-label` 필수
+- 상태 변경은 텍스트/아이콘/색상 중 2개 이상으로 전달 권장
+
+---
+
+## 11. 코드 스타일 규칙
+
+- `className` 결합은 `cn()`만 사용
+- 조건부 스타일은 class 토큰 조합으로 해결
+- 주석은 "왜 필요한지" 중심으로 최소화
+- 재사용 가능한 패턴은 공용 클래스/컴포넌트로 승격
+
+예시:
+
+```tsx
 import { cn } from "@/lib/utils";
 
-// ✅ Good
-const MyComponent = ({ className, ...props }) => (
-  <div className={cn("base-styles", className)} {...props} />
-);
-
-// ❌ Bad - template literals
-const BadComponent = ({ className }) => (
-  <div className={`base-styles ${className ?? ''}`} />
-);
-```
-
-### Dark Mode Pattern
-
-**Always use `dark:` prefix for dark variants:**
-
-```typescript
-// ✅ Good - explicit dark mode
-className="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50"
-
-// ❌ Bad - dark mode hardcoded
-className="bg-slate-950 text-slate-100"
+<div className={cn("container-section", isActive && "border-variant")} />
 ```
 
 ---
 
-## 🎨 Color System
+## 12. 금지/안티패턴
 
-### Primary Colors (Slate Scale)
-
-| Usage | Light Mode | Dark Mode |
-|-------|------------|-----------|
-| **Background** | `bg-white` | `dark:bg-slate-950` |
-| **Background (elevated)** | `bg-slate-50` | `dark:bg-slate-900` |
-| **Foreground** | `text-slate-900` | `dark:text-slate-50` |
-| **Muted Foreground** | `text-slate-600` | `dark:text-slate-400` |
-| **Border** | `border-slate-200` | `dark:border-slate-800` |
-| **Border (muted)** | `border-slate-300` | `dark:border-slate-700` |
-
-### Accent Colors
-
-| Purpose | Color | Usage |
-|---------|-------|-------|
-| **Primary** | `bg-sky-600` | Default buttons, links |
-| **Primary Hover** | `hover:bg-sky-500` | Interactive states |
-| **Destructive** | `bg-rose-600` | Error badges, delete buttons |
-| **Success** | `bg-emerald-600` | Success states |
-| **Warning** | `bg-amber-600` | Warning states |
-
-### Focus Ring
-
-```css
-focus-visible:outline-none
-focus-visible:ring-2
-focus-visible:ring-sky-500
-dark:focus-visible:ring-sky-400
-```
+- 매직 넘버 스타일 (`p-[13px]`, `text-[11px]`, `rounded-[7px]`)
+- 랜덤 색상/Hex 하드코딩 남발
+- 제목/본문/보조 텍스트의 계층 구분 부재
+- 동일 의미 상태를 화면마다 다른 색으로 표현
+- 라이트/다크 대비 부족으로 인한 가독성 저하
 
 ---
 
-## 📝 Typography
+## 13. 리뷰 체크리스트
 
-### Font Sizes
+PR 리뷰 시 아래를 확인합니다.
 
-| Size | Class | Usage |
-|------|-------|-------|
-| **10px** | `text-[10px]` | Tiny labels, badges |
-| **xs** | `text-xs` | Small labels, secondary text |
-| **sm** | `text-sm` | Descriptions, secondary text |
-| **base** | `text-base` | Body content, inputs |
-| **lg** | `text-lg` | Section titles, dialog titles |
-| **2xl** | `text-2xl` | Page headings |
-
-### Font Weights
-
-| Weight | Class | Usage |
-|--------|-------|-------|
-| **Normal** | `font-normal` | Body text (default) |
-| **Semibold** | `font-semibold` | Titles, headings |
-| **Bold** | `font-bold` | Emphasis |
-
-### Letter Spacing
-
-| Usage | Class |
-|-------|-------|
-| **Normal** | (default) |
-| **Wide/Uppercase** | `tracking-wider` | Labels, uppercase text |
+- [ ] 색상이 semantic 클래스 기반인가
+- [ ] `cn()` 사용 규칙을 지켰는가
+- [ ] 다크 모드에서 동일 정보가 읽히는가
+- [ ] 포커스/키보드 접근성이 보장되는가
+- [ ] 임의값/인라인 정적 스타일이 없는가
+- [ ] 컨테이너/입력/버튼 패턴이 표준 클래스와 일치하는가
+- [ ] 빈 상태/로딩 상태가 사용자 행동을 안내하는가
 
 ---
 
-## 📐 Spacing & Layout
+## 14. 마이그레이션 가이드
 
-### Standard Spacing Scale
+기존 화면 정비 순서:
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| **2** | 8px | Tight gaps (`gap-2`) |
-| **3** | 12px | Compact gaps (`gap-3`) |
-| **4** | 16px | Default gaps (`gap-4`) |
-| **5** | 20px | Section padding (`p-5`) |
-| **6** | 24px | Large gaps (`gap-6`) |
+1. 하드코딩 색상 제거
+2. semantic 클래스 치환
+3. 대문자 라벨 `tracking-wider` 통일
+4. 컨테이너/인풋/버튼 표준 클래스 적용
+5. 인라인 정적 스타일 제거
+6. 다크 모드/접근성 검증
 
-### Common Patterns
-
-```typescript
-// Page section padding
-"p-5"           // 20px - page sections
-
-// Button padding (default)
-"px-6 py-3"     // 24px 12px - primary buttons
-"px-4 py-2"     // 16px 8px - secondary buttons
-
-// Input padding
-"px-4 py-3"     // 16px 12px - inputs
-
-// Flex gaps
-"gap-2"      // 8px - tight spacing
-"gap-3"      // 12px - compact spacing
-"gap-4"      // 16px - default spacing
-"gap-6"      // 24px - section spacing
-```
-
-### Resizable Split Handle Standard
-
-Use one consistent splitter style across pages (Chat, Documents, OPS, SIM, Builder, Screen Editor).
-
-```typescript
-// ✅ Standard splitter classes
-<div className={cn("resize-handle-col", isResizing && "is-active")}>
-  <div className="resize-handle-grip" />
-</div>
-```
-
-**Rules:**
-- Width: `8px` fixed (`w-2`, no custom `w-4`, `w-6`)
-- Gap: do not add extra side margin (`mx-*`) unless layout breakage requires it
-- Default state: only small grip is visible (handle area remains transparent)
-- Hover/active: grip expands vertically (long bar)
-- Grip: single vertical pill (`.resize-handle-grip`)
-- State: active drag uses `.is-active`
-- Accessibility: `role="separator"`, `aria-orientation="vertical"`, clear `aria-label`
-
-**Do not:**
-- Use arbitrary splitter widths (`w-2`, `w-5`, `w-6`)
-- Add custom hover logic per-page with inline `onMouseEnter/onMouseLeave`
-- Mix multiple splitter visuals across pages
+치환 우선순위 예시:
+- `border-slate-*` -> `border-variant`
+- `bg-white`, `bg-slate-*` -> `bg-surface-*`
+- `text-slate-*` -> `text-foreground`/`text-muted-foreground`
 
 ---
 
-## 🧩 Component Patterns
+## 16. JSON Screen System Standards
 
-### Page Section
+`UIScreenRenderer`를 통해 JSON 정의만으로 화면을 구성할 때도 동일한 디자인 표준이 적용됩니다. 에이전트나 개발자가 새로운 `.screen.json`을 작성할 때 반드시 다음 매핑 규칙을 준수해야 합니다.
 
-```typescript
-<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Section Title</h2>
-  {/* content */}
-</section>
-```
+### 16.1 타이포그래피 매핑
 
-**Styles:**
-- Container: `rounded-2xl border shadow-sm`
-- Padding: `p-5` (20px)
-- Light: `bg-white border-slate-200`
-- Dark: `dark:bg-slate-900/90 dark:border-slate-800`
+JSON의 `fontSize`와 `fontWeight` props는 가이드의 텍스트 스케일과 다음과 같이 매핑됩니다:
 
-### Button
+| JSON Prop | CSS 클래스 (토큰) | 용도 |
+|---|---|---|
+| `fontSize: "xs"` | `text-xs` | 보조 텍스트, 설명 |
+| `fontSize: "sm"` | `text-sm` | 일반 본문, 폼 라벨 |
+| `fontSize: "base"` | `text-base` | 강조 본문 |
+| `fontSize: "lg"` | `text-lg` | 카드/섹션 타이틀 |
+| `fontSize: "2xl"` | `text-2xl` | 페이지 대제목 |
+| `fontWeight: "semibold"` | `font-semibold` | 강조/헤더 |
 
-**Variants:**
-- Primary: `bg-sky-600 text-white hover:bg-sky-500`
-- Secondary: `border border-slate-300 text-slate-700 hover:border-slate-400 dark:border-slate-700 dark:text-slate-300`
+### 16.2 컬러 및 상태 매핑
 
-**Sizes:**
-- Default: `px-6 py-3 text-sm`
-- Small: `px-4 py-2 text-sm`
+JSON 내에서 하드코딩된 HEX/RGB 색상 사용을 지양하고, 컴포넌트의 `variant` 또는 `conditional_styles`를 사용하여 의미론적으로 접근합니다.
 
-### Input
+- **Badge (`badge`)**:
+  - `variant: "success"` (Emerald 기반)
+  - `variant: "warning"` (Amber 기반)
+  - `variant: "danger"` (Rose 기반)
+  - `variant: "outline"` (Border variant 기반)
+- **Table/Chart 조건부 스타일**:
+  - `color: "#ef4444"` 대신 가능한 경우 `variant`를 지원하는 컴포넌트를 우선 사용하거나, 런타임이 지원하는 토큰 키워드를 사용합니다.
 
-```typescript
-<input
-  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
-/>
-```
+### 16.3 레이아웃 및 간격
 
----
+- **Spacing**: `gap` 속성은 4px 배수를 사용합니다 (`gap: 4` -> 16px).
+- **Layout Type**:
+  - `type: "stack"`: 기본 수직/수평 나열
+  - `type: "grid"`: 대시보드 및 복합 레이아웃
+  - `type: "form"`: 폼 중심 세로 레이아웃
+  - `type: "list"`: 목록형 레이아웃
+  - `type: "modal"`: 중앙 오버레이 레이아웃
+  - `type: "dashboard"`: 절대 위치 기반 대시보드 레이아웃
+- **Container**: JSON 컴포넌트들은 내부적으로 `.container-card`, `.container-section` 표준 클래스를 사용하여 렌더링되도록 설계되어 있습니다.
 
-## 🌙 Dark Mode
+### 16.4 JSON 작성 체크리스트
 
-### Implementation Pattern
-
-```typescript
-// Always pair light and dark variants
-className={cn(
-  "bg-white text-slate-900",           // Light mode
-  "dark:bg-slate-950 dark:text-slate-50" // Dark mode
-)}
-```
-
-### Dark Mode Colors
-
-| Element | Light | Dark |
-|---------|--------|------|
-| Background | `bg-white` | `dark:bg-slate-950` |
-| Text | `text-slate-900` | `dark:text-slate-50` |
-| Muted Text | `text-slate-600` | `dark:text-slate-400` |
-| Border | `border-slate-200` | `dark:border-slate-800` |
-| Elevated BG | `bg-slate-50` | `dark:bg-slate-900` |
+- [ ] `fontWeight: "semibold"`가 필요한 헤더에 적용되었는가
+- [ ] `fontSize`가 본 문서의 텍스트 스케일 범위를 벗어나지 않는가 (`text-tiny` ~ `text-2xl`)
+- [ ] 하드코딩된 특정 색상 코드 대신 표준 `variant`를 사용했는가
+- [ ] `row`, `column` 컴포넌트의 `gap`이 일관되게 적용되었는가
 
 ---
 
-## 📝 Code Style Guidelines
-
-### 1. Always use `cn()` utility
-
-```typescript
-// ✅ Good
-import { cn } from "@/lib/utils";
-className={cn("base-styles", className)}
-
-// ❌ Bad
-className={`base-styles ${className}`}
-```
-
-### 2. Dark mode first approach
-
-```typescript
-// ✅ Good - start with light, add dark variants
-className="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50"
-
-// ❌ Bad - assume dark mode only
-className="bg-slate-950 text-slate-100"
-```
-
-### 3. Border radius consistency
-
-```typescript
-// ✅ Good - consistent sizing
-rounded-2xl   // Page sections
-rounded-md     // Buttons, inputs
-rounded-lg     // Cards
-
-// ❌ Bad - mixed sizes without reason
-rounded-3xl | rounded-2xl | rounded-xl | rounded-full (mixed arbitrarily)
-```
-
-### 4. Forward refs for composite components
-
-```typescript
-// ✅ Good
-const Component = React.forwardRef<HTMLDivElement, Props>(
-  (props, ref) => <div ref={ref} {...props} />
-);
-Component.displayName = "Component";
-```
-
----
-
-## ✅ Migration Checklist
-
-Use this checklist when updating components:
-
-- [ ] Use `cn()` for className merging
-- [ ] Add `dark:` variants for all colors
-- [ ] Use consistent border radius (`rounded-2xl` for sections, `rounded-md` for buttons)
-- [ ] Use consistent text colors (`text-slate-900/50` for primary, `text-slate-600/400` for muted)
-- [ ] Use consistent borders (`border-slate-200` for light, `border-slate-800` for dark)
-- [ ] Add focus states for interactive elements
-
----
-
-## 🧠 UX Heuristics: Nielsen's 10 Usability Principles
-
-Industry-standard UX guidelines to apply alongside the design system.
-
-### 1. Visibility of System Status
-
-**Keep users informed about what is going on**
-
-```typescript
-// ✅ Good - Loading states visible
-<button disabled={loading}>
-  {loading ? <Spinner /> : "Submit"}
-</button>
-
-// ✅ Good - Progress indicator for long operations
-<ProgressBar value={progress} max={100} />
-
-// ✅ Good - Toast notifications for async results
-<Toast>{status}</Toast>
-```
-
-### 2. Match Between System and Real World
-
-**Use familiar concepts and language**
-
-```typescript
-// ❌ Bad - Technical jargon
-<button>Execute CRUD Operation</button>
-
-// ✅ Good - User's language
-<button>Create Item</button>
-```
-
-### 3. User Control and Freedom
-
-**Provide undo/redo and easy exit**
-
-```typescript
-// ✅ Good - Cancel/confirm for destructive actions
-<AlertDialog>
-  <AlertDialogTrigger>Delete</AlertDialogTrigger>
-  <AlertDialogContent>
-    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-    <AlertDialogAction>Cancel</AlertDialogAction>
-    <AlertDialogAction>Delete</AlertDialogAction>
-  </AlertDialogContent>
-</AlertDialog>
-
-// ✅ Good - Escape to dismiss modals
-// ✅ Good - Back button in multi-step forms
-```
-
-### 4. Consistency and Standards
-
-**Use design tokens and established patterns**
-
-```typescript
-// ✅ Good - Consistent with design system
-import { buttonVariants } from "@/components/ui/button";
-className={buttonVariants({ variant: "default" })}
-
-// ❌ Bad - Inconsistent styling
-className="px-3 py-1.5 bg-blue-500 rounded" // Non-standard
-```
-
-### 5. Error Prevention
-
-**Validate before submission, provide constraints**
-
-```typescript
-// ✅ Good - Form validation
-<input
-  type="email"
-  required
-  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$"
-  onInvalid={(e) => e.target.setCustomValidity("Please enter a valid email")}
-/>
-
-// ✅ Good - Disabled state while invalid
-<SubmitButton disabled={!form.isValid} />
-
-// ✅ Good - Confirmation for destructive actions
-```
-
-### 6. Recognition Rather Than Recall
-
-**Make options visible, minimize memory load**
-
-```typescript
-// ✅ Good - Visible filters
-<FilterGroup>
-  <FilterOption label="Active" />
-  <FilterOption label="Archived" />
-  <FilterOption label="Draft" />
-</FilterGroup>
-
-// ✅ Good - Help text and placeholders
-<input placeholder="Search by name or email..." />
-<p className="text-xs text-muted-foreground">
-  Supports wildcards: *.example.com
-</p>
-```
-
-### 7. Flexibility and Efficiency of Use
-
-**Support power users with shortcuts**
-
-```typescript
-// ✅ Good - Keyboard shortcuts
-<div onKeyDown={(e) => {
-  if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
-    openCommandPalette();
-  }
-}} />
-
-// ✅ Good - Sensible defaults
-<select defaultValue="last-30-days">
-  <option value="last-7-days">Last 7 days</option>
-  <option value="last-30-days">Last 30 days</option>
-  <option value="custom">Custom range</option>
-</select>
-```
-
-### 8. Aesthetic and Minimalist Design
-
-**Remove clutter, focus on essentials**
-
-```typescript
-// ❌ Bad - Everything visible at once
-<div>
-  <Button>Edit</Button>
-  <Button>Delete</Button>
-  <Button>Share</Button>
-  <Button>Duplicate</Button>
-  <Button>Export</Button>
-</div>
-
-// ✅ Good - Primary action, secondary in dropdown
-<div className="flex gap-2">
-  <Button>Edit</Button>
-  <DropdownMenu>
-    <DropdownMenuTrigger>More</DropdownMenuTrigger>
-    <DropdownMenuContent>
-      <DropdownMenuItem>Delete</DropdownMenuItem>
-      <DropdownMenuItem>Share</DropdownMenuItem>
-      <DropdownMenuItem>Duplicate</DropdownMenuItem>
-      <DropdownMenuItem>Export</DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-</div>
-```
-
-### 9. Help Users Recogn Errors
-
-**Clear error messages with solutions**
-
-```typescript
-// ❌ Bad - Cryptic error
-<ErrorMessage>ERR_CONNECTION_REFUSED</ErrorMessage>
-
-// ✅ Good - Actionable error message
-<Alert variant="destructive">
-  <AlertTitle>Connection Failed</AlertTitle>
-  <AlertDescription>
-    Unable to connect to the server. Please check your network connection
-    and try again. If the problem persists, contact support.
-  </AlertDescription>
-</Alert>
-```
-
-### 10. Help and Documentation
-
-**Guidance for first-time users**
-
-```typescript
-// ✅ Good - Empty state with guidance
-{items.length === 0 && (
-  <EmptyState
-    icon={FileIcon}
-    title="No documents yet"
-    description="Create your first document to get started"
-    action={<Button>Create Document</Button>}
-  />
-)}
-
-// ✅ Good - Tooltips for icon-only buttons
-<Button>
-  <Tooltip content="Copy to clipboard">
-    <CopyIcon />
-  </Tooltip>
-</Button>
-```
-
-### UX Checklist
-
-Use this checklist when implementing features:
-
-- [ ] **H1**: Loading/spinner states for async operations
-- [ ] **H2**: Labels use user's language (not technical terms)
-- [ ] **H3**: Cancel/undo/escape available for destructive actions
-- [ ] **H4**: Uses design system tokens and patterns
-- [ ] **H5**: Form validates before submission
-- [ ] **H6**: Options visible with clear labels
-- [ ] **H7**: Keyboard shortcuts documented (Esc, Cmd+K, etc.)
-- [ ] **H8**: Minimal UI, clear visual hierarchy
-- [ ] **H9**: Error messages explain problem + solution
-- [ ] **H10**: Empty states guide next action
-
----
-
-## 📚 References
-
-- [Tailwind CSS 4 Docs](https://tailwindcss.com/docs)
+## 17. 참고 문서
+
+- `AGENTS.md`
+- `docs/FEATURES.md`
+- `docs/TESTING_STRUCTURE.md`
+- `docs/UI_PATTERN_RECIPES.md` (JSON 스니펫 포함)
+- `apps/web/src/app/globals.css`
+- `apps/web/src/lib/design-tokens.ts`
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)
 - [Radix UI Primitives](https://www.radix-ui.com/primitives)
-- [Class Variance Authority](https://cva.style/docs)
-- [Design Tokens](/apps/web/src/lib/design-tokens.ts)
-- [Nielsen's 10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/) - Industry standard UX principles
-
-## 🏢 ADMIN Page Standards
-
-### Page Layout
-
-All ADMIN pages follow this standard structure:
-
-\`\`\`typescript
-<div className="space-y-6">
-  {/* Page Header */}
-  <div>
-    <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Page Title</h1>
-    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-      Page description and context
-    </p>
-  </div>
-
-  {/* Control Bar (Optional) */}
-  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-    {/* Filters, actions, etc. */}
-  </section>
-
-  {/* Content Area */}
-  <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-    {/* Main content */}
-  </section>
-</div>
-\`\`\`
-
-### Button Group Standards
-
-Tab buttons and filter groups:
-
-\`\`\`typescript
-// ✅ Good - Consistent tab group
-<div className="inline-flex rounded-xl border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/70 p-1">
-  <button
-    className={cn(
-      "px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition rounded-lg",
-      activeTab === "all"
-        ? "bg-sky-600 text-white"
-        : "bg-transparent text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
-    )}
-  >
-    All
-  </button>
-  <button>...</button>
-  <button>...</button>
-</div>
-\`\`\`
-
-### Table Standards
-
-Data tables with consistent styling:
-
-\`\`\`typescript
-<table className="w-full text-[11px]">
-  <thead>
-    <tr className="border-b border-slate-300 dark:border-slate-800">
-      <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-        Column Name
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr className="border-b border-slate-200 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800/30">
-      <td className="px-3 py-2 text-slate-700 dark:text-slate-400">
-        Cell Value
-      </td>
-    </tr>
-  </tbody>
-</table>
-\`\`\`
-
-### Loading Skeleton Standards
-
-Consistent loading patterns:
-
-\`\`\`typescript
-// ✅ Good - Follows page section standard
-<div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-  <div className="flex gap-6">
-    <div className="h-10 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-    <div className="h-10 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-  </div>
-  <div className="h-10 w-32 animate-pulse rounded-xl bg-sky-600" />
-</div>
-\`\`\`
-
-### Status Indicators
-
-Consistent status colors:
-
-| Status | Background | Text | Border |
-|--------|------------|------|--------|
-| Success | \`bg-emerald-600\` | \`text-white\` | - |
-| Warning | \`bg-amber-600\` | \`text-white\` | - |
-| Error | \`bg-rose-600\` | \`text-white\` | - |
-| Info | \`bg-sky-600\` | \`text-white\` | - |
-| Neutral | \`bg-slate-200\` | \`text-slate-700\` | \`border-slate-300\` (dark: \`bg-slate-800 dark:text-slate-300\`) |
-
-### ADMIN Page Checklist
-
-Use this checklist for ADMIN pages:
-
-- [ ] Page header with title (\`text-2xl\`) and description (\`text-sm\`)
-- [ ] Control bar uses \`rounded-2xl border bg-white p-5 dark:bg-slate-900/90\`
-- [ ] Content area uses \`rounded-2xl border bg-white shadow-sm dark:bg-slate-900/90\`
-- [ ] Buttons follow standard variants (Primary, Secondary, etc.)
-- [ ] Tables use consistent border colors (\`border-slate-200\` / \`dark:border-slate-800\`)
-- [ ] Loading skeletons follow page section pattern
-- [ ] All text has dark mode variants
-
-## 🌐 Universal Page Standards
-
-### All Page Layout
-
-Applies to ALL pages (Main, OPS, SIM, ADMIN, etc.):
-
-```typescript
-<div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-  <header className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-    {/* Header content */}
-  </header>
-  <main className="min-h-[calc(100vh-96px)] w-full px-4 pb-16 pt-4 md:px-6 md:pb-4">
-    {/* Page content */}
-  </main>
-</div>
-```
-
-### Universal Card/Section
-
-All content sections use this pattern:
-
-```typescript
-// Option 1: Use standardized container class
-<section className="container-section">
-  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Title</h2>
-  {/* Content */}
-</section>
-
-// Option 2: Use utility classes directly
-<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Title</h2>
-  {/* Content */}
-</section>
-```
-
-### Universal Input
-
-All form inputs follow this pattern:
-
-```typescript
-// Option 1: Use standardized input class
-<input className="input-container" />
-
-// Option 2: Use utility classes directly
-<input
-  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
-/>
-```
-
-### Universal Button Standards
-
-All buttons follow these variants:
-
-| Variant | Classes |
-|---------|----------|
-| Primary | `bg-sky-600 text-white hover:bg-sky-500 dark:bg-sky-700` |
-| Secondary | `border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800` |
-| Destructive | `bg-rose-600 text-white hover:bg-rose-500 dark:bg-rose-900` |
-| Ghost | `hover:bg-slate-100 text-slate-700 dark:hover:bg-slate-800 dark:text-slate-300` |
-
-### Universal Text Standards
-
-All text follows these rules:
-
-| Element | Light | Dark |
-|----------|--------|--------|
-| Heading (h1) | `text-slate-900` | `dark:text-slate-50` |
-| Heading (h2) | `text-slate-900` | `dark:text-white` |
-| Heading (h3) | `text-slate-900` | `dark:text-white` |
-| Body (p) | `text-slate-900` | `dark:text-slate-50` |
-| Muted (secondary) | `text-slate-600` | `dark:text-slate-400` |
-| Disabled | `text-slate-400` | `dark:text-slate-600` |
-
-### Universal Form Standards
-
-All forms follow these patterns:
-
-```typescript
-// ✅ Good - Consistent form layout
-<form className="space-y-4">
-  <div className="space-y-2">
-    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Field Name</label>
-    <input className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400" />
-  </div>
-</form>
-```
-
-### Empty State Standards
-
-All empty states follow this pattern:
-
-```typescript
-<div className="flex flex-col items-center justify-center py-20">
-  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4 border border-slate-300 dark:bg-slate-800 dark:border-slate-700">
-    {/* Icon */}
-  </div>
-  <p className="text-slate-700 dark:text-slate-400 text-sm font-medium">No data found</p>
-  <p className="text-slate-500 dark:text-slate-500 text-xs">Create your first item to get started</p>
-</div>
-```
-
-### Loading State Standards
-
-All loading states follow this pattern:
-
-```typescript
-<div className="flex flex-col items-center justify-center py-20">
-  <div className="w-10 h-10 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-  <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">Loading...</p>
-</div>
-```
-
----
-
-## 🎨 Visual Hierarchy Guidelines 🆕
-
-### Purpose
-Create clear visual hierarchy through consistent sizing, spacing, and contrast. Users should instantly understand:
-- What is most important (primary actions)
-- What is related (grouped content)
-- What is secondary (metadata, timestamps)
-
-### Visual Hierarchy Levels
-
-| Level | Size | Spacing | Usage | Example |
-|--------|------|----------|-------|---------|
-| **H1 (Page Heading)** | `text-2xl` (24px) | Large | Page titles, hero sections | "Create API Asset" |
-| **H2 (Section Title)** | `text-lg` (18px) | Medium-Large | Section headers, card titles | "Basic Information" |
-| **H3 (Subsection)** | `text-base` (16px) | Medium | Subsection titles | "Request Parameters" |
-| **Body (Primary)** | `text-sm` (14px) | Default | Main content, descriptions | Default paragraph text |
-| **Body (Secondary)** | `text-xs` (12px) | Compact | Labels, timestamps, metadata | "Updated 2 hours ago" |
-| **Tiny (Labels)** | `text-[10px]` (10px) | Minimal | Status badges, tiny tags | "PROD", "v2.1" |
-
-### Hierarchy Guidelines
-
-1. **Font Size Steps**
-   - Always use at least 2 steps between hierarchy levels
-   - Never jump from `text-2xl` to `text-xs` directly
-   - Example: `text-2xl` → `text-lg` → `text-base` → `text-sm` → `text-xs`
-
-2. **Contrast Requirements**
-   - Page headings: `text-slate-900` / `dark:text-slate-50` (strongest)
-   - Section titles: `text-slate-900` / `dark:text-white`
-   - Body text: `text-slate-700` / `dark:text-slate-300`
-   - Secondary text: `text-slate-500` / `dark:text-slate-400`
-   - Disabled text: `text-slate-400` / `dark:text-slate-600`
-
-3. **Spacing Hierarchy**
-   - Page sections: `p-5` (20px padding)
-   - Card content: `p-4` (16px padding)
-   - Dense content: `p-3` (12px padding)
-   - Tight groups: `space-y-2` (8px gaps)
-   - Default: `space-y-4` (16px gaps)
-
-4. **Interactive Element Hierarchy**
-   - Primary buttons: `bg-sky-600 hover:bg-sky-500` (most prominent)
-   - Secondary actions: `border border-slate-300 hover:bg-slate-100` (less prominent)
-   - Ghost buttons: `hover:bg-slate-100 dark:hover:bg-slate-800` (subtle)
-   - Links: `text-sky-600 hover:text-sky-500 dark:text-sky-400`
-
-5. **Border Radius Hierarchy**
-   - Panels (large containers): `rounded-3xl` (24px) - `.br-panel`
-   - Page sections: `rounded-2xl` (16px) - `.br-section`
-   - Cards: `rounded-xl` (12px) - `.br-card`
-   - Buttons: `rounded-lg` (8px) - `.br-btn`
-   - Badges/Tags: `rounded-full` - `.br-badge`
-
----
-
-## 🚫 Common Anti-Patterns 🆕
-
-### Purpose
-Identify and avoid common UI/UX mistakes that reduce clarity and consistency.
-
-### 1. Magic Numbers in Styles
-
-❌ **Bad**:
-```typescript
-// Arbitrary values without clear purpose
-<div style={{ padding: "13px", fontSize: "11.5px" }}>
-<button className="px-3.5 py-1.5 rounded-[7px]">
-```
-
-✅ **Good**:
-```typescript
-// Use design tokens or standard Tailwind classes
-<div className="p-4">  // 16px standard
-<div className="p-5">  // 20px page section
-<button className="px-6 py-3">  // 24px 12px standard
-<button className="px-4 py-2">  // 16px 8px small
-<button className="px-3 py-1.5 text-xs rounded-full">  // tiny button with badge
-```
-
-### 2. Inconsistent Hierarchy
-
-❌ **Bad**:
-```typescript
-// All text same size, no clear hierarchy
-<h1 className="text-sm">Title</h1>
-<p className="text-sm">Body text</p>
-<span className="text-sm">Label</span>
-```
-
-✅ **Good**:
-```typescript
-// Clear visual hierarchy
-<h1 className="text-2xl font-semibold">Page Title</h1>
-<h2 className="text-lg font-semibold">Section Title</h2>
-<h3 className="text-base font-medium">Subsection</h3>
-<p className="text-sm">Body content</p>
-<span className="text-xs">Secondary label</span>
-```
-
-### 3. Border Radius Soup
-
-❌ **Bad**:
-```typescript
-// Mixed border radius without clear purpose
-<div className="rounded-sm rounded-xl rounded-2xl">
-<button className="rounded-md rounded-full rounded-lg">
-```
-
-✅ **Good**:
-```typescript
-// Consistent border radius by element type
-<section className="br-section">     {/* page sections - rounded-2xl */}
-<div className="br-card">            {/* cards - rounded-xl */}
-<button className="br-btn">          {/* buttons - rounded-lg */}
-<input className="br-btn">           {/* inputs - rounded-lg */}
-<span className="br-badge">          {/* badges - rounded-full */}
-```
-
-Or use utility classes directly:
-```typescript
-<section className="rounded-2xl">    {/* page sections */}
-<div className="rounded-xl">          {/* cards */}
-<button className="rounded-lg">       {/* buttons */}
-<span className="rounded-full">       {/* badges */}
-```
-
-### 4. Color Chaos
-
-❌ **Bad**:
-```typescript
-// Random colors without semantic meaning
-<span style={{ color: "#a83f39" }}>
-<button className="bg-blue-500 bg-green-600 bg-purple">
-```
-
-✅ **Good**:
-```typescript
-// Semantic color tokens
-<span className="text-slate-900 dark:text-slate-50">  {/* primary text */}
-<span className="text-slate-600 dark:text-slate-400">  {/* muted text */}
-<div className="bg-surface-base">  {/* surface - white/slate-950 */}
-<div className="bg-surface-overlay">  {/* overlay - slate-50/slate-950/50 */}
-<button className="bg-sky-600 hover:bg-sky-500">  {/* primary button */}
-<button className="bg-rose-600 hover:bg-rose-500">  {/* destructive */}
-<button className="bg-emerald-600">  {/* success */}
-```
-
-### 5. Hardcoded Dark Styles
-
-❌ **Bad**:
-```typescript
-// Dark mode hardcoded, not responsive
-<div className="bg-slate-950 text-slate-100">
-<span className="text-white">
-```
-
-✅ **Good**:
-```typescript
-// Use dark: prefix for dark variants
-<div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50">
-<span className="text-slate-900 dark:text-slate-50">
-```
-
-### 6. Template Literal className Soup
-
-❌ **Bad**:
-```typescript
-// Hard to read, error-prone
-<div className={`base-styles ${isActive ? "active" : ""} ${disabled ? "opacity-50" : ""}`}>
-```
-
-✅ **Good**:
-```typescript
-// Use cn() utility for clean className merging
-import { cn } from "@/lib/utils";
-
-<div className={cn("base-styles", isActive && "active", disabled && "opacity-50")}>
-```
-
-### 7. Accessibility Ignored
-
-❌ **Bad**:
-```typescript
-// No focus states, no ARIA labels
-<button className="bg-sky-600">
-<div onClick={handleClick}>
-```
-
-✅ **Good**:
-```typescript
-// Focus visible, keyboard accessible, proper ARIA
-<button className="bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
-<div role="button" tabIndex={0} onClick={handleClick} onKeyDown={handleKeyDown}>
-<button aria-label="Close dialog">
-```
-
-### 8. Spacing Inconsistency
-
-❌ **Bad**:
-```typescript
-// Random spacing values
-<div className="space-y-2 space-x-5 gap-1.5 p-7">
-```
-
-✅ **Good**:
-```typescript
-// Consistent spacing scale
-<div className="space-y-2">  {/* tight */}
-<div className="space-y-3">  {/* compact */}
-<div className="space-y-4">  {/* default */}
-<div className="p-4">  {/* card padding */}
-<div className="p-5">  {/* page section */}
-```
-
-### Quick Reference Table
-
-| Category | Anti-Pattern | Solution |
-|----------|--------------|----------|
-| **Font Sizes** | `text-[11px]`, `text-[13px]` | Use `text-xs`, `text-sm` |
-| **Border Radius** | Mixed arbitrary values | Use `.br-badge`, `.br-card`, `.br-section`, `.br-panel` or `rounded-full`, `rounded-xl`, `rounded-2xl`, `rounded-3xl` |
-| **Colors** | Hex codes, random colors | Use semantic tokens: `text-slate-900`, `bg-sky-600` or `.bg-surface-base`, `.bg-surface-overlay` |
-| **Dark Mode** | Hardcoded dark styles | Use `dark:` prefix variants |
-| **Spacing** | `px-3.5`, `gap-1.5` | Use `px-3`, `px-4`, `gap-2`, `gap-3` |
-| **Resize Handle** | Mixed widths/styles (`w-2`, `w-6`, custom hover) | Use `.resize-handle-col` + `.resize-handle-grip` + optional `.is-active` |
-| **Letter Spacing** | `tracking-[0.2em]`, `tracking-[0.3em]` | Use `tracking-wider` for uppercase |
-| **Containers** | Mixed border+bg styles | Use `.container-card`, `.container-section`, `.container-panel` |
-
-### Common Violations to Avoid
-
-❌ **Bad Hierarchy**:
-- Same font size for title and body (`text-sm` everywhere)
-- Insufficient contrast between hierarchy levels
-- Random font sizes without clear progression
-- Inconsistent spacing between related elements
-
-✅ **Good Hierarchy**:
-```typescript
-// Clear visual progression
-<div>
-  <h1 className="text-2xl font-semibold">Page Title</h1>
-  <section className="p-5">
-    <h2 className="text-lg font-semibold">Section Title</h2>
-    <div className="space-y-4">
-      <h3 className="text-base font-medium">Subsection</h3>
-      <p className="text-sm">Body content</p>
-      <p className="text-xs">Secondary info</p>
-    </div>
-  </section>
-</div>
-```
-
----
-
-## 🔧 Border Radius & Background Utility Classes
-
-### Border Radius Classes
-
-Use these for consistent border radius across components:
-
-| Class | Value | Usage |
-|-------|-------|-------|
-| `.br-badge` | `rounded-full` | Badges, pills, indicators |
-| `.br-btn` | `rounded-lg` | Buttons, inputs |
-| `.br-card` | `rounded-xl` | Cards, small boxes |
-| `.br-section` | `rounded-2xl` | Page sections, large containers |
-| `.br-panel` | `rounded-3xl` | Large panels, main containers |
-
-### Background Color Classes
-
-Use these for consistent background colors with automatic dark mode:
-
-| Class | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `.bg-surface-base` | `bg-white` | `dark:bg-slate-900/90` | Primary surface |
-| `.bg-surface-overlay` | `bg-slate-50` | `dark:bg-slate-950/50` | Overlay surface |
-| `.bg-surface-elevated` | `bg-slate-100` | `dark:bg-slate-900/40` | Elevated surface |
-
-### Combined Container Classes
-
-These combine border-radius + background + border + shadow:
-
-| Class | Border | Background | Padding | Usage |
-|-------|--------|------------|----------|-------|
-| `.container-card` | `rounded-xl` | surface-base | `p-4` | Cards |
-| `.container-section` | `rounded-2xl` | surface-base | `p-5` | Page sections |
-| `.container-panel` | `rounded-3xl` | surface-base | `p-6` | Large panels |
-
-### Input & Code Block Classes
-
-| Class | Usage |
-|-------|-------|
-| `.input-container` | Standard input field with focus states |
-| `.code-block` | Code block (max-height: 12rem) |
-| `.code-block-lg` | Large code block (max-height: 20rem) |
-
-### Usage Examples
-
-```typescript
-// Container classes
-<section className="container-section">
-  <h2>Section Title</h2>
-  {/* content */}
-</section>
-
-<div className="container-card">
-  {/* card content */}
-</div>
-
-// Background classes
-<div className="bg-surface-base">
-  <div className="bg-surface-overlay p-4">
-    {/* layered content */}
-  </div>
-</div>
-
-// Input classes
-<input className="input-container" />
-<textarea className="input-container" />
-
-// Code blocks
-<pre className="code-block">{code}</pre>
-<pre className="code-block-lg">{longCode}</pre>
-
-// Border radius classes
-<span className="br-badge px-3 py-1">Badge</span>
-<button className="br-btn px-6 py-3">Button</button>
-<div className="br-card p-4">Card</div>
-<section className="br-section p-5">Section</section>
-<div className="br-panel p-6">Panel</div>
-```
-
----
-
-## 🎯 Complete Design Checklist
-
-Use this checklist for ANY page/component:
-
-**Layout & Structure:**
-- [ ] Page wrapper: `bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50`
-- [ ] Sections: `.container-section` or `rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90`
-- [ ] Cards: `.container-card` or `rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900`
-- [ ] Panels: `.container-panel` or `rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900`
-
-**Components:**
-- [ ] Inputs: `.input-container` or `rounded-lg border border-slate-300 bg-white px-4 py-3` (with dark variants)
-- [ ] Code blocks: `.code-block` or `.code-block-lg`
-- [ ] Buttons use standard variants (Primary, Secondary, Destructive, Ghost)
-- [ ] Badges use `.br-badge` (rounded-full)
-
-**Colors & Typography:**
-- [ ] Text has proper dark mode variants
-- [ ] Use `.bg-surface-base`, `.bg-surface-overlay`, `.bg-surface-elevated` for backgrounds
-- [ ] Use `.br-badge`, `.br-btn`, `.br-card`, `.br-section`, `.br-panel` for border radius
-
-**Forms:**
-- [ ] Forms use `space-y-4` for vertical spacing
-- [ ] Empty states follow universal pattern
-- [ ] Loading states follow universal pattern
+- [Nielsen Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/)

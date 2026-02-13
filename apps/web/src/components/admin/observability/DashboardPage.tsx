@@ -33,7 +33,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-variant bg-slate-950/60 text-muted-foreground transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-variant bg-surface-base/60 text-muted-foreground transition-colors"
             title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
             {isFullScreen ? (
@@ -42,7 +42,7 @@ export default function DashboardPage() {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
             )}
           </button>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-variant bg-slate-950/60">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-variant bg-surface-base/60">
             <input
               type="checkbox"
               id="auto-refresh"
@@ -58,7 +58,7 @@ export default function DashboardPage() {
             <select
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
-              className="px-3 py-2 rounded-lg border border-variant bg-slate-950/60 text-sm text-foreground"
+              className="px-3 py-2 rounded-lg border border-variant bg-surface-base/60 text-sm text-foreground"
             >
               <option value={10}>Every 10s</option>
               <option value={30}>Every 30s</option>
@@ -119,7 +119,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Footer Info */}
-      <div className="flex items-center justify-between text-xs px-4 py-3 rounded-lg border border-variant bg-slate-950/40 text-muted-foreground">
+      <div className="flex items-center justify-between text-xs px-4 py-3 rounded-lg border border-variant bg-surface-base/40 text-muted-foreground">
         <div>
           Last updated: {new Date().toLocaleTimeString()}
         </div>

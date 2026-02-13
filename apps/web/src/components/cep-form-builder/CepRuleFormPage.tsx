@@ -29,7 +29,7 @@ interface Action {
 
 interface Aggregation {
   id: string;
-  type: "avg" | "sum" | "min" | "max" | "count" | "stddev";
+  type: "avg" | "sum" | "min" | "max" | "count" | "std" | "percentile";
   field?: string;
   outputAlias?: string;
 }
@@ -46,7 +46,7 @@ interface CepRuleFormData {
   ruleName: string;
   description: string;
   isActive: boolean;
-  triggerType: "metric" | "event" | "schedule";
+  triggerType: "metric" | "event" | "schedule" | "anomaly";
   triggerSpec: Record<string, any>;
   conditions: Condition[];
   conditionLogic: "AND" | "OR" | "NOT";

@@ -405,14 +405,14 @@ function DocumentViewerContent() {
     <div className="space-y-6">
       <header className="ui-box flex items-center justify-between p-6">
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             문서 뷰어
           </p>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+          <h2 className="text-2xl font-semibold text-foreground dark:text-slate-50">
             {documentMeta?.filename ?? "문서 불러오는 중..."}
           </h2>
           {chunkInfo ? (
-            <p className="text-xs text-slate-700 dark:text-slate-400">
+            <p className="text-xs text-foreground dark:text-muted-foreground">
               근거 청크 하이라이트 중 ·{" "}
               {chunkInfo.page != null ? `${chunkInfo.page}페이지` : "페이지 미확인"}
             </p>
@@ -457,7 +457,7 @@ function DocumentViewerContent() {
       </header>
 
       <section className="ui-box p-6">
-        <div className="mb-4 flex items-center justify-between text-xs text-slate-700 dark:text-slate-400">
+        <div className="mb-4 flex items-center justify-between text-xs text-foreground dark:text-muted-foreground">
           <span>{currentPage}페이지</span>
           {numPages ? <span>전체 {numPages}페이지</span> : <span>페이지 로딩 중...</span>}
           <span className="text-tiny">방향키(←→)로 페이지 이동</span>
@@ -467,8 +467,8 @@ function DocumentViewerContent() {
             {pdfLoading && (
               <div className="flex h-[600px] w-full items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400 border-slate-300" />
-                  <span className="text-sm text-slate-700 dark:text-slate-400">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400 border-variant" />
+                  <span className="text-sm text-foreground dark:text-muted-foreground">
                     PDF 불러오는 중...
                   </span>
                 </div>
@@ -507,7 +507,7 @@ function DocumentViewerContent() {
       {/* References Section */}
       {references.length > 0 && (
         <section className="ui-box p-6">
-          <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-700 dark:text-slate-400">
+          <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-foreground dark:text-muted-foreground">
             <span>근거 문서 ({references.length}건)</span>
           </div>
           <div className="space-y-3">
@@ -520,10 +520,10 @@ function DocumentViewerContent() {
                     "block rounded-2xl border p-4 transition",
                     isCurrentDocument
                       ? "border-amber-400 bg-amber-500/10"
-                      : "border-slate-200 bg-white hover:border-sky-500 dark:border-slate-700 dark:bg-slate-900",
+                      : "border-variant bg-surface-base hover:border-sky-500 dark:border-variant dark:bg-surface-base",
                   )}
                 >
-                  <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-700 dark:text-slate-400">
+                  <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-foreground dark:text-muted-foreground">
                     <span>{reference.document_title}</span>
                     <span>
                       {reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}
@@ -533,7 +533,7 @@ function DocumentViewerContent() {
                     {reference.snippet}
                   </p>
                   {reference.score != null && (
-                    <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-tiny text-muted-foreground dark:text-muted-foreground">
                       유사도 {(reference.score * 100).toFixed(1)}%
                     </p>
                   )}

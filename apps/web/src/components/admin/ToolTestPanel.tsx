@@ -128,10 +128,10 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key as "test" | "schema" | "config")}
                         className={cn(
-                            "flex-1 px-4 py-3 text-tiny font-bold uppercase tracking-widest transition-all",
+                            "panel-tab flex-1 rounded-none border-0 border-b-2 border-transparent px-4 py-3 text-tiny",
                             activeTab === tab.key
-                                ? "text-sky-400 border-b-2 border-sky-400 bg-sky-400/5"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? "panel-tab-active border-b-sky-500"
+                                : "panel-tab-inactive hover:text-foreground"
                         )}
                     >
                         {tab.label}

@@ -295,7 +295,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
           <span className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
             asset.status === "published"
               ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50"
-              : "bg-slate-900/30 text-muted-foreground border-slate-700/30"
+              : "bg-surface-base/30 text-muted-foreground border-variant/30"
           }`}>
             {asset.status} (v{asset.version})
           </span>

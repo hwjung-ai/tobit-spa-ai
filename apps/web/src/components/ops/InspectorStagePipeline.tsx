@@ -157,7 +157,7 @@ function AssetLegend() {
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {Object.entries(ASSET_CONFIG).map(([type, config]) => (
-        <div key={type} className="flex items-center gap-1.5">
+        <div key={type} className="flex items-center gap-2">
           <span className={config.color}>{config.icon}</span>
            <span className="text-xs-9px text-muted-foreground">{config.label}</span>
         </div>
@@ -205,23 +205,23 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
 
         <div className="space-y-3">
           <div className="rounded-lg p-3 bg-surface-overlay">
-            <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Asset ID</p>
+            <p className="text-xs uppercase tracking-wider mb-1 text-muted-foreground">Asset ID</p>
             <p className="text-xs font-mono break-all text-foreground">{asset.id}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg p-3 bg-surface-overlay">
-              <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Type</p>
+              <p className="text-xs uppercase tracking-wider mb-1 text-muted-foreground">Type</p>
               <p className="text-xs capitalize text-foreground">{asset.type}</p>
             </div>
             <div className="rounded-lg p-3 bg-surface-overlay">
-              <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Version</p>
+              <p className="text-xs-9px uppercase tracking-wider mb-1 text-muted-foreground dark:text-muted-foreground">Version</p>
               <p className="text-xs text-foreground">v{asset.version}</p>
             </div>
           </div>
 
           <div className="rounded-lg p-3 bg-surface-overlay">
-            <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Full Identifier</p>
+            <p className="text-xs-9px uppercase tracking-wider mb-1 text-muted-foreground dark:text-muted-foreground">Full Identifier</p>
             <p className="text-xs font-mono break-all text-muted-foreground">{asset.fullId}</p>
           </div>
 
@@ -355,7 +355,7 @@ export default function InspectorStagePipeline({
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <details className="border border-variant bg-surface-overlay rounded-xl p-3" open>
-                <summary className="text-tiny uppercase tracking-wider cursor-pointer text-slate-500 dark:text-slate-400">
+                <summary className="text-tiny uppercase tracking-wider cursor-pointer text-muted-foreground dark:text-muted-foreground">
                   Stage Input
                 </summary>
                 <pre className="mt-2 text-xs text-foreground overflow-auto max-h-56">
@@ -363,7 +363,7 @@ export default function InspectorStagePipeline({
                 </pre>
               </details>
               <details className="border border-variant bg-surface-overlay rounded-xl p-3">
-                <summary className="text-tiny uppercase tracking-wider cursor-pointer text-slate-500 dark:text-slate-400">
+                <summary className="text-tiny uppercase tracking-wider cursor-pointer text-muted-foreground dark:text-muted-foreground">
                   Stage Output
                 </summary>
                 <pre className="mt-2 text-xs text-foreground overflow-auto max-h-56">

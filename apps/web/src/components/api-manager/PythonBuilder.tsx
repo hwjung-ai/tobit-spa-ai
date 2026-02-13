@@ -178,16 +178,11 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
               key={template}
               onClick={() => handleTemplateChange(template)}
               disabled={readOnly}
-              className={`rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-normal transition ${
+              className={`rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
                 selectedTemplate === template
                   ? "border-sky-600 bg-sky-500/10 text-white"
-                  : "hover:"
+                  : "border-variant bg-surface-overlay text-muted-foreground hover:border-sky-500"
               }`}
-              style={
-                selectedTemplate === template
-                  ? { borderColor: "var(--border)" }
-                  : { border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" }
-              }
             >
               {template}
             </button>
@@ -277,7 +272,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <div className="text-tiny uppercase tracking-normal text-muted-foreground">
+        <div className="text-tiny uppercase tracking-wider text-muted-foreground">
           Python 3.11+ syntax
         </div>
         <button

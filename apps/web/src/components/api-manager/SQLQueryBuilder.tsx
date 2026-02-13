@@ -158,11 +158,11 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
 
   return (
     <div className="builder-container space-y-4 rounded-2xl p-4">
-      <h3 className="builder-title text-xs uppercase tracking-normal">SQL Visual Builder</h3>
+      <h3 className="builder-title text-xs uppercase tracking-wider">SQL Visual Builder</h3>
       
       {/* Table Selection */}
       <div className="space-y-2">
-        <label className="builder-label-text text-xs uppercase tracking-normal">Select Table</label>
+        <label className="builder-label-text text-xs uppercase tracking-wider">Select Table</label>
         <select
           value={selectedTable}
           onChange={(e) => handleTableChange(e.target.value)}
@@ -181,7 +181,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* Column Selection */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="builder-label-text text-xs uppercase tracking-normal">Select Columns</label>
+          <label className="builder-label-text text-xs uppercase tracking-wider">Select Columns</label>
           <div className="builder-border-overlay max-h-40 overflow-auto rounded-2xl border p-3">
             {TABLES[selectedTable].map((column) => (
               <label key={column} className="builder-label-checkbox flex items-center gap-2 text-sm">
@@ -202,7 +202,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* WHERE Conditions */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="builder-label-text text-xs uppercase tracking-normal">WHERE Conditions</label>
+          <label className="builder-label-text text-xs uppercase tracking-wider">WHERE Conditions</label>
           <div className="builder-border-overlay rounded-2xl border p-3 space-y-2">
             <div className="flex items-center gap-2">
               <span className="builder-label-small text-xs">Combinator</span>
@@ -224,7 +224,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                     rules: [...prev.rules, { field: "", operator: "=", value: "" }],
                   }))
                 }
-                className="ml-auto rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-tiny uppercase tracking-normal text-sky-400 transition hover:border-sky-500"
+                className="ml-auto rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-tiny uppercase tracking-wider text-sky-400 transition hover:border-sky-500"
               >
                 + Rule
               </button>
@@ -295,7 +295,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                           }))
                         }
                         disabled={readOnly}
-                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-tiny uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
+                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-tiny uppercase tracking-wider text-rose-400 transition hover:border-rose-500"
                       >
                         ×
                       </button>
@@ -311,7 +311,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* ORDER BY */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="builder-label-text text-xs uppercase tracking-normal">ORDER BY</label>
+          <label className="builder-label-text text-xs uppercase tracking-wider">ORDER BY</label>
           <div className="flex gap-2">
             <select
               value={orderBy.column}
@@ -342,7 +342,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* GROUP BY */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="builder-label-text text-xs uppercase tracking-normal">GROUP BY</label>
+          <label className="builder-label-text text-xs uppercase tracking-wider">GROUP BY</label>
           <div className="builder-border-overlay max-h-32 overflow-auto rounded-2xl border p-3">
             {TABLES[selectedTable].map((column) => (
               <label key={column} className="builder-label-checkbox flex items-center gap-2 text-sm">
@@ -369,7 +369,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* LIMIT */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="builder-label-text text-xs uppercase tracking-normal">LIMIT</label>
+          <label className="builder-label-text text-xs uppercase tracking-wider">LIMIT</label>
           <input
             type="number"
             min={1}
@@ -384,7 +384,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
 
       {/* Generated SQL Preview */}
       <div className="builder-preview-container space-y-2 rounded-2xl border p-4">
-        <label className="builder-label-text text-xs uppercase tracking-normal">Generated SQL</label>
+        <label className="builder-label-text text-xs uppercase tracking-wider">Generated SQL</label>
         {!selectedTable && query?.trim() ? (
           <p className="builder-help-text-small text-xs">
             Current SQL is loaded. Select a table to rebuild it with the visual builder.
@@ -396,7 +396,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       </div>
 
       <div className="builder-preview-container space-y-2 rounded-2xl border p-4">
-        <label className="builder-label-text text-xs uppercase tracking-normal">SQL Editor</label>
+        <label className="builder-label-text text-xs uppercase tracking-wider">SQL Editor</label>
         {selectedTable ? (
           <p className="builder-help-text-small text-xs">
             Visual builder is active. Editing here is allowed, but builder interactions can regenerate SQL.

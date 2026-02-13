@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { FormFieldGroup } from "./FormFieldGroup";
 
 interface SimulationResult {
@@ -83,13 +84,12 @@ export function SimulationPanel({
 
       {result && (
         <div className="space-y-3">
-          <div
-            className={`rounded-lg border p-3 ${
-              result.matched
-                ? "border-emerald-500/50 bg-emerald-500/10"
-                : ""
-            }`}
-          >
+           <div
+             className={cn(
+               "rounded-lg border p-3",
+               result.matched && "border-emerald-500/50 bg-emerald-500/10"
+             )}
+           >
             <div className="flex items-center gap-2">
               <span className="text-lg">
                 {result.matched ? "✅" : "⚪"}

@@ -184,18 +184,9 @@ export default function CanvasComponent({
         onDragOver={isGridItem ? undefined : handleDragOver}
         onDragLeave={isGridItem ? undefined : handleDragLeave}
         onDrop={isGridItem ? undefined : handleDrop}
-        className={`${isGridItem ? "" : "p-3 rounded-lg border-2 cursor-pointer transition-colors"} ${getDragClass()}`}
-
-        onMouseEnter={(e) => {
-          if (isContainer && !isDragging && !isDragOver && !isSelected) {
-            e.currentTarget.style.backgroundColor = "var(--surface-base)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (isContainer && !isDragging && !isDragOver && !isSelected) {
-            e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-          }
-        }}
+        className={`${isGridItem ? "" : "p-3 rounded-lg border-2 cursor-pointer transition-colors"} ${getDragClass()} ${
+          isContainer && !isGridItem ? "canvas-component-container" : ""
+        } ${isDragging ? "is-dragging" : ""} ${isDragOver ? "is-drag-over" : ""} ${isSelected ? "is-selected" : ""}`}
         data-testid={`canvas-component-${component.id}`}
       >
         <div className="flex items-start justify-between gap-2">

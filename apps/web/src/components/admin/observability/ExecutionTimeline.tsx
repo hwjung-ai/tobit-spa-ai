@@ -59,7 +59,7 @@ export default function ExecutionTimeline() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-variant bg-slate-900/60 p-6 text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-variant bg-surface-base/60 p-6 text-sm text-muted-foreground">
         Loading error timeline...
       </div>
     );
@@ -84,7 +84,7 @@ export default function ExecutionTimeline() {
   }));
 
   return (
-    <div className="rounded-2xl border border-variant bg-slate-900/60 p-6">
+    <div className="rounded-2xl border border-variant bg-surface-base/60 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Error Timeline</h3>
         <div className="flex gap-2">

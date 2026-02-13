@@ -148,7 +148,7 @@ interface DocumentDetail extends DocumentItem {
 
 const getBadgeStyle = (status: DocumentStatus): string => {
   const base =
-    "px-2.5 py-0.5 rounded-full text-tiny font-semibold uppercase tracking-wider border border-solid border";
+    "px-3 py-1 rounded-full text-tiny font-semibold uppercase tracking-wider border border-variant";
   switch (status) {
     case "queued":
       return `${base} bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40`;
@@ -159,7 +159,7 @@ const getBadgeStyle = (status: DocumentStatus): string => {
     case "failed":
       return `${base} bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/40`;
     default:
-      return `${base} border-variant`;
+      return base;
   }
 };
 
@@ -889,7 +889,7 @@ function DocumentsPageContent() {
                     "group relative flex flex-col gap-1 rounded-2xl border px-3 py-2 transition cursor-pointer text-foreground",
                     selectedDocumentId === document.id
                       ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
-                      : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:border-sky-500",
+                      : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-surface-elevated dark:hover:border-sky-500",
                   )}
                   role="button"
                   tabIndex={0}
@@ -910,7 +910,7 @@ function DocumentsPageContent() {
                   </p>
                   <button
                     type="button"
-                    className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                    className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-surface-base dark:text-rose-400 dark:hover:bg-rose-500/10"
                     onClick={(event) => {
                       event.stopPropagation();
                       deleteDocument(document.id);
@@ -980,7 +980,7 @@ function DocumentsPageContent() {
                   ) : null}
                   <button
                     type="button"
-                    className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                    className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-surface-base dark:text-rose-400 dark:hover:bg-rose-500/10"
                     onClick={handleDeleteSelectedDocument}
                     aria-label="Delete document"
                   >
@@ -1085,9 +1085,9 @@ function DocumentsPageContent() {
                 {streamChunks.map((chunk, idx) => (
                   <div
                     key={`${chunk.type}-${idx}`}
-                    className="space-y-2 br-card border p-3 text-sm bg-surface-elevated dark:bg-slate-950"
+                    className="space-y-2 br-card border p-3 text-sm bg-surface-elevated dark:bg-surface-base"
                   >
-                    <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-slate-800 dark:text-slate-50">
+                    <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-variant dark:text-slate-50">
                       {chunkTypeLabel[chunk.type] ?? chunk.type}
                     </span>
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
@@ -1106,8 +1106,8 @@ function DocumentsPageContent() {
                   </div>
                 ))}
                 {references.length > 0 && (
-                  <section className="rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
-                    <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <section className="rounded-2xl border p-3 text-sm bg-surface-elevated border-variant text-foreground dark:bg-surface-base dark:border-variant dark:text-slate-50">
+                    <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                       <span>근거 문서 ({references.length}건)</span>
                     </div>
                     <div className="space-y-3">
@@ -1116,8 +1116,8 @@ function DocumentsPageContent() {
                         const viewerHref = buildReferenceViewerHref(reference);
                         const content = (
                           <>
-                            <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                              <span className="text-slate-900 dark:text-slate-50">
+                            <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
+                              <span className="text-foreground dark:text-slate-50">
                                 {reference.document_title}
                               </span>
                               <span>
@@ -1126,11 +1126,11 @@ function DocumentsPageContent() {
                                   : "페이지 미확인"}
                               </span>
                             </div>
-                            <p className="mt-2 text-xs line-clamp-3 text-slate-900 dark:text-slate-50">
+                            <p className="mt-2 text-xs line-clamp-3 text-foreground dark:text-slate-50">
                               {reference.snippet}
                             </p>
                             {reference.score != null ? (
-                              <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">
+                              <p className="mt-2 text-tiny text-muted-foreground dark:text-muted-foreground">
                                 유사도 {(reference.score * 100).toFixed(1)}%
                               </p>
                             ) : null}
@@ -1170,14 +1170,14 @@ function DocumentsPageContent() {
                                 console.error("Failed to open document:", error);
                               }
                             }}
-                            className="block rounded-2xl border px-4 py-3 transition cursor-pointer border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                            className="block rounded-2xl border px-4 py-3 transition cursor-pointer border-variant bg-surface-elevated text-foreground hover:border-sky-500 dark:border-variant dark:bg-surface-base dark:text-slate-50"
                           >
                             {content}
                           </button>
                         ) : (
                           <div
                             key={`${reference.document_id}-${reference.chunk_id}`}
-                            className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                            className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed border-variant bg-surface-elevated text-foreground dark:border-variant dark:bg-surface-base dark:text-slate-50"
                             title="문서 정보가 부족하여 원문을 열 수 없습니다"
                           >
                             {content}
@@ -1187,18 +1187,18 @@ function DocumentsPageContent() {
                     </div>
                   </section>
                 )}
-                <section className="rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                <section className="rounded-2xl border p-3 text-sm bg-surface-elevated border-variant text-foreground dark:bg-surface-base dark:border-variant dark:text-slate-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                         Document history
                       </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                         Select a prior question to review its answer.
                       </p>
                     </div>
                     {docHistoryLoading ? (
-                      <span className="text-xs text-slate-600 dark:text-slate-400">Loading…</span>
+                      <span className="text-xs text-muted-foreground dark:text-muted-foreground">Loading…</span>
                     ) : null}
                   </div>
                   {docHistoryError ? (
@@ -1208,7 +1208,7 @@ function DocumentsPageContent() {
                   ) : null}
                   <div className="mt-4 space-y-2">
                     {documentHistoryEntries.length === 0 ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                         {selectedDocument
                           ? "No documented questions yet."
                           : "Select a document to view history."}
@@ -1220,17 +1220,17 @@ function DocumentsPageContent() {
                           <div
                             key={entry.id}
                             className={cn(
-                              "group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer text-slate-900 dark:text-slate-50",
+                              "group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer text-foreground dark:text-slate-50",
                               isSelected
                                 ? "border-sky-500 bg-sky-500/10"
-                                : "border-slate-200 bg-slate-50 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500",
+                                : "border-variant bg-surface-elevated hover:border-sky-500 dark:border-variant dark:bg-surface-base dark:hover:border-sky-500",
                             )}
                           >
                             <div
                               onClick={() => setSelectedDocHistoryId(entry.id)}
                               className="text-left"
                             >
-                              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                                 <span>{entry.status === "error" ? "Error" : "OK"}</span>
                                 <div className="flex items-center gap-2">
                                   <span>{formatTimestamp(entry.createdAt)}</span>
@@ -1241,17 +1241,17 @@ function DocumentsPageContent() {
                                       event.stopPropagation();
                                       handleRemoveDocHistory(entry.id);
                                     }}
-                                    className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                                    className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-surface-base dark:text-rose-400 dark:hover:bg-rose-500/10"
                                     title="Delete history"
                                   >
                                     ✕
                                   </button>
                                 </div>
                               </div>
-                              <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">
+                              <p className="mt-2 text-sm font-semibold text-foreground dark:text-slate-50">
                                 {entry.question}
                               </p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                              <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                                 {entry.summary}
                               </p>
                             </div>
@@ -1261,32 +1261,32 @@ function DocumentsPageContent() {
                     )}
                   </div>
                   {selectedDocHistoryEntry ? (
-                    <div className="group relative mt-3 rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
+                    <div className="group relative mt-3 rounded-2xl border p-3 text-sm bg-surface-elevated border-variant text-foreground dark:bg-surface-base dark:border-variant dark:text-slate-50">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                           Answer
                         </p>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-slate-600 dark:text-slate-400">
+                          <span className="text-xs text-muted-foreground dark:text-muted-foreground">
                             {formatTimestamp(selectedDocHistoryEntry.createdAt)}
                           </span>
                           <button
                             type="button"
                             aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
                             onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
-                            className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                            className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-surface-base dark:text-rose-400 dark:hover:bg-rose-500/10"
                             title="Delete history"
                           >
                             ✕
                           </button>
                         </div>
                       </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-foreground dark:text-slate-50">
                         {selectedDocHistoryEntry.answer || "No answer recorded."}
                       </p>
                       {selectedDocHistoryEntry.references.length > 0 ? (
-                        <div className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-                          <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        <div className="mt-3 text-xs text-muted-foreground dark:text-muted-foreground">
+                          <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                             References
                           </p>
                           <div className="mt-2 space-y-2">
@@ -1296,10 +1296,10 @@ function DocumentsPageContent() {
 
                               const content = (
                                 <>
-                                  <p className="text-slate-900 dark:text-slate-50">
+                                  <p className="text-foreground dark:text-slate-50">
                                     {reference.document_title}
                                   </p>
-                                  <p className="text-slate-600 dark:text-slate-400">
+                                  <p className="text-muted-foreground dark:text-muted-foreground">
                                     {reference.snippet}
                                   </p>
                                   {reference.page != null ? (
@@ -1330,14 +1330,14 @@ function DocumentsPageContent() {
                                       console.error("Failed to open document:", error);
                                     }
                                   }}
-                                  className="block rounded-xl border px-3 py-2 text-xs transition cursor-pointer w-full text-left border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                                  className="block rounded-xl border px-3 py-2 text-xs transition cursor-pointer w-full text-left border-variant bg-surface-elevated text-foreground hover:border-sky-500 dark:border-variant dark:bg-surface-base dark:text-slate-50"
                                 >
                                   {content}
                                 </button>
                               ) : (
                                 <div
                                   key={`${reference.document_id}-${reference.chunk_id}`}
-                                  className="rounded-xl border px-3 py-2 text-xs opacity-60 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                                  className="rounded-xl border px-3 py-2 text-xs opacity-60 border-variant bg-surface-elevated text-foreground dark:border-variant dark:bg-surface-base dark:text-slate-50"
                                 >
                                   {content}
                                 </div>
@@ -1378,7 +1378,7 @@ function DocumentsPageContent() {
 export default function DocumentsPage() {
   return (
     <Suspense
-      fallback={<div className="p-4 text-slate-600 dark:text-slate-400">Loading documents...</div>}
+      fallback={<div className="p-4 text-muted-foreground dark:text-muted-foreground">Loading documents...</div>}
     >
       <DocumentsPageContent />
     </Suspense>

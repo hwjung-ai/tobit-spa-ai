@@ -274,7 +274,7 @@ export default function OpsPage() {
       ? "border-emerald-500 text-emerald-300 hover:border-emerald-400"
       : traceCopyStatus === "failed"
         ? "border-rose-500 text-rose-300 hover:border-rose-400"
-        : "border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400 hover:border-slate-200 hover:text-white dark:hover:border-slate-800";
+        : "border-variant text-muted-foreground dark:border-variant dark:text-muted-foreground hover:border-variant hover:text-white dark:hover:border-variant";
 
   const handleRemoveHistory = useCallback(
     (id: string) => {
@@ -703,7 +703,7 @@ export default function OpsPage() {
                     {summaryData.overall_summary && (
                       <div className="mb-4 br-card border p-4 bg-sky-950/30">
                         <h3 className="mb-2 text-sm font-semibold text-sky-300">📝 전체 요약</h3>
-                        <pre className="whitespace-pre-wrap text-xs font-sans text-slate-300">
+                        <pre className="whitespace-pre-wrap text-xs font-sans text-muted-foreground">
                           {summaryData.overall_summary}
                         </pre>
                       </div>
@@ -863,13 +863,13 @@ export default function OpsPage() {
                             className={cn(
                               "group relative flex w-full flex-col rounded-2xl border px-3 py-2 transition",
                               isSelected
-                                ? "bg-surface-elevated border-sky-500 dark:bg-slate-800 dark:border-sky-500"
-                                : "border-transparent hover:bg-surface-elevated dark:hover:bg-slate-800 hover:border-border dark:hover:border-slate-700",
+                                ? "bg-surface-elevated border-sky-500 dark:bg-surface-elevated dark:border-sky-500"
+                                : "border-transparent hover:bg-surface-elevated dark:hover:bg-surface-elevated hover:border-border dark:hover:border-variant",
                             )}
                           >
                             <button onClick={() => setSelectedId(entry.id)} className="text-left">
                               <div className="flex items-center justify-between pr-8 text-muted-standard">
-                                <span className="rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-surface-base text-foreground dark:bg-slate-800 dark:text-slate-50">
+                                <span className="rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-surface-base text-foreground dark:bg-surface-elevated dark:text-slate-50">
                                   {label}
                                 </span>
                                 <span className="tracking-normal">
@@ -894,7 +894,7 @@ export default function OpsPage() {
                                 event.preventDefault();
                                 handleRemoveHistory(entry.id);
                               }}
-                              className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-xs text-rose-400 transition group-hover:flex dark:bg-slate-900"
+                              className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-xs text-rose-400 transition group-hover:flex dark:bg-surface-base"
                             >
                               ✕
                             </button>
@@ -918,7 +918,7 @@ export default function OpsPage() {
                       key={modeEntry.id}
                       onClick={() => handleModeSelection(modeEntry.id)}
                       className={cn(
-                        "rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-slate-800",
+                        "rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-surface-elevated",
                         uiMode === modeEntry.id
                           ? "bg-primary border-primary text-white hover:bg-sky-500 dark:hover:bg-sky-600"
                           : "border text-foreground dark:border-border",
@@ -1003,7 +1003,7 @@ export default function OpsPage() {
                     {canFullScreen ? (
                       <button
                         onClick={() => setIsFullScreen((prev) => !prev)}
-                        className="br-badge border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-slate-800 border text-muted-standard dark:border-border"
+                        className="br-badge border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-surface-elevated border text-muted-standard dark:border-border"
                       >
                         {isFullScreen ? "Exit full screen" : "Full screen"}
                       </button>
@@ -1032,7 +1032,7 @@ export default function OpsPage() {
                       <p className="text-sm text-rose-300">Error: {String(meta.error)}</p>
                     ) : null}
                     {selectedEntry.errorDetails ? (
-                      <details className="mt-2 rounded-2xl border p-3 text-sm bg-surface-base dark:bg-slate-900 border-border">
+                      <details className="mt-2 rounded-2xl border p-3 text-sm bg-surface-base dark:bg-surface-base border-border">
                         <summary className="cursor-pointer uppercase tracking-wider text-muted-standard">
                           Details
                         </summary>
@@ -1100,13 +1100,13 @@ export default function OpsPage() {
                   <>
                     <button
                       onClick={handleCopyResultTraceId}
-                      className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-slate-800 border text-muted-standard dark:border-border"
+                      className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-surface-elevated border text-muted-standard dark:border-border"
                     >
                       Copy trace_id
                     </button>
                     <button
                       onClick={openInspectorTrace}
-                      className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-slate-800 border text-muted-standard dark:border-border"
+                      className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-surface-elevated border text-muted-standard dark:border-border"
                     >
                       Open in Inspector
                     </button>

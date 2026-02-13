@@ -88,7 +88,7 @@ export default function SystemDashboard() {
       case "critical":
         return "bg-rose-500/10 border-rose-500/50 text-rose-400";
       default:
-        return "bg-slate-100 border-variant text-muted-foreground";
+        return "bg-surface-elevated border-variant text-muted-foreground";
     }
   };
 
@@ -210,7 +210,7 @@ export default function SystemDashboard() {
                       {new Date(alert.timestamp).toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-tiny uppercase tracking-wider font-bold px-2 py-1 rounded bg-white/10">
+                  <div className="text-tiny uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-base/10">
                     {alert.severity}
                   </div>
                 </div>

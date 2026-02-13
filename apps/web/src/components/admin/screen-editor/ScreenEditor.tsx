@@ -522,7 +522,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         >
           <div className="flex items-center justify-between border-b px-4 py-3">
             <div>
-              <p className="draft-panel-label">Schema</p>
+              <p className="draft-panel-label">AI Copilot</p>
               <p className="text-xs">{schemaSummary}</p>
             </div>
           </div>

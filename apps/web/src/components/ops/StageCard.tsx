@@ -289,14 +289,14 @@ export default function StageCard({
             </button>
             <button
               onClick={() => handleAction("debug")}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-surface-elevated border-variant dark:border-variant text-muted-foreground dark:text-muted-foreground bg-surface-elevated dark:bg-surface-elevated"
             >
               <Settings className="h-3 w-3" />
               Debug
             </button>
             <button
               onClick={() => handleAction("delete")}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-surface-elevated border-variant dark:border-variant text-muted-foreground dark:text-muted-foreground bg-surface-elevated dark:bg-surface-elevated"
             >
               <Trash2 className="h-3 w-3" />
               Delete

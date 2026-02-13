@@ -37,7 +37,7 @@ export const Drawer = ({ open, onOpenChange, children, ...rest }: DrawerProps) =
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 bg-surface-base/80 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={handleClose}
       />
       <div
@@ -66,7 +66,7 @@ export const DrawerContent = ({ children, className, ...rest }: { children?: Rea
 export const DrawerHeader = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
-      className={cn("flex flex-col space-y-1.5 p-6 text-center sm:text-left", className)}
+      className={cn("flex flex-col space-y-2 p-6 text-center sm:text-left", className)}
       {...rest}
     >
       {children}

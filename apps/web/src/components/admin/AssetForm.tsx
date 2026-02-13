@@ -560,7 +560,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                             <p className="text-xs mt-1 text-muted-foreground">Optional metadata tags (e.g., {`{"category": "maintenance"}`})</p>
                         </div>
 
-                        <div className="flex items-center justify-between rounded-lg p-4 border bg-slate-900/50 border-variant"
+                        <div className="flex items-center justify-between rounded-lg p-4 border bg-surface-base/50 border-variant"
                         >
                             <div className="space-y-1">
                                 <p className="text-sm font-medium text-foreground">Screen Editor</p>
@@ -584,7 +584,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         </p>
                         {asset.content && (
                             <details
-                                className="border rounded-xl p-3 bg-slate-900/60 border-variant"
+                                className="border rounded-xl p-3 bg-surface-base/60 border-variant"
                             >
                                 <summary className="text-sm font-semibold cursor-pointer text-foreground">
                                     Raw Asset Content
@@ -636,7 +636,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         </button>
                         <button
                             onClick={() => setShowRollbackModal(true)}
-                            className="px-6 py-2 rounded-lg transition-colors font-medium border bg-surface-elevated text-foreground border-muted hover:bg-slate-700/80"
+                            className="px-6 py-2 rounded-lg transition-colors font-medium border bg-surface-elevated text-foreground border-muted hover:bg-surface-elevated/80"
                         >
                             Version Rollback...
                         </button>

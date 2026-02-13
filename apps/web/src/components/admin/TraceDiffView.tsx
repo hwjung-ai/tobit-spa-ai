@@ -482,7 +482,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
   }, [traceA.trace_id, traceB.trace_id]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-base/80">
       <div className="rounded-2xl shadow-2xl w-full max-w-7xl flex overflow-hidden bg-surface-base">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-variant px-6 py-4">

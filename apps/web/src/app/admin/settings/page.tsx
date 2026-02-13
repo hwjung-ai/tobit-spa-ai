@@ -195,7 +195,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex-1">
                             <p className="mb-0.5 text-sm font-bold tracking-tight text-amber-900 dark:text-amber-300">Runtime Constraints Warning</p>
-                            <p className="text-xs leading-relaxed text-slate-700 dark:text-amber-200">
+                            <p className="text-xs leading-relaxed text-foreground dark:text-amber-200">
                                 Settings marked with 🔄 require a service restart. Changes to <span className="ml-1 text-sky-700 dark:text-sky-400">Published</span> values override
                                 <span className="ml-1 text-amber-700 dark:text-amber-400">Environment</span> and <span className="ml-1 text-muted-standard">Default</span> configurations.
                             </p>

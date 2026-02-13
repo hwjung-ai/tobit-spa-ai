@@ -378,6 +378,7 @@ html {
 .ag-theme-cep {
   --ag-background-color: var(--surface-base);
   --ag-foreground-color: var(--foreground);
+  --ag-icon-color: var(--muted-foreground);
   --ag-border-color: var(--border);
   --ag-secondary-border-color: var(--border);
   --ag-header-background-color: var(--surface-base);
@@ -421,11 +422,23 @@ html {
   color: var(--muted-foreground) !important;
 }
 
+.ag-theme-cep .ag-header-icon .ag-icon,
+.ag-theme-cep .ag-icon {
+  color: var(--muted-foreground) !important;
+  fill: currentColor !important;
+  opacity: 1 !important;
+}
+
 /* Keep AG Grid popup/filter surfaces consistent in dark mode as well. */
+.ag-popup {
+  color: var(--foreground) !important;
+}
+
 .ag-theme-cep .ag-menu,
 .ag-theme-cep .ag-filter,
 .ag-popup .ag-menu,
-.ag-popup .ag-filter {
+.ag-popup .ag-filter,
+.ag-popup .ag-popup-child {
   background-color: var(--surface-elevated) !important;
   color: var(--foreground) !important;
   border-color: var(--border) !important;
@@ -443,6 +456,25 @@ html {
   background-color: var(--surface-base) !important;
   color: var(--foreground) !important;
   border-color: var(--input-border) !important;
+}
+
+.ag-theme-cep .ag-picker-field-wrapper,
+.ag-popup .ag-picker-field-wrapper,
+.ag-theme-cep .ag-select-list,
+.ag-popup .ag-select-list,
+.ag-theme-cep .ag-list-item,
+.ag-popup .ag-list-item {
+  background-color: var(--surface-elevated) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+
+.ag-theme-cep .ag-list-item.ag-active-item,
+.ag-popup .ag-list-item.ag-active-item,
+.ag-theme-cep .ag-list-item:hover,
+.ag-popup .ag-list-item:hover {
+  background-color: color-mix(in srgb, var(--surface-elevated), var(--foreground) 6%) !important;
+  color: var(--foreground) !important;
 }
 
 /* Dragging and ghost header styles */
@@ -1618,20 +1650,110 @@ html {
 
 /* Standard Tab Button Classes */
 .tab-button {
-  @apply px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
+  @apply rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition;
+  border: 1px solid var(--border);
+  background-color: var(--surface-base);
   color: var(--foreground);
 }
 
 .tab-button-active {
-  @apply bg-sky-600 text-white;
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .tab-button-inactive {
-  @apply bg-transparent text-slate-700 hover:bg-slate-200;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
 }
 
-.dark .tab-button-inactive {
-  @apply text-slate-300 hover:bg-slate-800;
+.tab-button-inactive:hover {
+  border-color: var(--border-muted);
+  background-color: var(--surface-overlay);
+}
+
+/* Top-level page navigation tabs (e.g., Admin assets/tools/catalogs/screens) */
+.nav-tab {
+  @apply rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wider transition;
+}
+
+.nav-tab-active {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.nav-tab-inactive {
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.nav-tab-inactive:hover {
+  border-color: var(--border-muted);
+  background-color: var(--surface-overlay);
+}
+
+/* In-panel tabs (definition/logic/test, cep center tabs, etc.) */
+.panel-tab {
+  @apply rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition;
+}
+
+.panel-tab-active {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.panel-tab-inactive {
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.panel-tab-inactive:hover {
+  border-color: var(--border-muted);
+  background-color: var(--surface-overlay);
+}
+
+/* Selection chips (metric/event/schedule/anomaly style option selectors) */
+.choice-chip {
+  @apply rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition;
+}
+
+.choice-chip-active {
+  border-color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+}
+
+.choice-chip-inactive {
+  border-color: var(--border);
+  background-color: transparent;
+  color: var(--muted-foreground);
+}
+
+.choice-chip-inactive:hover {
+  border-color: var(--border-muted);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+/* TabsTrigger helper class for shadcn/radix tabs */
+.panel-tab-trigger {
+  @apply rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition;
+  color: var(--muted-foreground);
+}
+
+.panel-tab-trigger:hover {
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.panel-tab-trigger[data-state="active"] {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
 }
 
 /* Standard Page Section Class */

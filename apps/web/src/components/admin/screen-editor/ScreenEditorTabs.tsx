@@ -398,23 +398,23 @@ export default function ScreenEditorTabs() {
           </div>
         </div>
       )}
-      <TabsList className="mx-6 mt-4 border-b gap-1 rounded-none">
-        <TabsTrigger value="visual" data-testid="tab-visual" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:">
+      <TabsList className="mx-6 mt-4 gap-1 rounded-none border-b border-variant bg-transparent p-0">
+        <TabsTrigger value="visual" data-testid="tab-visual" className="panel-tab-trigger rounded-b-none border-b-2 border-transparent data-[state=active]:border-sky-500">
           Visual Editor
         </TabsTrigger>
-        <TabsTrigger value="json" data-testid="tab-json" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:">
+        <TabsTrigger value="json" data-testid="tab-json" className="panel-tab-trigger rounded-b-none border-b-2 border-transparent data-[state=active]:border-sky-500">
           JSON
         </TabsTrigger>
-        <TabsTrigger value="binding" data-testid="tab-binding" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:">
+        <TabsTrigger value="binding" data-testid="tab-binding" className="panel-tab-trigger rounded-b-none border-b-2 border-transparent data-[state=active]:border-sky-500">
           Binding
         </TabsTrigger>
-        <TabsTrigger value="action" data-testid="tab-action" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:">
+        <TabsTrigger value="action" data-testid="tab-action" className="panel-tab-trigger rounded-b-none border-b-2 border-transparent data-[state=active]:border-sky-500">
           Action
         </TabsTrigger>
-        <TabsTrigger value="preview" data-testid="tab-preview" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:">
+        <TabsTrigger value="preview" data-testid="tab-preview" className="panel-tab-trigger rounded-b-none border-b-2 border-transparent data-[state=active]:border-sky-500">
           Preview
         </TabsTrigger>
-        <TabsTrigger value="diff" data-testid="tab-diff" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:">
+        <TabsTrigger value="diff" data-testid="tab-diff" className="panel-tab-trigger rounded-b-none border-b-2 border-transparent data-[state=active]:border-sky-500">
           Diff
         </TabsTrigger>
       </TabsList>

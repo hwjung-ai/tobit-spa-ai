@@ -86,8 +86,8 @@ export default function PropertiesPanel() {
 
   if (!selectedComponent) {
     return (
-      <div className="flex flex-col h-full bg-slate-900/50 items-center justify-center">
-        <p className="text-slate-400 text-sm">Select a component to edit</p>
+      <div className="flex flex-col h-full bg-surface-base/50 items-center justify-center">
+        <p className="text-muted-foreground text-sm">Select a component to edit</p>
       </div>
     );
   }
@@ -199,13 +199,13 @@ export default function PropertiesPanel() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50">
+    <div className="flex flex-col h-full bg-surface-base/50">
       {/* Header */}
-      <div className="border-b border-slate-800 p-3">
-        <h3 className="text-sm font-semibold text-slate-200 truncate">
+      <div className="border-b border-variant p-3">
+        <h3 className="text-sm font-semibold text-muted-foreground truncate">
           Properties
         </h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {selectedComponent.type}
         </p>
       </div>
@@ -214,31 +214,31 @@ export default function PropertiesPanel() {
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {/* Component Label */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">
+          <label className="block text-xs font-medium text-muted-foreground mb-1">
             Label
           </label>
           <Input
             value={selectedComponent.label || ""}
             onChange={e => handleLabelChange(e.target.value)}
             placeholder="Component label"
-            className="h-8 text-xs bg-slate-800 border-slate-700"
+            className="h-8 text-xs bg-surface-elevated border-variant"
             data-testid="prop-label"
           />
         </div>
 
         {/* Component ID (Read-only) */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">
+          <label className="block text-xs font-medium text-muted-foreground mb-1">
             Component ID
           </label>
-          <div className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs text-slate-400 font-mono">
+          <div className="px-2 py-1 rounded bg-surface-elevated border border-variant text-xs text-muted-foreground font-mono">
             {selectedComponent.id}
           </div>
         </div>
 
         {/* Props */}
         {renderableFields.length === 0 ? (
-          <div className="text-xs text-slate-500 text-center py-4">
+          <div className="text-xs text-muted-foreground text-center py-4">
             No properties available
           </div>
         ) : (
@@ -266,15 +266,15 @@ export default function PropertiesPanel() {
         {normalizedType === "table" && (
           <Accordion type="single" collapsible>
             <AccordionItem value="table-columns">
-              <AccordionTrigger className="text-sm font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
                 Table Columns
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">
                 {tableColumns.length === 0 ? (
-                  <p className="text-xs text-slate-500">No columns configured.</p>
+                  <p className="text-xs text-muted-foreground">No columns configured.</p>
                 ) : (
                   tableColumns.map((column, index) => (
-                    <div key={`table-col-${index}`} className="rounded border border-slate-700 bg-slate-800/60 p-2 space-y-2">
+                    <div key={`table-col-${index}`} className="rounded border border-variant bg-surface-elevated/60 p-2 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           value={column.field}
@@ -284,7 +284,7 @@ export default function PropertiesPanel() {
                             handlePropChange("columns", next);
                           }}
                           placeholder="field"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                           data-testid={`prop-table-column-field-${index}`}
                         />
                         <Input
@@ -295,7 +295,7 @@ export default function PropertiesPanel() {
                             handlePropChange("columns", next);
                           }}
                           placeholder="header"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                           data-testid={`prop-table-column-header-${index}`}
                         />
                       </div>
@@ -311,7 +311,7 @@ export default function PropertiesPanel() {
                             handlePropChange("columns", next);
                           }}
                         >
-                          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                          <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
                             <SelectValue placeholder="format" />
                           </SelectTrigger>
                           <SelectContent>
@@ -324,7 +324,7 @@ export default function PropertiesPanel() {
                         </Select>
                       </div>
                       <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-xs text-slate-300">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
                           <input
                             type="checkbox"
                             checked={column.sortable}
@@ -379,12 +379,12 @@ export default function PropertiesPanel() {
         {normalizedType === "chart" && (
           <Accordion type="single" collapsible>
             <AccordionItem value="chart-series">
-              <AccordionTrigger className="text-sm font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
                 Chart Behavior
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">
                 <div>
-                  <label className="text-xs text-slate-400">Chart Type</label>
+                  <label className="text-xs text-muted-foreground">Chart Type</label>
                   <Select
                     value={String(formData.chart_type || formData.type || "line")}
                     onValueChange={(val) => {
@@ -392,7 +392,7 @@ export default function PropertiesPanel() {
                       handlePropChange("type", val);
                     }}
                   >
-                    <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                    <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -409,7 +409,7 @@ export default function PropertiesPanel() {
                     value={String(formData.x_key || "")}
                     onChange={(e) => handlePropChange("x_key", e.target.value)}
                     placeholder="x_key (e.g. timestamp)"
-                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    className="h-8 text-xs bg-surface-elevated border-variant"
                     data-testid="prop-chart-x-key"
                   />
                   <Input
@@ -420,12 +420,12 @@ export default function PropertiesPanel() {
                     value={String((formData.height as number) ?? 400)}
                     onChange={(e) => handlePropChange("height", Number(e.target.value || 400))}
                     placeholder="height"
-                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    className="h-8 text-xs bg-surface-elevated border-variant"
                     data-testid="prop-chart-height"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={formData.show_legend !== false}
@@ -433,7 +433,7 @@ export default function PropertiesPanel() {
                     />
                     Show Legend
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={formData.show_grid !== false}
@@ -441,7 +441,7 @@ export default function PropertiesPanel() {
                     />
                     Show Grid
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={formData.responsive !== false}
@@ -461,7 +461,7 @@ export default function PropertiesPanel() {
                       )
                     }
                     placeholder="y_min"
-                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    className="h-8 text-xs bg-surface-elevated border-variant"
                     data-testid="prop-chart-y-min"
                   />
                   <Input
@@ -474,12 +474,12 @@ export default function PropertiesPanel() {
                       )
                     }
                     placeholder="y_max"
-                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    className="h-8 text-xs bg-surface-elevated border-variant"
                     data-testid="prop-chart-y-max"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400">Y-Axis Options (JSON)</label>
+                  <label className="text-xs text-muted-foreground">Y-Axis Options (JSON)</label>
                   <Textarea
                     value={JSON.stringify(formData.y_axis || {}, null, 2)}
                     onChange={(e) => {
@@ -490,11 +490,11 @@ export default function PropertiesPanel() {
                       }
                     }}
                     placeholder='{"min": 0, "max": 100, "title": "Value"}'
-                    className="h-20 text-xs bg-slate-800 border-slate-700 font-mono"
+                    className="h-20 text-xs bg-surface-elevated border-variant font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400">Legend Options (JSON)</label>
+                  <label className="text-xs text-muted-foreground">Legend Options (JSON)</label>
                   <Textarea
                     value={JSON.stringify(formData.legend || {}, null, 2)}
                     onChange={(e) => {
@@ -505,11 +505,11 @@ export default function PropertiesPanel() {
                       }
                     }}
                     placeholder='{"show": true, "position": "right"}'
-                    className="h-20 text-xs bg-slate-800 border-slate-700 font-mono"
+                    className="h-20 text-xs bg-surface-elevated border-variant font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400">Tooltip Options (JSON)</label>
+                  <label className="text-xs text-muted-foreground">Tooltip Options (JSON)</label>
                   <Textarea
                     value={JSON.stringify(formData.tooltip || {}, null, 2)}
                     onChange={(e) => {
@@ -520,14 +520,14 @@ export default function PropertiesPanel() {
                       }
                     }}
                     placeholder='{"show": true, "trigger": "axis"}'
-                    className="h-20 text-xs bg-slate-800 border-slate-700 font-mono"
+                    className="h-20 text-xs bg-surface-elevated border-variant font-mono"
                   />
                 </div>
                 {chartSeries.length === 0 ? (
-                  <p className="text-xs text-slate-500">No series configured.</p>
+                  <p className="text-xs text-muted-foreground">No series configured.</p>
                 ) : (
                   chartSeries.map((series, index) => (
-                    <div key={`chart-series-${index}`} className="rounded border border-slate-700 bg-slate-800/60 p-2 space-y-2">
+                    <div key={`chart-series-${index}`} className="rounded border border-variant bg-surface-elevated/60 p-2 space-y-2">
                       <div className="grid grid-cols-3 gap-2">
                         <Input
                           value={series.name}
@@ -537,7 +537,7 @@ export default function PropertiesPanel() {
                             handlePropChange("series", next);
                           }}
                           placeholder="name"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                         <Input
                           value={series.data_key}
@@ -547,7 +547,7 @@ export default function PropertiesPanel() {
                             handlePropChange("series", next);
                           }}
                           placeholder="data_key"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                         <Input
                           value={series.color}
@@ -557,7 +557,7 @@ export default function PropertiesPanel() {
                             handlePropChange("series", next);
                           }}
                           placeholder="var(--primary-light)"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                       </div>
                       <Button
@@ -601,18 +601,18 @@ export default function PropertiesPanel() {
         {/* Bindings Section */}
         <Accordion type="single" collapsible>
           <AccordionItem value="bindings">
-            <AccordionTrigger className="text-sm font-semibold text-slate-300">
+            <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
               Bindings
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-3">
               {bindableFields.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   No bindable properties
                 </p>
               ) : (
                 bindableFields.map(field => (
                   <div key={`binding-${field.name}`}>
-                    <label className="block text-xs font-medium text-slate-300 mb-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-2">
                       {field.label || field.name}
                     </label>
                     <BindingEditor
@@ -635,11 +635,11 @@ export default function PropertiesPanel() {
         {/* Visibility Section */}
         <Accordion type="single" collapsible>
           <AccordionItem value="visibility">
-            <AccordionTrigger className="text-sm font-semibold text-slate-300">
+            <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
               Visibility
             </AccordionTrigger>
             <AccordionContent className="space-y-2 pt-3">
-              <label className="block text-xs font-medium text-slate-300 mb-2">
+              <label className="block text-xs font-medium text-muted-foreground mb-2">
                 Show when (optional)
               </label>
               <BindingEditor
@@ -652,7 +652,7 @@ export default function PropertiesPanel() {
                 className="text-xs"
                 showModeToggle={false}
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Component will be hidden if condition is empty or false
               </p>
             </AccordionContent>
@@ -662,12 +662,12 @@ export default function PropertiesPanel() {
         {/* Actions Section */}
         <Accordion type="single" collapsible>
           <AccordionItem value="actions">
-            <AccordionTrigger className="text-sm font-semibold text-slate-300">
+            <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
               Actions ({selectedComponent.actions?.length || 0})
             </AccordionTrigger>
             <AccordionContent className="space-y-2 pt-3">
               {!selectedComponent.actions || selectedComponent.actions.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   No actions defined. Click &quot;Add Action&quot; to create one.
                 </p>
               ) : (
@@ -675,13 +675,13 @@ export default function PropertiesPanel() {
                   {selectedComponent.actions.map((action, index) => (
                     <div
                       key={action.id}
-                      className="flex items-center justify-between p-2 rounded bg-slate-800 border border-slate-700"
+                      className="flex items-center justify-between p-2 rounded bg-surface-elevated border border-variant"
                     >
                       <div className="flex-1">
-                        <p className="text-xs font-medium text-slate-200">
+                        <p className="text-xs font-medium text-muted-foreground">
                           {action.label || action.id}
                         </p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                           {action.handler}
                         </p>
                       </div>
@@ -697,7 +697,7 @@ export default function PropertiesPanel() {
                               "up"
                             );
                           }}
-                          className="h-6 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-30"
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-surface-elevated disabled:opacity-30"
                         >
                           <ChevronUp className="w-3 h-3" />
                         </Button>
@@ -712,7 +712,7 @@ export default function PropertiesPanel() {
                               "down"
                             );
                           }}
-                          className="h-6 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-30"
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-surface-elevated disabled:opacity-30"
                         >
                           <ChevronDown className="w-3 h-3" />
                         </Button>
@@ -723,7 +723,7 @@ export default function PropertiesPanel() {
                             setEditingAction(action);
                             setActionModalOpen(true);
                           }}
-                          className="h-6 px-2 text-xs text-sky-400 hover:text-sky-300 hover:bg-slate-700"
+                          className="h-6 px-2 text-xs text-sky-400 hover:text-sky-300 hover:bg-surface-elevated"
                         >
                           <Edit2 className="w-3 h-3" />
                         </Button>
@@ -733,7 +733,7 @@ export default function PropertiesPanel() {
                           onClick={() => {
                             editorState.deleteComponentAction(selectedComponent.id, action.id);
                           }}
-                          className="h-6 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-slate-700"
+                          className="h-6 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-surface-elevated"
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -762,11 +762,11 @@ export default function PropertiesPanel() {
         {actionOptions.length > 0 && (
           <Accordion type="single" collapsible>
             <AccordionItem value="auto-refresh">
-              <AccordionTrigger className="text-sm font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
                 Auto Refresh
               </AccordionTrigger>
               <AccordionContent className="space-y-3 pt-3">
-                <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
                   <input
                     type="checkbox"
                     checked={autoRefresh.enabled ?? false}
@@ -780,7 +780,7 @@ export default function PropertiesPanel() {
                 </label>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Action
                   </label>
                   <Select
@@ -790,7 +790,7 @@ export default function PropertiesPanel() {
                     }
                   >
                     <SelectTrigger
-                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      className="h-8 text-xs bg-surface-elevated border-variant"
                       data-testid="prop-auto-refresh-action-index"
                     >
                       <SelectValue placeholder="Select action" />
@@ -806,7 +806,7 @@ export default function PropertiesPanel() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Interval (ms)
                   </label>
                   <Input
@@ -819,14 +819,14 @@ export default function PropertiesPanel() {
                         Number(e.target.value || 30000)
                       )
                     }
-                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    className="h-8 text-xs bg-surface-elevated border-variant"
                     data-testid="prop-auto-refresh-interval-ms"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">
                       Max Failures
                     </label>
                     <Input
@@ -839,12 +839,12 @@ export default function PropertiesPanel() {
                           Number(e.target.value || 3)
                         )
                       }
-                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      className="h-8 text-xs bg-surface-elevated border-variant"
                       data-testid="prop-auto-refresh-max-failures"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">
                       Backoff (ms)
                     </label>
                     <Input
@@ -857,12 +857,12 @@ export default function PropertiesPanel() {
                           Number(e.target.value || 0)
                         )
                       }
-                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      className="h-8 text-xs bg-surface-elevated border-variant"
                       data-testid="prop-auto-refresh-backoff-ms"
                     />
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Runtime executes selected action periodically with backoff and failure stop.
                 </p>
               </AccordionContent>
@@ -874,11 +874,11 @@ export default function PropertiesPanel() {
         {normalizedType === "table" && actionOptions.length > 0 && (
           <Accordion type="single" collapsible>
             <AccordionItem value="table-behavior">
-              <AccordionTrigger className="text-sm font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
                 Table Behavior
               </AccordionTrigger>
               <AccordionContent className="space-y-3 pt-3">
-                <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.sortable !== false}
@@ -890,7 +890,7 @@ export default function PropertiesPanel() {
                 </label>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Page Size (0 = off)
                   </label>
                   <Input
@@ -900,13 +900,13 @@ export default function PropertiesPanel() {
                     onChange={(e) =>
                       handlePropChange("page_size", Number(e.target.value || 0))
                     }
-                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    className="h-8 text-xs bg-surface-elevated border-variant"
                     data-testid="prop-table-page-size"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Row Click Action
                   </label>
                   <Select
@@ -916,7 +916,7 @@ export default function PropertiesPanel() {
                     }
                   >
                     <SelectTrigger
-                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      className="h-8 text-xs bg-surface-elevated border-variant"
                       data-testid="prop-table-row-action-index"
                     >
                       <SelectValue placeholder="Select action" />
@@ -939,17 +939,17 @@ export default function PropertiesPanel() {
         {(normalizedType === "table" || normalizedType === "chart" || normalizedType === "badge") && (
           <Accordion type="single" collapsible>
             <AccordionItem value="component-conditional-styles">
-              <AccordionTrigger className="text-sm font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-muted-foreground">
                 Conditional Styles
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">
                 {componentConditionalStyles.length === 0 ? (
-                  <p className="text-xs text-slate-500">No rules configured.</p>
+                  <p className="text-xs text-muted-foreground">No rules configured.</p>
                 ) : (
                   componentConditionalStyles.map((rule, index) => (
                     <div
                       key={`component-style-rule-${index}`}
-                      className="rounded border border-slate-700 bg-slate-800/60 p-2 space-y-2"
+                      className="rounded border border-variant bg-surface-elevated/60 p-2 space-y-2"
                     >
                       <div className={normalizedType === "chart" ? "grid grid-cols-3 gap-2" : "grid grid-cols-2 gap-2"}>
                         <Input
@@ -960,7 +960,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                           placeholder="field"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                         <Select
                           value={rule.operator}
@@ -970,7 +970,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                         >
-                          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                          <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
                             <SelectValue placeholder="operator" />
                           </SelectTrigger>
                           <SelectContent>
@@ -992,7 +992,7 @@ export default function PropertiesPanel() {
                               handlePropChange("conditional_styles", next);
                             }}
                             placeholder="series (optional)"
-                            className="h-8 text-xs bg-slate-800 border-slate-700"
+                            className="h-8 text-xs bg-surface-elevated border-variant"
                           />
                         )}
                       </div>
@@ -1006,7 +1006,7 @@ export default function PropertiesPanel() {
                               handlePropChange("conditional_styles", next);
                             }}
                           >
-                            <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                            <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
                               <SelectValue placeholder="target" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1030,7 +1030,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                           placeholder="value"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                         <Input
                           value={rule.color}
@@ -1040,7 +1040,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                           placeholder="var(--chart-error-color)"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                         <Input
                           value={rule.bg_color}
@@ -1050,7 +1050,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                           placeholder="#7f1d1d"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                         <Input
                           value={rule.border_color}
@@ -1060,7 +1060,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                           placeholder="#ef4444"
-                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          className="h-8 text-xs bg-surface-elevated border-variant"
                         />
                       </div>
                       {normalizedType === "badge" && (
@@ -1072,7 +1072,7 @@ export default function PropertiesPanel() {
                             handlePropChange("conditional_styles", next);
                           }}
                         >
-                          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                          <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
                             <SelectValue placeholder="variant" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1132,7 +1132,7 @@ export default function PropertiesPanel() {
       </div>
 
       {/* Component-level Actions */}
-      <div className="border-t border-slate-800 p-3 space-y-2">
+      <div className="border-t border-variant p-3 space-y-2">
         <Button
           onClick={handleDuplicate}
           variant="outline"
@@ -1220,7 +1220,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
   if (field.type === "boolean") {
     return (
       <div>
-        <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
+        <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
           <input
             type="checkbox"
             checked={(value as boolean) || false}
@@ -1237,11 +1237,11 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
   if (field.type === "select" && field.options) {
     return (
       <div>
-        <label className="block text-xs font-medium text-slate-300 mb-1">
+        <label className="block text-xs font-medium text-muted-foreground mb-1">
           {field.label || field.name}
         </label>
         <Select value={typeof value === "string" ? value : ""} onValueChange={(val) => onChange(val)}>
-          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700" data-testid={`prop-${field.name}`}>
+          <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant" data-testid={`prop-${field.name}`}>
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
           <SelectContent>
@@ -1259,14 +1259,14 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
   if (field.type === "textarea") {
     return (
       <div>
-        <label className="block text-xs font-medium text-slate-300 mb-1">
+        <label className="block text-xs font-medium text-muted-foreground mb-1">
           {field.label || field.name}
         </label>
         <Textarea
           value={(value as string) || ""}
           onChange={e => onChange(e.target.value)}
           placeholder={field.placeholder || ""}
-          className="min-h-16 text-xs bg-slate-800 border-slate-700 resize-none"
+          className="min-h-16 text-xs bg-surface-elevated border-variant resize-none"
           data-testid={`prop-${field.name}`}
         />
       </div>
@@ -1276,7 +1276,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
   if (field.type === "number") {
     return (
       <div>
-        <label className="block text-xs font-medium text-slate-300 mb-1">
+        <label className="block text-xs font-medium text-muted-foreground mb-1">
           {field.label || field.name}
         </label>
         <Input
@@ -1284,7 +1284,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
           value={(value as string | number) || ""}
           onChange={e => onChange(e.target.value ? Number(e.target.value) : "")}
           placeholder={field.placeholder || ""}
-          className="h-8 text-xs bg-slate-800 border-slate-700"
+          className="h-8 text-xs bg-surface-elevated border-variant"
           min={field.min}
           max={field.max}
           data-testid={`prop-${field.name}`}
@@ -1296,7 +1296,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
   if (field.type === "array" || field.type === "object") {
     return (
       <div>
-        <label className="block text-xs font-medium text-slate-300 mb-1">
+        <label className="block text-xs font-medium text-muted-foreground mb-1">
           {field.label || field.name}
         </label>
         <Textarea
@@ -1321,7 +1321,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
             }
           }}
           placeholder={field.type === "array" ? "[]" : "{}"}
-          className="min-h-24 text-xs font-mono bg-slate-800 border-slate-700 resize-y"
+          className="min-h-24 text-xs font-mono bg-surface-elevated border-variant resize-y"
           data-testid={`prop-${field.name}`}
         />
         {jsonError && (
@@ -1334,14 +1334,14 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
   // Default: text input
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-300 mb-1">
+      <label className="block text-xs font-medium text-muted-foreground mb-1">
         {field.label || field.name}
       </label>
       <Input
         value={(value as string) || ""}
         onChange={e => onChange(e.target.value)}
         placeholder={field.placeholder || ""}
-        className="h-8 text-xs bg-slate-800 border-slate-700"
+        className="h-8 text-xs bg-surface-elevated border-variant"
         data-testid={`prop-${field.name}`}
       />
     </div>
@@ -1382,7 +1382,7 @@ function TextPropertyField({
           value={staticValue}
           onChange={(e) => handleStaticChange(e.target.value)}
           placeholder={field.placeholder || "Enter text..."}
-          className="min-h-16 text-xs bg-slate-800 border-slate-700 resize-none"
+          className="min-h-16 text-xs bg-surface-elevated border-variant resize-none"
         />
       );
     }
@@ -1390,7 +1390,7 @@ function TextPropertyField({
     if (field.name === "variant") {
       return (
         <Select value={staticValue || ""} onValueChange={(val) => handleStaticChange(val)}>
-          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+          <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
             <SelectValue placeholder="Select variant" />
           </SelectTrigger>
           <SelectContent>
@@ -1407,7 +1407,7 @@ function TextPropertyField({
     if (field.name === "color") {
       return (
         <Select value={staticValue || ""} onValueChange={(val) => handleStaticChange(val)}>
-          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+          <SelectTrigger className="h-8 text-xs bg-surface-elevated border-variant">
             <SelectValue placeholder="Select color" />
           </SelectTrigger>
           <SelectContent>
@@ -1426,7 +1426,7 @@ function TextPropertyField({
         value={staticValue}
         onChange={(e) => handleStaticChange(e.target.value)}
         placeholder={field.placeholder || ""}
-        className="h-8 text-xs bg-slate-800 border-slate-700"
+        className="h-8 text-xs bg-surface-elevated border-variant"
       />
     );
   };
@@ -1522,30 +1522,30 @@ function FieldBindingControl({
   };
 
   return (
-    <div className="space-y-2 rounded border border-slate-800 bg-slate-900/60 p-3">
+    <div className="space-y-2 rounded border border-variant bg-surface-base/60 p-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-slate-300">{label}</p>
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
           {description && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {description}
             </p>
           )}
         </div>
-        <span className="text-tiny uppercase tracking-wider text-slate-400">
+        <span className="text-tiny uppercase tracking-wider text-muted-foreground">
           {mode === "binding" ? "Binding" : "Static"}
         </span>
       </div>
       <Tabs value={mode} onValueChange={(val) => setMode(val as "binding" | "static")}>
-        <TabsList className="grid grid-cols-2 gap-2 bg-slate-800/50">
+        <TabsList className="grid grid-cols-2 gap-2 bg-surface-elevated/50">
           <TabsTrigger
-            className="h-8 text-tiny uppercase tracking-wider px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+            className="h-8 text-tiny uppercase tracking-wider px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-muted-foreground hover:text-muted-foreground"
             value="static"
           >
             Static
           </TabsTrigger>
           <TabsTrigger
-            className="h-8 text-tiny uppercase tracking-wider px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+            className="h-8 text-tiny uppercase tracking-wider px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-muted-foreground hover:text-muted-foreground"
             value="binding"
           >
             Binding
@@ -1560,7 +1560,7 @@ function FieldBindingControl({
               <button
                 key={option.value}
                 type="button"
-                className="rounded-full border border-slate-700 px-2 py-1 text-xs text-slate-200 hover:border-slate-500"
+                className="rounded-full border border-variant px-2 py-1 text-xs text-muted-foreground hover:border-variant"
                 onClick={() => handlePrefixInsert(option.value)}
               >
                 {option.label}

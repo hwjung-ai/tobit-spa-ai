@@ -37,7 +37,7 @@ export const Dialog = ({ open, onOpenChange, children, ...rest }: DialogProps) =
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 bg-surface-base/80 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={handleClose}
       />
       <div
@@ -83,7 +83,7 @@ export const DialogHeader = (props: { children?: React.ReactNode } & React.HTMLA
   const { children, className, ...rest } = props;
   return (
     <div
-      className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
+      className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
       {...rest}
     >
       {children}

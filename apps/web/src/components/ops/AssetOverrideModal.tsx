@@ -85,7 +85,7 @@ const ASSET_TYPES: Record<string, AssetTypeConfig> = {
   source: {
     label: "Source",
     icon: Database,
-    color: "bg-slate-100 border-variant text-foreground-secondary",
+    color: "bg-surface-elevated border-variant text-foreground-secondary",
   },
   schema: {
     label: "Schema",
@@ -216,7 +216,7 @@ export default function AssetOverrideModal({
                   ? "bg-emerald-500/10 text-emerald-400"
                   : asset.status === "draft"
                     ? "bg-amber-500/10 text-amber-400"
-                    : "bg-slate-100 text-muted-foreground",
+                    : "bg-surface-elevated text-muted-foreground",
               )}
             >
               {asset.status}
@@ -297,7 +297,7 @@ export default function AssetOverrideModal({
                       <Icon className="h-3 w-3" />
                       {config.label}
                       {count > 0 && (
-                        <span className="px-1.5 py-0.5 rounded bg-surface-elevated">{count}</span>
+                        <span className="px-2 py-1 rounded bg-surface-elevated">{count}</span>
                       )}
                     </button>
                   );

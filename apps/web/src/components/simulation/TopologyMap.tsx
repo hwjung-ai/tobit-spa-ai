@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { authenticatedFetch } from "@/lib/apiClient";
 
 interface TopologyNode {
@@ -270,20 +271,21 @@ export default function TopologyMap({
                   <span className="text-muted-standard">Type:</span>
                   <span className="ml-2 text-foreground capitalize">{selectedNode.type}</span>
                 </div>
-                <div>
-                  <span className="text-muted-standard">Status:</span>
-                  <span
-                    className={`ml-2 ${
-                      selectedNode.status === "critical"
-                        ? "text-error"
-                        : selectedNode.status === "warning"
-                        ? "text-warning"
-                        : "text-success"
-                    }`}
-                  >
-                    {selectedNode.status}
-                  </span>
-                </div>
+                 <div>
+                   <span className="text-muted-standard">Status:</span>
+                   <span
+                     className={cn(
+                       "ml-2",
+                       selectedNode.status === "critical"
+                         ? "text-error"
+                         : selectedNode.status === "warning"
+                         ? "text-warning"
+                         : "text-success"
+                     )}
+                   >
+                     {selectedNode.status}
+                   </span>
+                 </div>
                 <div>
                   <span className="text-muted-standard">Baseline:</span>
                   <span className="ml-2 text-foreground">{selectedNode.baseline_load}%</span>
@@ -293,19 +295,20 @@ export default function TopologyMap({
                   <span className="ml-2 text-foreground">{selectedNode.simulated_load}%</span>
                 </div>
               </div>
-              <div className="mt-2">
-                <span className="text-muted-standard">Change:</span>
-                <span
-                  className={`ml-2 font-semibold ${
-                    selectedNode.load_change_pct >= 0
-                      ? "text-warning"
-                      : "text-success"
-                  }`}
-                >
-                  {selectedNode.load_change_pct >= 0 ? "+" : ""}
-                  {selectedNode.load_change_pct}%
-                </span>
-              </div>
+               <div className="mt-2">
+                 <span className="text-muted-standard">Change:</span>
+                 <span
+                   className={cn(
+                     "ml-2 font-semibold",
+                     selectedNode.load_change_pct >= 0
+                       ? "text-warning"
+                       : "text-success"
+                   )}
+                 >
+                   {selectedNode.load_change_pct >= 0 ? "+" : ""}
+                   {selectedNode.load_change_pct}%
+                 </span>
+               </div>
             </div>
             <button
               onClick={() => setSelectedNode(null)}

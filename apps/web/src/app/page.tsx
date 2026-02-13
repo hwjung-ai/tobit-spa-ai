@@ -58,13 +58,13 @@ const getBadgeClasses = (type: ChunkType): string => {
     case "summary":
       return "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800";
     case "detail":
-      return "bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-950 dark:text-slate-900 dark:border-slate-300";
+      return "bg-slate-100 text-slate-900 border-variant dark:bg-surface-base dark:text-slate-900 dark:border-variant";
     case "done":
       return "bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800";
     case "error":
       return "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800";
     default:
-      return "bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-950 dark:text-slate-900 dark:border-slate-300";
+      return "bg-slate-100 text-slate-900 border-variant dark:bg-surface-base dark:text-slate-900 dark:border-variant";
   }
 };
 
@@ -326,7 +326,7 @@ export default function Home() {
   }, [activeThread]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="min-h-screen flex flex-col bg-surface-elevated text-slate-900 dark:bg-surface-base dark:text-slate-50">
       {/* Page Header - Standard */}
       <header className="page-header">
         <div className="page-header-wrapper">
@@ -376,7 +376,7 @@ export default function Home() {
                     "group relative flex w-full cursor-pointer flex-col br-card border px-3 py-3 transition",
                     activeThread?.id === thread.id
                       ? "border-sky-600 bg-sky-50 dark:border-sky-500 dark:bg-sky-900/20"
-                      : "border-border bg-surface-base hover:bg-surface-elevated dark:hover:bg-slate-800/80",
+                      : "border-border bg-surface-base hover:bg-surface-elevated dark:hover:bg-surface-elevated/80",
                   )}
                   onClick={() => selectThread(thread.id)}
                 >

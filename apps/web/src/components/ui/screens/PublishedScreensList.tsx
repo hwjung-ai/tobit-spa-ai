@@ -58,7 +58,7 @@ export default function PublishedScreensList() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border p-6 text-center border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50">
+      <div className="rounded-xl border p-6 text-center border-variant dark:border-variant text-muted-foreground dark:text-muted-foreground bg-surface-elevated dark:bg-surface-elevated/50">
         Loading published screens...
       </div>
     );
@@ -75,7 +75,7 @@ export default function PublishedScreensList() {
 
   if (!assets.length) {
     return (
-      <div className="rounded-xl border p-6 text-center border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50">
+      <div className="rounded-xl border p-6 text-center border-variant dark:border-variant text-muted-foreground dark:text-muted-foreground bg-surface-elevated dark:bg-surface-elevated/50">
         No published screens available
       </div>
     );

@@ -137,7 +137,7 @@ export default function ObservabilityDashboard() {
   }
 
   return (
-    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-slate-950 p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
+    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-surface-base p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
       <div className="flex items-center justify-between">
         <div />
         <div className="flex items-center gap-4">

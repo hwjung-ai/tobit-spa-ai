@@ -43,7 +43,7 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-variant bg-slate-900/60 p-6 text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-variant bg-surface-base/60 p-6 text-sm text-muted-foreground">
         Loading rule statistics...
       </div>
     );
@@ -58,7 +58,7 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-variant bg-slate-900/60 p-6">
+    <div className="rounded-2xl border border-variant bg-surface-base/60 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Rule Performance</h3>
         <span className="text-sm uppercase tracking-wider text-muted-foreground">Last 7 days</span>
@@ -72,7 +72,7 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
             <button
               key={rule.rule_id}
               onClick={() => onRuleSelect?.(rule.rule_id)}
-              className="w-full text-left p-4 rounded-lg border border-variant bg-slate-950/40 transition"
+              className="w-full text-left p-4 rounded-lg border border-variant bg-surface-base/40 transition"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
                       "text-xs px-2 py-1 rounded",
                       rule.is_active
                         ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-slate-500/50 text-muted-foreground"
+                        : "bg-surface-elevated0/50 text-muted-foreground"
                     )}
                   >
                     {rule.is_active ? "Active" : "Inactive"}

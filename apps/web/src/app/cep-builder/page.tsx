@@ -315,11 +315,11 @@ export default function CepBuilderPage() {
       setIsActive(true);
       setStatusMessage("Define a new CEP rule to get started.");
       setLogs([]);
-      setFormBaselineSnapshot(buildFormSnapshot());
+      setFormBaselineSnapshot(null);
       setAppliedDraftSnapshot(null);
       setSelectedCompareDraftId(null);
     }
-  }, [selectedRule, fetchLogs, buildFormSnapshot]);
+  }, [selectedRule, fetchLogs]);
 
   useEffect(() => {
     const currentSnapshot = buildFormSnapshot();
@@ -626,9 +626,9 @@ export default function CepBuilderPage() {
     setRuleName("");
     setRuleDescription("");
     setIsActive(true);
-    setFormBaselineSnapshot(buildFormSnapshot());
+    setFormBaselineSnapshot(null);
     setAppliedDraftSnapshot(null);
-  }, [buildFormSnapshot]);
+  }, []);
 
   const handleSimulate = async () => {
     if (!selectedRule?.rule_id) {
@@ -892,8 +892,8 @@ export default function CepBuilderPage() {
             key={type}
             onClick={() => setTriggerType(type)}
             className={cn(
-              "cep-builder-tab text-tiny",
-              triggerType === type && "cep-builder-tab-active",
+              "choice-chip",
+              triggerType === type ? "choice-chip-active" : "choice-chip-inactive",
             )}
           >
             {type}
@@ -964,7 +964,13 @@ export default function CepBuilderPage() {
 
       <TriggerSection
         triggerType={triggerType as any}
-        triggerSpec={parseJsonObject(triggerSpecText)}
+        triggerSpec={(() => {
+          try {
+            return parseJsonObject(triggerSpecText);
+          } catch {
+            return {};
+          }
+        })()}
         onTriggerTypeChange={(type) => {
           setTriggerType(type);
           setTriggerSpecText("{}");
@@ -1049,9 +1055,9 @@ export default function CepBuilderPage() {
 
   const testContent = (
     <div className="space-y-4">
-      <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
         Action endpoint:&nbsp;
-        <span className="font-mono text-tiny text-slate-500 dark:text-slate-400">
+        <span className="font-mono text-tiny text-muted-foreground dark:text-muted-foreground">
           {actionEndpointLabel}
         </span>
       </p>
@@ -1092,13 +1098,13 @@ export default function CepBuilderPage() {
       ) : (
         logs.map((log) => (
           <div key={log.exec_id} className="cep-builder-log-entry p-3 text-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-muted-foreground">
               <span>{new Date(log.triggered_at).toLocaleString("ko-KR")}</span>
               <span
                 className={cn(
                   "br-badge border px-2 py-0.5 uppercase tracking-wider",
                   log.status === "success" && "border-emerald-400 text-emerald-300",
-                  log.status === "dry_run" && "bg-transparent text-slate-400 dark:text-slate-500",
+                  log.status === "dry_run" && "bg-transparent text-muted-foreground dark:text-muted-foreground",
                   log.status !== "success" &&
                     log.status !== "dry_run" &&
                     "border-rose-500 text-rose-300",
@@ -1107,7 +1113,7 @@ export default function CepBuilderPage() {
                 {log.status}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-muted-foreground dark:text-muted-foreground">
               Duration {log.duration_ms} ms
             </p>
             {log.error_message ? (
@@ -1127,8 +1133,8 @@ export default function CepBuilderPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "br-badge border px-3 py-1 text-tiny uppercase tracking-wider transition",
-              activeTab === tab.id ? "bg-sky-500/10 border-sky-400 text-sky-400" : "bg-transparent",
+              "panel-tab",
+              activeTab === tab.id ? "panel-tab-active" : "panel-tab-inactive",
             )}
           >
             {tab.label}
@@ -1151,12 +1157,12 @@ export default function CepBuilderPage() {
         <div className="cep-builder-status-box p-3 text-xs">
           <p className="cep-builder-label">Metadata</p>
           {selectedRule ? (
-            <div className="mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+            <div className="mt-2 space-y-1 text-xs text-muted-foreground dark:text-muted-foreground">
               <p>Trigger type: {selectedRule.trigger_type}</p>
               <p>Last updated: {new Date(selectedRule.updated_at).toLocaleString("ko-KR")}</p>
             </div>
           ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground">
               Select a rule to see its metadata.
             </p>
           )}
@@ -1198,7 +1204,7 @@ export default function CepBuilderPage() {
       ) : (
         <div className="cep-builder-status-box p-4 text-xs">
           <p className="cep-builder-label">Logs</p>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-muted-foreground dark:text-muted-foreground">
             Click reload to refresh logs or trigger a rule to write entries.
           </p>
         </div>
@@ -1212,7 +1218,7 @@ export default function CepBuilderPage() {
         <p className="left-panel-title">CEP rules</p>
         <button
           onClick={handleNew}
-          className="text-tiny uppercase tracking-wider underline text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+          className="text-tiny uppercase tracking-wider underline text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground"
         >
           New
         </button>
@@ -1225,7 +1231,7 @@ export default function CepBuilderPage() {
       />
       <div className="space-y-2">
         {filteredRules.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">No rules found.</p>
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground">No rules found.</p>
         ) : (
           filteredRules.map((rule) => (
             <button
@@ -1364,9 +1370,9 @@ export default function CepBuilderPage() {
         }}
         inputPlaceholder="CEP 룰 드래프트를 설명해 주세요..."
       />
-      <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50">
+      <div className="space-y-3 rounded-3xl border border-slate-200 bg-surface-elevated p-4 text-sm text-slate-900 dark:border-variant dark:bg-surface-base dark:text-slate-50">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Draft status
           </span>
           <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
@@ -1374,11 +1380,11 @@ export default function CepBuilderPage() {
           </span>
         </div>
         {draftNotes ? (
-          <p className="text-sm text-slate-600 dark:text-slate-400">{draftNotes}</p>
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">{draftNotes}</p>
         ) : null}
         {draftDiff && (
-          <div className="space-y-1 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          <div className="space-y-1 rounded-2xl border border-slate-200 bg-surface-elevated px-3 py-2 text-xs text-slate-900 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground">
+            <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Auto Diff
             </p>
             {draftDiff.map((item) => (
@@ -1391,23 +1397,23 @@ export default function CepBuilderPage() {
             Draft is outdated. Apply again or regenerate.
           </div>
         ) : null}
-        <div className="sticky bottom-0 w-full bg-slate-50/95 pt-3 backdrop-blur-sm dark:bg-slate-900/95">
+        <div className="sticky bottom-0 w-full bg-surface-elevated/95 pt-3 backdrop-blur-sm dark:bg-surface-base/95">
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               onClick={handlePreviewDraft}
-              className="br-card border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-900 transition hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="br-card border border-variant bg-surface-base px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-900 transition hover:border-sky-500 dark:border-variant dark:bg-surface-base dark:text-muted-foreground"
             >
               Preview
             </button>
             <button
               onClick={handleTestDraftWithSimulation}
-              className="br-card border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-900 transition hover:border-emerald-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="br-card border border-variant bg-surface-base px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-900 transition hover:border-emerald-400 dark:border-variant dark:bg-surface-base dark:text-muted-foreground"
             >
               Test (Simulate)
             </button>
             <button
               onClick={handleApplyDraft}
-              className="br-card border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-900 transition hover:border-indigo-400 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="br-card border border-variant bg-surface-base px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-900 transition hover:border-indigo-400 disabled:opacity-50 dark:border-variant dark:bg-surface-base dark:text-muted-foreground"
               disabled={!draftApi || draftTestOk !== true}
             >
               Apply
@@ -1422,7 +1428,7 @@ export default function CepBuilderPage() {
           </div>
         </div>
         {!draftApi && (
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
             No draft yet. Ask the copilot to generate one.
             {lastParseError ? ` Parse error: ${lastParseError}` : ""}
           </p>
@@ -1442,24 +1448,24 @@ export default function CepBuilderPage() {
           </div>
         )}
         {draftPreviewSummary && draftPreviewJson ? (
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-surface-elevated p-3 text-xs text-slate-900 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Preview
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-50">{draftPreviewSummary}</p>
-            <pre className="max-h-48 overflow-auto rounded-xl bg-white p-2 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+            <pre className="max-h-48 overflow-auto rounded-xl bg-surface-base p-2 text-xs text-muted-foreground dark:bg-surface-base dark:text-muted-foreground">
               {draftPreviewJson}
             </pre>
           </div>
         ) : null}
-        <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-surface-elevated p-3 text-xs text-slate-900 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Multi Draft Compare
           </p>
           <select
             value={selectedCompareDraftId ?? ""}
             onChange={(event) => setSelectedCompareDraftId(event.target.value || null)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-variant bg-surface-base px-2 py-1 text-xs text-slate-900 dark:border-variant dark:bg-surface-base dark:text-muted-foreground"
           >
             <option value="">비교할 드래프트 선택</option>
             {draftHistory.map((item) => (
@@ -1476,8 +1482,8 @@ export default function CepBuilderPage() {
             </div>
           )}
         </div>
-        <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-surface-elevated p-3 text-xs text-slate-900 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Example Prompts
           </p>
           <div className="max-h-40 space-y-1 overflow-auto">
@@ -1486,7 +1492,7 @@ export default function CepBuilderPage() {
                 key={prompt}
                 type="button"
                 onClick={() => navigator.clipboard.writeText(prompt)}
-                className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-left text-xs text-slate-600 transition hover:border-sky-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                className="w-full rounded-md border border-variant bg-surface-base px-2 py-1 text-left text-xs text-muted-foreground transition hover:border-sky-600 dark:border-variant dark:bg-surface-base dark:text-muted-foreground"
                 title="클릭하면 프롬프트가 클립보드에 복사됩니다."
               >
                 {prompt}
@@ -1494,41 +1500,41 @@ export default function CepBuilderPage() {
             ))}
           </div>
         </div>
-        <details className="rounded-2xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-          <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+        <details className="rounded-2xl border border-slate-200 bg-surface-elevated p-3 text-xs text-slate-900 dark:border-variant dark:bg-surface-elevated dark:text-muted-foreground">
+          <summary className="cursor-pointer text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Debug
           </summary>
           <div className="mt-2 space-y-1">
-            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Save target: {saveTarget ?? "none"}
             </p>
             {lastSaveError ? (
               <p className="text-xs text-rose-300">Save error: {lastSaveError}</p>
             ) : null}
-            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Selected rule
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground">
               {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
             </p>
-            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Parse status: {lastParseStatus}
             </p>
             {lastParseError ? (
               <p className="text-xs text-rose-300">Error: {lastParseError}</p>
             ) : null}
-            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Last assistant raw
             </p>
-            <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-tiny text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+            <pre className="max-h-32 overflow-auto rounded-xl bg-surface-base p-2 text-tiny text-slate-900 dark:bg-surface-base dark:text-muted-foreground">
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
               <>
-                <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   Draft JSON
                 </p>
-                <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-tiny text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+                <pre className="max-h-32 overflow-auto rounded-xl bg-surface-base p-2 text-tiny text-slate-900 dark:bg-surface-base dark:text-muted-foreground">
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
               </>
@@ -1540,7 +1546,7 @@ export default function CepBuilderPage() {
   );
 
   return (
-    <div className="page-cep-builder min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="page-cep-builder min-h-screen bg-surface-elevated text-slate-900 dark:bg-surface-base dark:text-slate-50">
       <PageHeader
         title="Event Rule Maker"
         description="런타임 API와 연동되는 CEP 이벤트 규칙을 정의하고, 시뮬레이션하며, 트리거합니다."

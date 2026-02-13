@@ -51,7 +51,7 @@ export default function PerformanceMetrics() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-variant bg-slate-900/60 p-6 text-sm text-muted-foreground">
+      <div className="container-section text-sm text-muted-foreground">
         Loading performance metrics...
       </div>
     );
@@ -95,7 +95,7 @@ export default function PerformanceMetrics() {
   ];
 
   return (
-    <div className="rounded-2xl border border-variant bg-slate-900/60 p-6">
+    <div className="container-section">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Performance Metrics</h3>
         <span className="text-sm uppercase tracking-wider text-muted-foreground">Today</span>
@@ -121,23 +121,23 @@ export default function PerformanceMetrics() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Execution Stats */}
         <div className="p-4 rounded-lg border border-variant bg-surface-base">
-          <h4 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">Execution Stats</h4>
+          <h4 className="text-sm font-semibold text-foreground dark:text-slate-50 mb-3">Execution Stats</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Today's Executions</span>
-              <span className="text-foreground dark:text-foreground font-semibold">
+              <span className="text-foreground dark:text-slate-50 font-semibold">
                 {stats.today_execution_count.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Last 24h Executions</span>
-              <span className="text-foreground dark:text-foreground font-semibold">
+              <span className="text-foreground dark:text-slate-50 font-semibold">
                 {stats.last_24h_execution_count.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Average per Hour</span>
-              <span className="text-foreground dark:text-foreground font-semibold">
+              <span className="text-foreground dark:text-slate-50 font-semibold">
                 {(stats.today_execution_count / 24).toFixed(1)}
               </span>
             </div>
@@ -146,7 +146,7 @@ export default function PerformanceMetrics() {
 
         {/* Error Stats */}
         <div className="p-4 rounded-lg border border-variant bg-surface-base">
-          <h4 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">Error Stats</h4>
+          <h4 className="text-sm font-semibold text-foreground dark:text-slate-50 mb-3">Error Stats</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Today's Errors</span>
@@ -180,7 +180,7 @@ export default function PerformanceMetrics() {
 
       {/* KPI Assessment */}
       <div className="mt-4 p-4 rounded-lg border border-variant bg-surface-base">
-        <h4 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">Assessment</h4>
+        <h4 className="text-sm font-semibold text-foreground dark:text-slate-50 mb-3">Assessment</h4>
         <div className="space-y-2 text-xs">
           <div className="flex items-center gap-2">
             <div
@@ -190,7 +190,7 @@ export default function PerformanceMetrics() {
             />
             <span className="text-muted-foreground">
               Response Time:{" "}
-              <span className="text-foreground dark:text-foreground font-semibold">
+              <span className="text-foreground dark:text-slate-50 font-semibold">
                 {stats.today_avg_duration_ms.toFixed(0)}ms
               </span>
             </span>
@@ -203,7 +203,7 @@ export default function PerformanceMetrics() {
             />
             <span className="text-muted-foreground">
               Reliability:{" "}
-              <span className="text-foreground dark:text-foreground font-semibold">
+              <span className="text-foreground dark:text-slate-50 font-semibold">
                 {((1 - stats.today_error_rate) * 100).toFixed(1)}%
               </span>
             </span>
@@ -216,7 +216,7 @@ export default function PerformanceMetrics() {
             />
             <span className="text-muted-foreground">
               Active Rules:{" "}
-              <span className="text-foreground dark:text-foreground font-semibold">{stats.active_rules}</span>
+              <span className="text-foreground dark:text-slate-50 font-semibold">{stats.active_rules}</span>
             </span>
           </div>
         </div>

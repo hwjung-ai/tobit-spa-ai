@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import {
   buildRepairPrompt,
   type CopilotContract,
@@ -330,7 +331,7 @@ export default function ChatExperience({
   if (inline) {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground shrink-0">AI Copilot</p>
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">AI Copilot</p>
         <div className="max-h-[min(440px,calc(100vh-14rem))] overflow-y-auto rounded-2xl border border-border p-3 text-xs custom-scrollbar min-h-0 bg-surface-overlay text-foreground">
           {messages.length === 0 ? (
             <p className="text-xs text-muted-foreground">질문을 입력하면 AI가 응답합니다.</p>
@@ -360,7 +361,7 @@ export default function ChatExperience({
             ))
           )}
         </div>
-        <form onSubmit={handleSubmit} className="space-y-1.5 shrink-0">
+        <form onSubmit={handleSubmit} className="space-y-2 shrink-0">
           <textarea
             rows={2}
             value={inputValue}
@@ -426,11 +427,12 @@ export default function ChatExperience({
               <div
                 key={pair.userMsg.id}
                 onClick={() => setSelectedMessageId(pair.userMsg.id)}
-                className={`group relative cursor-pointer rounded-2xl border p-3 transition hover:bg-surface-elevated ${
-                  selectedMessageId === pair.userMsg.id
-                    ? "border-sky-500 bg-sky-500/5"
-                    : "border-border"
-                }`}
+               className={cn(
+                 "group relative cursor-pointer rounded-2xl border p-3 transition hover:bg-surface-elevated",
+                 selectedMessageId === pair.userMsg.id
+                   ? "border-sky-500 bg-sky-500/5"
+                   : "border-border"
+               )}
               >
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span className="text-tiny uppercase tracking-wider font-medium">
@@ -465,18 +467,18 @@ export default function ChatExperience({
       </div>
 
       {/* ── Resize Handle ── */}
-      <div
-        onMouseDown={(event) => {
-          event.preventDefault();
-          setIsResizing(true);
-        }}
-        className={`resize-handle-col ${isResizing ? "is-active" : ""}`}
-        onDoubleClick={() => setLeftPanelWidth(340)}
-        aria-label="Resize panels"
-        role="separator"
-        aria-orientation="vertical"
-        data-testid="chat-panel-resize-handle"
-      >
+       <div
+         onMouseDown={(event) => {
+           event.preventDefault();
+           setIsResizing(true);
+         }}
+         className={cn("resize-handle-col", isResizing && "is-active")}
+         onDoubleClick={() => setLeftPanelWidth(340)}
+         aria-label="Resize panels"
+         role="separator"
+         aria-orientation="vertical"
+         data-testid="chat-panel-resize-handle"
+       >
         <div className="resize-handle-grip" />
       </div>
 
@@ -500,20 +502,22 @@ export default function ChatExperience({
           ) : (
             <div className="space-y-4">
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  id={`msg-${message.id}`}
-                  className={`group relative flex items-start gap-3 pr-8 ${
-                    selectedMessageId === message.id ? "rounded-xl bg-sky-500/5 p-2 -m-2" : ""
-                  }`}
-                >
-                  <div
-                    className={`mt-1 h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-tiny font-bold uppercase ${
-                      message.role === "user"
-                        ? "bg-sky-600 text-white"
-                        : "bg-emerald-600 text-white"
-                    }`}
-                  >
+                 <div
+                   key={message.id}
+                   id={`msg-${message.id}`}
+                   className={cn(
+                     "group relative flex items-start gap-3 pr-8",
+                     selectedMessageId === message.id && "rounded-xl bg-sky-500/5 p-2 -m-2"
+                   )}
+                 >
+                   <div
+                     className={cn(
+                       "mt-1 h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-tiny font-bold uppercase",
+                       message.role === "user"
+                         ? "bg-sky-600 text-white"
+                         : "bg-emerald-600 text-white"
+                     )}
+                   >
                     {message.role === "user" ? "U" : "A"}
                   </div>
                   <div className="flex-1 min-w-0">

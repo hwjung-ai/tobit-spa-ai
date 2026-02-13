@@ -102,7 +102,7 @@ export default function RCAPanel({
             ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-200"
             : hyp.confidence === "medium"
               ? "bg-amber-500/20 border-amber-500/50 text-amber-200"
-              : "bg-slate-100 border-variant text-foreground-secondary";
+              : "bg-surface-elevated border-variant text-foreground-secondary";
 
         return (
           <article

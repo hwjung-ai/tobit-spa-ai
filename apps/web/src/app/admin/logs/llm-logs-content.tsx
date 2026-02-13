@@ -133,7 +133,7 @@ export default function LlmLogsContent() {
             case "error":
                 return "bg-rose-500/20 text-rose-400 border-rose-500/30";
             default:
-                return "bg-slate-500/10 text-slate-300 border-slate-500/30";
+                return "bg-surface-elevated0/10 text-muted-foreground border-slate-500/30";
         }
     };
 
@@ -142,7 +142,7 @@ export default function LlmLogsContent() {
             planner: "bg-purple-500/20 text-purple-400 border-purple-500/30",
             output_parser: "bg-sky-500/20 text-sky-400 border-sky-500/30",
             tool: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-            default: "bg-slate-500/10 text-slate-300 border-slate-500/30",
+            default: "bg-surface-elevated0/10 text-muted-foreground border-slate-500/30",
         };
         return colors[callType] || colors.default;
     };
@@ -458,7 +458,7 @@ export default function LlmLogsContent() {
                             </div>
                             <button
                                 onClick={handleCloseDetail}
-                                className="text-muted-foreground transition-colors hover:text-slate-200"
+                                className="text-muted-foreground transition-colors hover:text-muted-foreground"
                             >
                                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

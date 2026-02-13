@@ -9,7 +9,7 @@ export const metadata = {
 export default function CatalogsPage() {
   return (
     <div className="space-y-6">
-      <Suspense fallback={<div className="text-center py-8 text-sm text-slate-600 dark:text-slate-400">Loading catalogs...</div>}>
+      <Suspense fallback={<div className="text-center py-8 text-sm text-muted-foreground dark:text-muted-foreground">Loading catalogs...</div>}>
         <CatalogsContent />
       </Suspense>
     </div>

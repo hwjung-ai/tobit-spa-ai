@@ -78,7 +78,7 @@ export default function SystemStatusIndicator() {
   }, [fetchHealth]);
 
   const color = (status: string) =>
-    status === "ok" ? "text-emerald-400" : status === "checking" ? "text-slate-400" : "text-rose-400";
+    status === "ok" ? "text-emerald-400" : status === "checking" ? "text-muted-foreground" : "text-rose-400";
 
   const items: { icon: typeof Server; key: string; label: string }[] = [
     { icon: Activity, key: "api", label: "API" },

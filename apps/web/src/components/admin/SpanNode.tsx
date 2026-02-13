@@ -31,7 +31,7 @@ function SpanNode({ data, selected }: NodeProps<SpanNodeData>) {
 
   return (
     <div
-      className={`w-56 rounded-lg px-3 py-2 transition-all cursor-pointer bg-slate-900/80 ${nodeClass} ${statusClass}`}
+      className={`w-56 rounded-lg px-3 py-2 transition-all cursor-pointer bg-surface-base/80 ${nodeClass} ${statusClass}`}
     >
       <Handle type="target" position={Position.Top} />
 

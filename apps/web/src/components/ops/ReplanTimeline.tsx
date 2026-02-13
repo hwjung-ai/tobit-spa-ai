@@ -255,14 +255,14 @@ export default function ReplanTimeline({
                 {/* Summary Bar - Always Visible */}
                 <button
                   onClick={() => toggleEvent(event, index)}
-                  className="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 rounded-lg transition-colors"
+                  className="w-full p-3 flex items-center justify-between text-left hover:bg-surface-base/5 rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span className="text-sm font-medium text-foreground">{triggerConfig.label}</span>
                     <span className="text-xs text-muted-foreground">{event.stage_name}</span>
                     <span className={cn(
-                      "px-1.5 py-0.5 rounded text-xs font-medium",
+                      "px-2 py-1 rounded text-xs font-medium",
                       SEVERITY_COLORS[event.trigger.severity as keyof typeof SEVERITY_COLORS]
                     )}>
                       {event.trigger.severity}
@@ -270,12 +270,12 @@ export default function ReplanTimeline({
                   </div>
                   <div className="flex items-center gap-2">
                     {isApproved ? (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-400/30 text-xs text-emerald-400">
+                      <span className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/10 border border-emerald-400/30 text-xs text-emerald-400">
                         <CheckCircle className="h-3 w-3" />
                         Approved
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-400/30 text-xs text-rose-400">
+                      <span className="flex items-center gap-1 px-2 py-1 rounded bg-rose-500/10 border border-rose-400/30 text-xs text-rose-400">
                         <X className="h-3 w-3" />
                         Denied
                       </span>

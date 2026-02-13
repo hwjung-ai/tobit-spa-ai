@@ -16,7 +16,7 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 dark:border-slate-800">
+          <tr className="border-b border-variant dark:border-variant">
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Key</th>
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Value</th>
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Source</th>
@@ -28,10 +28,10 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
           {settings.map((setting) => (
             <tr
               key={setting.key}
-              className="border-b border-slate-200 bg-white transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900/40"
+              className="border-b border-variant bg-surface-base transition-colors hover:bg-surface-elevated dark:border-variant dark:bg-surface-base dark:hover:bg-surface-base/40"
             >
-              <td className="px-4 py-3 font-mono text-xs text-slate-900 dark:text-slate-100">{setting.key}</td>
-              <td className="px-4 py-3 text-slate-900 dark:text-slate-100">
+              <td className="px-4 py-3 font-mono text-xs text-foreground dark:text-muted-foreground">{setting.key}</td>
+              <td className="px-4 py-3 text-foreground dark:text-muted-foreground">
                 {typeof setting.value === "object" ? JSON.stringify(setting.value) : String(setting.value)}
               </td>
               <td className="px-4 py-3">
@@ -41,7 +41,7 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
                       ? "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300"
                       : setting.source === "env"
                         ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        : "bg-surface-elevated text-foreground dark:bg-surface-elevated dark:text-muted-foreground"
                   }`}
                 >
                   {setting.source}

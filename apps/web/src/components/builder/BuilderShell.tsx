@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 interface BuilderShellProps {
   leftPane?: React.ReactNode;
@@ -72,16 +73,16 @@ export default function BuilderShell({
         </div>
 
         {/* Left Resize Handle */}
-        <div
-          onMouseDown={(event) => {
-            event.preventDefault();
-            setIsResizingLeft(true);
-          }}
-          className={`resize-handle-col ${isResizingLeft ? "is-active" : ""}`}
-          aria-label="Resize left pane"
-          role="separator"
-          aria-orientation="vertical"
-        >
+         <div
+           onMouseDown={(event) => {
+             event.preventDefault();
+             setIsResizingLeft(true);
+           }}
+           className={cn("resize-handle-col", isResizingLeft && "is-active")}
+           aria-label="Resize left pane"
+           role="separator"
+           aria-orientation="vertical"
+         >
           <div className="resize-handle-grip" />
         </div>
 
@@ -100,17 +101,17 @@ export default function BuilderShell({
           )}
         </div>
 
-        {/* Right Resize Handle */}
-        <div
-          onMouseDown={(event) => {
-            event.preventDefault();
-            setIsResizingRight(true);
-          }}
-          className={`resize-handle-col ${isResizingRight ? "is-active" : ""}`}
-          aria-label="Resize right pane"
-          role="separator"
-          aria-orientation="vertical"
-        >
+         {/* Right Resize Handle */}
+         <div
+           onMouseDown={(event) => {
+             event.preventDefault();
+             setIsResizingRight(true);
+           }}
+           className={cn("resize-handle-col", isResizingRight && "is-active")}
+           aria-label="Resize right pane"
+           role="separator"
+           aria-orientation="vertical"
+         >
           <div className="resize-handle-grip" />
         </div>
 

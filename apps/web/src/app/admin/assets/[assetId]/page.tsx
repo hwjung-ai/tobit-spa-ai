@@ -94,12 +94,12 @@ function AssetDetailPageContent() {
     if (isLoading) {
         return (
             <div className="min-h-screen px-4 py-6 md:px-6 md:py-8">
-                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border p-12 bg-white border-border">
+                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border p-12 bg-surface-base border-border">
                     <div className="w-12 h-12 border-2 rounded-full animate-spin border-border-t-primary"></div>
                     <p className="text-muted-foreground font-medium text-foreground">Loading asset details...</p>
                     <Link
                         href={backUrl}
-                        className="mt-6 px-6 py-2 text-white rounded-lg transition-all font-medium inline-block bg-slate-100 hover:bg-sky-600"
+                        className="mt-6 px-6 py-2 text-white rounded-lg transition-all font-medium inline-block bg-surface-elevated hover:bg-sky-600"
                     >
                         ← Return to Asset List
                     </Link>
@@ -156,7 +156,7 @@ function AssetDetailPageContent() {
                             {asset.status}
                         </span>
                     </div>
-                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    <p className="text-sm leading-relaxed text-muted-foreground dark:text-muted-foreground">
                         Asset ID: <span className="font-mono text-foreground">{asset.asset_id}</span>
                         <span className="mx-2 text-foreground">|</span>
                         Type: <span className="capitalize text-foreground">{asset.asset_type}</span>
@@ -173,7 +173,7 @@ function AssetDetailPageContent() {
                                     ? `/data/sources?asset_id=${asset.asset_id}`
                                     : `/data/resolvers?asset_id=${asset.asset_id}`
                             }
-                            className="px-5 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-white text-slate-700 border-slate-300 hover:border-sky-600 hover:bg-sky-600 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:bg-sky-600"
+                            className="px-5 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-surface-base text-foreground border-variant hover:border-sky-600 hover:bg-sky-600 dark:bg-surface-base dark:text-muted-foreground dark:border-variant dark:hover:border-sky-500 dark:hover:bg-sky-600"
                         >
                             Open in Data
                         </Link>
@@ -212,41 +212,41 @@ function AssetDetailPageContent() {
             </div>
 
             {shouldLoadTraces ? (
-                <div className="rounded-3xl border p-6 space-y-4 bg-white border-border">
+                <div className="rounded-3xl border p-6 space-y-4 bg-surface-base border-border">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Applied Traces</h2>
-                            <p className="text-xs text-slate-700 dark:text-slate-400">이 asset이 사용된 trace 목록</p>
+                            <h2 className="text-lg font-semibold text-foreground dark:text-slate-50">Applied Traces</h2>
+                            <p className="text-xs text-foreground dark:text-muted-foreground">이 asset이 사용된 trace 목록</p>
                         </div>
                         <Link
                             href={`/admin/inspector?asset_id=${asset.asset_id}`}
-                            className="text-tiny uppercase tracking-wider border border-slate-300 rounded-full px-3 py-1 transition hover:border-sky-500 text-slate-700 dark:border-slate-700 dark:text-slate-300"
+                            className="text-tiny uppercase tracking-wider border border-variant rounded-full px-3 py-1 transition hover:border-sky-500 text-foreground dark:border-variant dark:text-muted-foreground"
                         >
                             Open in Inspector
                         </Link>
                     </div>
                     {tracesLoading ? (
-                        <p className="text-sm text-slate-900 dark:text-slate-50">Loading traces...</p>
+                        <p className="text-sm text-foreground dark:text-slate-50">Loading traces...</p>
                     ) : tracesError ? (
                         <p className="text-sm text-rose-600 dark:text-rose-400">
                             {(tracesError as Error)?.message || "Failed to load traces"}
                         </p>
                     ) : traceData?.traces?.length ? (
-                        <div className="divide-y border-slate-200 dark:border-slate-700">
+                        <div className="divide-y border-variant dark:border-variant">
                             {traceData.traces.map((trace) => (
                                 <Link
                                     key={trace.trace_id}
                                     href={`/admin/inspector?trace_id=${trace.trace_id}`}
-                                    className="block py-3 rounded-xl transition bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
+                                    className="block py-3 rounded-xl transition bg-surface-elevated hover:bg-surface-elevated dark:bg-surface-elevated dark:hover:bg-surface-elevated"
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-base)"; }}
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{trace.question_snippet}</div>
-                                        <div className="text-xs font-mono text-slate-900 dark:text-slate-50">
+                                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground">{trace.question_snippet}</div>
+                                        <div className="text-xs font-mono text-foreground dark:text-slate-50">
                                             {new Date(trace.created_at).toLocaleString("ko-KR")}
                                         </div>
                                     </div>
-                                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-900 dark:text-slate-50">
+                                    <div className="mt-1 flex items-center gap-3 text-xs text-foreground dark:text-slate-50">
                                         <span className="uppercase tracking-wider">{trace.feature}</span>
                                         <span className={trace.status === "error" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}>
                                             {trace.status}
@@ -269,7 +269,7 @@ function AssetDetailPageContent() {
 // Wrapper component with Suspense boundary for useSearchParams
 export default function AssetDetailPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen px-4 py-6 md:px-6 md:py-8 flex items-center justify-center text-slate-600">Loading asset details...</div>}>
+        <Suspense fallback={<div className="min-h-screen px-4 py-6 md:px-6 md:py-8 flex items-center justify-center text-muted-foreground">Loading asset details...</div>}>
             <AssetDetailPageContent />
         </Suspense>
     );

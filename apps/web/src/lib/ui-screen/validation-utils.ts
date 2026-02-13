@@ -160,20 +160,29 @@ export function validateBindingPath(
 
     // Check if schema exists, if not, try to extract from initial values
     let stateSchema = schema?.state?.schema;
-    
+
     // If schema is undefined but initial values exist, extract schema structure from initial values
     if (!stateSchema && schema?.state?.initial) {
       stateSchema = extractSchemaFromInitial(schema.state.initial);
     }
-    
+
+    // Also try extracting from initial if schema exists but path validation might fail
+    // (e.g., when schema has type: "object" without properties for nested paths)
+    const schemaFromInitial = schema?.state?.initial
+      ? extractSchemaFromInitial(schema.state.initial)
+      : null;
+
     if (stateSchema) {
-      if (!isValidPath(path, stateSchema)) {
-        const availablePaths = Object.keys(stateSchema);
+      // Use schema from initial values if available, as it properly handles nested objects
+      const effectiveSchema = schemaFromInitial || stateSchema;
+
+      if (!isValidPath(path, effectiveSchema)) {
+        const availablePaths = Object.keys(effectiveSchema);
         // Limit available paths display to avoid overwhelming error messages
         const displayPaths = availablePaths.length > 10
           ? [...availablePaths.slice(0, 10), `... and ${availablePaths.length - 10} more`].join(", ")
           : availablePaths.join(", ");
-        
+
         errors.push({
           path: pathExpr,
           message: `Path "${path}" not found in state schema. Available paths: ${displayPaths}`,

@@ -126,11 +126,11 @@ export default function ScreenEditorHeader({
 
             <div className="flex items-center gap-3">
               <span
-                className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider border ${status === "published"
-                  ? ""
-                  : ""
-                  }`}
-                style={status === "published" ? { backgroundColor: "rgba(16, 185, 129, 0.15)", color: "var(--success)", borderColor: "rgba(16, 185, 129, 0.5)" } : { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "var(--border-muted)" }}
+                className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                  status === "published"
+                    ? "status-badge-published"
+                    : "status-badge-draft"
+                }`}
                 data-testid="status-badge"
               >
                 {status}

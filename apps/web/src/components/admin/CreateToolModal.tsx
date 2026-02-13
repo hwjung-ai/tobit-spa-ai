@@ -324,7 +324,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-            <div className="rounded-2xl border max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] bg-surface-base border-variant">
+            <div className="container-panel max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] bg-surface-base dark:bg-surface-base text-foreground dark:text-slate-50">
                 <div className="flex items-center justify-between p-6 border-b border-variant">
                     <div>
                         <h2 className="text-xl font-bold text-foreground">Create New Tool</h2>
@@ -332,7 +332,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     </div>
                     <button
                         onClick={onClose}
-                        className="hover:text-foreground transition-colors text-muted-foreground"
+                        className="hover:text-foreground transition-colors text-muted-foreground dark:text-muted-foreground"
                     >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -396,7 +396,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 <select
                                     value={selectedApiId}
                                     onChange={(e) => handleApiSelection(e.target.value)}
-                                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
+                                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                 >
                                     <option value="">-- Select API Manager API --</option>
                                     {apiManagerApis.map((api) => (
@@ -427,7 +427,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             value={mcpServerUrl}
                                             onChange={(e) => setMcpServerUrl(e.target.value)}
                                             placeholder="e.g. http://localhost:3100/sse"
-                                            className="w-full px-3 py-3 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
+                                            className="w-full px-3 py-3 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                         />
                                     </div>
                                     <div className="w-[180px]">
@@ -447,7 +447,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 <button
                                     onClick={handleMcpDiscover}
                                     disabled={mcpIsDiscovering || !mcpServerUrl.trim()}
-                                    className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
+                                    className="w-full py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider dark:bg-sky-700 dark:hover:bg-sky-600"
                                 >
                                     {mcpIsDiscovering ? "Discovering..." : "Discover Tools"}
                                 </button>
@@ -474,7 +474,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             </button>
                                         </div>
 
-                                        <div className="max-h-[240px] overflow-y-auto space-y-1.5 pr-1">
+                                        <div className="max-h-[240px] overflow-y-auto space-y-2 pr-1">
                                             {mcpDiscoveredTools.map((tool) => {
                                                 const isSelected = mcpSelectedTools.has(tool.name);
                                                 return (
@@ -507,7 +507,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                                         e.stopPropagation();
                                                                         handleMcpSelectSingle(tool);
                                                                     }}
-                                                                    className="text-xs px-3 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
+                                                                    className="text-xs px-3 py-0.5 rounded border border-variant hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
                                                                     title="Fill form with this tool's data"
                                                                 >
                                                                     Fill Form
@@ -529,7 +529,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             <button
                                                 onClick={handleMcpImportSelected}
                                                 disabled={mcpIsImporting}
-                                                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
+                                                className="w-full py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider dark:bg-sky-700 dark:hover:bg-sky-600"
                                             >
                                                 {mcpIsImporting
                                                     ? "Importing..."
@@ -593,7 +593,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Describe what this tool does and include keywords that help LLM select it. E.g., 'Search equipment inventory. Keywords: equipment, 장비, machine, 설비'"
                                         rows={3}
-                                        className="w-full px-4 py-3 border rounded-xl placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base"
+                                        className="w-full px-4 py-3 border rounded-xl placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                     />
                                 </div>
 
@@ -605,7 +605,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                     <select
                                         value={catalogRef}
                                         onChange={(e) => setCatalogRef(e.target.value)}
-                                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
+                                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                     >
                                         <option value="">-- No Catalog Selected --</option>
                                         {catalogsData?.map((catalog: any) => (
@@ -654,14 +654,14 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 hover:text-foreground transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
+                            className="flex-1 py-3 border border-variant text-foreground hover:bg-slate-100 dark:border-variant dark:text-muted-foreground dark:hover:bg-surface-elevated transition-colors font-bold uppercase tracking-widest text-xs"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleCreate}
                             disabled={isCreating}
-                            className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-xl transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95"
+                            className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-lg transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95 dark:bg-sky-700 dark:hover:bg-sky-600"
                         >
                             {isCreating ? "Creating..." : "Create Tool Draft"}
                         </button>
@@ -673,7 +673,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 hover:text-foreground transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
+                            className="flex-1 py-3 border border-variant text-foreground hover:bg-slate-100 dark:border-variant dark:text-muted-foreground dark:hover:bg-surface-elevated transition-colors font-bold uppercase tracking-widest text-xs"
                         >
                             Close
                         </button>

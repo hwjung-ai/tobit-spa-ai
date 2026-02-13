@@ -59,16 +59,16 @@ export default function RecentErrors() {
 
   // Get severity background/border color class based on error message
   const getSeverityBgClass = (message: string | null): string => {
-    if (!message) return "bg-slate-500/30 border-slate-500/30";
+    if (!message) return "bg-surface-elevated0/30 border-slate-500/30";
     if (message.toLowerCase().includes("timeout")) return "bg-red-900/20 border-red-900/50";
     if (message.toLowerCase().includes("connection")) return "bg-orange-900/20 border-orange-900/50";
     if (message.toLowerCase().includes("validation")) return "bg-yellow-500/20 border-yellow-500/50";
-    return "bg-slate-500/30 border-slate-500/30";
+    return "bg-surface-elevated0/30 border-slate-500/30";
   };
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-variant bg-slate-900/60 p-6 text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-variant bg-surface-base/60 p-6 text-sm text-muted-foreground">
         Loading recent errors...
       </div>
     );
@@ -83,7 +83,7 @@ export default function RecentErrors() {
   }
 
   return (
-    <div className="rounded-2xl border border-variant bg-slate-900/60 p-6">
+    <div className="rounded-2xl border border-variant bg-surface-base/60 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Recent Errors</h3>
         <span className="text-sm uppercase tracking-wider text-muted-foreground">
@@ -93,7 +93,7 @@ export default function RecentErrors() {
 
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {errors.length === 0 ? (
-          <div className="p-6 text-center rounded-lg border border-variant bg-slate-950/40">
+          <div className="p-6 text-center rounded-lg border border-variant bg-surface-base/40">
             <div className="inline-block p-3 rounded-full mb-3 bg-emerald-500/10">
               <svg
                 className="w-6 h-6 text-emerald-400"
