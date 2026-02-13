@@ -75,19 +75,12 @@ export default function BuilderShell({
             event.preventDefault();
             setIsResizingLeft(true);
           }}
-          className="group flex w-4 cursor-col-resize items-center justify-center transition-colors"
-          style={{backgroundColor: isResizingLeft ? "rgba(14, 165, 233, 0.1)" : "transparent"}}
-          onMouseEnter={(e) => {
-            if (!isResizingLeft) e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.05)";
-          }}
-          onMouseLeave={(e) => {
-            if (!isResizingLeft) e.currentTarget.style.backgroundColor = "transparent";
-          }}
+          className={`resize-handle-col ${isResizingLeft ? "is-active" : ""}`}
+          aria-label="Resize left pane"
+          role="separator"
+          aria-orientation="vertical"
         >
-          <div
-            className="h-12 w-1 rounded-full transition-colors"
-            style={{backgroundColor: isResizingLeft ? "var(--primary)" : "var(--border)"}}
-          />
+          <div className="resize-handle-grip" />
         </div>
 
         {/* Center Pane */}
@@ -113,19 +106,12 @@ export default function BuilderShell({
             event.preventDefault();
             setIsResizingRight(true);
           }}
-          className="group flex w-4 cursor-col-resize items-center justify-center transition-colors"
-          style={{backgroundColor: isResizingRight ? "rgba(14, 165, 233, 0.1)" : "transparent"}}
-          onMouseEnter={(e) => {
-            if (!isResizingRight) e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.05)";
-          }}
-          onMouseLeave={(e) => {
-            if (!isResizingRight) e.currentTarget.style.backgroundColor = "transparent";
-          }}
+          className={`resize-handle-col ${isResizingRight ? "is-active" : ""}`}
+          aria-label="Resize right pane"
+          role="separator"
+          aria-orientation="vertical"
         >
-          <div
-            className="h-12 w-1 rounded-full transition-colors"
-            style={{backgroundColor: isResizingRight ? "var(--primary)" : "var(--border)"}}
-          />
+          <div className="resize-handle-grip" />
         </div>
 
         {/* Right Pane */}

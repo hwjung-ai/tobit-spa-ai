@@ -303,6 +303,7 @@ html {
   --ag-background-color: var(--surface-base);
   --ag-foreground-color: var(--foreground);
   --ag-border-color: var(--border);
+  --ag-secondary-border-color: var(--border);
   --ag-header-background-color: var(--surface-base);
   --ag-header-height: 40px;
   --ag-odd-row-background-color: var(--surface-base);
@@ -316,6 +317,12 @@ html {
   --ag-range-selection-border-color: var(--primary);
   --ag-secondary-foreground-color: var(--muted-foreground);
   --ag-data-color: var(--foreground);
+  --ag-panel-background-color: var(--surface-elevated);
+  --ag-menu-background-color: var(--surface-elevated);
+  --ag-menu-border-color: var(--border);
+  --ag-input-border-color: var(--input-border);
+  --ag-icon-font-family: agGridQuartz;
+  --ag-popup-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.65);
 }
 
 .ag-theme-cep .ag-root-wrapper,
@@ -336,6 +343,30 @@ html {
 
 .ag-theme-cep .ag-header-icon {
   color: var(--muted-foreground) !important;
+}
+
+/* Keep AG Grid popup/filter surfaces consistent in dark mode as well. */
+.ag-theme-cep .ag-menu,
+.ag-theme-cep .ag-filter,
+.ag-popup .ag-menu,
+.ag-popup .ag-filter {
+  background-color: var(--surface-elevated) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+
+.ag-theme-cep .ag-menu-option:hover,
+.ag-popup .ag-menu-option:hover,
+.ag-theme-cep .ag-filter-body-wrapper,
+.ag-popup .ag-filter-body-wrapper {
+  background-color: color-mix(in srgb, var(--surface-elevated), var(--foreground) 4%) !important;
+}
+
+.ag-theme-cep .ag-input-field-input,
+.ag-popup .ag-input-field-input {
+  background-color: var(--surface-base) !important;
+  color: var(--foreground) !important;
+  border-color: var(--input-border) !important;
 }
 
 /* Dragging and ghost header styles */
@@ -2490,4 +2521,49 @@ html {
 
 .dark .docviewer-loading {
   color: #94a3b8; /* slate-400 */
+}
+
+/* Resizable split-handle standard */
+.resize-handle-col {
+  width: 8px;
+  min-width: 8px;
+  flex: 0 0 8px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  cursor: col-resize;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background-color: transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  user-select: none;
+}
+
+.resize-handle-col:hover {
+  border-color: var(--border);
+  background-color: rgba(var(--primary-rgb), 0.12);
+}
+
+.resize-handle-col.is-active {
+  border-color: var(--border);
+  background-color: rgba(var(--primary-rgb), 0.16);
+}
+
+.resize-handle-grip {
+  height: 24px;
+  width: 4px;
+  margin: auto;
+  border-radius: 9999px;
+  background-color: var(--border-muted);
+  transition:
+    background-color 0.15s ease,
+    height 0.15s ease;
+}
+
+.resize-handle-col:hover .resize-handle-grip,
+.resize-handle-col.is-active .resize-handle-grip {
+  height: calc(100% - 4px);
+  background-color: var(--primary);
 }

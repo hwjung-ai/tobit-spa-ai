@@ -281,6 +281,7 @@ function CepEventBrowserContent() {
       sortable: true,
       filter: true,
       resizable: true,
+      suppressMovable: true,
     }),
     [],
   );
@@ -820,7 +821,7 @@ function CepEventBrowserContent() {
           {eventsQuery.error ? (
             <p className="mb-3 text-sm text-rose-400">{normalizeError(eventsQuery.error)}</p>
           ) : null}
-          <div className="ag-theme-cep h-[540px] w-full br-section">
+          <div className="ag-theme-quartz ag-theme-cep h-[540px] w-full br-section">
             <AgGridReact<CepEventSummary>
               rowData={eventsQuery.data ?? []}
               columnDefs={columnDefs}
@@ -845,10 +846,13 @@ function CepEventBrowserContent() {
               setIsResizing(true);
               setIsUserSized(true);
             }}
-            className={`mx-2 w-2 cursor-col-resize rounded-full border ${isResizing ? "bg-sky-600/40" : ""}`}
-            style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}
-            aria-hidden="true"
-          />
+            className={`resize-handle-col ${isResizing ? "is-active" : ""}`}
+            aria-label="Resize detail panel"
+            role="separator"
+            aria-orientation="vertical"
+          >
+            <div className="resize-handle-grip" />
+          </div>
         </div>
 
         <aside className="br-section space-y-4 overflow-y-auto custom-scrollbar max-h-[610px] p-4">

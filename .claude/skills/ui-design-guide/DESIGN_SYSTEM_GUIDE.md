@@ -329,6 +329,31 @@ dark:focus-visible:ring-sky-400
 "gap-6"      // 24px - section spacing
 ```
 
+### Resizable Split Handle Standard
+
+Use one consistent splitter style across pages (Chat, Documents, OPS, SIM, Builder, Screen Editor).
+
+```typescript
+// ✅ Standard splitter classes
+<div className={cn("resize-handle-col", isResizing && "is-active")}>
+  <div className="resize-handle-grip" />
+</div>
+```
+
+**Rules:**
+- Width: `8px` fixed (`w-2`, no custom `w-4`, `w-6`)
+- Gap: do not add extra side margin (`mx-*`) unless layout breakage requires it
+- Default state: only small grip is visible (handle area remains transparent)
+- Hover/active: grip expands vertically (long bar)
+- Grip: single vertical pill (`.resize-handle-grip`)
+- State: active drag uses `.is-active`
+- Accessibility: `role="separator"`, `aria-orientation="vertical"`, clear `aria-label`
+
+**Do not:**
+- Use arbitrary splitter widths (`w-2`, `w-5`, `w-6`)
+- Add custom hover logic per-page with inline `onMouseEnter/onMouseLeave`
+- Mix multiple splitter visuals across pages
+
 ---
 
 ## 🧩 Component Patterns
@@ -1120,6 +1145,7 @@ import { cn } from "@/lib/utils";
 | **Colors** | Hex codes, random colors | Use semantic tokens: `text-slate-900`, `bg-sky-600` or `.bg-surface-base`, `.bg-surface-overlay` |
 | **Dark Mode** | Hardcoded dark styles | Use `dark:` prefix variants |
 | **Spacing** | `px-3.5`, `gap-1.5` | Use `px-3`, `px-4`, `gap-2`, `gap-3` |
+| **Resize Handle** | Mixed widths/styles (`w-2`, `w-6`, custom hover) | Use `.resize-handle-col` + `.resize-handle-grip` + optional `.is-active` |
 | **Letter Spacing** | `tracking-[0.2em]`, `tracking-[0.3em]` | Use `tracking-wider` for uppercase |
 | **Containers** | Mixed border+bg styles | Use `.container-card`, `.container-section`, `.container-panel` |
 
@@ -1254,4 +1280,3 @@ Use this checklist for ANY page/component:
 - [ ] Forms use `space-y-4` for vertical spacing
 - [ ] Empty states follow universal pattern
 - [ ] Loading states follow universal pattern
-

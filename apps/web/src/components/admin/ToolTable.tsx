@@ -340,7 +340,7 @@ export default function ToolTable({
         </div>
       </div>
 
-      <div className="ag-theme-cep ag-theme-cep-static w-full overflow-hidden" style={{ height: "600px" }}>
+      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static w-full overflow-hidden" style={{ height: "600px" }}>
         <AgGridReact
           theme="legacy"
           rowData={tools}

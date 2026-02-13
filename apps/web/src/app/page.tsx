@@ -87,10 +87,13 @@ export default function Home() {
   const [loadingThreads, setLoadingThreads] = useState(false);
   const [status, setStatus] = useState<"idle" | "streaming" | "error">("idle");
   const [historyVisible, setHistoryVisible] = useState(true);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320);
+  const [isResizing, setIsResizing] = useState(false);
   const [threadsError, setThreadsError] = useState<string | null>(null);
   const apiBaseUrl = sanitizeUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const [references, setReferences] = useState<ReferenceItem[]>([]);
   const router = useRouter();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const fetchThreads = useCallback(async () => {
     setLoadingThreads(true);
@@ -113,6 +116,28 @@ export default function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threads]);
+
+  useEffect(() => {
+    if (!isResizing || !historyVisible) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!contentRef.current) return;
+      const rect = contentRef.current.getBoundingClientRect();
+      const nextWidth = event.clientX - rect.left;
+      setLeftPanelWidth(Math.max(260, Math.min(520, nextWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [historyVisible, isResizing]);
 
   const fetchThreadDetail = useCallback(async (threadId: string) => {
     const payload = await authenticatedFetch<ThreadDetail | { data: ThreadDetail }>(
@@ -322,9 +347,16 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex flex-1 gap-6 py-6">
+      <div
+        ref={contentRef}
+        className="flex flex-1 overflow-hidden py-6"
+        style={{ userSelect: isResizing ? "none" : "auto" }}
+      >
         {historyVisible ? (
-          <aside className="w-[320px] space-y-4 container-panel">
+          <aside
+            className="space-y-4 container-panel h-full overflow-y-auto custom-scrollbar"
+            style={{ width: `${leftPanelWidth}px` }}
+          >
             <div className="flex items-center justify-between">
               <p className="left-panel-title">History</p>
               {loadingThreads ? (
@@ -370,8 +402,28 @@ export default function Home() {
           </aside>
         ) : null}
 
+        {historyVisible ? (
+          <div
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setIsResizing(true);
+            }}
+            className={cn("resize-handle-col", isResizing && "is-active")}
+            onDoubleClick={() => setLeftPanelWidth(320)}
+            aria-label="Resize history panel"
+            role="separator"
+            aria-orientation="vertical"
+            data-testid="chat-history-resize-handle"
+          >
+            <div className="resize-handle-grip" />
+          </div>
+        ) : null}
+
         <main
-          className={cn("flex flex-1 flex-col gap-6 transition-all", !historyVisible && "w-full")}
+          className={cn(
+            "flex min-w-0 flex-1 flex-col gap-6 transition-all",
+            historyVisible ? "pl-2" : "w-full",
+          )}
         >
           {/* Input Section */}
           <section className="container-section">

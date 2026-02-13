@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/shared";
 import { cn } from "@/lib/utils";
 import BlockRenderer, {
@@ -77,6 +77,33 @@ export default function OpsPage() {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [pdfFilename, setPdfFilename] = useState<string>("document.pdf");
+
+  // Resizable panel state (left sidebar)
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(340);
+  const [isResizingLeft, setIsResizingLeft] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle left sidebar resize
+  useEffect(() => {
+    if (!isResizingLeft) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setLeftSidebarWidth(Math.max(250, Math.min(600, e.clientX - rect.left)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingLeft(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizingLeft]);
 
   const router = useRouter();
 
@@ -587,7 +614,11 @@ export default function OpsPage() {
   const shouldShowSidebar = !isFullScreen;
 
   return (
-    <div className="ops-theme">
+    <div
+      ref={containerRef}
+      className="ops-theme"
+      style={{userSelect: isResizingLeft ? "none" : "auto"}}
+    >
       {/* Page Header - Standard */}
       <PageHeader
         title="Operations"
@@ -795,8 +826,11 @@ export default function OpsPage() {
             </button>
           </div>
 
-          <div className={`grid gap-6 ${gridColsClass}`}>
-            <div className={`h-[80vh] flex-col gap-4 ${shouldShowSidebar ? "flex" : "hidden"}`}>
+          <div className="flex gap-0">
+            <div
+              className={`h-[80vh] flex-col gap-4 ${shouldShowSidebar ? "flex" : "hidden"} flex-shrink-0`}
+              style={{width: shouldShowSidebar ? `${leftSidebarWidth}px` : "0"}}
+            >
               <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border bg-surface-base shadow-inner shadow-black/40 dark:border-border">
                 <div className="border-b px-4 py-3 border-border">
                   <div className="flex items-center justify-between">
@@ -916,11 +950,25 @@ export default function OpsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Left Resize Handle */}
+            {shouldShowSidebar && (
+              <div
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  setIsResizingLeft(true);
+                }}
+                className={cn("resize-handle-col", isResizingLeft && "is-active")}
+                aria-label="Resize left panel"
+                role="separator"
+                aria-orientation="vertical"
+              >
+                <div className="resize-handle-grip" />
+              </div>
+            )}
+
             <section
-              className="flex flex-col gap-4 rounded-3xl border p-4 shadow-inner shadow-black/40 bg-surface-base dark:border-border"
-              style={{
-                ...(isFullScreen ? { gridColumn: "span 2" } : {}),
-              }}
+              className="flex flex-col gap-4 rounded-3xl border p-4 shadow-inner shadow-black/40 bg-surface-base dark:border-border flex-1"
             >
               <header className="page-header">
                 <div className="flex flex-wrap items-center justify-between gap-4">

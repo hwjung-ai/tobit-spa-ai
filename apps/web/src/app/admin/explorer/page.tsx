@@ -838,13 +838,13 @@ export default function ExplorerPage() {
               <div className="text-xs uppercase tracking-wider text-muted-standard">
                 Results
               </div>
-              <div className="ag-theme-cep h-[520px] w-full rounded-2xl border overflow-hidden border-border bg-surface-elevated">
+              <div className="ag-theme-quartz ag-theme-cep h-[520px] w-full rounded-2xl border overflow-hidden border-border bg-surface-elevated">
                 <AgGridReact
                   theme="legacy"
                   columnDefs={gridColDefs}
                   rowData={gridRows}
                   rowSelection="single"
-                  defaultColDef={{ resizable: true, sortable: true, filter: true } satisfies ColDef}
+                  defaultColDef={{ resizable: true, sortable: true, filter: true, suppressMovable: true } satisfies ColDef}
                   onRowClicked={handleTableRowClick}
                 />
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/shared";
 import {
   Bar,
@@ -246,6 +246,58 @@ export default function SimPage() {
   const [lastParseStatus, setLastParseStatus] = useState<"idle" | "success" | "fail">("idle");
   const [lastParseError, setLastParseError] = useState<string | null>(null);
   const [lastAssistantRaw, setLastAssistantRaw] = useState<string>("");
+
+  // Resizable panel state
+  const [leftPanelWidth, setLeftPanelWidth] = useState(380);
+  const [rightPanelWidth, setRightPanelWidth] = useState(320);
+  const [isResizingLeft, setIsResizingLeft] = useState(false);
+  const [isResizingRight, setIsResizingRight] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle left panel resize
+  useEffect(() => {
+    if (!isResizingLeft) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setLeftPanelWidth(Math.max(280, Math.min(600, e.clientX - rect.left)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingLeft(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizingLeft]);
+
+  // Handle right panel resize
+  useEffect(() => {
+    if (!isResizingRight) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newRightWidth = rect.right - e.clientX;
+      setRightPanelWidth(Math.max(250, Math.min(600, newRightWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingRight(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizingRight]);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -579,16 +631,23 @@ export default function SimPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50"
+      style={{ userSelect: isResizingLeft || isResizingRight ? "none" : "auto" }}
+    >
       <PageHeader
         title="Simulation Workspace"
         description="질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다."
       />
-      <main className="min-h-[calc(100vh-96px)] py-6">
-        {/* Main Content Grid */}
-        <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
+      <main className="flex h-[calc(100vh-8rem)] gap-0 overflow-hidden py-6">
+        {/* Main Content - Flex layout with resizable panels */}
+        <section className="flex gap-0 flex-1 overflow-hidden">
           {/* Left Panel - Scenario Builder */}
-          <aside className="space-y-4 container-section min-h-[320px]">
+          <aside
+            className="space-y-4 container-section min-h-[320px] overflow-y-auto custom-scrollbar flex-shrink-0"
+            style={{ width: `${leftPanelWidth}px` }}
+          >
             <h2 className="left-panel-title">Scenario Builder</h2>
 
             <label className="block br-card border p-3 text-label">
@@ -807,8 +866,22 @@ export default function SimPage() {
             </div>
           </aside>
 
+          {/* Left Resize Handle */}
+          <div
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setIsResizingLeft(true);
+            }}
+            className={cn("mx-2 resize-handle-col", isResizingLeft && "is-active")}
+            aria-label="Resize left panel"
+            role="separator"
+            aria-orientation="vertical"
+          >
+            <div className="resize-handle-grip" />
+          </div>
+
           {/* Main Content */}
-          <main className="space-y-4">
+          <main className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
             {/* KPI Summary Section */}
             <section className="container-section">
               <h2 data-testid="simulation-kpi-summary" className="section-title">
@@ -1046,8 +1119,25 @@ export default function SimPage() {
             </section>
           </main>
 
+          {/* Right Resize Handle */}
+          <div
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setIsResizingRight(true);
+            }}
+            className={cn("mx-2 resize-handle-col", isResizingRight && "is-active")}
+            aria-label="Resize right panel"
+            role="separator"
+            aria-orientation="vertical"
+          >
+            <div className="resize-handle-grip" />
+          </div>
+
           {/* Right Panel - AI Copilot */}
-          <aside className="min-h-[320px] container-panel xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
+          <aside
+            className="min-h-[320px] container-panel overflow-y-auto custom-scrollbar flex-shrink-0"
+            style={{ width: `${rightPanelWidth}px` }}
+          >
             <div className="space-y-4">
               <BuilderCopilotPanel
                 builderSlug="sim-workspace"

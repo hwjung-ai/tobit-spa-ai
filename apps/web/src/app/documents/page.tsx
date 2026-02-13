@@ -215,6 +215,33 @@ function DocumentsPageContent() {
   const [pdfViewerHref, setPdfViewerHref] = useState<string | undefined>(undefined);
   const [pdfHighlightSnippet, setPdfHighlightSnippet] = useState<string | undefined>(undefined);
 
+  // Resizable panel state (left sidebar)
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(320);
+  const [isResizingLeft, setIsResizingLeft] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle left sidebar resize
+  useEffect(() => {
+    if (!isResizingLeft) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setLeftSidebarWidth(Math.max(250, Math.min(600, e.clientX - rect.left)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingLeft(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizingLeft]);
+
   const selectedDocumentRef = useRef<DocumentDetail | null>(null);
 
   useEffect(() => {
@@ -832,9 +859,16 @@ function DocumentsPageContent() {
           </button>
         }
       />
-      <main className="min-h-[calc(100vh-96px)] space-y-6 py-6">
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          <aside className="container-section">
+      <main
+        ref={containerRef}
+        className="min-h-[calc(100vh-96px)] space-y-6 py-6"
+        style={{userSelect: isResizingLeft ? "none" : "auto"}}
+      >
+        <div className="flex gap-0">
+          <aside
+            className="container-section flex-shrink-0"
+            style={{width: `${leftSidebarWidth}px`}}
+          >
             <div className="flex items-center justify-between">
               <h2 className="left-panel-title">Library</h2>
               {loadingDocuments ? (
@@ -890,7 +924,21 @@ function DocumentsPageContent() {
             </div>
           </aside>
 
-          <div className="space-y-6">
+          {/* Left Resize Handle */}
+          <div
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setIsResizingLeft(true);
+            }}
+            className={cn("resize-handle-col", isResizingLeft && "is-active")}
+            aria-label="Resize left panel"
+            role="separator"
+            aria-orientation="vertical"
+          >
+            <div className="resize-handle-grip" />
+          </div>
+
+          <div className="space-y-6 flex-1">
             <section className="container-section text-foreground">
               <form onSubmit={handleUpload} className="flex flex-col gap-3">
                 <label className="ml-6 text-sm text-foreground">

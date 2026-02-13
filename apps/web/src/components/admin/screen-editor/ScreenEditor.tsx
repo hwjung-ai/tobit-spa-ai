@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import BuilderCopilotPanel from "@/components/chat/BuilderCopilotPanel";
@@ -109,6 +109,34 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const [showPublishGate, setShowPublishGate] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
   const [authCheckDone, setAuthCheckDone] = useState(false);
+
+  // Resizable panel state (right copilot panel)
+  const [rightPanelWidth, setRightPanelWidth] = useState(320);
+  const [isResizingRight, setIsResizingRight] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle right panel resize
+  useEffect(() => {
+    if (!isResizingRight) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newRightWidth = rect.right - e.clientX;
+      setRightPanelWidth(Math.max(250, Math.min(600, newRightWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingRight(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizingRight]);
 
   // Subscribe to specific state fields for re-renders
   const isDirty = draftModified;
@@ -354,8 +382,13 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   }
 
   return (
-    <div className="screen-editor-theme flex flex-col h-full" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }} data-testid="screen-editor">
-      <div className="flex flex-1 gap-6 overflow-hidden">
+    <div
+      ref={containerRef}
+      className="screen-editor-theme flex flex-col h-full"
+      style={{ backgroundColor: "var(--background)", color: "var(--foreground)", userSelect: isResizingRight ? "none" : "auto" }}
+      data-testid="screen-editor"
+    >
+      <div className="flex flex-1 gap-0 overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Header */}
           <ScreenEditorHeader
@@ -458,10 +491,24 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           </div>
         </div>
 
-        <div className="w-80 flex-shrink-0 flex flex-col border-l" style={{ borderColor: "var(--border)", backgroundColor: "var(--background)" }}>
+        {/* Right Resize Handle */}
+        <div
+          onMouseDown={(event) => {
+            event.preventDefault();
+            setIsResizingRight(true);
+          }}
+          className={`resize-handle-col ${isResizingRight ? "is-active" : ""}`}
+          aria-label="Resize right panel"
+          role="separator"
+          aria-orientation="vertical"
+        >
+          <div className="resize-handle-grip" />
+        </div>
+
+        <div className="flex-shrink-0 flex flex-col border-l" style={{ width: `${rightPanelWidth}px`, borderColor: "var(--border)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
             <div>
-              <p className="text-sm uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Schema</p>
+              <p className="draft-panel-label">Schema</p>
               <p className="text-xs" style={{ color: "var(--foreground-secondary)" }}>{schemaSummary}</p>
             </div>
           </div>
@@ -478,10 +525,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           {editorState.proposedPatch && (
             <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: "var(--border)" }}>
               {proposedPatchSummary.length > 0 && (
-                <div className="rounded-xl border p-2 text-xs" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)", color: "var(--foreground-secondary)" }}>
-                  <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Patch Diff</p>
+                <div className="draft-panel-section">
+                  <p className="draft-panel-label">Patch Diff</p>
                   {proposedPatchSummary.map((line) => (
-                    <p key={line}>{line}</p>
+                    <p key={line} className="text-xs" style={{ color: "var(--foreground-secondary)" }}>{line}</p>
                   ))}
                 </div>
               )}
@@ -499,15 +546,15 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                       });
                     }
                   }}
-                  className="flex-1 rounded-2xl bg-emerald-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500"
+                  className="draft-panel-button flex-1 bg-emerald-600 hover:bg-emerald-500 text-white"
+                  style={{ borderColor: "transparent" }}
                 >
                   Apply
                 </button>
                 <button
                   type="button"
                   onClick={() => editorState.discardProposal()}
-                  className="flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition"
-                  style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                  className="draft-panel-button flex-1"
                 >
                   Discard
                 </button>
@@ -515,8 +562,8 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             </div>
           )}
           {livePreviewBlock && (
-            <div className="border-t px-4 py-3" style={{ borderColor: "var(--border)" }}>
-              <p className="mb-2 text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Live Preview</p>
+            <div className="draft-panel-section border-t rounded-none border-x-0 border-b-0">
+              <p className="draft-panel-label">Live Preview</p>
               <div className="max-h-60 overflow-auto rounded-lg border p-2" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)" }}>
                 <UIScreenRenderer block={livePreviewBlock} schemaOverride={screen} />
               </div>
