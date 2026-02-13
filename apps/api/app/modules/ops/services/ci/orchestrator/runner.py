@@ -5947,6 +5947,7 @@ class OpsOrchestratorRunner:
         )
         # Build execution_steps from stage outputs (new orchestration)
         execution_steps = []
+        execution_plan_trace = None  # Extract execution_plan_trace from execute stage
         self.logger.info(f"[DEBUG] Building execution_steps from {len(stage_outputs)} stage_outputs")
 
         for stage_out in stage_outputs:
@@ -5956,7 +5957,11 @@ class OpsOrchestratorRunner:
                 execute_result = stage_out.get("result", {})
                 execution_results = execute_result.get("execution_results", [])
 
+                # Extract execution_plan_trace if available (for orchestration visualization)
+                execution_plan_trace = execute_result.get("execution_plan_trace")
+
                 self.logger.info(f"[DEBUG] Found execute stage with {len(execution_results)} execution_results")
+                self.logger.info(f"[DEBUG] execution_plan_trace: {execution_plan_trace is not None}")
 
                 # Convert execution_results to execution_steps format
                 for result in execution_results:
@@ -5965,6 +5970,9 @@ class OpsOrchestratorRunner:
                         "success": result.get("success", False),
                         "duration_ms": result.get("duration_ms", 0),
                     }
+                    # Include orchestration metadata if available
+                    if "orchestration" in result:
+                        step["orchestration"] = result["orchestration"]
                     if not result.get("success"):
                         step["error"] = result.get("error", "")
                     execution_steps.append(step)
@@ -5982,6 +5990,11 @@ class OpsOrchestratorRunner:
                 }
                 for call in self.tool_calls
             ]
+
+        # Build orchestration_trace for UI visualization
+        orchestration_trace = self._build_orchestration_trace(
+            execution_steps, route_kind, plan_output, execution_plan_trace
+        )
 
         trace = {
             "route": route_kind,
@@ -6001,6 +6014,7 @@ class OpsOrchestratorRunner:
             "tenant_id": self.tenant_id,
             "trace_id": trace_id,
             "parent_trace_id": parent_trace_id,
+            "orchestration_trace": orchestration_trace,  # Add orchestration trace for UI
         }
 
         elapsed_ms = int((perf_counter() - start) * 1000)
@@ -6031,6 +6045,7 @@ class OpsOrchestratorRunner:
         execution_steps: List[Dict[str, Any]],
         route_kind: str,
         plan_output: PlanOutput,
+        execution_plan_trace: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Build UI-friendly orchestration trace from execution steps.
@@ -6038,53 +6053,167 @@ class OpsOrchestratorRunner:
         Converts linear execution_steps into grouped format with dependencies,
         strategy, and parallel/sequential execution info.
 
+        Uses plan_output.tool_dependencies and plan_output.execution_strategy
+        to properly represent the orchestration plan.
+
         Args:
             execution_steps: List of tool execution steps in order
             route_kind: Route type (orch, etc.)
             plan_output: Plan output for reference
+            execution_plan_trace: Optional pre-built execution plan trace from ToolOrchestrator
 
         Returns:
             Orchestration trace dict matching UI component expectations
         """
         from app.modules.ops.services.ci.tools.base import get_tool_registry
 
+        # If execution_plan_trace is provided, use it directly
+        # This is the most accurate source of orchestration information
+        if execution_plan_trace and execution_plan_trace.get("execution_groups"):
+            self.logger.info(
+                "orchestration.using_execution_plan_trace",
+                extra={
+                    "strategy": execution_plan_trace.get("strategy"),
+                    "total_groups": execution_plan_trace.get("total_groups"),
+                    "total_tools": execution_plan_trace.get("total_tools"),
+                }
+            )
+            return execution_plan_trace
+
+        # Fallback: Build from plan_output.tool_dependencies
         registry = get_tool_registry()
         tools_info = registry.get_all_tools_info()
 
         # Build tool info map
         tool_info_map = {t["name"]: t for t in tools_info}
 
-        # Group execution steps by dependencies to determine execution strategy
+        # Get tool dependencies from plan
+        tool_deps_map: Dict[str, Dict[str, Any]] = {}
+        plan = plan_output.plan if plan_output.kind == PlanOutputKind.PLAN else None
+
+        if plan and plan.tool_dependencies:
+            for dep in plan.tool_dependencies:
+                tool_deps_map[dep.tool_id] = {
+                    "depends_on": dep.depends_on,
+                    "output_mapping": dep.output_mapping,
+                    "condition": dep.condition,
+                }
+
+        # Build execution groups using topological sort based on dependencies
         execution_groups = []
         tools_seen = set()
         tool_ids = []
+        tools_in_group_map: Dict[str, int] = {}  # tool_id -> group_index
 
-        for step_idx, step in enumerate(execution_steps):
+        # Process each execution step in order
+        for step in execution_steps:
             tool_name = step.get("tool_name", "unknown")
-            if tool_name not in tools_seen:
-                # Determine group index
-                group_index = len(execution_groups)
+            if tool_name in tools_seen:
+                continue
 
-                # Get tool type
-                tool_info = tool_info_map.get(tool_name, {})
-                tool_type = tool_info.get("type", "unknown")
+            tools_seen.add(tool_name)
+            tool_ids.append(tool_name)
 
-                # Start new execution group
-                tools_in_group = [{tool_id: tool_name, tool_type: tool_type}]
-                tools_seen.add(tool_name)
-                tool_ids.append(tool_name)
+            # Get tool type
+            tool_info = tool_info_map.get(tool_name, {})
+            tool_type = tool_info.get("type", "unknown")
 
-                execution_groups.append({
-                    "group_index": group_index,
-                    "tools": tools_in_group,
-                    "parallel_execution": False,  # Default: sequential
-                })
+            # Get dependency info
+            dep_info = tool_deps_map.get(tool_name, {})
+            depends_on = dep_info.get("depends_on", [])
+            output_mapping = dep_info.get("output_mapping", {})
 
-        # Determine strategy from execution_groups
-        if len(execution_groups) == 1:
+            # Determine which group this tool belongs to
+            # A tool can be in the same group as another if they have no dependencies
+            # and are not depended on by tools already placed in later groups
+
+            # Find the earliest group this tool can be placed in
+            # It must be after all tools it depends on
+            min_group_index = 0
+            for dep_tool in depends_on:
+                if dep_tool in tools_in_group_map:
+                    dep_group = tools_in_group_map[dep_tool]
+                    min_group_index = max(min_group_index, dep_group + 1)
+
+            # Check if we can place this tool in an existing group at min_group_index
+            target_group = None
+            if min_group_index < len(execution_groups):
+                target_group = execution_groups[min_group_index]
+                # Check if any tool in this group is depended on by tools not yet placed
+                # or if this tool depends on any tool in this group
+                can_place_in_group = True
+                for existing_tool in target_group["tools"]:
+                    existing_tool_id = existing_tool["tool_id"]
+                    # Cannot be in same group if there's a dependency relationship
+                    if existing_tool_id in depends_on or tool_name in existing_tool.get("depends_on", []):
+                        can_place_in_group = False
+                        break
+
+                if can_place_in_group:
+                    # Add to existing group
+                    existing_tool = next(
+                        (t for t in target_group["tools"] if t["tool_id"] == tool_name),
+                        None
+                    )
+                    if existing_tool:
+                        # Update existing tool with dependency info
+                        existing_tool["depends_on"] = depends_on
+                        existing_tool["output_mapping"] = output_mapping
+                    else:
+                        # Add new tool to group
+                        target_group["tools"].append({
+                            "tool_id": tool_name,
+                            "tool_type": tool_type,
+                            "depends_on": depends_on,
+                            "dependency_groups": [],
+                            "output_mapping": output_mapping,
+                        })
+                        # Update parallel_execution flag
+                        target_group["parallel_execution"] = len(target_group["tools"]) > 1
+                    tools_in_group_map[tool_name] = min_group_index
+                    continue
+
+            # Need to create a new group
+            group_index = len(execution_groups)
+            new_tool = {
+                "tool_id": tool_name,
+                "tool_type": tool_type,
+                "depends_on": depends_on,
+                "dependency_groups": [],
+                "output_mapping": output_mapping,
+            }
+
+            execution_groups.append({
+                "group_index": group_index,
+                "tools": [new_tool],
+                "parallel_execution": False,  # Will be updated if more tools added
+            })
+            tools_in_group_map[tool_name] = group_index
+
+        # Calculate dependency_groups for each tool
+        for group in execution_groups:
+            for tool in group["tools"]:
+                tool_id = tool["tool_id"]
+                depends_on = tool.get("depends_on", [])
+                dep_groups = []
+                for dep_tool in depends_on:
+                    if dep_tool in tools_in_group_map:
+                        dep_group = tools_in_group_map[dep_tool]
+                        if dep_group not in dep_groups:
+                            dep_groups.append(dep_group)
+                tool["dependency_groups"] = sorted(dep_groups)
+
+        # Determine strategy - use plan's strategy if available, otherwise infer
+        if plan and plan.execution_strategy:
+            strategy = plan.execution_strategy.value
+        elif len(execution_groups) == 1:
             strategy = "serial"
         elif any(g.get("parallel_execution", False) for g in execution_groups):
-            strategy = "parallel"
+            # Has parallel groups
+            if len(execution_groups) > 1:
+                strategy = "dag"  # Mixed parallel and sequential
+            else:
+                strategy = "parallel"
         elif len(execution_groups) > 1:
             strategy = "dag"
         else:

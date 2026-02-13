@@ -358,6 +358,9 @@ class StageExecutor:
                     orchestrator = ToolOrchestrator(plan=plan, context=tool_context)
                     chain_result = await orchestrator.execute()
 
+                    # Extract execution_plan_trace from chain_result metadata
+                    execution_plan_trace = chain_result.metadata.get("execution_plan_trace") if chain_result.metadata else None
+
                     # Map tool_id to mode for compose stage compatibility
                     tool_id_to_mode = {
                         "primary": "primary",
@@ -374,6 +377,11 @@ class StageExecutor:
                         # Format each result with tool_name, mode, success, and data fields
                         step_data = step_result.data if step_result.success else None
 
+                        # Extract orchestration metadata from step_data if available
+                        orchestration_metadata = None
+                        if step_data and isinstance(step_data, dict) and "orchestration" in step_data:
+                            orchestration_metadata = step_data.get("orchestration")
+
                         # Flatten data structure for compose stage compatibility
                         # If data is {"rows": [...], ...}, promote rows to top level
                         formatted_result = {
@@ -382,6 +390,10 @@ class StageExecutor:
                             "success": step_result.success,
                             "data": step_data,
                         }
+
+                        # Include orchestration metadata if available
+                        if orchestration_metadata:
+                            formatted_result["orchestration"] = orchestration_metadata
 
                         # Promote rows to top level if data is a dict with rows
                         if step_data and isinstance(step_data, dict):
@@ -580,6 +592,7 @@ class StageExecutor:
                         "references": references,
                         "plan_output": plan_output_dict,
                         "executed_at": time.time(),
+                        "execution_plan_trace": execution_plan_trace,  # Include execution plan trace for orchestration visualization
                     }
                     return self._sanitize_json_value(response_payload)
                 except Exception as e:
