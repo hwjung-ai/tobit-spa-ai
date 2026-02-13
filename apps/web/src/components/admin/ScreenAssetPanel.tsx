@@ -5,6 +5,7 @@ import Toast from "./Toast";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useSearchParams } from "next/navigation";
+import StatusFilterButtons from "./StatusFilterButtons";
 import {
   SCREEN_TEMPLATES,
   createMinimalScreen,
@@ -240,29 +241,35 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center rounded-2xl border bg-surface-elevated border-border p-4 backdrop-blur-sm">
-        <div className="min-w-[180px]">
-          <label className="form-field-label">Status</label>
-          <select
+        <div className="flex items-center gap-4">
+          <StatusFilterButtons
             value={filterStatus}
-            onChange={(e) => {
-              const value = e.target.value as "all" | "draft" | "published";
+            onChange={(value) => {
               setFilterStatus(value);
               updateUrlParams(searchTerm, value);
             }}
-            className="input-container"
-            data-testid="select-filter-status"
-          >
-            <option value="all">Any Status</option>
-            <option value="draft">Draft Only</option>
-            <option value="published">Published Only</option>
-          </select>
+          />
+          <div className="min-w-[280px]">
+            <label className="text-xs font-semibold tracking-wide text-muted-foreground">Search</label>
+            <input
+              type="text"
+              placeholder="Search by ID or name..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                updateUrlParams(e.target.value, filterStatus);
+              }}
+              className="input-container text-xs"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <button
+            type="button"
             onClick={() => {
               void fetchScreens();
             }}
-            className="text-label-sm font-bold uppercase tracking-widest text-muted-standard hover:text-primary"
+            className="rounded-md border border-variant bg-surface-base px-3 py-2 text-label-sm transition hover:border-sky-500 hover:text-primary"
           >
             Refresh
           </button>
@@ -384,12 +391,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   value={newScreenData.name}
                   onChange={(e) => setNewScreenData({ ...newScreenData, name: e.target.value })}
                   placeholder="e.g., Main Dashboard"
-                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500"
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--foreground)",
-                    backgroundColor: "var(--surface-elevated)",
-                  }}
+                  className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:border-sky-500 border-variant text-foreground bg-surface-elevated"
                   data-testid="input-screen-name"
                 />
               </div>
@@ -450,20 +452,6 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           </div>
         </div>
       )}
-
-      {/* Search */}
-      <div className="flex gap-4">
-        <input
-          type="text"
-          placeholder="Search by ID or name..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            updateUrlParams(e.target.value, filterStatus);
-          }}
-          className="flex-1 px-4 py-2 border rounded-lg text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500"
-        />
-      </div>
 
       {/* Loading State */}
       {loading && (
@@ -533,13 +521,8 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       className={`inline-flex px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                         screen.status === "published"
                           ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
-                          : "  border /50"
+                          : "bg-surface-overlay text-muted-foreground border-variant"
                       }`}
-                      style={{
-                        backgroundColor: "var(--surface-overlay)",
-                        color: "var(--muted-foreground)",
-                        borderColor: "var(--border)",
-                      }}
                       data-testid={`status-badge-${screen.asset_id}`}
                     >
                       {screen.status}

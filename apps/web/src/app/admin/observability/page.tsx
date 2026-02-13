@@ -17,10 +17,10 @@ export default function ObservabilityPage() {
         <button
           onClick={() => setActiveTab("system")}
           className={cn(
-            "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+            "panel-tab rounded-lg",
             activeTab === "system"
-              ? "bg-sky-600 text-white"
-              : "bg-transparent text-foreground hover:bg-surface-elevated"
+              ? "panel-tab-active"
+              : "panel-tab-inactive"
           )}
         >
           System Monitoring
@@ -28,10 +28,10 @@ export default function ObservabilityPage() {
         <button
           onClick={() => setActiveTab("cep")}
           className={cn(
-            "px-3 py-2 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+            "panel-tab rounded-lg",
             activeTab === "cep"
-              ? "bg-emerald-600 text-white"
-              : "bg-transparent text-foreground hover:bg-surface-elevated"
+              ? "panel-tab-active"
+              : "panel-tab-inactive"
           )}
         >
           Event Rule Monitoring

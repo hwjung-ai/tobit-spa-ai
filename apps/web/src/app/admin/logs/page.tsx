@@ -21,13 +21,13 @@ interface LogData {
   exists?: boolean;
 }
 
-const LOG_TABS: Array<{ type: LogType; label: string; activeClass: string }> = [
-  { type: "query-history", label: "Query History", activeClass: "bg-sky-600 text-white hover:bg-sky-500" },
-  { type: "execution-trace", label: "Execution Trace", activeClass: "bg-sky-600 text-white hover:bg-sky-500" },
-  { type: "audit", label: "Audit Log", activeClass: "bg-sky-600 text-white hover:bg-sky-500" },
-  { type: "llm-logs", label: "LLM Calls", activeClass: "bg-sky-600 text-white hover:bg-sky-500" },
-  { type: "api-file", label: "API Server Logs", activeClass: "bg-emerald-600 text-white hover:bg-emerald-500" },
-  { type: "web-file", label: "WEB Server Logs", activeClass: "bg-emerald-600 text-white hover:bg-emerald-500" },
+const LOG_TABS: Array<{ type: LogType; label: string }> = [
+  { type: "query-history", label: "Query History" },
+  { type: "execution-trace", label: "Execution Trace" },
+  { type: "audit", label: "Audit Log" },
+  { type: "llm-logs", label: "LLM Calls" },
+  { type: "api-file", label: "API Server Logs" },
+  { type: "web-file", label: "WEB Server Logs" },
 ];
 
 export default function LogsPage() {
@@ -161,7 +161,7 @@ export default function LogsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
+      <div className="inline-flex flex-wrap rounded-xl border border-border bg-surface-elevated p-1">
         {LOG_TABS.map((tab) => {
           const active = logType === tab.type;
           return (
@@ -172,10 +172,10 @@ export default function LogsPage() {
                 setPage(0);
               }}
               className={cn(
-                "rounded-lg border px-4 py-2 text-xs font-semibold tracking-wider transition",
+                "panel-tab rounded-lg",
                 active
-                  ? tab.activeClass
-                  : "border-border bg-surface-elevated text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "panel-tab-active"
+                  : "panel-tab-inactive"
               )}
             >
               {tab.label}

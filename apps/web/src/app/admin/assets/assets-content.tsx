@@ -5,7 +5,8 @@ import { Asset, fetchApi } from "../../../lib/adminUtils";
 import AssetTable from "../../../components/admin/AssetTable";
 import CreateAssetModal from "../../../components/admin/CreateAssetModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import StatusFilterButtons from "../../../components/admin/StatusFilterButtons";
 
 // Define types for select options
 type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "source" | "resolver";
@@ -14,10 +15,12 @@ type AssetStatus = "all" | "draft" | "published";
 export default function AssetsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const queryClient = useQueryClient();
     const [typeFilter, setTypeFilter] = useState<AssetType>("all");
     const [statusFilter, setStatusFilter] = useState<AssetStatus>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [refreshNonce, setRefreshNonce] = useState(0);
 
     // Initialize filters from URL query parameters
     useEffect(() => {
@@ -52,8 +55,8 @@ export default function AssetsPageContent() {
         router.push(`/admin/assets?${params.toString()}`);
     };
 
-    const { data: assets = [], isLoading, error, refetch } = useQuery({
-        queryKey: ["assets", typeFilter, statusFilter],
+    const { data: assets = [], isLoading, isFetching, error } = useQuery({
+        queryKey: ["assets", typeFilter, statusFilter, refreshNonce],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (typeFilter !== "all") params.append("asset_type", typeFilter);
@@ -61,10 +64,15 @@ export default function AssetsPageContent() {
 
             const queryString = params.toString();
             const endpoint = `/asset-registry/assets${queryString ? `?${queryString}` : ""}`;
-            const response = await fetchApi<{ assets: Asset[] }>(endpoint);
+            const response = await fetchApi<{ assets: Asset[] }>(endpoint, { cache: "no-store" });
             return response.data.assets;
         }
     });
+
+    const handleRefresh = () => {
+        queryClient.removeQueries({ queryKey: ["assets"] });
+        setRefreshNonce((prev) => prev + 1);
+    };
 
     return (
         <div className="space-y-6">
@@ -72,7 +80,7 @@ export default function AssetsPageContent() {
             <div className="flex justify-between items-center rounded-2xl border bg-surface-elevated border-border p-4 backdrop-blur-sm">
                 <div className="flex gap-6">
                     <div className="min-w-[160px]">
-                        <label className="form-field-label">Asset Type</label>
+                        <label className="text-xs font-semibold tracking-wide text-muted-foreground">Asset Type</label>
                         <select
                             value={typeFilter}
                             onChange={(e) => {
@@ -83,7 +91,7 @@ export default function AssetsPageContent() {
                                     handleTypeFilterChange(value as AssetType);
                                 }
                             }}
-                            className="input-container"
+                            className="input-container text-xs"
                         >
                             <option value="all">All Categories</option>
                             <option value="prompt">Prompts</option>
@@ -94,32 +102,20 @@ export default function AssetsPageContent() {
                             <option value="resolver">Resolvers</option>
                         </select>
                     </div>
+                    <StatusFilterButtons value={statusFilter} onChange={handleStatusFilterChange} />
 
-                    <div className="min-w-[160px]">
-                        <label className="form-field-label">Lifecycle</label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === "all" || value === "draft" || value === "published") {
-                                    handleStatusFilterChange(value as AssetStatus);
-                                }
-                            }}
-                            className="input-container"
-                        >
-                            <option value="all">Any Status</option>
-                            <option value="draft">Draft Only</option>
-                            <option value="published">Published Only</option>
-                        </select>
-                    </div>
                 </div>
 
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => refetch()}
-                        className="text-label-sm font-bold uppercase tracking-widest text-muted-standard hover:text-primary"
+                        type="button"
+                        onClick={() => {
+                            void handleRefresh();
+                        }}
+                        disabled={isFetching}
+                        className="rounded-md border border-variant bg-surface-base px-3 py-2 text-label-sm transition hover:border-sky-500 hover:text-primary"
                     >
-                        Refresh
+                        {isFetching ? "Refreshing..." : "Refresh"}
                     </button>
                     <div className="w-px h-6 bg-border" />
                     <button
@@ -132,28 +128,24 @@ export default function AssetsPageContent() {
             </div>
 
             {/* Content Area */}
-            <div className="insp-section">
-                {error ? (
-                    <div className="text-center py-20">
-                        <p className="text-rose-500 dark:text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load assets"}</p>
-                        <button
-                            onClick={() => refetch()}
-                            className="btn-secondary"
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                ) : (
-                    <div>
-                        <AssetTable
-                            assets={assets}
-                            loading={!isInitialized || isLoading}
-                            statusFilter={statusFilter}
-                            onStatusFilterChange={handleStatusFilterChange}
-                        />
-                    </div>
-                )}
-            </div>
+            {error ? (
+                <div className="text-center py-20">
+                    <p className="text-rose-500 dark:text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load assets"}</p>
+                    <button
+                        onClick={() => {
+                            void handleRefresh();
+                        }}
+                        className="btn-secondary"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            ) : (
+                <AssetTable
+                    assets={assets}
+                    loading={!isInitialized || isLoading}
+                />
+            )}
 
             {showCreateModal && (
                 <CreateAssetModal

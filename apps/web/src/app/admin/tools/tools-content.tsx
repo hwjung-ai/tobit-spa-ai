@@ -6,7 +6,8 @@ import ToolTable from "../../../components/admin/ToolTable";
 import CreateToolModal from "../../../components/admin/CreateToolModal";
 import ToolTestPanel from "../../../components/admin/ToolTestPanel";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import StatusFilterButtons from "../../../components/admin/StatusFilterButtons";
 
 // Tool Asset interface
 export interface ToolAsset {
@@ -35,11 +36,13 @@ type ToolType = "all" | "database_query" | "http_api" | "graph_query" | "mcp" | 
 export default function ToolsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const queryClient = useQueryClient();
     const [statusFilter, setStatusFilter] = useState<ToolStatus>("all");
     const [toolTypeFilter, setToolTypeFilter] = useState<ToolType>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedTool, setSelectedTool] = useState<ToolAsset | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [refreshNonce, setRefreshNonce] = useState(0);
 
     // Initialize filters from URL query parameters
     useEffect(() => {
@@ -74,8 +77,8 @@ export default function ToolsPageContent() {
         router.push(`/admin/tools?${params.toString()}`);
     };
 
-    const { data: tools = [], isLoading, error, refetch } = useQuery({
-        queryKey: ["tools", statusFilter, toolTypeFilter],
+    const { data: tools = [], isLoading, isFetching, error } = useQuery({
+        queryKey: ["tools", statusFilter, toolTypeFilter, refreshNonce],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (statusFilter !== "all") params.append("status", statusFilter);
@@ -85,7 +88,7 @@ export default function ToolsPageContent() {
             const endpoint = `/asset-registry/tools${queryString ? `?${queryString}` : ""}`;
             try {
                 // Tool API returns ResponseEnvelope with data = { assets, total, page, page_size }
-                const response = await fetchApi<{ assets: ToolAsset[]; total: number; page: number; page_size: number }>(endpoint);
+                const response = await fetchApi<{ assets: ToolAsset[]; total: number; page: number; page_size: number }>(endpoint, { cache: "no-store" });
                 console.log("[Tools] API Response:", response);
                 return response.data.assets || [];
             } catch (err) {
@@ -94,6 +97,11 @@ export default function ToolsPageContent() {
             }
         }
     });
+
+    const handleRefresh = () => {
+        queryClient.removeQueries({ queryKey: ["tools"] });
+        setRefreshNonce((prev) => prev + 1);
+    };
 
     const handleToolSelect = (tool: ToolAsset) => {
         setSelectedTool(tool);
@@ -108,12 +116,12 @@ export default function ToolsPageContent() {
             {/* Control Bar */}
             <div className="flex justify-between items-center rounded-2xl border p-4 backdrop-blur-sm border-border bg-surface-elevated">
                 <div className="flex gap-6">
-                    <div className="min-w-[160px]">
-                        <label className="block text-tiny font-bold uppercase tracking-widest mb-1.5 ml-1 text-muted-foreground">Tool Type</label>
+                    <div className="min-w-[260px] flex items-center gap-3">
+                        <label className="text-xs font-semibold tracking-wide text-muted-foreground whitespace-nowrap">Tool Type</label>
                         <select
                             value={toolTypeFilter}
                             onChange={(e) => handleToolTypeFilterChange(e.target.value as ToolType)}
-                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer border-border text-foreground bg-surface-base"
+                            className="input-container w-full text-xs"
                         >
                             <option value="all">All Types</option>
                             <option value="database_query">Database Query</option>
@@ -123,32 +131,25 @@ export default function ToolsPageContent() {
                             <option value="python_script">Python Script</option>
                         </select>
                     </div>
+                    <StatusFilterButtons value={statusFilter} onChange={handleStatusFilterChange} />
 
-                    <div className="min-w-[160px]">
-                        <label className="block text-tiny font-bold uppercase tracking-widest mb-1.5 ml-1 text-muted-foreground">Status</label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => handleStatusFilterChange(e.target.value as ToolStatus)}
-                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer border-border text-foreground bg-surface-base"
-                        >
-                            <option value="all">Any Status</option>
-                            <option value="draft">Draft Only</option>
-                            <option value="published">Published Only</option>
-                        </select>
-                    </div>
                 </div>
 
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => refetch()}
-                        className="hover: transition-colors text-tiny font-bold uppercase tracking-widest px-2 text-muted-foreground"
+                        type="button"
+                        onClick={() => {
+                            void handleRefresh();
+                        }}
+                        disabled={isFetching}
+                        className="rounded-md border border-variant bg-surface-base px-3 py-2 text-label-sm transition hover:border-sky-500 hover:text-primary"
                     >
-                        Refresh
+                        {isFetching ? "Refreshing..." : "Refresh"}
                     </button>
-                    <div className="divider-vertical h-6" />
+                    <div className="w-px h-6 bg-border" />
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-5 py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-tiny uppercase tracking-wider shadow-lg shadow-sky-900/20 active:scale-95"
+                        className="btn-primary"
                     >
                         + New Tool
                     </button>
@@ -165,8 +166,10 @@ export default function ToolsPageContent() {
                         <div className="text-center py-20">
                             <p className="text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load tools"}</p>
                             <button
-                                onClick={() => refetch()}
-                                className="px-6 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                onClick={() => {
+                                    void handleRefresh();
+                                }}
+                                className="px-6 py-2 hover:bg-surface-elevated dark:hover:bg-surface-elevated rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-surface-elevated text-foreground dark:bg-surface-elevated dark:text-muted-foreground"
                             >
                                 Try Again
                             </button>
@@ -176,11 +179,9 @@ export default function ToolsPageContent() {
                             <ToolTable
                                 tools={tools}
                                 loading={!isInitialized || isLoading}
-                                statusFilter={statusFilter}
-                                onStatusFilterChange={handleStatusFilterChange}
                                 onToolSelect={handleToolSelect}
                                 selectedToolId={selectedTool?.asset_id}
-                                onRefresh={refetch}
+                                onRefresh={handleRefresh}
                             />
                         </div>
                     )}
@@ -192,7 +193,7 @@ export default function ToolsPageContent() {
                         <ToolTestPanel
                             tool={selectedTool}
                             onClose={handleCloseTestPanel}
-                            onRefresh={refetch}
+                            onRefresh={handleRefresh}
                         />
                     </div>
                 )}
@@ -202,7 +203,7 @@ export default function ToolsPageContent() {
                 <CreateToolModal
                     onClose={() => setShowCreateModal(false)}
                     onSuccess={(assetId) => {
-                        refetch();
+                        void handleRefresh();
                         setShowCreateModal(false);
                     }}
                 />

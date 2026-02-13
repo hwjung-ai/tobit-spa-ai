@@ -281,7 +281,6 @@ function CepEventBrowserContent() {
       sortable: true,
       filter: true,
       resizable: true,
-      suppressMovable: true,
     }),
     [],
   );
@@ -817,6 +816,9 @@ function CepEventBrowserContent() {
             <button onClick={handleExport} className="cep-event-action-btn rounded-xl">
               Export
             </button>
+            <span className="ml-auto badge-primary font-mono text-primary">
+              count: {eventsQuery.data?.length ?? 0}
+            </span>
           </div>
           {eventsQuery.error ? (
             <p className="mb-3 text-sm text-rose-400">{normalizeError(eventsQuery.error)}</p>
@@ -918,7 +920,7 @@ function CepEventBrowserContent() {
 
 export default function CepEventBrowserPage() {
   return (
-    <Suspense fallback={<div className="p-4 text-slate-600 dark:text-slate-400">Loading...</div>}>
+    <Suspense fallback={<div className="p-4 text-muted-foreground dark:text-muted-foreground">Loading...</div>}>
       <CepEventBrowserContent />
     </Suspense>
   );

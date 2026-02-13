@@ -9,6 +9,7 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import { formatRelativeTime, fetchApi } from "../../lib/adminUtils";
 import { cn } from "@/lib/utils";
+import StatusBadge from "./StatusBadge";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -43,15 +44,15 @@ interface ToolTableProps {
 
 const filterBtnClass = (active: boolean) =>
   cn(
-    "rounded-md px-3 py-1 text-tiny font-bold uppercase tracking-wider transition hover:border-sky-500",
+    "rounded-md h-6 px-2 text-[9px] font-medium uppercase tracking-wider transition hover:border-sky-500",
     active
       ? "bg-sky-600 text-white"
-      : "border text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
+      : "border text-foreground hover:bg-surface-elevated dark:text-muted-foreground dark:hover:bg-surface-elevated",
     {
-      "bg-slate-50": !active,
-      "dark:bg-slate-900": !active,
-      "border-slate-300": !active,
-      "dark:border-slate-700": !active,
+      "bg-surface-elevated": !active,
+      "dark:bg-surface-base": !active,
+      "border-variant": !active,
+      "dark:border-variant": !active,
     },
   );
 
@@ -141,21 +142,7 @@ export default function ToolTable({
         headerName: "Status",
         field: "status",
         width: 120,
-        cellRenderer: (params: ICellRendererParams<ToolAsset>) => {
-          const status = String(params.value || "draft");
-          return (
-            <span
-              className={cn(
-                "inline-flex rounded-md border px-2 py-0.5 text-tiny font-bold uppercase tracking-wider",
-                status === "published"
-                  ? "border-success bg-success/10 text-success"
-                  : "border-variant bg-surface-elevated text-muted-foreground",
-              )}
-            >
-              {status}
-            </span>
-          );
-        },
+        cellRenderer: (params: ICellRendererParams<ToolAsset>) => <StatusBadge status={String(params.value || "draft")} />,
       },
       {
         headerName: "Version",
@@ -278,7 +265,7 @@ export default function ToolTable({
             count: {tools.length}
           </span>
           {onStatusFilterChange && (
-            <div className="ml-4 flex gap-1.5">
+            <div className="ml-4 flex gap-2">
               <button
                 onClick={() => onStatusFilterChange("all")}
                 className={filterBtnClass(statusFilter === "all")}
@@ -300,12 +287,9 @@ export default function ToolTable({
             </div>
           )}
         </div>
-        <div className="text-tiny font-medium italic text-muted-foreground">
-          Click row to test • Click headers to sort
-        </div>
       </div>
 
-      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static w-full overflow-hidden">
+      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static h-[600px] w-full overflow-hidden">
         <AgGridReact
           theme="legacy"
           rowData={tools}
@@ -314,7 +298,7 @@ export default function ToolTable({
             sortable: true,
             filter: true,
             resizable: true,
-            suppressMovable: true,
+            suppressMovable: false,
             unSortIcon: true,
           }}
           rowSelection="single"

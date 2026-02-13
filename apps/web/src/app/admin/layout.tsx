@@ -44,7 +44,6 @@ export default function AdminLayout({
             <PageHeader
                 title="Adminstrator"
                 description="운영 파라미터를 설정하고 핵심 자산을 관리하며 시스템 활동을 점검합니다."
-                actions={<div className="text-label-sm">시스템 관리</div>}
             />
 
             {/* Sub Navigation (Capsule Style like Data page) */}
@@ -57,10 +56,10 @@ export default function AdminLayout({
                                 key={tab.label}
                                 href={tab.href}
                                 className={cn(
-                                    "rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition",
+                                    "nav-tab",
                                     isActive
-                                        ? "border-sky-600 bg-sky-600 text-white dark:border-sky-700 dark:bg-sky-700"
-                                        : "border-slate-300 text-slate-700 hover:border-sky-500 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                        ? "nav-tab-active"
+                                        : "nav-tab-inactive"
                                 )}
                             >
                                 {tab.label}

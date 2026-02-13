@@ -583,57 +583,39 @@ function InspectorContent() {
   return (
     <div className="space-y-6">
       <div className="px-6 pb-6">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="insp-section">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="insp-label">
-                Trace Lookup
-              </p>
-              <h3 className="insp-h2">
-                Trace ID로 바로 열람
-              </h3>
-            </div>
-            <span className="insp-body-secondary">Exact</span>
-          </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="insp-section lg:col-span-4">
           <div className="flex gap-3">
+            <label htmlFor="trace-id-lookup" className="form-field-label whitespace-nowrap self-center">
+              Trace_id
+            </label>
             <input
+              id="trace-id-lookup"
               type="text"
               value={lookupTraceId}
               onChange={(event) => setLookupTraceId(event.target.value)}
               placeholder="Trace ID를 입력하세요"
-              className="insp-input insp-mono flex-1"
+              className="input-container flex-1 font-mono text-xs"
             />
             <button
               onClick={handleLookup}
-              className="insp-button"
+              className="rounded-md bg-sky-600 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500"
             >
               {detailLoading ? "로딩..." : "조회"}
             </button>
           </div>
-          <p className="insp-body-secondary">
-            Trace ID가 있으면 단일 실행 상세를 즉시 확인합니다.
-          </p>
         </div>
 
-        <div className="insp-section">
-          <div>
-            <p className="insp-label">
-              Trace Search
-            </p>
-            <h3 className="insp-h2">
-              운용/분석 필터
-            </h3>
-          </div>
+        <div className="insp-section lg:col-span-8">
           <div className="space-y-3">
-            <input
-              type="text"
-              value={filters.q}
-              onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
-              placeholder="질의 또는 키워드(q)"
-              className="insp-input w-full"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+              <input
+                type="text"
+                value={filters.q}
+                onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
+                placeholder="질의 또는 키워드(q)"
+                className="input-container"
+              />
               <input
                 type="text"
                 value={filters.feature}
@@ -641,7 +623,7 @@ function InspectorContent() {
                   setFilters((prev) => ({ ...prev, feature: event.target.value }))
                 }
                 placeholder="Feature (예: ci)"
-                className="insp-input"
+                className="input-container"
               />
               <input
                 type="text"
@@ -650,53 +632,53 @@ function InspectorContent() {
                   setFilters((prev) => ({ ...prev, assetId: event.target.value }))
                 }
                 placeholder="Asset ID 기준"
-                className="insp-input"
+                className="input-container"
               />
+              <div className="flex items-center justify-end">
+                <button
+                  onClick={handleResetFilters}
+                  className="rounded-md border border-border px-4 py-2 text-xs uppercase tracking-wider text-foreground transition hover:bg-surface-elevated dark:border-border dark:text-foreground dark:hover:bg-surface-elevated"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
               <select
                 value={filters.status}
                 onChange={(event) =>
                   setFilters((prev) => ({ ...prev, status: event.target.value }))
                 }
-                className="insp-input"
+                className="input-container"
               >
                 <option value="">응답 상태 (전체)</option>
                 <option value="success">success</option>
                 <option value="error">error</option>
               </select>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={filters.from}
-                  onChange={(event) =>
-                    setFilters((prev) => ({ ...prev, from: event.target.value }))
-                  }
-                  className="flex-1 rounded-md border border-border bg-surface-base px-3 py-3 text-sm text-foreground outline-none transition focus:border-sky-500 dark:border-border dark:bg-surface-elevated dark:text-foreground dark:focus:border-sky-400"
-                />
-                <input
-                  type="date"
-                  value={filters.to}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
-                  className="flex-1 rounded-md border border-border bg-surface-base px-3 py-3 text-sm text-foreground outline-none transition focus:border-sky-500 dark:border-border dark:bg-surface-elevated dark:text-foreground dark:focus:border-sky-400"
-                />
+              <input
+                type="date"
+                value={filters.from}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, from: event.target.value }))
+                }
+                className="input-container [color-scheme:light] dark:[color-scheme:dark]"
+              />
+              <input
+                type="date"
+                value={filters.to}
+                onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
+                className="input-container [color-scheme:light] dark:[color-scheme:dark]"
+              />
+              <div className="flex items-center justify-end">
+                <button
+                  onClick={() => handleSearch(0)}
+                  disabled={loading}
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  {loading ? "Searching..." : "Trace Search"}
+                </button>
               </div>
             </div>
-          </div>
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={handleResetFilters}
-              className="rounded-md border border-border px-4 py-2 text-xs uppercase tracking-wider text-foreground transition hover:bg-surface-elevated dark:border-border dark:text-foreground dark:hover:bg-surface-elevated"
-            >
-              Reset
-            </button>
-            <button
-              onClick={() => handleSearch(0)}
-              disabled={loading}
-              className="rounded-md bg-emerald-600 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {loading ? "Searching..." : "Trace Search"}
-            </button>
           </div>
         </div>
       </div>
@@ -709,18 +691,8 @@ function InspectorContent() {
         <div
           className="px-5 py-3 border-b flex items-center justify-between border-border"
         >
-          <div>
-            <p
-              className="text-xs uppercase tracking-wider "
-            >
-              Trace Results
-            </p>
-            <h3 className="text-white text-sm font-semibold">
-              {traces.length} 건 중 {total}개
-            </h3>
-          </div>
-          <p className="text-sm  text-muted-standard">
-            Showing {offset === 0 ? traces.length : offset} / {total}
+          <p className="text-sm font-semibold text-white">
+            Trace Results · {traces.length} 건 중 {total}개
           </p>
         </div>
         {loading && traces.length === 0 ? (
@@ -782,7 +754,7 @@ function InspectorContent() {
                     </td>
                     <td className="px-4 py-3  text-foreground">
                       <span
-                        className={`px-2 py-1 rounded-full text-sm ${getStatusBadgeClass(trace.status)}`}
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(trace.status)}`}
                       >
                         {trace.status}
                       </span>
@@ -851,7 +823,7 @@ function InspectorContent() {
                   Trace Overview
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold text-white tracking-tight">
+                  <h2 className="text-sm font-semibold text-white tracking-tight">
                     {traceDetail.question}
                   </h2>
                   <span
@@ -1855,12 +1827,7 @@ function InspectorContent() {
                           </div>
                         ) : (
                           <div
-                            style={{
-                              height: "400px",
-                              background: "var(--surface-elevated)",
-                              borderRadius: "var(--radius-lg)",
-                              border: "1px solid var(--border)",
-                            }}
+                            className="h-[400px] rounded-lg border border-variant bg-surface-elevated"
                           >
                             <ReactFlow
                               nodes={nodes}
@@ -1912,7 +1879,7 @@ function InspectorContent() {
                         </div>
                         <button
                           onClick={() => setSelectedSpan(null)}
-                          className=" text-white text-lg"
+                          className=" text-white text-sm"
                         >
                           ✕
                         </button>
@@ -2039,10 +2006,10 @@ function InspectorContent() {
             className="border rounded-2xl p-6 w-96 space-y-4 border-border bg-surface-base"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Compare with Trace</h3>
+              <h3 className="text-sm font-semibold text-white">Compare with Trace</h3>
               <button
                 onClick={() => setShowCompareModal(false)}
-                className=" text-white text-xl"
+                className=" text-white text-sm"
               >
                 ✕
               </button>

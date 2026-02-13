@@ -31,21 +31,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
+    <div className="flex min-h-screen items-center justify-center bg-surface-base dark:bg-surface-base">
       <div className="container-panel w-full max-w-md space-y-6">
         <div>
-          <h2 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-50">
+          <h2 className="text-center text-2xl font-semibold text-foreground dark:text-slate-50">
             Tobit SPA AI
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-center text-sm text-muted-foreground dark:text-muted-foreground">
             Sign in to your account
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="email" className="text-slate-900 dark:text-slate-50">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="email" className="w-28 shrink-0 text-foreground dark:text-slate-50">
                 Email Address
               </Label>
               <Input
@@ -54,13 +54,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1"
+                className="flex-1"
                 placeholder="admin@tobit.local"
               />
             </div>
 
-            <div>
-              <Label htmlFor="password" className="text-slate-900 dark:text-slate-50">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="password" className="w-28 shrink-0 text-foreground dark:text-slate-50">
                 Password
               </Label>
               <Input
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="flex-1"
                 placeholder="•••••••"
               />
             </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        <div className="rounded-lg border border-variant bg-surface-base p-4 text-xs text-muted-foreground dark:border-variant dark:bg-surface-base dark:text-muted-foreground">
           <p className="font-semibold mb-2">Demo Credentials:</p>
           <p>Email: admin@tobit.local</p>
           <p>Password: admin123</p>

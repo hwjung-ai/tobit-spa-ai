@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CatalogTable from "@/components/admin/CatalogTable";
 import CreateCatalogModal from "@/components/admin/CreateCatalogModal";
 import CatalogScanPanel from "@/components/admin/CatalogScanPanel";
 import CatalogViewerPanel from "@/components/admin/CatalogViewerPanel";
+import StatusFilterButtons from "@/components/admin/StatusFilterButtons";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface CatalogAsset {
@@ -27,22 +28,29 @@ interface CatalogAsset {
 }
 
 export default function CatalogsContent() {
+  const queryClient = useQueryClient();
   const [selectedCatalog, setSelectedCatalog] = useState<CatalogAsset | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   const {
     data: catalogsData,
     isLoading,
-    refetch,
+    isFetching,
   } = useQuery({
-    queryKey: ["admin-catalogs"],
+    queryKey: ["admin-catalogs", refreshNonce],
     queryFn: async () => {
-      const response = await fetchApi<{ assets: CatalogAsset[] }>("/asset-registry/catalogs");
+      const response = await fetchApi<{ assets: CatalogAsset[] }>("/asset-registry/catalogs", { cache: "no-store" });
       return response.data?.assets || [];
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const handleRefresh = () => {
+    queryClient.removeQueries({ queryKey: ["admin-catalogs"] });
+    setRefreshNonce((prev) => prev + 1);
+  };
 
   const catalogs = catalogsData || [];
 
@@ -102,26 +110,20 @@ export default function CatalogsContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between rounded-2xl border border-border bg-surface-elevated p-4 backdrop-blur-sm">
-        <div className="min-w-[180px]">
-          <label className="form-field-label">Status</label>
-          <select
-            value={statusFilter}
-            onChange={(event) =>
-              setStatusFilter(event.target.value as "all" | "draft" | "published")
-            }
-            className="input-container"
-          >
-            <option value="all">Any Status</option>
-            <option value="draft">Draft Only</option>
-            <option value="published">Published Only</option>
-          </select>
-        </div>
+        <StatusFilterButtons
+          value={statusFilter}
+          onChange={(value) => setStatusFilter(value)}
+        />
         <div className="flex items-center gap-4">
           <button
-            onClick={() => refetch()}
-            className="text-label-sm font-bold uppercase tracking-widest text-muted-standard hover:text-primary"
+            type="button"
+            onClick={() => {
+              void handleRefresh();
+            }}
+            disabled={isFetching}
+            className="rounded-md border border-variant bg-surface-base px-3 py-2 text-label-sm transition hover:border-sky-500 hover:text-primary"
           >
-            Refresh
+            {isFetching ? "Refreshing..." : "Refresh"}
           </button>
           <div className="h-6 w-px bg-border" />
           <button onClick={() => setShowCreateModal(true)} className="btn-primary">
@@ -135,12 +137,12 @@ export default function CatalogsContent() {
           {isLoading ? (
             <div className="py-4 text-center text-muted-standard">Loading...</div>
           ) : (
-            <CatalogTable
-              catalogs={filteredCatalogs}
-              selectedCatalog={selectedCatalog}
-              onSelect={setSelectedCatalog}
-              onRefresh={refetch}
-            />
+              <CatalogTable
+                catalogs={filteredCatalogs}
+                selectedCatalog={selectedCatalog}
+                onSelect={setSelectedCatalog}
+                onRefresh={handleRefresh}
+              />
           )}
         </div>
 
@@ -184,7 +186,7 @@ export default function CatalogsContent() {
               <CatalogScanPanel
                 schema={selectedCatalog}
                 onScanComplete={() => {
-                  void refetch();
+                  void handleRefresh();
                 }}
               />
 
@@ -192,7 +194,7 @@ export default function CatalogsContent() {
               <CatalogViewerPanel
                 schema={selectedCatalog}
                 onRefresh={() => {
-                  void refetch();
+                  void handleRefresh();
                 }}
               />
             </>
@@ -210,7 +212,7 @@ export default function CatalogsContent() {
           onClose={() => setShowCreateModal(false)}
           onSave={() => {
             setShowCreateModal(false);
-            refetch();
+            void handleRefresh();
           }}
         />
       )}
