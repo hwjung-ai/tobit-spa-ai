@@ -36,20 +36,22 @@ from app.modules.ops.services.orchestration.blocks import (
     table_block,
     text_block,
 )
+from app.modules.ops.services.orchestration.orchestrator.builders import BlockBuilder
 from app.modules.ops.services.orchestration.orchestrator.compositions import (
     COMPOSITION_SEARCH_WITH_CONTEXT,
 )
-from app.modules.ops.services.orchestration.orchestrator.stage_executor import StageExecutor
-from app.modules.ops.services.orchestration.orchestrator.tool_selector import (
-    SelectionStrategy,
-    SmartToolSelector,
-    ToolSelectionContext,
-)
-from app.modules.ops.services.orchestration.orchestrator.builders import BlockBuilder
 from app.modules.ops.services.orchestration.orchestrator.handlers import (
     AggregationHandler,
     ListPreviewHandler,
     PathHandler,
+)
+from app.modules.ops.services.orchestration.orchestrator.stage_executor import (
+    StageExecutor,
+)
+from app.modules.ops.services.orchestration.orchestrator.tool_selector import (
+    SelectionStrategy,
+    SmartToolSelector,
+    ToolSelectionContext,
 )
 from app.modules.ops.services.orchestration.planner.plan_schema import (
     AutoSpec,
@@ -127,7 +129,9 @@ def _find_exact_candidate(
     return None
 
 
-CI_IDENTIFIER_PATTERN = re.compile(r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE)
+CI_IDENTIFIER_PATTERN = re.compile(
+    r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE
+)
 
 RUNNER_MARKER = "RUNNER_PATCH_GRAPH_20260112"
 HISTORY_FALLBACK_KEYWORDS = {"이력", "작업", "점검", "history", "log", "이벤트", "기록"}
@@ -455,7 +459,9 @@ class OpsOrchestratorRunner:
             return f"{name} (v{version})"
         return name
 
-    def _resolve_applied_assets_from_assets(self, assets: Dict[str, Any]) -> Dict[str, str]:
+    def _resolve_applied_assets_from_assets(
+        self, assets: Dict[str, Any]
+    ) -> Dict[str, str]:
         """Resolve applied assets from pre-computed assets dictionary.
 
         This is similar to _resolve_applied_assets() but takes assets as input
@@ -579,7 +585,9 @@ class OpsOrchestratorRunner:
 
         try:
             # Execute the tool
-            result = await self._tool_executor.execute_async(tool_name, tool_context, params)
+            result = await self._tool_executor.execute_async(
+                tool_name, tool_context, params
+            )
 
             # Track the tool call
             tool_call = ToolCall(
@@ -587,7 +595,9 @@ class OpsOrchestratorRunner:
                 tool_name=tool_name,
                 input_params=params,
                 success=result.get("success", False),
-                result_size=len(str(result.get("data", {}))) if result.get("data") else 0,
+                result_size=len(str(result.get("data", {})))
+                if result.get("data")
+                else 0,
                 execution_time_ms=result.get("execution_time_ms", 0),
             )
             self.tool_calls.append(tool_call)
@@ -597,7 +607,9 @@ class OpsOrchestratorRunner:
                 extra={
                     "tool_name": tool_name,
                     "success": result.get("success"),
-                    "data_keys": list(result.get("data", {}).keys()) if result.get("data") else [],
+                    "data_keys": list(result.get("data", {}).keys())
+                    if result.get("data")
+                    else [],
                 },
             )
 
@@ -788,12 +800,14 @@ class OpsOrchestratorRunner:
                     }
 
             if from_id and to_id:
-                edges.append({
-                    "from": from_id,
-                    "to": to_id,
-                    "type": row.get("relationship_type", ""),
-                    "strength": row.get("strength", 1.0),
-                })
+                edges.append(
+                    {
+                        "from": from_id,
+                        "to": to_id,
+                        "type": row.get("relationship_type", ""),
+                        "strength": row.get("strength", 1.0),
+                    }
+                )
 
         # Build nodes
         nodes = [
@@ -880,7 +894,9 @@ class OpsOrchestratorRunner:
                 # NOTE: Built-in ci_tools.ci_search fallback removed for generic orchestration.
                 # This functionality should be implemented as a 'ci_search' Tool Asset.
                 self.logger.warning(f"CI search via registry failed: {e}")
-                self.logger.error("Tool fallback 'ci_search' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'ci_search' is no longer available. Please implement as Tool Asset."
+                )
                 meta["row_count"] = 0
                 meta["fallback"] = False
                 meta["error"] = f"CI search tool not available: {str(e)}"
@@ -957,10 +973,14 @@ class OpsOrchestratorRunner:
         ) as meta:
             # NOTE: Built-in ci_tools.ci_search_broad_or removed for generic orchestration.
             # This functionality should be implemented as a 'ci_search_broad' Tool Asset.
-            self.logger.error("Tool fallback 'ci_search_broad_or' is no longer available. Please implement as Tool Asset.")
+            self.logger.error(
+                "Tool fallback 'ci_search_broad_or' is no longer available. Please implement as Tool Asset."
+            )
             meta["row_count"] = 0
-            result = type('Result', (), {'records': []})()
-        return [r.model_dump() if hasattr(r, 'model_dump') else r for r in result.records]
+            result = type("Result", (), {"records": []})()
+        return [
+            r.model_dump() if hasattr(r, "model_dump") else r for r in result.records
+        ]
 
     def _recover_ci_identifiers(self) -> tuple[str, ...] | None:
         if not self.question:
@@ -991,7 +1011,9 @@ class OpsOrchestratorRunner:
         filtered = set()
         # Get metric aliases and extract keywords
         metric_aliases = _get_metric_aliases()
-        metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
+        metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(
+            metric_aliases.get("keywords", [])
+        )
         filtered.update(k.lower() for k in metric_keywords)
         filtered.update(k.lower() for k in metric_aliases.get("aliases", {}).keys())
         # Get agg keywords
@@ -1101,7 +1123,9 @@ class OpsOrchestratorRunner:
                 "ci.get.cache_hit",
                 extra={"ci_id": ci_id},
             )
-            return cached_detail[0] if isinstance(cached_detail, list) else cached_detail
+            return (
+                cached_detail[0] if isinstance(cached_detail, list) else cached_detail
+            )
 
         with self._tool_context(
             "ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id, cache_hit=False
@@ -1112,7 +1136,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in ci_tools.ci_get fallback removed for generic orchestration.
                 self.logger.warning(f"CI get via registry failed: {e}")
-                self.logger.error("Tool fallback 'ci_get' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'ci_get' is no longer available. Please implement as Tool Asset."
+                )
                 detail = None
                 meta["found"] = False
                 meta["fallback"] = False
@@ -1144,7 +1170,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in ci_tools.ci_get_by_code fallback removed for generic orchestration.
                 self.logger.warning(f"CI get_by_code via registry failed: {e}")
-                self.logger.error("Tool fallback 'ci_get_by_code' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'ci_get_by_code' is no longer available. Please implement as Tool Asset."
+                )
                 detail = None
                 meta["found"] = False
                 meta["fallback"] = False
@@ -1210,7 +1238,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in ci_tools.ci_aggregate fallback removed for generic orchestration.
                 self.logger.warning(f"CI aggregate via registry failed: {e}")
-                self.logger.error("Tool fallback 'ci_aggregate' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'ci_aggregate' is no longer available. Please implement as Tool Asset."
+                )
                 meta["row_count"] = 0
                 meta["fallback"] = False
                 meta["error"] = f"CI aggregate tool not available: {str(e)}"
@@ -1252,7 +1282,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in ci_tools.ci_list_preview fallback removed for generic orchestration.
                 self.logger.warning(f"CI list_preview via registry failed: {e}")
-                self.logger.error("Tool fallback 'ci_list_preview' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'ci_list_preview' is no longer available. Please implement as Tool Asset."
+                )
                 meta["row_count"] = 0
                 meta["fallback"] = False
                 meta["error"] = f"CI list_preview tool not available: {str(e)}"
@@ -1283,7 +1315,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in graph_tools.graph_expand fallback removed for generic orchestration.
                 self.logger.warning(f"Graph expand via registry failed: {e}")
-                self.logger.error("Tool fallback 'graph_expand' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'graph_expand' is no longer available. Please implement as Tool Asset."
+                )
                 raw_payload = None
                 meta["fallback"] = False
                 meta["error"] = f"Graph expand tool not available: {str(e)}"
@@ -1374,7 +1408,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in graph_tools.graph_path fallback removed for generic orchestration.
                 self.logger.warning(f"Graph path via registry failed: {e}")
-                self.logger.error("Tool fallback 'graph_path' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'graph_path' is no longer available. Please implement as Tool Asset."
+                )
                 payload = {"nodes": [], "edges": [], "hop_count": 0}
                 meta["fallback"] = False
                 meta["error"] = f"Graph path tool not available: {str(e)}"
@@ -1407,6 +1443,7 @@ class OpsOrchestratorRunner:
 
         # Convert time_range to start_time and end_time
         from datetime import timedelta
+
         end_time = datetime.utcnow()
         if time_range == "last_24h":
             start_time = end_time - timedelta(hours=24)
@@ -1450,7 +1487,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in metric_tools.metric_aggregate fallback removed for generic orchestration.
                 self.logger.warning(f"Metric aggregate via registry failed: {e}")
-                self.logger.error("Tool fallback 'metric_aggregate' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'metric_aggregate' is no longer available. Please implement as Tool Asset."
+                )
                 meta["value_present"] = False
                 meta["ci_count_used"] = 0
                 meta["fallback"] = False
@@ -1500,7 +1539,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in metric_tools.metric_series_table fallback removed for generic orchestration.
                 self.logger.warning(f"Metric series via registry failed: {e}")
-                self.logger.error("Tool fallback 'metric_series_table' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'metric_series_table' is no longer available. Please implement as Tool Asset."
+                )
                 meta["rows_count"] = 0
                 meta["fallback"] = False
                 meta["error"] = f"Metric series tool not available: {str(e)}"
@@ -1559,11 +1600,11 @@ class OpsOrchestratorRunner:
                 meta["warnings_count"] = len(result.get("warnings", []))
                 meta["available"] = result.get("available")
             except Exception as e:
-                self.logger.warning(
-                    f"History recent via registry failed: {e}"
-                )
+                self.logger.warning(f"History recent via registry failed: {e}")
                 # NOTE: Built-in history_tools.event_log_recent fallback removed for generic orchestration.
-                self.logger.error("Tool fallback 'event_log_recent' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'event_log_recent' is no longer available. Please implement as Tool Asset."
+                )
                 result = {"rows": [], "warnings": [], "available": False}
                 meta["row_count"] = 0
                 meta["warnings_count"] = 0
@@ -1613,7 +1654,9 @@ class OpsOrchestratorRunner:
             except Exception as e:
                 # NOTE: Built-in cep_tools.cep_simulate fallback removed for generic orchestration.
                 self.logger.warning(f"CEP simulate via registry failed: {e}")
-                self.logger.error("Tool fallback 'cep_simulate' is no longer available. Please implement as Tool Asset.")
+                self.logger.error(
+                    "Tool fallback 'cep_simulate' is no longer available. Please implement as Tool Asset."
+                )
                 result = {"success": False, "exec_log_id": None}
                 meta["success"] = False
                 meta["exec_log_present"] = False
@@ -1641,16 +1684,20 @@ class OpsOrchestratorRunner:
             with get_session_context() as session:
                 query = select(TbAssetRegistry).where(
                     TbAssetRegistry.asset_type == "query",
-                    TbAssetRegistry.status == "published"
+                    TbAssetRegistry.status == "published",
                 )
                 query_assets = session.exec(query).all()
-            self.logger.info(f"[QUERY ASSET RUNNER] Loaded {len(query_assets)} Query Assets")
+            self.logger.info(
+                f"[QUERY ASSET RUNNER] Loaded {len(query_assets)} Query Assets"
+            )
         except Exception as e:
             self.logger.warning(f"Failed to load Query Assets: {e}")
             return None
 
         if not query_assets:
-            self.logger.warning("[QUERY ASSET RUNNER] No Query Assets found in database")
+            self.logger.warning(
+                "[QUERY ASSET RUNNER] No Query Assets found in database"
+            )
             return None
 
         # Score assets based on keywords, name, and SQL table matching
@@ -1687,7 +1734,9 @@ class OpsOrchestratorRunner:
             # Support flexible matching: asset name parts in question
             if asset_name:
                 name_parts = asset_name.replace("_", " ").split()
-                name_match = sum(1 for part in name_parts if part in question and len(part) > 2)
+                name_match = sum(
+                    1 for part in name_parts if part in question and len(part) > 2
+                )
                 name_score = name_match / max(len(name_parts), 1)
                 score += name_score * 0.2
 
@@ -1697,8 +1746,13 @@ class OpsOrchestratorRunner:
             question_words = set(question.split())
             has_event_keyword = any(w in question_words for w in ["event", "events"])
             has_ci_keyword = any(w in question_words for w in ["ci", "configuration"])
-            has_metric_keyword = any(w in question_words for w in ["metric", "metrics", "measurement", "measurements"])
-            has_audit_keyword = any(w in question_words for w in ["audit", "log", "audit_log"])
+            has_metric_keyword = any(
+                w in question_words
+                for w in ["metric", "metrics", "measurement", "measurements"]
+            )
+            has_audit_keyword = any(
+                w in question_words for w in ["audit", "log", "audit_log"]
+            )
 
             sql_score = 0.0
             if sql:
@@ -1712,7 +1766,9 @@ class OpsOrchestratorRunner:
                     sql_score += 1
 
                 # Penalty for date filters (prefer general queries over specific date ranges)
-                if "WHERE" in sql.upper() and ("DATE(" in sql or "INTERVAL" in sql or "CURRENT_DATE" in sql):
+                if "WHERE" in sql.upper() and (
+                    "DATE(" in sql or "INTERVAL" in sql or "CURRENT_DATE" in sql
+                ):
                     sql_score -= 0.5  # Penalize queries with date filters
 
             score += min(sql_score * 0.1, 0.1)  # Cap at 0.1
@@ -1723,10 +1779,14 @@ class OpsOrchestratorRunner:
 
         # Only use Query Asset if score is significant
         if best_score < 0.3:
-            self.logger.info(f"[QUERY ASSET RUNNER] No Query Asset matched (best score: {best_score:.2f}, question: {self.question})")
+            self.logger.info(
+                f"[QUERY ASSET RUNNER] No Query Asset matched (best score: {best_score:.2f}, question: {self.question})"
+            )
             return None
 
-        self.logger.info(f"[QUERY ASSET RUNNER] Selected Query Asset: {best_asset.name} (score: {best_score:.2f})")
+        self.logger.info(
+            f"[QUERY ASSET RUNNER] Selected Query Asset: {best_asset.name} (score: {best_score:.2f})"
+        )
 
         # Execute SQL
         schema = best_asset.schema_json or {}
@@ -1754,13 +1814,13 @@ class OpsOrchestratorRunner:
             {
                 "type": "text",
                 "text": f"Query Asset: {best_asset.name}",
-                "title": "Source"
+                "title": "Source",
             },
             {
                 "type": "markdown",
                 "content": f"Based on the database query, the result is: **{answer_value}**.",
-                "metadata": {"generated_by": "query_asset"}
-            }
+                "metadata": {"generated_by": "query_asset"},
+            },
         ]
 
         self.logger.info(
@@ -1773,8 +1833,8 @@ class OpsOrchestratorRunner:
             "results": [],
             "meta": {
                 "used_tools": ["query_asset"],
-                "query_asset_name": best_asset.name
-            }
+                "query_asset_name": best_asset.name,
+            },
         }
 
     def run(self, plan_output: PlanOutput | None = None) -> Dict[str, Any]:
@@ -3111,7 +3171,6 @@ class OpsOrchestratorRunner:
     async def _handle_aggregate_async(self) -> tuple[List[Block], str]:
         """Delegate to AggregationHandler (Phase 5 decomposition)."""
         return await self._aggregation_handler.handle_aggregate_async()
-        return blocks, answer
 
     def _handle_list_preview(self) -> tuple[List[Block], str]:
         return asyncio.run(self._handle_list_preview_async())
@@ -3376,7 +3435,9 @@ class OpsOrchestratorRunner:
             return None
         try:
             # NOTE: history_tools.recent_work_and_maintenance removed for generic orchestration
-            self.logger.error("Tool fallback 'recent_work_and_maintenance' is no longer available. Please implement as Tool Asset.")
+            self.logger.error(
+                "Tool fallback 'recent_work_and_maintenance' is no longer available. Please implement as Tool Asset."
+            )
             return [
                 text_block(
                     "이력 조회 기능이 준비중입니다. 이력 탭을 이용해주세요.",
@@ -4116,17 +4177,25 @@ class OpsOrchestratorRunner:
         if not result.get("success"):
             error_msg = result.get("error", "Failed to retrieve metric data")
             metric_trace.update({"status": "error", "error": error_msg})
-            self._log_metric_blocks_return([text_block(error_msg, title="Metric query")])
+            self._log_metric_blocks_return(
+                [text_block(error_msg, title="Metric query")]
+            )
             return [text_block(error_msg, title="Metric query")]
 
         data = result.get("data", {})
-        metric_trace.update({"status": "success", "data_rows": len(data.get("rows", []))})
+        metric_trace.update(
+            {"status": "success", "data_rows": len(data.get("rows", []))}
+        )
 
         # Build blocks from metric data
-        blocks = self._build_metric_blocks_from_data(data, metric_spec.metric_name, detail)
+        blocks = self._build_metric_blocks_from_data(
+            data, metric_spec.metric_name, detail
+        )
 
         # Add next actions
-        self.next_actions.extend(self._metric_next_actions(metric_spec.time_range or "last_24h"))
+        self.next_actions.extend(
+            self._metric_next_actions(metric_spec.time_range or "last_24h")
+        )
 
         self._log_metric_blocks_return(blocks)
         return blocks
@@ -4174,20 +4243,22 @@ class OpsOrchestratorRunner:
         depth_applied = graph_meta.get("depth", graph_depth)
         truncated = graph_payload.get("truncated", False)
 
-        metric_trace.update({
-            "status": "graph_aggregate",
-            "scope": metric_spec.scope,
-            "graph_expand": {
-                "view": graph_view.value,
-                "depth_requested": graph_depth,
-                "depth_applied": depth_applied,
-                "node_count": graph_summary.get("node_count"),
-                "edge_count": graph_summary.get("edge_count"),
-                "rel_types": graph_meta.get("rel_types"),
-                "truncated": truncated,
-            },
-            "data_rows": len(data.get("rows", [])),
-        })
+        metric_trace.update(
+            {
+                "status": "graph_aggregate",
+                "scope": metric_spec.scope,
+                "graph_expand": {
+                    "view": graph_view.value,
+                    "depth_requested": graph_depth,
+                    "depth_applied": depth_applied,
+                    "node_count": graph_summary.get("node_count"),
+                    "edge_count": graph_summary.get("edge_count"),
+                    "rel_types": graph_meta.get("rel_types"),
+                    "truncated": truncated,
+                },
+                "data_rows": len(data.get("rows", [])),
+            }
+        )
 
         rows = [
             [
@@ -4199,7 +4270,9 @@ class OpsOrchestratorRunner:
                 metric_spec.agg or "AVG",
                 data.get("time_from", ""),
                 data.get("time_to", ""),
-                str(data.get("value", "")) if data.get("value") is not None else "<null>",
+                str(data.get("value", ""))
+                if data.get("value") is not None
+                else "<null>",
             ]
         ]
 
@@ -4451,7 +4524,9 @@ class OpsOrchestratorRunner:
             "source": history_spec.source or "all",
         }
 
-        result = await self._execute_tool_asset_async("work_history_query", history_params)
+        result = await self._execute_tool_asset_async(
+            "work_history_query", history_params
+        )
 
         if not result.get("success"):
             error_msg = result.get("error", "Failed to retrieve history data")
@@ -4459,13 +4534,19 @@ class OpsOrchestratorRunner:
             return [text_block(error_msg, title="History")]
 
         data = result.get("data", {})
-        history_trace.update({"status": "success", "data_rows": len(data.get("rows", []))})
+        history_trace.update(
+            {"status": "success", "data_rows": len(data.get("rows", []))}
+        )
 
         # Build blocks from history data
-        blocks = self._build_history_blocks_from_data(data, history_spec.source or "work")
+        blocks = self._build_history_blocks_from_data(
+            data, history_spec.source or "work"
+        )
 
         # Add next actions
-        self.next_actions.extend(self._history_time_actions(history_spec.time_range or "last_24h"))
+        self.next_actions.extend(
+            self._history_time_actions(history_spec.time_range or "last_24h")
+        )
 
         return blocks
 
@@ -4498,7 +4579,9 @@ class OpsOrchestratorRunner:
             "source": history_spec.source or "all",
         }
 
-        result = await self._execute_tool_asset_async("history_combined_union", hist_params)
+        result = await self._execute_tool_asset_async(
+            "history_combined_union", hist_params
+        )
 
         if not result.get("success"):
             error_msg = result.get("error", "Failed to retrieve graph history data")
@@ -4511,19 +4594,21 @@ class OpsOrchestratorRunner:
         depth_applied = graph_meta.get("depth", graph_depth)
         truncated = graph_payload.get("truncated", False)
 
-        history_trace.update({
-            "status": "graph_success",
-            "scope": "graph",
-            "graph_expand": {
-                "view": graph_view.value,
-                "depth_requested": graph_depth,
-                "depth_applied": depth_applied,
-                "node_count": graph_summary.get("node_count"),
-                "edge_count": graph_summary.get("edge_count"),
-                "truncated": truncated,
-            },
-            "data_rows": len(data.get("rows", [])),
-        })
+        history_trace.update(
+            {
+                "status": "graph_success",
+                "scope": "graph",
+                "graph_expand": {
+                    "view": graph_view.value,
+                    "depth_requested": graph_depth,
+                    "depth_applied": depth_applied,
+                    "node_count": graph_summary.get("node_count"),
+                    "edge_count": graph_summary.get("edge_count"),
+                    "truncated": truncated,
+                },
+                "data_rows": len(data.get("rows", [])),
+            }
+        )
 
         self.next_actions.extend(
             self._graph_history_next_actions(
@@ -4808,7 +4893,9 @@ class OpsOrchestratorRunner:
             current_load=await self._get_system_load(),
             cache_status={},
             estimated_time=self._estimate_tool_times(),
-            mode_hint=getattr(self.plan, "mode_hint", None),  # Pass mode hint for filtering
+            mode_hint=getattr(
+                self.plan, "mode_hint", None
+            ),  # Pass mode hint for filtering
         )
         ranked = await self._tool_selector.select_tools(context)
         return [tool for tool, _ in ranked]
@@ -5069,9 +5156,7 @@ class OpsOrchestratorRunner:
 
     async def _ci_get_via_registry_async(self, ci_id: str) -> Dict[str, Any] | None:
         try:
-            result = await self._execute_tool_with_tracing(
-                "ci", "get", ci_id=ci_id
-            )
+            result = await self._execute_tool_with_tracing("ci", "get", ci_id=ci_id)
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
             return None
@@ -5142,6 +5227,7 @@ class OpsOrchestratorRunner:
 
         # Convert time_range to start_time and end_time
         from datetime import timedelta
+
         end_time = datetime.utcnow()
         if time_range == "last_24h":
             start_time = end_time - timedelta(hours=24)
@@ -5545,7 +5631,9 @@ class OpsOrchestratorRunner:
                 execute_start = perf_counter()
 
                 # DEBUG: Log that we're in the execute stage
-                self.logger.info(f"[DEBUG] EXECUTE STAGE (PLAN path) - Question: {self.question}")
+                self.logger.info(
+                    f"[DEBUG] EXECUTE STAGE (PLAN path) - Question: {self.question}"
+                )
 
                 # ===== GENERIC ORCHESTRATION: Use stage_executor for tool execution =====
                 # This replaces Query Asset fallback and legacy _run_async()
@@ -5580,8 +5668,14 @@ class OpsOrchestratorRunner:
 
                     # Get execution results from execute stage (StageOutput object)
                     # In new orchestration: execute returns execution_results, compose creates blocks
-                    execute_stage_result = execute_result.result if hasattr(execute_result, 'result') else execute_result
-                    execution_results = execute_stage_result.get("execution_results", [])
+                    execute_stage_result = (
+                        execute_result.result
+                        if hasattr(execute_result, "result")
+                        else execute_result
+                    )
+                    execution_results = execute_stage_result.get(
+                        "execution_results", []
+                    )
 
                     # base_result will be populated after compose stage, not here
                     base_result = {
@@ -5592,7 +5686,9 @@ class OpsOrchestratorRunner:
                     blocks = []  # Blocks will be created by compose stage
                     answer = answer  # Keep existing answer
 
-                    self.logger.info(f"[GENERIC ORCHESTRATION] Execute stage completed, execution_results: {len(execution_results)}")
+                    self.logger.info(
+                        f"[GENERIC ORCHESTRATION] Execute stage completed, execution_results: {len(execution_results)}"
+                    )
 
                 except Exception as e:
                     self.logger.error(f"[GENERIC ORCHESTRATION] Exception: {e}")
@@ -5609,8 +5705,12 @@ class OpsOrchestratorRunner:
                     stage="execute",
                     result={
                         "base_result": base_result,  # Include base_result for compose stage
-                        "tool_calls": base_result.get("tool_calls", []),  # Use tool_calls from base_result
-                        "execution_results": base_result.get("execution_results", []),  # Pass execution_results from new orchestration
+                        "tool_calls": base_result.get(
+                            "tool_calls", []
+                        ),  # Use tool_calls from base_result
+                        "execution_results": base_result.get(
+                            "execution_results", []
+                        ),  # Pass execution_results from new orchestration
                         "used_tools": base_result.get("meta", {}).get("used_tools", []),
                         "blocks_count": len(blocks),
                         "errors": self.errors,
@@ -5641,20 +5741,28 @@ class OpsOrchestratorRunner:
                     applied_assets={},
                     params={
                         "plan_output": plan_output.model_dump(),
-                        "question": self.question
+                        "question": self.question,
                     },
                     prev_output=execute_output.model_dump(),
                     trace_id=trace_id,
                 )
 
                 # Use StageExecutor for compose stage (assets tracked during execution)
-                compose_output = await self._stage_executor.execute_stage(temp_compose_input)
+                compose_output = await self._stage_executor.execute_stage(
+                    temp_compose_input
+                )
 
                 # Compose stage creates composed_result, not blocks
                 # Blocks will be created by present stage
-                compose_result = compose_output.result if hasattr(compose_output, 'result') else compose_output
+                compose_result = (
+                    compose_output.result
+                    if hasattr(compose_output, "result")
+                    else compose_output
+                )
 
-                self.logger.info(f"[GENERIC ORCHESTRATION] Compose stage completed, composed_result keys: {list(compose_result.keys()) if compose_result else []}")
+                self.logger.info(
+                    f"[GENERIC ORCHESTRATION] Compose stage completed, composed_result keys: {list(compose_result.keys()) if compose_result else []}"
+                )
 
                 # Capture assets used during compose stage execution
                 compose_assets = end_stage_asset_tracking()
@@ -5678,14 +5786,16 @@ class OpsOrchestratorRunner:
                     applied_assets={},
                     params={
                         "plan_output": plan_output.model_dump(),
-                        "base_result": base_result
+                        "base_result": base_result,
                     },
                     prev_output=compose_output.model_dump(),
                     trace_id=trace_id,
                 )
 
                 # Use StageExecutor for present stage (assets tracked during execution)
-                present_output = await self._stage_executor.execute_stage(temp_present_input)
+                present_output = await self._stage_executor.execute_stage(
+                    temp_present_input
+                )
 
                 # Capture assets used during present stage execution
                 present_assets = end_stage_asset_tracking()
@@ -5700,16 +5810,24 @@ class OpsOrchestratorRunner:
                 record_stage("present", present_input, present_output)
 
                 # Update blocks and answer from present_output
-                present_result = present_output.result if hasattr(present_output, 'result') else present_output
+                present_result = (
+                    present_output.result
+                    if hasattr(present_output, "result")
+                    else present_output
+                )
                 if present_result:
                     blocks = present_result.get("blocks", [])
                     answer = present_result.get("summary", answer)
-                    base_result.update({
-                        "blocks": blocks,
-                        "answer": answer,
-                    })
+                    base_result.update(
+                        {
+                            "blocks": blocks,
+                            "answer": answer,
+                        }
+                    )
 
-                self.logger.info(f"[GENERIC ORCHESTRATION] Present stage completed, blocks: {len(blocks)}")
+                self.logger.info(
+                    f"[GENERIC ORCHESTRATION] Present stage completed, blocks: {len(blocks)}"
+                )
 
         except Exception as exc:
             self.errors.append(str(exc))
@@ -5728,7 +5846,9 @@ class OpsOrchestratorRunner:
         # Build execution_steps from stage outputs (new orchestration)
         execution_steps = []
         execution_plan_trace = None  # Extract execution_plan_trace from execute stage
-        self.logger.info(f"[DEBUG] Building execution_steps from {len(stage_outputs)} stage_outputs")
+        self.logger.info(
+            f"[DEBUG] Building execution_steps from {len(stage_outputs)} stage_outputs"
+        )
 
         for stage_out in stage_outputs:
             stage_name = stage_out.get("stage")
@@ -5740,8 +5860,12 @@ class OpsOrchestratorRunner:
                 # Extract execution_plan_trace if available (for orchestration visualization)
                 execution_plan_trace = execute_result.get("execution_plan_trace")
 
-                self.logger.info(f"[DEBUG] Found execute stage with {len(execution_results)} execution_results")
-                self.logger.info(f"[DEBUG] execution_plan_trace: {execution_plan_trace is not None}")
+                self.logger.info(
+                    f"[DEBUG] Found execute stage with {len(execution_results)} execution_results"
+                )
+                self.logger.info(
+                    f"[DEBUG] execution_plan_trace: {execution_plan_trace is not None}"
+                )
 
                 # Convert execution_results to execution_steps format
                 for result in execution_results:
@@ -5856,7 +5980,7 @@ class OpsOrchestratorRunner:
                     "strategy": execution_plan_trace.get("strategy"),
                     "total_groups": execution_plan_trace.get("total_groups"),
                     "total_tools": execution_plan_trace.get("total_tools"),
-                }
+                },
             )
             return execution_plan_trace
 
@@ -5925,7 +6049,9 @@ class OpsOrchestratorRunner:
                 for existing_tool in target_group["tools"]:
                     existing_tool_id = existing_tool["tool_id"]
                     # Cannot be in same group if there's a dependency relationship
-                    if existing_tool_id in depends_on or tool_name in existing_tool.get("depends_on", []):
+                    if existing_tool_id in depends_on or tool_name in existing_tool.get(
+                        "depends_on", []
+                    ):
                         can_place_in_group = False
                         break
 
@@ -5933,7 +6059,7 @@ class OpsOrchestratorRunner:
                     # Add to existing group
                     existing_tool = next(
                         (t for t in target_group["tools"] if t["tool_id"] == tool_name),
-                        None
+                        None,
                     )
                     if existing_tool:
                         # Update existing tool with dependency info
@@ -5941,15 +6067,19 @@ class OpsOrchestratorRunner:
                         existing_tool["output_mapping"] = output_mapping
                     else:
                         # Add new tool to group
-                        target_group["tools"].append({
-                            "tool_id": tool_name,
-                            "tool_type": tool_type,
-                            "depends_on": depends_on,
-                            "dependency_groups": [],
-                            "output_mapping": output_mapping,
-                        })
+                        target_group["tools"].append(
+                            {
+                                "tool_id": tool_name,
+                                "tool_type": tool_type,
+                                "depends_on": depends_on,
+                                "dependency_groups": [],
+                                "output_mapping": output_mapping,
+                            }
+                        )
                         # Update parallel_execution flag
-                        target_group["parallel_execution"] = len(target_group["tools"]) > 1
+                        target_group["parallel_execution"] = (
+                            len(target_group["tools"]) > 1
+                        )
                     tools_in_group_map[tool_name] = min_group_index
                     continue
 
@@ -5963,11 +6093,13 @@ class OpsOrchestratorRunner:
                 "output_mapping": output_mapping,
             }
 
-            execution_groups.append({
-                "group_index": group_index,
-                "tools": [new_tool],
-                "parallel_execution": False,  # Will be updated if more tools added
-            })
+            execution_groups.append(
+                {
+                    "group_index": group_index,
+                    "tools": [new_tool],
+                    "parallel_execution": False,  # Will be updated if more tools added
+                }
+            )
             tools_in_group_map[tool_name] = group_index
 
         # Calculate dependency_groups for each tool
@@ -6054,7 +6186,9 @@ class OpsOrchestratorRunner:
             trace_id=trace_id,
         )
 
-    def _distribute_stage_assets(self, stage: str, all_assets: Dict[str, str]) -> Dict[str, str]:
+    def _distribute_stage_assets(
+        self, stage: str, all_assets: Dict[str, str]
+    ) -> Dict[str, str]:
         """Distribute global assets to stage-specific assets based on usage patterns.
 
         Each stage typically uses specific asset types:
@@ -6068,7 +6202,11 @@ class OpsOrchestratorRunner:
             "route_plan": [],  # routing doesn't use assets
             "validate": ["policy", "prompt"],  # validation uses policy and prompt
             "execute": ["queries", "source", "schema"],  # execution uses data sources
-            "compose": ["prompt", "mapping", "resolver"],  # composition uses prompt and resolver
+            "compose": [
+                "prompt",
+                "mapping",
+                "resolver",
+            ],  # composition uses prompt and resolver
             "present": ["prompt"],  # presentation uses prompt
         }
 
@@ -6102,5 +6240,3 @@ class OpsOrchestratorRunner:
             "summary": summary,
             "presented_at": time.time(),
         }
-
-

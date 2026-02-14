@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any, Callable, Literal
 from uuid import uuid4
 
@@ -38,7 +38,6 @@ from app.modules.inspector.service import persist_execution_trace
 # Legacy executors removed for generic orchestration
 # All executor functionality should be implemented as Tool Assets
 from .ops_all_runner import OpsAllRunner
-from .query_decomposition_runner import QueryDecompositionRunner
 from .resolvers import resolve_ci, resolve_time_range
 
 # Legacy executors removed - all use OpsOrchestratorRunner
@@ -85,24 +84,23 @@ def _generate_rag_answer(question: str, context: str, logger: logging.Logger) ->
             return "LLM did not generate a response. Here are the relevant document excerpts found."
 
     except Exception as exc:
-        logger.warning(f"LLM RAG generation failed, falling back to search results: {exc}")
+        logger.warning(
+            f"LLM RAG generation failed, falling back to search results: {exc}"
+        )
         # Fallback: return context snippets as-is
         return f"(LLM unavailable - showing raw search results)\n\n{context}"
 
 
-def execute_universal(
-    question: str, mode: str, tenant_id: str
-) -> ExecutorResult:
+def execute_universal(question: str, mode: str, tenant_id: str) -> ExecutorResult:
     """Universal executor for config, relation, metric, history, hist, graph, and document modes.
 
     Uses the OPS Orchestrator for execution.
     """
-    import asyncio
-
     # Ensure tools are initialized (no-op if already done)
     import app.modules.ops.services.orchestration.tools.registry_init  # noqa: F401
-    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
-    from app.modules.ops.services.orchestration.planner.plan_schema import Plan
+    from app.modules.ops.services.orchestration.orchestrator.runner import (
+        OpsOrchestratorRunner,
+    )
 
     logger = logging.getLogger(__name__)
     logger.info(f"Executing universal mode '{mode}' for question: {question[:100]}")
@@ -126,7 +124,9 @@ def execute_universal(
         )
 
         # Run the orchestrator
-        logger.info(f"Running orchestrator for {mode} mode with question: {question[:80]}")
+        logger.info(
+            f"Running orchestrator for {mode} mode with question: {question[:80]}"
+        )
         result = runner.run(plan_output=None)
         logger.info(
             f"Orchestrator returned result type: {type(result)}, "
@@ -146,7 +146,7 @@ def execute_universal(
             # 2) Extract execution_results from trace for data blocks
             trace_data = result.get("trace", {})
             execution_results = []
-            for stage_out in (trace_data.get("stage_outputs") or []):
+            for stage_out in trace_data.get("stage_outputs") or []:
                 if isinstance(stage_out, dict):
                     sr = stage_out.get("result", {})
                     if isinstance(sr, dict):
@@ -161,20 +161,27 @@ def execute_universal(
                 data_blocks = _build_data_blocks_from_results(execution_results, mode)
                 if data_blocks:
                     blocks.extend(data_blocks)
-                    logger.info(f"Added {len(data_blocks)} data blocks from execution_results")
+                    logger.info(
+                        f"Added {len(data_blocks)} data blocks from execution_results"
+                    )
 
             # 4) Fallback: if no blocks at all, use answer text
             if not blocks and result.get("answer"):
-                blocks = [MarkdownBlock(
-                    type="markdown",
-                    title=f"{mode.capitalize()} Result",
-                    content=str(result["answer"]),
-                )]
+                blocks = [
+                    MarkdownBlock(
+                        type="markdown",
+                        title=f"{mode.capitalize()} Result",
+                        content=str(result["answer"]),
+                    )
+                ]
                 logger.info("Used answer text as markdown fallback")
 
         logger.info(f"Final: {len(blocks)} blocks for {mode} mode")
         meta = result.get("meta", {}) if isinstance(result, dict) else {}
-        used_tools = meta.get("used_tools", result.get("used_tools", []) if isinstance(result, dict) else [])
+        used_tools = meta.get(
+            "used_tools",
+            result.get("used_tools", []) if isinstance(result, dict) else [],
+        )
 
         # Convert AnswerBlock pydantic models to dicts for ExecutorResult
         blocks_as_dicts = []
@@ -187,7 +194,10 @@ def execute_universal(
                 blocks_as_dicts.append({"type": "text", "text": str(b)})
 
         trace = result.get("trace", {}) if isinstance(result, dict) else {}
-        tool_calls_raw = trace.get("tool_calls", result.get("tool_calls", []) if isinstance(result, dict) else [])
+        tool_calls_raw = trace.get(
+            "tool_calls",
+            result.get("tool_calls", []) if isinstance(result, dict) else [],
+        )
         return ExecutorResult(
             blocks=blocks_as_dicts,
             used_tools=used_tools if isinstance(used_tools, list) else [],
@@ -259,10 +269,7 @@ def _create_simple_plan(mode: str, question: str = "") -> Any:
             filters=[],
             top_n=20,
         )
-        primary = PrimarySpec(
-            limit=10,
-            tool_type="ci_lookup"
-        )
+        primary = PrimarySpec(limit=10, tool_type="ci_lookup")
 
     elif mode == "graph":
         # Graph mode: Analyze CI relationships (independent)
@@ -270,11 +277,7 @@ def _create_simple_plan(mode: str, question: str = "") -> Any:
         view = View.NEIGHBORS
         primary = PrimarySpec(limit=5)  # Default, won't execute (no keywords)
         aggregate = AggregateSpec()  # Default empty
-        graph = GraphSpec(
-            depth=2,
-            view=View.NEIGHBORS,
-            tool_type="ci_graph"
-        )
+        graph = GraphSpec(depth=2, view=View.NEIGHBORS, tool_type="ci_graph")
 
     elif mode == "document":
         # Document mode: Document search and RAG
@@ -283,9 +286,7 @@ def _create_simple_plan(mode: str, question: str = "") -> Any:
         # Extract keywords from question for document search
         doc_keywords = [question] if question else []
         primary = PrimarySpec(
-            limit=5,
-            tool_type="document_search",
-            keywords=doc_keywords
+            limit=5, tool_type="document_search", keywords=doc_keywords
         )
         # Add document-specific specs if needed
         aggregate = AggregateSpec()
@@ -333,9 +334,7 @@ def _create_simple_plan(mode: str, question: str = "") -> Any:
     )
 
 
-def _build_data_blocks_from_results(
-    execution_results: list, mode: str
-) -> list:
+def _build_data_blocks_from_results(execution_results: list, mode: str) -> list:
     """Build data blocks (table, graph) from execution_results.
 
     Converts raw tool results into structured blocks for display.
@@ -366,29 +365,31 @@ def _build_data_blocks_from_results(
             table_rows = []
             for row in rows:
                 if isinstance(row, dict):
-                    table_rows.append([
-                        str(row.get(col, "")) for col in columns
-                    ])
+                    table_rows.append([str(row.get(col, "")) for col in columns])
 
             title_map = {
                 "history": "작업이력 / 유지보수 점검 이력",
                 "aggregate": "집계 결과",
             }
-            blocks.append({
-                "type": "table",
-                "title": title_map.get(tool_name, tool_name),
-                "columns": columns,
-                "rows": table_rows,
-            })
+            blocks.append(
+                {
+                    "type": "table",
+                    "title": title_map.get(tool_name, tool_name),
+                    "columns": columns,
+                    "rows": table_rows,
+                }
+            )
 
         # Graph results → network block
         if tool_name == "graph" and (nodes or edges):
-            blocks.append({
-                "type": "network",
-                "title": "CI 관계도",
-                "nodes": nodes,
-                "edges": edges,
-            })
+            blocks.append(
+                {
+                    "type": "network",
+                    "title": "CI 관계도",
+                    "nodes": nodes,
+                    "edges": edges,
+                }
+            )
 
         # Document search results → references block
         if tool_name == "document_search" and data.get("results"):
@@ -419,24 +420,24 @@ def _build_data_blocks_from_results(
                     if params:
                         url += f"?{'&'.join(params)}"
 
-                reference_items.append({
-                    "title": doc_name,
-                    "kind": "document",
-                    "snippet": snippet,
-                    "url": url,
-                    "payload": {
-                        "relevance_score": relevance,
-                        "chunk_id": chunk_id,
-                        "document_id": document_id,
-                        "page_number": page_number
+                reference_items.append(
+                    {
+                        "title": doc_name,
+                        "kind": "document",
+                        "snippet": snippet,
+                        "url": url,
+                        "payload": {
+                            "relevance_score": relevance,
+                            "chunk_id": chunk_id,
+                            "document_id": document_id,
+                            "page_number": page_number,
+                        },
                     }
-                })
+                )
 
-            blocks.append({
-                "type": "references",
-                "title": "근거문서",
-                "items": reference_items
-            })
+            blocks.append(
+                {"type": "references", "title": "근거문서", "items": reference_items}
+            )
 
     return blocks
 
@@ -455,48 +456,68 @@ def _convert_runner_blocks(runner_blocks: list, mode: str) -> list[AnswerBlock]:
         btype = blk.get("type", "")
         try:
             if btype == "text":
-                blocks.append(TextBlock(type="text", text=blk.get("text", ""), title=blk.get("title")))
+                blocks.append(
+                    TextBlock(
+                        type="text", text=blk.get("text", ""), title=blk.get("title")
+                    )
+                )
             elif btype == "markdown":
-                blocks.append(MarkdownBlock(type="markdown", content=blk.get("content", ""), title=blk.get("title")))
+                blocks.append(
+                    MarkdownBlock(
+                        type="markdown",
+                        content=blk.get("content", ""),
+                        title=blk.get("title"),
+                    )
+                )
             elif btype == "table":
-                blocks.append(TableBlock(
-                    type="table",
-                    title=blk.get("title"),
-                    columns=blk.get("columns", []),
-                    rows=blk.get("rows", []),
-                ))
+                blocks.append(
+                    TableBlock(
+                        type="table",
+                        title=blk.get("title"),
+                        columns=blk.get("columns", []),
+                        rows=blk.get("rows", []),
+                    )
+                )
             elif btype == "number":
-                blocks.append(NumberBlock(
-                    type="number",
-                    title=blk.get("title"),
-                    value=float(blk.get("value", 0)),
-                    unit=blk.get("unit"),
-                ))
+                blocks.append(
+                    NumberBlock(
+                        type="number",
+                        title=blk.get("title"),
+                        value=float(blk.get("value", 0)),
+                        unit=blk.get("unit"),
+                    )
+                )
             elif btype == "network":
-                blocks.append(NetworkBlock(
-                    type="network",
-                    title=blk.get("title"),
-                    nodes=blk.get("nodes", []),
-                    edges=blk.get("edges", []),
-                    meta=blk.get("meta", {}),
-                ))
+                blocks.append(
+                    NetworkBlock(
+                        type="network",
+                        title=blk.get("title"),
+                        nodes=blk.get("nodes", []),
+                        edges=blk.get("edges", []),
+                        meta=blk.get("meta", {}),
+                    )
+                )
             elif btype == "path":
-                blocks.append(PathBlock(
-                    type="path",
-                    title=blk.get("title"),
-                    nodes=blk.get("nodes", []),
-                    edges=blk.get("edges", []),
-                    hop_count=blk.get("hop_count", 0),
-                ))
+                blocks.append(
+                    PathBlock(
+                        type="path",
+                        title=blk.get("title"),
+                        nodes=blk.get("nodes", []),
+                        edges=blk.get("edges", []),
+                        hop_count=blk.get("hop_count", 0),
+                    )
+                )
             elif btype == "chart":
-                blocks.append(ChartBlock(
-                    type="chart",
-                    chart_type=blk.get("chart_type", "line"),
-                    title=blk.get("title"),
-                    x=blk.get("x", ""),
-                    series=blk.get("series", []),
-                    meta=blk.get("meta", {}),
-                ))
+                blocks.append(
+                    ChartBlock(
+                        type="chart",
+                        chart_type=blk.get("chart_type", "line"),
+                        title=blk.get("title"),
+                        x=blk.get("x", ""),
+                        series=blk.get("series", []),
+                        meta=blk.get("meta", {}),
+                    )
+                )
             elif btype == "graph":
                 nodes = [
                     GraphNode(
@@ -517,47 +538,70 @@ def _convert_runner_blocks(runner_blocks: list, mode: str) -> list[AnswerBlock]:
                     for e in blk.get("edges", [])
                     if isinstance(e, dict)
                 ]
-                blocks.append(GraphBlock(type="graph", title=blk.get("title"), nodes=nodes, edges=edges))
+                blocks.append(
+                    GraphBlock(
+                        type="graph", title=blk.get("title"), nodes=nodes, edges=edges
+                    )
+                )
             elif btype == "timeseries":
                 series_list = []
                 for s in blk.get("series", []):
-                    points = [TimeSeriesPoint(timestamp=p["timestamp"], value=p["value"]) for p in s.get("data", [])]
-                    series_list.append(TimeSeriesSeries(name=s.get("name"), data=points))
-                blocks.append(TimeSeriesBlock(type="timeseries", title=blk.get("title"), series=series_list))
+                    points = [
+                        TimeSeriesPoint(timestamp=p["timestamp"], value=p["value"])
+                        for p in s.get("data", [])
+                    ]
+                    series_list.append(
+                        TimeSeriesSeries(name=s.get("name"), data=points)
+                    )
+                blocks.append(
+                    TimeSeriesBlock(
+                        type="timeseries", title=blk.get("title"), series=series_list
+                    )
+                )
             elif btype == "references":
                 # Convert references block for document search results
                 reference_items = []
                 for item in blk.get("items", []):
                     if isinstance(item, dict):
-                        reference_items.append(ReferenceItem(
-                            title=item.get("title", ""),
-                            kind=item.get("kind", "unknown"),
-                            snippet=item.get("snippet", ""),
-                            url=item.get("url"),
-                            payload=item.get("payload", {}),
-                        ))
+                        reference_items.append(
+                            ReferenceItem(
+                                title=item.get("title", ""),
+                                kind=item.get("kind", "unknown"),
+                                snippet=item.get("snippet", ""),
+                                url=item.get("url"),
+                                payload=item.get("payload", {}),
+                            )
+                        )
                     elif isinstance(item, ReferenceItem):
                         reference_items.append(item)
-                blocks.append(ReferencesBlock(
-                    type="references",
-                    title=blk.get("title"),
-                    items=reference_items,
-                ))
+                blocks.append(
+                    ReferencesBlock(
+                        type="references",
+                        title=blk.get("title"),
+                        items=reference_items,
+                    )
+                )
             else:
                 # Unknown type: wrap as markdown
-                _log.warning(f"Unknown runner block type '{btype}', wrapping as markdown")
-                blocks.append(MarkdownBlock(
-                    type="markdown",
-                    title=blk.get("title"),
-                    content=str(blk.get("text") or blk.get("content") or blk),
-                ))
+                _log.warning(
+                    f"Unknown runner block type '{btype}', wrapping as markdown"
+                )
+                blocks.append(
+                    MarkdownBlock(
+                        type="markdown",
+                        title=blk.get("title"),
+                        content=str(blk.get("text") or blk.get("content") or blk),
+                    )
+                )
         except Exception as exc:
             _log.warning(f"Failed to convert runner block type={btype}: {exc}")
-            blocks.append(MarkdownBlock(
-                type="markdown",
-                title="Data",
-                content=str(blk),
-            ))
+            blocks.append(
+                MarkdownBlock(
+                    type="markdown",
+                    title="Data",
+                    content=str(blk),
+                )
+            )
 
     return blocks
 
@@ -583,29 +627,53 @@ def _convert_result_to_blocks(result: dict, mode: str) -> list:
                     graph_nodes = []
                     for node in nodes:
                         if isinstance(node, dict):
-                            graph_nodes.append(GraphNode(
-                                id=str(node.get("id", node.get("ci_code", f"n{len(graph_nodes)}"))),
-                                data={"label": str(node.get("label", node.get("ci_name", "Unknown")))},
-                                position={"x": 0.0, "y": 0.0}  # Let frontend handle layout
-                            ))
+                            graph_nodes.append(
+                                GraphNode(
+                                    id=str(
+                                        node.get(
+                                            "id",
+                                            node.get("ci_code", f"n{len(graph_nodes)}"),
+                                        )
+                                    ),
+                                    data={
+                                        "label": str(
+                                            node.get(
+                                                "label", node.get("ci_name", "Unknown")
+                                            )
+                                        )
+                                    },
+                                    position={
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                    },  # Let frontend handle layout
+                                )
+                            )
 
                     graph_edges = []
                     for edge in edges:
                         if isinstance(edge, dict):
-                            graph_edges.append(GraphEdge(
-                                id=str(edge.get("id", f"e{len(graph_edges)}")),
-                                source=str(edge.get("source", edge.get("from", ""))),
-                                target=str(edge.get("target", edge.get("to", ""))),
-                                label=str(edge.get("label", edge.get("relation", "")))
-                            ))
+                            graph_edges.append(
+                                GraphEdge(
+                                    id=str(edge.get("id", f"e{len(graph_edges)}")),
+                                    source=str(
+                                        edge.get("source", edge.get("from", ""))
+                                    ),
+                                    target=str(edge.get("target", edge.get("to", ""))),
+                                    label=str(
+                                        edge.get("label", edge.get("relation", ""))
+                                    ),
+                                )
+                            )
 
                     if graph_nodes:
-                        blocks.append(GraphBlock(
-                            type="graph",
-                            title=f"{tool_id} Graph",
-                            nodes=graph_nodes,
-                            edges=graph_edges
-                        ))
+                        blocks.append(
+                            GraphBlock(
+                                type="graph",
+                                title=f"{tool_id} Graph",
+                                nodes=graph_nodes,
+                                edges=graph_edges,
+                            )
+                        )
                         continue
 
             # Otherwise handle as table data
@@ -625,7 +693,10 @@ def _convert_result_to_blocks(result: dict, mode: str) -> list:
                     table_columns = [str(col) for col in rows[0].keys()]
                 for row in rows:
                     table_rows.append(
-                        ["" if row.get(col) is None else str(row.get(col)) for col in table_columns]
+                        [
+                            "" if row.get(col) is None else str(row.get(col))
+                            for col in table_columns
+                        ]
                     )
             else:
                 if isinstance(columns, list) and columns:
@@ -635,28 +706,36 @@ def _convert_result_to_blocks(result: dict, mode: str) -> list:
                     table_columns = [f"col_{idx + 1}" for idx in range(row_len)]
                 for row in rows:
                     if isinstance(row, (list, tuple)):
-                        table_rows.append(["" if cell is None else str(cell) for cell in row])
+                        table_rows.append(
+                            ["" if cell is None else str(cell) for cell in row]
+                        )
                     else:
                         table_rows.append(["" if row is None else str(row)])
 
-            blocks.append(TableBlock(
-                title=f"{tool_id} Results",
-                columns=table_columns,
-                rows=table_rows,
-            ))
+            blocks.append(
+                TableBlock(
+                    title=f"{tool_id} Results",
+                    columns=table_columns,
+                    rows=table_rows,
+                )
+            )
 
     # If no blocks generated, add a message block
     if not blocks:
-        blocks.append(MarkdownBlock(
-            type="markdown",
-            title="No Results",
-            content=f"No data found for {mode} mode query. The query executed successfully but returned no results."
-        ))
+        blocks.append(
+            MarkdownBlock(
+                type="markdown",
+                title="No Results",
+                content=f"No data found for {mode} mode query. The query executed successfully but returned no results.",
+            )
+        )
 
     return blocks
 
 
-OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph", "document"]
+OpsMode = Literal[
+    "config", "history", "relation", "metric", "all", "hist", "graph", "document"
+]
 
 
 def _get_required_tenant_id(settings: Any) -> str:
@@ -726,7 +805,9 @@ def _serialize_references(
     return serialized
 
 
-def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict[str, Any] | None]:
+def handle_ops_query(
+    mode: OpsMode, question: str
+) -> tuple[AnswerEnvelope, dict[str, Any] | None]:
     settings = get_settings()
     started = time.perf_counter()
     fallback = False
@@ -767,7 +848,9 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
             if status and status != "success":
                 fallback = True
                 if not error:
-                    error = _fallback_error_message(status) or executor_result.summary.get("error", "Unknown error")
+                    error = _fallback_error_message(
+                        status
+                    ) or executor_result.summary.get("error", "Unknown error")
                 # In real mode, do NOT replace with mock blocks
         route_reason = "OPS real mode"
         summary = f"Real mode response for {mode}"
@@ -775,15 +858,19 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
     # Log block generation status
     logger = logging.getLogger(__name__)
     if not blocks:
-        logger.warning(f"Empty blocks returned for {mode} mode (ops_mode={settings.ops_mode})")
+        logger.warning(
+            f"Empty blocks returned for {mode} mode (ops_mode={settings.ops_mode})"
+        )
         # In real mode, don't use fallback - show error instead
         if settings.ops_mode == "real":
             error = error or f"No data available for {mode} mode"
-            blocks = [MarkdownBlock(
-                type="markdown",
-                title="No Data",
-                content=f"❌ Unable to retrieve {mode} mode data.\n\nError: {error}\n\nPlease check:\n- Data availability\n- Query syntax\n- System configuration",
-            )]
+            blocks = [
+                MarkdownBlock(
+                    type="markdown",
+                    title="No Data",
+                    content=f"❌ Unable to retrieve {mode} mode data.\n\nError: {error}\n\nPlease check:\n- Data availability\n- Query syntax\n- System configuration",
+                )
+            ]
             fallback = True
         else:
             # In mock mode, use fallback data
@@ -794,7 +881,9 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
             if not summary:
                 summary = f"Fallback mock data for {mode}"
     else:
-        logger.info(f"Successfully generated {len(blocks)} blocks for {mode} mode (ops_mode={settings.ops_mode})")
+        logger.info(
+            f"Successfully generated {len(blocks)} blocks for {mode} mode (ops_mode={settings.ops_mode})"
+        )
 
     meta = AnswerMeta(
         route=mode,
@@ -886,14 +975,20 @@ def _execute_real_mode(
             # Check if we got meaningful results
             if result.blocks and len(result.blocks) > 0:
                 # Check if we got actual document results (not just error messages)
-                has_references = any(block.get("type") == "references" for block in result.blocks)
+                has_references = any(
+                    block.get("type") == "references" for block in result.blocks
+                )
                 if has_references:
                     return result.blocks, result.used_tools
             # Fallback to direct search if no meaningful results
-            _log.warning("No document results from orchestrator, falling back to direct search")
+            _log.warning(
+                "No document results from orchestrator, falling back to direct search"
+            )
             return _run_document_fallback(question, tenant_id)
         except Exception as exc:
-            _log.warning(f"Document orchestrator failed: {exc}, falling back to direct search")
+            _log.warning(
+                f"Document orchestrator failed: {exc}, falling back to direct search"
+            )
             # Fallback: direct document search
             return _run_document_fallback(question, tenant_id)
 
@@ -928,7 +1023,8 @@ def _normalize_real_result(
 def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
     tenant_id = _get_required_tenant_id(settings)
     try:
-        return run_config_executor(question, tenant_id=tenant_id)
+        result = execute_universal(question, "config", tenant_id)
+        return result.blocks, result.used_tools
     except Exception:
         placeholder_blocks = _build_config_placeholder(question, settings)
         return placeholder_blocks, ["placeholder"]
@@ -938,28 +1034,32 @@ def _run_history(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = _get_required_tenant_id(settings)
-    return run_hist(question, tenant_id=tenant_id)
+    result = execute_universal(question, "history", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def _run_ci_search(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = _get_required_tenant_id(settings)
-    return run_ci_search(question, tenant_id=tenant_id)
+    result = execute_universal(question, "hist", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def _run_graph(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = _get_required_tenant_id(settings)
-    return run_graph(question, tenant_id=tenant_id)
+    result = execute_universal(question, "graph", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def _run_metric(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = _get_required_tenant_id(settings)
-    return run_metric(question, tenant_id=tenant_id)
+    result = execute_universal(question, "metric", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def _run_all(
@@ -971,6 +1071,7 @@ def _run_all(
 
     # Get real document search results
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -983,25 +1084,25 @@ def _run_all(
             for block in doc_result.blocks:
                 if block.get("type") == "references":
                     blocks.append(block)
-                    logger.info(f"Added {len(block.get('items', []))} document references to ALL mode")
+                    logger.info(
+                        f"Added {len(block.get('items', []))} document references to ALL mode"
+                    )
                     break
     except Exception as exc:
         logger.warning(f"Failed to get document results for ALL mode: {exc}")
 
     # Fallback to empty references if no document results
     if not blocks:
-        blocks.append({
-            "type": "references",
-            "title": "근거문서",
-            "items": []
-        })
+        blocks.append({"type": "references", "title": "근거문서", "items": []})
 
     # Add markdown block
-    blocks.append({
-        "type": "markdown",
-        "title": "전체 검색 결과",
-        "content": f"'{question}'에 대한 모드별 검색 결과입니다.\n\n1. **문서 검색**: 문서를 검색합니다\n2. **구성 정보**: CI/CD 파이프라인 상태 확인\n3. **성능 지표**: 시스템 리소스 사용률 모니터링\n\n상세한 내용은 각 섹션의 참조문서를 확인하세요."
-    })
+    blocks.append(
+        {
+            "type": "markdown",
+            "title": "전체 검색 결과",
+            "content": f"'{question}'에 대한 모드별 검색 결과입니다.\n\n1. **문서 검색**: 문서를 검색합니다\n2. **구성 정보**: CI/CD 파이프라인 상태 확인\n3. **성능 지표**: 시스템 리소스 사용률 모니터링\n\n상세한 내용은 각 섹션의 참조문서를 확인하세요.",
+        }
+    )
 
     return blocks, ["document_search", "ci_lookup", "metrics"], None
     # Use intelligent orchestration similar to /ops/ask
@@ -1032,7 +1133,9 @@ def _run_all_orchestration(
 ) -> tuple[list[AnswerBlock], list[str], str | None]:
     """Intelligent orchestration for ALL mode using planner and orchestrator."""
     import app.modules.ops.services.orchestration.tools.registry_init  # noqa: F401
-    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import (
+        OpsOrchestratorRunner,
+    )
     from app.modules.ops.services.orchestration.planner.plan_schema import Plan
 
     logger = logging.getLogger(__name__)
@@ -1071,15 +1174,20 @@ def _run_all_orchestration(
                 # Fallback to answer text
                 answer = result.get("answer")
                 if answer:
-                    blocks = [MarkdownBlock(
-                        type="markdown",
-                        title="ALL Results",
-                        content=str(answer),
-                    )]
+                    blocks = [
+                        MarkdownBlock(
+                            type="markdown",
+                            title="ALL Results",
+                            content=str(answer),
+                        )
+                    ]
 
         # Get metadata
         meta = result.get("meta", {}) if isinstance(result, dict) else {}
-        used_tools = meta.get("used_tools", result.get("used_tools", []) if isinstance(result, dict) else [])
+        used_tools = meta.get(
+            "used_tools",
+            result.get("used_tools", []) if isinstance(result, dict) else [],
+        )
 
         logger.info(f"ALL orchestration completed with {len(blocks)} blocks")
         return list(blocks), used_tools, None
@@ -1142,7 +1250,9 @@ def _create_all_plan(question: str) -> Any:
         )
 
     # Metrics: Include if performance-related keywords
-    if any(kw in question_lower for kw in ["성능", "cpu", "memory", "사용률", "메트릭"]):
+    if any(
+        kw in question_lower for kw in ["성능", "cpu", "memory", "사용률", "메트릭"]
+    ):
         metric = MetricSpec(
             metric_name="cpu_usage",
             agg="max",
@@ -1153,11 +1263,7 @@ def _create_all_plan(question: str) -> Any:
 
     # Graph: Include if relationship/dependency keywords
     if any(kw in question_lower for kw in ["연결", "의존", "영향", "관계", "경로"]):
-        graph = GraphSpec(
-            depth=2,
-            view=View.NEIGHBORS,
-            tool_type="ci_graph"
-        )
+        graph = GraphSpec(depth=2, view=View.NEIGHBORS, tool_type="ci_graph")
         intent = Intent.EXPAND
 
     return Plan(
@@ -1334,7 +1440,9 @@ def _safe_resolve_ci_code(question: str) -> str:
 
 def _safe_resolve_time_range_text(question: str) -> str:
     try:
-        time_range = resolve_time_range(question, datetime.now(get_settings().timezone_offset))
+        time_range = resolve_time_range(
+            question, datetime.now(get_settings().timezone_offset)
+        )
         return f"{time_range.start.isoformat()} ~ {time_range.end.isoformat()} ({time_range.bucket})"
     except Exception:
         logging.debug(
@@ -1357,18 +1465,22 @@ def _build_mock_blocks(mode: OpsMode, question: str) -> list[AnswerBlock]:
         blocks.extend(_mock_metric_blocks(question))
     elif mode == "hist" or mode == "history":
         blocks.append(_mock_table())
-        blocks.append(MarkdownBlock(
-            type="markdown",
-            title="Event Details",
-            content="Recent infrastructure events and changes",
-        ))
+        blocks.append(
+            MarkdownBlock(
+                type="markdown",
+                title="Event Details",
+                content="Recent infrastructure events and changes",
+            )
+        )
     elif mode == "graph" or mode == "relation":
         blocks.append(_mock_graph())
-        blocks.append(MarkdownBlock(
-            type="markdown",
-            title="Dependency Analysis",
-            content="CI relationships and topology visualization",
-        ))
+        blocks.append(
+            MarkdownBlock(
+                type="markdown",
+                title="Dependency Analysis",
+                content="CI relationships and topology visualization",
+            )
+        )
     elif mode == "config":
         blocks.append(_mock_table())
     elif mode == "document":
@@ -1390,7 +1502,9 @@ def _build_mock_blocks(mode: OpsMode, question: str) -> list[AnswerBlock]:
                     ReferenceItem(
                         kind="sql",
                         title="CI Lookup Query",
-                        payload={"query": "SELECT * FROM ci WHERE ci_type = 'SYSTEM' LIMIT 10;"},
+                        payload={
+                            "query": "SELECT * FROM ci WHERE ci_type = 'SYSTEM' LIMIT 10;"
+                        },
                     ),
                     ReferenceItem(
                         kind="cypher",
@@ -1446,15 +1560,21 @@ def _mock_metric_blocks(question: str) -> list[AnswerBlock]:
     blocks: list[AnswerBlock] = []
 
     # Add summary
-    blocks.append(MarkdownBlock(
-        type="markdown",
-        title="Metric Summary",
-        content=f"Metric data for: {question}\n\nShowing CPU usage metrics with trend analysis."
-    ))
+    blocks.append(
+        MarkdownBlock(
+            type="markdown",
+            title="Metric Summary",
+            content=f"Metric data for: {question}\n\nShowing CPU usage metrics with trend analysis.",
+        )
+    )
 
     # Generate more detailed timeseries data for CPU metrics
     # Extract server name from question if possible
-    server_name = "MES Server 06" if "06" in question or "Server 06" in question else "Default Server"
+    server_name = (
+        "MES Server 06"
+        if "06" in question or "Server 06" in question
+        else "Default Server"
+    )
 
     cpu_data = [
         _timeseries_point(now, -120, 35),
@@ -1471,24 +1591,28 @@ def _mock_metric_blocks(question: str) -> list[AnswerBlock]:
         data=cpu_data,
     )
 
-    blocks.append(TimeSeriesBlock(
-        type="timeseries",
-        title=f"{server_name} - CPU Usage (Last 2 Hours)",
-        series=[cpu_series]
-    ))
+    blocks.append(
+        TimeSeriesBlock(
+            type="timeseries",
+            title=f"{server_name} - CPU Usage (Last 2 Hours)",
+            series=[cpu_series],
+        )
+    )
 
     # Add summary table
-    blocks.append(TableBlock(
-        type="table",
-        title="Performance Summary",
-        columns=["Metric", "Current", "Average", "Peak", "Status"],
-        rows=[
-            ["CPU Usage", "62%", "48%", "72%", "Normal"],
-            ["Memory Usage", "58%", "55%", "68%", "Normal"],
-            ["Disk I/O", "24%", "31%", "45%", "Normal"],
-            ["Network I/O", "12%", "18%", "32%", "Normal"],
-        ]
-    ))
+    blocks.append(
+        TableBlock(
+            type="table",
+            title="Performance Summary",
+            columns=["Metric", "Current", "Average", "Peak", "Status"],
+            rows=[
+                ["CPU Usage", "62%", "48%", "72%", "Normal"],
+                ["Memory Usage", "58%", "55%", "68%", "Normal"],
+                ["Disk I/O", "24%", "31%", "45%", "Normal"],
+                ["Network I/O", "12%", "18%", "32%", "Normal"],
+            ],
+        )
+    )
 
     return blocks
 
@@ -1512,9 +1636,21 @@ def _mock_document_results() -> TableBlock:
         title="Document Search Results",
         columns=["Document", "Content Preview", "Relevance"],
         rows=[
-            ["system_architecture.pdf", "System architecture overview with component...", "92%"],
-            ["deployment_guide.md", "Step-by-step deployment instructions for...", "87%"],
-            ["troubleshooting.md", "Common troubleshooting steps and solutions...", "78%"],
+            [
+                "system_architecture.pdf",
+                "System architecture overview with component...",
+                "92%",
+            ],
+            [
+                "deployment_guide.md",
+                "Step-by-step deployment instructions for...",
+                "87%",
+            ],
+            [
+                "troubleshooting.md",
+                "Common troubleshooting steps and solutions...",
+                "78%",
+            ],
         ],
     )
 
@@ -1526,9 +1662,12 @@ def _timeseries_point(
     return TimeSeriesPoint(timestamp=timestamp, value=float(value))
 
 
-def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBlock], list[str]]:
+def _run_document_fallback(
+    question: str, tenant_id: str
+) -> tuple[list[AnswerBlock], list[str]]:
     """Fallback document search using search_crud."""
     import logging
+
     _log = logging.getLogger(__name__)
     from core.db import get_session
 
@@ -1558,7 +1697,9 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
                 content = row["text"]
                 snippet = content[:200] + "..." if len(content) > 200 else content
 
-                _log.info(f"Document search result: {row['filename']}, snippet length: {len(snippet)}")
+                _log.info(
+                    f"Document search result: {row['filename']}, snippet length: {len(snippet)}"
+                )
 
                 # Generate URL - use /api/documents/... for actual file serving
                 url = f"/api/documents/{document_id}/viewer"
@@ -1570,34 +1711,36 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
                 if params:
                     url += f"?{'&'.join(params)}"
 
-                reference_items.append({
-                    "title": row["filename"],
-                    "kind": "document",
-                    "snippet": snippet,
-                    "url": url,
-                    "payload": {
-                        "relevance_score": row["score"],
-                        "chunk_id": chunk_id,
-                        "document_id": document_id,
-                        "page_number": page_number
+                reference_items.append(
+                    {
+                        "title": row["filename"],
+                        "kind": "document",
+                        "snippet": snippet,
+                        "url": url,
+                        "payload": {
+                            "relevance_score": row["score"],
+                            "chunk_id": chunk_id,
+                            "document_id": document_id,
+                            "page_number": page_number,
+                        },
                     }
-                })
+                )
 
-            blocks.append({
-                "type": "references",
-                "title": "참고 문서",
-                "items": reference_items
-            })
+            blocks.append(
+                {"type": "references", "title": "참고 문서", "items": reference_items}
+            )
 
             used_tools.append("document_search")
         else:
             # No results found - provide helpful message
             _log.info(f"No document search results for query: {question[:100]}")
-            blocks.append({
-                "type": "markdown",
-                "title": "검색 결과 없음",
-                "content": f"'{question}'와 일치하는 문서를 찾을 수 없습니다.\n\n검색 팁:\n- 검색어를 간단하게 줄여보세요\n- 다른 키워드로 검색해보세요\n- 오타가 없는지 확인하세요"
-            })
+            blocks.append(
+                {
+                    "type": "markdown",
+                    "title": "검색 결과 없음",
+                    "content": f"'{question}'와 일치하는 문서를 찾을 수 없습니다.\n\n검색 팁:\n- 검색어를 간단하게 줄여보세요\n- 다른 키워드로 검색해보세요\n- 오타가 없는지 확인하세요",
+                }
+            )
 
         session.close()
 
@@ -1605,10 +1748,12 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
         _log = logging.getLogger(__name__)
         _log.warning(f"Document search fallback failed: {exc}")
         # Return error message
-        blocks.append({
-            "type": "markdown",
-            "title": "검색 오류",
-            "content": f"문서 검색 중 오류가 발생했습니다: {str(exc)}"
-        })
+        blocks.append(
+            {
+                "type": "markdown",
+                "title": "검색 오류",
+                "content": f"문서 검색 중 오류가 발생했습니다: {str(exc)}",
+            }
+        )
 
     return blocks, used_tools

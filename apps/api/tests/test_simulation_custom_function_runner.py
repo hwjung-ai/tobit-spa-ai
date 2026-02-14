@@ -4,12 +4,11 @@ import json
 from types import SimpleNamespace
 
 import pytest
-from fastapi import HTTPException
-
 from app.modules.simulation.schemas import SimulationCustomFunctionSpec
 from app.modules.simulation.services.simulation.custom_function_runner import (
     execute_custom_function,
 )
+from fastapi import HTTPException
 
 
 def _spec(**kwargs) -> SimulationCustomFunctionSpec:

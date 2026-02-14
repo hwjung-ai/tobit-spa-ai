@@ -104,11 +104,11 @@ def parse_llm_response(response_text: str) -> dict[str, Any]:
     # Try to extract JSON from the response
     try:
         # Look for JSON object in the response
-        start_idx = response_text.find('{')
-        end_idx = response_text.rfind('}')
+        start_idx = response_text.find("{")
+        end_idx = response_text.rfind("}")
 
         if start_idx >= 0 and end_idx > start_idx:
-            json_str = response_text[start_idx:end_idx + 1]
+            json_str = response_text[start_idx : end_idx + 1]
             parsed = json.loads(json_str)
 
             # Validate expected fields
@@ -133,7 +133,7 @@ def parse_llm_response(response_text: str) -> dict[str, Any]:
         "confidence": 0.0,
         "suggestions": ["Please try again with a more specific request"],
         "request_example": None,
-        "response_example": None
+        "response_example": None,
     }
 
 
@@ -143,7 +143,6 @@ def generate_example_request(api_draft: dict[str, Any]) -> dict[str, Any]:
     Used as fallback when LLM doesn't provide explicit examples.
     """
 
-    method = api_draft.get("method", "GET")
     param_schema = api_draft.get("param_schema", {})
 
     example = {}
@@ -177,6 +176,6 @@ def generate_example_response(api_draft: dict[str, Any]) -> dict[str, Any]:
         "data": {
             "id": "example-id-123",
             "created_at": "2024-02-14T10:30:00Z",
-            "message": "Operation completed successfully"
-        }
+            "message": "Operation completed successfully",
+        },
     }

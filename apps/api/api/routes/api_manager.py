@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from app.modules.auth.models import TbUser
 from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from app.modules.auth.models import TbUser
 from models import ApiDefinition, ApiMode, ApiScope
 from schemas import (
     ApiDefinitionCreate,

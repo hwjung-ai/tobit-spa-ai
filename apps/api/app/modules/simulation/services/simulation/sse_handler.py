@@ -6,29 +6,23 @@ instead of WebSocket.
 """
 from __future__ import annotations
 
-import asyncio
 import json
-from datetime import datetime, timezone
 from typing import Any, AsyncGenerator
 
-from fastapi import HTTPException
-from sqlmodel import Session
-
 from app.modules.simulation.schemas import SimulationRunRequest
-from app.modules.simulation.services.simulation.baseline_loader import load_baseline_and_scenario_kpis
-from app.modules.simulation.services.simulation.planner import plan_simulation
-from app.modules.simulation.services.simulation.schemas import SimulationPlan
-from app.modules.simulation.services.simulation.strategies.ml_strategy_real import (
-    MLPredictiveStrategyReal,
-    create_ml_strategy_real as create_ml_strategy,
-)
-from app.modules.simulation.services.simulation.strategies.dl_strategy_real import (
-    DeepLearningStrategyReal,
-    create_dl_strategy_real as create_dl_strategy,
-)
 from app.modules.simulation.services.simulation import (
     RuleBasedStrategy,
     StatisticalStrategy,
+)
+from app.modules.simulation.services.simulation.baseline_loader import (
+    load_baseline_and_scenario_kpis,
+)
+from app.modules.simulation.services.simulation.planner import plan_simulation
+from app.modules.simulation.services.simulation.strategies.dl_strategy_real import (
+    create_dl_strategy_real as create_dl_strategy,
+)
+from app.modules.simulation.services.simulation.strategies.ml_strategy_real import (
+    create_ml_strategy_real as create_ml_strategy,
 )
 
 
@@ -176,8 +170,12 @@ class SimulationSSEHandler:
                     kpi.simulated = round(scenario_kpis[kpi.kpi], 3)
 
             # Create final result
-            from app.modules.simulation.services.simulation.schemas import SimulationResult
-            from app.modules.simulation.services.simulation.baseline_loader import _estimate_uncertainty
+            from app.modules.simulation.services.simulation.baseline_loader import (
+                _estimate_uncertainty,
+            )
+            from app.modules.simulation.services.simulation.schemas import (
+                SimulationResult,
+            )
 
             confidence_interval, error_bound = _estimate_uncertainty(payload.strategy, confidence)
 
@@ -418,7 +416,9 @@ class FunctionExecutionSSE:
         Stream function execution results via SSE.
         """
         try:
-            from app.modules.simulation.services.simulation.functions import execute_simulation
+            from app.modules.simulation.services.simulation.functions import (
+                execute_simulation,
+            )
 
             yield self._sse_event("progress", {"step": "init", "message": f"Executing function: {function_id}"})
 

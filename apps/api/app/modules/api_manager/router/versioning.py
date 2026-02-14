@@ -7,13 +7,19 @@ from typing import Optional
 from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
-from models.api_definition import ApiAuthMode, ApiDefinition, ApiDefinitionVersion, ApiMode, ApiScope
+from models.api_definition import (
+    ApiAuthMode,
+    ApiDefinition,
+    ApiDefinitionVersion,
+    ApiMode,
+    ApiScope,
+)
 from schemas import ResponseEnvelope
 from sqlmodel import Session, select
 
 from app.modules.auth.models import TbUser
 
-from ..crud import _record_api_version, _api_snapshot, _parse_api_uuid
+from ..crud import _api_snapshot, _parse_api_uuid, _record_api_version
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])

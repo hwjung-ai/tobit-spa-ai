@@ -12,10 +12,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.modules.simulation.services.simulation.metric_loader import (
-    load_baseline_kpis,
-    get_available_services_from_metrics,
     _get_metric_timeseries,
     calculate_baseline_statistics,
+    get_available_services_from_metrics,
+    load_baseline_kpis,
 )
 from core.db import get_session_context
 
@@ -71,11 +71,11 @@ def test_load_baseline_kpis():
                 print(f"   {metric_name:<25} {value:>15.2f} {unit:<10}")
 
         if baseline.get("_source") == "metrics":
-            print(f"\n✅ Data source: metric_timeseries (PostgreSQL)")
+            print("\n✅ Data source: metric_timeseries (PostgreSQL)")
             print(f"   Data points: {baseline.get('_count', 0)}")
         else:
             print(f"\n⚠️  Data source: {baseline.get('_source', 'unknown')}")
-            print(f"   (Using fallback defaults)")
+            print("   (Using fallback defaults)")
 
         return True
 
@@ -106,7 +106,7 @@ def test_calculate_statistics():
     print(f"\n📈 Sample data ({len(sample_data)} points):")
     print(f"   Values: {[d['value'] for d in sample_data]}")
 
-    print(f"\n📊 Statistics:")
+    print("\n📊 Statistics:")
     for agg in aggregations:
         result = calculate_baseline_statistics(sample_data, aggregation=agg)
         print(f"   {agg:<10}: {result:>10.2f}")
@@ -130,12 +130,12 @@ def test_metric_timeseries_query():
                 hours_back=24
             )
 
-            print(f"\n📈 Metric timeseries data:")
+            print("\n📈 Metric timeseries data:")
             for metric_name, records in metric_data.items():
                 print(f"\n   Metric: {metric_name}")
                 print(f"   Records: {len(records)}")
                 if records:
-                    print(f"   Latest values:")
+                    print("   Latest values:")
                     for record in records[-5:]:
                         print(f"     - {record['timestamp']}: {record['value']:.2f} {record.get('unit', '')}")
 

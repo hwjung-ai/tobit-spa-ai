@@ -3,12 +3,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.modules.api_keys.crud import create_api_key
 from app.modules.api_manager import runtime_router as runtime_router_module
 from app.modules.auth.models import TbUser, UserRole
 from core.auth import get_settings as auth_get_settings
+from fastapi.testclient import TestClient
 from main import app
 from models.api_definition import ApiAuthMode, ApiDefinition, ApiMode, ApiScope
 

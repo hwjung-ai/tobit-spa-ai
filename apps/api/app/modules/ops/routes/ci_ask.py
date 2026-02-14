@@ -49,8 +49,11 @@ from app.modules.ops.schemas import (
     RerunContext,
 )
 from app.modules.ops.security import SecurityUtils
+from app.modules.ops.services.control_loop import evaluate_replan
 from app.modules.ops.services.orchestration.blocks import text_block
-from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+from app.modules.ops.services.orchestration.orchestrator.runner import (
+    OpsOrchestratorRunner,
+)
 from app.modules.ops.services.orchestration.planner import planner_llm, validator
 from app.modules.ops.services.orchestration.planner.plan_schema import (
     Intent,
@@ -59,7 +62,6 @@ from app.modules.ops.services.orchestration.planner.plan_schema import (
     PlanOutputKind,
     View,
 )
-from app.modules.ops.services.control_loop import evaluate_replan
 
 from .utils import _tenant_id, apply_patch, generate_references_from_tool_calls
 

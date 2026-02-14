@@ -7,8 +7,10 @@ from typing import Any, Dict
 from sqlmodel import Session
 
 from app.modules.inspector.observability_crud import (
-    collect_ops_summary_stats as _collect_ops_summary_stats_crud,
     collect_observability_metrics as _collect_observability_metrics_crud,
+)
+from app.modules.inspector.observability_crud import (
+    collect_ops_summary_stats as _collect_ops_summary_stats_crud,
 )
 
 

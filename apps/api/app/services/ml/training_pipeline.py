@@ -9,7 +9,6 @@ Provides:
 """
 from __future__ import annotations
 
-import io
 import json
 import logging
 import pickle
@@ -18,9 +17,8 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field
-
 from core.db import get_session_context
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 

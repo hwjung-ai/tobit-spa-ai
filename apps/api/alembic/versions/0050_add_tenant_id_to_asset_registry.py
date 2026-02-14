@@ -4,9 +4,8 @@ Revision ID: 0057_add_tenant_id_to_asset_registry
 Revises: 0056
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "0057_add_tenant_id_to_asset_registry"
 down_revision = "0056"

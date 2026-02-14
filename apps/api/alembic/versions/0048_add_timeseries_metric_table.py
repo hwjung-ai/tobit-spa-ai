@@ -5,10 +5,9 @@ Revises: 0047_add_document_search_indexes
 Create Date: 2026-02-11
 
 """
-from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

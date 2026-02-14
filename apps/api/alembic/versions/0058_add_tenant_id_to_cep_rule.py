@@ -5,9 +5,8 @@ Revises: 0057_add_tenant_id_to_asset_registry
 Create Date: 2026-02-14
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "0058_add_tenant_id_to_cep_rule"
 down_revision = "0057_add_tenant_id_to_asset_registry"

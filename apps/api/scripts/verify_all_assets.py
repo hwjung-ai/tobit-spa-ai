@@ -20,7 +20,9 @@ def main():
     # 1. View Registry
     print("\n1️⃣  View Registry (view_depth)")
     try:
-        from app.modules.ops.services.orchestration.view_registry import get_view_registry
+        from app.modules.ops.services.orchestration.view_registry import (
+            get_view_registry,
+        )
         registry = get_view_registry()
         print(f"   ✅ Loaded {len(registry)} views from DB")
         tests.append(("View Registry", True))
@@ -31,8 +33,12 @@ def main():
     # 2. Tool Limits
     print("\n2️⃣  Tool Limits (tool_limits)")
     try:
-        from app.modules.ops.services.orchestration.tools.ci import _get_limits as ci_limits
-        from app.modules.ops.services.orchestration.tools.graph import _get_limits as graph_limits
+        from app.modules.ops.services.orchestration.tools.ci import (
+            _get_limits as ci_limits,
+        )
+        from app.modules.ops.services.orchestration.tools.graph import (
+            _get_limits as graph_limits,
+        )
         from app.modules.ops.services.orchestration.tools.history import (
             _get_limits as history_limits,
         )
@@ -77,7 +83,9 @@ def main():
     # 4. Column Allowlist
     print("\n4️⃣  Column Allowlist (column_allowlist)")
     try:
-        from app.modules.ops.services.orchestration.tools.ci import _get_column_allowlist
+        from app.modules.ops.services.orchestration.tools.ci import (
+            _get_column_allowlist,
+        )
         allowlist = _get_column_allowlist()
         print(f"   ✅ Search columns: {len(allowlist['search_columns'])}")
         print(f"   ✅ Filter fields: {len(allowlist['filter_fields'])}")

@@ -21,9 +21,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
-
 from core.db import get_session_context
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +279,9 @@ class MetricCollector:
         Returns:
             Number of records saved
         """
-        from app.modules.simulation.services.simulation.metric_models import TbMetricTimeseries
+        from app.modules.simulation.services.simulation.metric_models import (
+            TbMetricTimeseries,
+        )
 
         saved_count = 0
 

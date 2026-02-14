@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from schemas.common import ResponseEnvelope
-from sqlmodel import Session
 
 from ..schemas import (
     ConditionSpec,

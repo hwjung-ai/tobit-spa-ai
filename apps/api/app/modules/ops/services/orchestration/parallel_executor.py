@@ -8,17 +8,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Dict, List, Set
 
 from .runner_base import (
     BaseRunner,
-    RunnerContext,
-    ToolResult,
     OrchestrationResult,
-    ToolExecutionError,
-    RunnerTimeoutError,
+    RunnerContext,
+    RunnerStatus,
+    ToolResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ToolTask:
     """Represents a tool execution task."""
+
     name: str
     params: Dict[str, Any]
     dependencies: List[str] = field(default_factory=list)
@@ -39,6 +38,7 @@ class ToolTask:
 @dataclass
 class ExecutionPlan:
     """Represents an execution plan with phases."""
+
     phases: List[List[ToolTask]]
     total_tasks: int
     estimated_time_ms: float = 0.0
@@ -75,9 +75,7 @@ class DependencyResolver:
         while remaining:
             # Find tasks with no remaining dependencies
             phase = [
-                task_map[name]
-                for name in remaining
-                if current_in_degree[name] == 0
+                task_map[name] for name in remaining if current_in_degree[name] == 0
             ]
 
             if not phase:
@@ -109,8 +107,7 @@ class DependencyResolver:
             phases=phases,
             total_tasks=len(tasks),
             estimated_time_ms=sum(
-                max(t.timeout_seconds for t in phase) * 1000
-                for phase in phases
+                max(t.timeout_seconds for t in phase) * 1000 for phase in phases
             ),
         )
 
@@ -161,8 +158,7 @@ class ParallelExecutor(BaseRunner):
                 # Check for critical failures
                 if self._has_critical_failure(phase_results):
                     return self.complete(
-                        success=False,
-                        error="Critical tool execution failed"
+                        success=False, error="Critical tool execution failed"
                     )
 
             return self.complete(success=True)
@@ -173,11 +169,7 @@ class ParallelExecutor(BaseRunner):
             logger.exception(f"[{self.context.trace_id}] Runner error: {e}")
             return self.complete(success=False, error=str(e))
 
-    async def execute_tool(
-        self,
-        tool_name: str,
-        params: Dict[str, Any]
-    ) -> ToolResult:
+    async def execute_tool(self, tool_name: str, params: Dict[str, Any]) -> ToolResult:
         """Execute a single tool with timeout and retry."""
         start_time = time.time()
 
@@ -185,8 +177,7 @@ class ParallelExecutor(BaseRunner):
             for attempt in range(3):  # Max 3 retries
                 try:
                     result = await asyncio.wait_for(
-                        self.tool_executor(tool_name, params),
-                        timeout=10.0
+                        self.tool_executor(tool_name, params), timeout=10.0
                     )
                     result.execution_time_ms = (time.time() - start_time) * 1000
                     result.tool_name = tool_name
@@ -201,7 +192,7 @@ class ParallelExecutor(BaseRunner):
                         return ToolResult(
                             success=False,
                             tool_name=tool_name,
-                            error=f"Tool timeout after 10s",
+                            error="Tool timeout after 10s",
                             execution_time_ms=(time.time() - start_time) * 1000,
                         )
                     await asyncio.sleep(0.5 * (attempt + 1))
@@ -230,55 +221,68 @@ class ParallelExecutor(BaseRunner):
         tasks = []
 
         if mode in ["all", "config"]:
-            tasks.append(ToolTask(
-                name="ci_lookup",
-                params={"query": self.context.query},
-                priority=10,
-            ))
+            tasks.append(
+                ToolTask(
+                    name="ci_lookup",
+                    params={"query": self.context.query},
+                    priority=10,
+                )
+            )
 
         if mode in ["all", "metric"]:
-            tasks.append(ToolTask(
-                name="metric_query",
-                params={"query": self.context.query},
-                priority=5,
-                dependencies=["ci_lookup"] if "config" in mode or mode == "all" else [],
-            ))
+            tasks.append(
+                ToolTask(
+                    name="metric_query",
+                    params={"query": self.context.query},
+                    priority=5,
+                    dependencies=["ci_lookup"]
+                    if "config" in mode or mode == "all"
+                    else [],
+                )
+            )
 
         if mode in ["all", "hist"]:
-            tasks.append(ToolTask(
-                name="history_query",
-                params={"query": self.context.query},
-                priority=5,
-                dependencies=["ci_lookup"] if "config" in mode or mode == "all" else [],
-            ))
+            tasks.append(
+                ToolTask(
+                    name="history_query",
+                    params={"query": self.context.query},
+                    priority=5,
+                    dependencies=["ci_lookup"]
+                    if "config" in mode or mode == "all"
+                    else [],
+                )
+            )
 
         if mode in ["all", "graph"]:
-            tasks.append(ToolTask(
-                name="graph_query",
-                params={"query": self.context.query},
-                priority=3,
-                dependencies=["ci_lookup"] if "config" in mode or mode == "all" else [],
-            ))
+            tasks.append(
+                ToolTask(
+                    name="graph_query",
+                    params={"query": self.context.query},
+                    priority=3,
+                    dependencies=["ci_lookup"]
+                    if "config" in mode or mode == "all"
+                    else [],
+                )
+            )
 
         return tasks
 
     async def _execute_phase(self, phase: List[ToolTask]) -> List[ToolResult]:
         """Execute a phase of tasks in parallel."""
-        tasks = [
-            self.execute_tool(task.name, task.params)
-            for task in phase
-        ]
+        tasks = [self.execute_tool(task.name, task.params) for task in phase]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Convert exceptions to ToolResult
         processed = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                processed.append(ToolResult(
-                    success=False,
-                    tool_name=phase[i].name,
-                    error=str(result),
-                ))
+                processed.append(
+                    ToolResult(
+                        success=False,
+                        tool_name=phase[i].name,
+                        error=str(result),
+                    )
+                )
                 self.record_result(processed[-1])
             else:
                 self.record_result(result)
@@ -323,7 +327,8 @@ class DependencyAwareExecutor(ParallelExecutor):
             for phase_idx, phase in enumerate(plan.phases):
                 # Skip tasks that depend on failed tasks
                 executable = [
-                    t for t in phase
+                    t
+                    for t in phase
                     if not any(d in self._failed_tasks for d in t.dependencies)
                 ]
 
@@ -347,7 +352,7 @@ class DependencyAwareExecutor(ParallelExecutor):
                 if self.fail_fast and self._failed_tasks:
                     return self.complete(
                         success=False,
-                        error=f"Fail-fast triggered: {self._failed_tasks}"
+                        error=f"Fail-fast triggered: {self._failed_tasks}",
                     )
 
             return self.complete(success=len(self._failed_tasks) == 0)
@@ -362,7 +367,7 @@ class DependencyAwareExecutor(ParallelExecutor):
 def create_parallel_executor(
     context: RunnerContext,
     tool_executor: Callable[[str, Dict[str, Any]], Awaitable[ToolResult]],
-    **kwargs
+    **kwargs,
 ) -> ParallelExecutor:
     """Factory function to create a parallel executor."""
     return ParallelExecutor(context, tool_executor, **kwargs)
@@ -371,7 +376,7 @@ def create_parallel_executor(
 def create_dependency_aware_executor(
     context: RunnerContext,
     tool_executor: Callable[[str, Dict[str, Any]], Awaitable[ToolResult]],
-    **kwargs
+    **kwargs,
 ) -> DependencyAwareExecutor:
     """Factory function to create a dependency-aware executor."""
     return DependencyAwareExecutor(context, tool_executor, **kwargs)

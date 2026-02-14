@@ -20,15 +20,11 @@ from app.modules.auth.models import TbUser
 
 from .crud import (
     count_chunks_by_document,
-    create_chunk,
-    create_chunks,
     create_document,
-    get_document,
     get_document_version_chain,
     get_document_with_lock,
     increment_document_version,
     list_chunks_by_document,
-    list_documents,
 )
 from .services import (
     ChunkingStrategy,
@@ -137,7 +133,9 @@ def _build_document_payload(document: Document, chunk_count: int = 0) -> dict:
         "filename": document.filename,
         "content_type": document.content_type,
         "size": document.size,
-        "status": document.status.value if hasattr(document.status, "value") else str(document.status),
+        "status": document.status.value
+        if hasattr(document.status, "value")
+        else str(document.status),
         "error_message": document.error_message,
         "created_at": document.created_at.isoformat() if document.created_at else None,
         "updated_at": document.updated_at.isoformat() if document.updated_at else None,
@@ -265,7 +263,9 @@ async def upload_document(
 
         return ResponseEnvelope.success(
             data={
-                "document": _build_document_payload(document, chunk_count=created_chunks),
+                "document": _build_document_payload(
+                    document, chunk_count=created_chunks
+                ),
                 "status": "done",
             }
         )
@@ -385,7 +385,9 @@ async def get_document(
             ).all()
         )
         return ResponseEnvelope.success(
-            data={"document": _build_document_payload(document, chunk_count=chunk_count)}
+            data={
+                "document": _build_document_payload(document, chunk_count=chunk_count)
+            }
         )
 
     except HTTPException:
@@ -424,13 +426,13 @@ async def get_document_view(
             raise HTTPException(404, "Document file not found")
 
         # Determine content type and appropriate viewer
-        if document.filename.lower().endswith('.pdf'):
+        if document.filename.lower().endswith(".pdf"):
             # For PDF, return PDF viewer page
             return {
                 "document_id": document_id,
                 "filename": document.filename,
                 "type": "pdf",
-                "url": f"/api/documents/{document_id}/pdf"
+                "url": f"/api/documents/{document_id}/pdf",
             }
         else:
             # For other documents, return text content
@@ -438,7 +440,7 @@ async def get_document_view(
                 "document_id": document_id,
                 "filename": document.filename,
                 "type": "text",
-                "url": f"/api/documents/{document_id}/content"
+                "url": f"/api/documents/{document_id}/content",
             }
 
     except HTTPException:
@@ -565,15 +567,18 @@ async def search_documents(
             if params:
                 document_url += f"?{'&'.join(params)}"
 
-            result_list.append(SearchResultResponse(
-                chunk_id=r.chunk_id,
-                document_id=r.document_id,
-                document_name=r.document_name,
-                chunk_text=r.chunk_text,
-                page_number=r.page_number,
-                relevance_score=r.relevance_score,
-                chunk_type=r.chunk_type,
-            ).model_dump() | {"url": document_url})
+            result_list.append(
+                SearchResultResponse(
+                    chunk_id=r.chunk_id,
+                    document_id=r.document_id,
+                    document_name=r.document_name,
+                    chunk_text=r.chunk_text,
+                    page_number=r.page_number,
+                    relevance_score=r.relevance_score,
+                    chunk_type=r.chunk_type,
+                ).model_dump()
+                | {"url": document_url}
+            )
 
         return ResponseEnvelope.success(
             data={
@@ -614,7 +619,9 @@ async def search_suggestions(
         # Get search service
         search_svc = DocumentSearchService(db_session=session)
 
-        suggestions = search_svc.get_search_suggestions(prefix, limit, tenant_id=tenant_id)
+        suggestions = search_svc.get_search_suggestions(
+            prefix, limit, tenant_id=tenant_id
+        )
 
         return ResponseEnvelope.success(
             data={
@@ -765,7 +772,9 @@ async def share_document(
     document_id: str,
     user_id: str = Query(..., description="Target user ID to share with"),
     access_type: str = Query("read", description="Access level: read, download, share"),
-    expires_in_days: Optional[int] = Query(None, description="Expiration in days (optional)"),
+    expires_in_days: Optional[int] = Query(
+        None, description="Expiration in days (optional)"
+    ),
     current_user: TbUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -784,13 +793,13 @@ async def share_document(
         # Validate inputs
         if not user_id:
             raise HTTPException(400, detail="user_id required")
-        
+
         if access_type not in ["read", "download", "share"]:
             raise HTTPException(400, detail=f"Invalid access_type: {access_type}")
 
         tenant_id = _tenant_id_from_user(current_user)
         current_user_id = _user_id_from_user(current_user)
-        
+
         logger.info(
             f"Sharing document {document_id} with user {user_id}, "
             f"access={access_type}, expires_in={expires_in_days} days"
@@ -803,50 +812,60 @@ async def share_document(
             .where(Document.tenant_id == tenant_id)
             .where(Document.deleted_at.is_(None))
         ).first()
-        
+
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
-        
+
         if document.user_id != current_user_id:
-            raise HTTPException(status_code=403, detail="You don't have permission to share this document")
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to share this document",
+            )
 
         # Check if target user exists and is in same tenant
         from app.modules.auth.models import TbUser
+
         target_user = session.get(TbUser, user_id)
-        
+
         if not target_user:
             raise HTTPException(status_code=404, detail="Target user not found")
-        
+
         if target_user.tenant_id != tenant_id:
             raise HTTPException(status_code=403, detail="Cannot share across tenants")
 
         # Calculate expiration date
         expires_at = None
         if expires_in_days:
-            expires_at = datetime.now(timezone.utc) + timezone.timedelta(days=expires_in_days)
+            expires_at = datetime.now(timezone.utc) + timezone.timedelta(
+                days=expires_in_days
+            )
 
         # Store share metadata in document.doc_metadata
         share_metadata = document.doc_metadata or {}
         shares = share_metadata.get("shares", [])
-        
+
         # Check if already shared
         existing_share = next((s for s in shares if s.get("user_id") == user_id), None)
         if existing_share:
             # Update existing share
             existing_share["access_type"] = access_type
-            existing_share["expires_at"] = expires_at.isoformat() if expires_at else None
+            existing_share["expires_at"] = (
+                expires_at.isoformat() if expires_at else None
+            )
             existing_share["updated_at"] = datetime.now(timezone.utc).isoformat()
         else:
             # Add new share
-            shares.append({
-                "user_id": user_id,
-                "user_email": getattr(target_user, "email", ""),
-                "access_type": access_type,
-                "expires_at": expires_at.isoformat() if expires_at else None,
-                "shared_by": current_user_id,
-                "shared_at": datetime.now(timezone.utc).isoformat(),
-            })
-        
+            shares.append(
+                {
+                    "user_id": user_id,
+                    "user_email": getattr(target_user, "email", ""),
+                    "access_type": access_type,
+                    "expires_at": expires_at.isoformat() if expires_at else None,
+                    "shared_by": current_user_id,
+                    "shared_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+
         document.doc_metadata = {
             **share_metadata,
             "shares": shares,
@@ -863,7 +882,7 @@ async def share_document(
                 "access_type": access_type,
                 "expires_at": expires_at.isoformat() if expires_at else None,
             },
-            message=f"Document shared successfully with user {user_id}"
+            message=f"Document shared successfully with user {user_id}",
         )
 
     except HTTPException:
@@ -895,7 +914,9 @@ async def export_document(
             raise HTTPException(400, f"Unsupported format: {format}")
 
         tenant_id = _tenant_id_from_user(current_user)
-        logger.info(f"Exporting document {document_id} as {format} (tenant={tenant_id})")
+        logger.info(
+            f"Exporting document {document_id} as {format} (tenant={tenant_id})"
+        )
 
         # Get document
         document = session.exec(
@@ -904,7 +925,7 @@ async def export_document(
             .where(Document.tenant_id == tenant_id)
             .where(Document.deleted_at.is_(None))
         ).first()
-        
+
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
 
@@ -914,7 +935,7 @@ async def export_document(
             .where(DocumentChunk.document_id == document_id)
             .order_by(DocumentChunk.chunk_index.asc())
         ).all()
-        
+
         if not chunks:
             raise HTTPException(404, detail="No chunks found for this document")
 
@@ -922,7 +943,7 @@ async def export_document(
         import io
 
         from fastapi.responses import StreamingResponse
-        
+
         if format == "json":
             # JSON format: structured export with metadata
             export_data = {
@@ -931,7 +952,9 @@ async def export_document(
                     "filename": document.filename,
                     "format": document.format,
                     "size": document.size,
-                    "created_at": document.created_at.isoformat() if document.created_at else None,
+                    "created_at": document.created_at.isoformat()
+                    if document.created_at
+                    else None,
                     "total_chunks": len(chunks),
                 },
                 "chunks": [
@@ -946,68 +969,82 @@ async def export_document(
                         "chunk_version": chunk.chunk_version,
                     }
                     for chunk in chunks
-                ]
+                ],
             }
-            
+
             import json
+
             output = io.StringIO()
             json.dump(export_data, output, ensure_ascii=False, indent=2)
             output.seek(0)
-            
+
             return StreamingResponse(
-                io.BytesIO(output.getvalue().encode('utf-8')),
+                io.BytesIO(output.getvalue().encode("utf-8")),
                 media_type="application/json",
                 headers={
                     "Content-Disposition": f'attachment; filename="{document.filename}.json"'
-                }
+                },
             )
-        
+
         elif format == "csv":
             # CSV format: spreadsheet-friendly
             import csv
-            
+
             output = io.StringIO()
             writer = csv.writer(output)
-            
+
             # Header
-            writer.writerow([
-                "chunk_index", "page_number", "page", 
-                "chunk_type", "text", "position_in_doc", "chunk_version"
-            ])
-            
+            writer.writerow(
+                [
+                    "chunk_index",
+                    "page_number",
+                    "page",
+                    "chunk_type",
+                    "text",
+                    "position_in_doc",
+                    "chunk_version",
+                ]
+            )
+
             # Rows
             for chunk in chunks:
-                writer.writerow([
-                    chunk.chunk_index,
-                    chunk.page_number or "",
-                    chunk.page or "",
-                    chunk.chunk_type,
-                    chunk.text.replace("\n", " ").replace("\r", ""),  # Escape newlines
-                    chunk.position_in_doc,
-                    chunk.chunk_version,
-                ])
-            
+                writer.writerow(
+                    [
+                        chunk.chunk_index,
+                        chunk.page_number or "",
+                        chunk.page or "",
+                        chunk.chunk_type,
+                        chunk.text.replace("\n", " ").replace(
+                            "\r", ""
+                        ),  # Escape newlines
+                        chunk.position_in_doc,
+                        chunk.chunk_version,
+                    ]
+                )
+
             output.seek(0)
-            
+
             return StreamingResponse(
-                io.BytesIO(output.getvalue().encode('utf-8')),
+                io.BytesIO(output.getvalue().encode("utf-8")),
                 media_type="text/csv",
                 headers={
                     "Content-Disposition": f'attachment; filename="{document.filename}.csv"'
-                }
+                },
             )
-        
+
         elif format == "markdown":
             # Markdown format: readable with headers
             output = io.StringIO()
-            
+
             output.write(f"# {document.filename}\n\n")
             output.write(f"**Format:** {document.format}\n")
             output.write(f"**Size:** {document.size} bytes\n")
             output.write(f"**Total Chunks:** {len(chunks)}\n")
-            output.write(f"**Created:** {document.created_at.isoformat() if document.created_at else 'N/A'}\n\n")
+            output.write(
+                f"**Created:** {document.created_at.isoformat() if document.created_at else 'N/A'}\n\n"
+            )
             output.write("---\n\n")
-            
+
             for chunk in chunks:
                 header = f"## Chunk {chunk.chunk_index}"
                 if chunk.page_number:
@@ -1015,33 +1052,33 @@ async def export_document(
                 output.write(f"{header}\n\n")
                 output.write(f"{chunk.text}\n\n")
                 output.write("---\n\n")
-            
+
             output.seek(0)
-            
+
             return StreamingResponse(
-                io.BytesIO(output.getvalue().encode('utf-8')),
+                io.BytesIO(output.getvalue().encode("utf-8")),
                 media_type="text/markdown",
                 headers={
                     "Content-Disposition": f'attachment; filename="{document.filename}.md"'
-                }
+                },
             )
-        
+
         elif format == "text":
             # Plain text format: simple concatenation
             output = io.StringIO()
-            
+
             for chunk in chunks:
                 output.write(chunk.text)
                 output.write("\n\n")
-            
+
             output.seek(0)
-            
+
             return StreamingResponse(
-                io.BytesIO(output.getvalue().encode('utf-8')),
+                io.BytesIO(output.getvalue().encode("utf-8")),
                 media_type="text/plain",
                 headers={
                     "Content-Disposition": f'attachment; filename="{document.filename}.txt"'
-                }
+                },
             )
 
     except HTTPException:
@@ -1086,7 +1123,7 @@ async def get_document_viewer(
         return FileResponse(
             path=str(storage_path),
             filename=document.filename,
-            media_type=document.content_type or "application/octet-stream"
+            media_type=document.content_type or "application/octet-stream",
         )
 
     except HTTPException:
@@ -1120,9 +1157,11 @@ async def query_document_stream(
     - done: Final message with references
     - error: Error message
     """
-    from fastapi.responses import StreamingResponse
-    from .search_crud import search_chunks_by_text
     import json
+
+    from fastapi.responses import StreamingResponse
+
+    from .search_crud import search_chunks_by_text
 
     async def event_generator():
         try:
@@ -1147,7 +1186,9 @@ async def query_document_stream(
                 yield f"data: {json.dumps({'type': 'error', 'text': 'Query is required'})}\n\n"
                 return
 
-            logger.info(f"Document query: document_id={document_id}, query='{query[:50]}', top_k={top_k}")
+            logger.info(
+                f"Document query: document_id={document_id}, query='{query[:50]}', top_k={top_k}"
+            )
 
             # Search for relevant chunks in this specific document
             results = search_chunks_by_text(
@@ -1158,10 +1199,12 @@ async def query_document_stream(
             )
 
             # Filter to only chunks from this document
-            document_results = [r for r in results if r["document_id"] == document_id][:top_k]
+            document_results = [r for r in results if r["document_id"] == document_id][
+                :top_k
+            ]
 
             if not document_results:
-                yield f"data: {json.dumps({'type': 'summary', 'text': f'문서 \"{document.filename}\"에서 \"{query}\"에 관한 내용을 찾을 수 없습니다.'})}\n\n"
+                yield f"data: {json.dumps({'type': 'summary', 'text': f'문서 "{document.filename}"에서 "{query}"에 관한 내용을 찾을 수 없습니다.'})}\n\n"
                 yield f"data: {json.dumps({'type': 'detail', 'text': '검색어를 바꾸거나 다른 문서를 시도해보세요.'})}\n\n"
                 yield f"data: {json.dumps({'type': 'answer', 'text': '죄송합니다. 검색 결과가 없습니다.'})}\n\n"
                 yield f"data: {json.dumps({'type': 'done', 'meta': {'references': [], 'chunks': []}})}\n\n"
@@ -1177,25 +1220,26 @@ async def query_document_stream(
                 chunk_id = row["id"]
                 page_number = row["page_number"]
 
-                chunk_infos.append({
-                    "chunk_id": chunk_id,
-                    "page": page_number
-                })
+                chunk_infos.append({"chunk_id": chunk_id, "page": page_number})
 
-                references.append({
-                    "document_id": document_id,
-                    "document_title": document.filename,
-                    "chunk_id": chunk_id,
-                    "page": page_number,
-                    "snippet": chunk_text[:200] + "..." if len(chunk_text) > 200 else chunk_text,
-                    "score": row["score"]
-                })
+                references.append(
+                    {
+                        "document_id": document_id,
+                        "document_title": document.filename,
+                        "chunk_id": chunk_id,
+                        "page": page_number,
+                        "snippet": chunk_text[:200] + "..."
+                        if len(chunk_text) > 200
+                        else chunk_text,
+                        "score": row["score"],
+                    }
+                )
 
             # Send summary
-            yield f"data: {json.dumps({'type': 'summary', 'text': f'문서 \"{document.filename}\"에서 {len(document_results)}개의 관련 내용을 찾았습니다.'})}\n\n"
+            yield f"data: {json.dumps({'type': 'summary', 'text': f'문서 "{document.filename}"에서 {len(document_results)}개의 관련 내용을 찾았습니다.'})}\n\n"
 
             # Send detail
-            score_val = document_results[0].get('score', 0.0)
+            score_val = document_results[0].get("score", 0.0)
             detail_text = f'검색어: "{query}"\n발견된 청크: {len(document_results)}개\n관련성: {score_val:.2f}'
             yield f"data: {json.dumps({'type': 'detail', 'text': detail_text})}\n\n"
 
@@ -1204,7 +1248,7 @@ async def query_document_stream(
             answer_parts = [answer_template.format(doc_name=document.filename)]
 
             for i, ref in enumerate(references, 1):
-                page_info = f"{ref['page']}페이지" if ref['page'] else "페이지 미확인"
+                page_info = f"{ref['page']}페이지" if ref["page"] else "페이지 미확인"
                 answer_parts.append(f"{i}. ({page_info}) {ref['snippet']}\n")
 
             answer = "".join(answer_parts)
@@ -1230,7 +1274,7 @@ async def query_document_stream(
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-        }
+        },
     )
 
 
@@ -1271,10 +1315,14 @@ async def get_chunk_detail(
                     "page": chunk.page,
                     "page_number": chunk.page_number,
                     "text": chunk.text,
-                    "snippet": chunk.text[:200] + "..." if len(chunk.text) > 200 else chunk.text,
+                    "snippet": chunk.text[:200] + "..."
+                    if len(chunk.text) > 200
+                    else chunk.text,
                     "chunk_type": chunk.chunk_type,
                     "position_in_doc": chunk.position_in_doc,
-                    "created_at": chunk.created_at.isoformat() if chunk.created_at else None,
+                    "created_at": chunk.created_at.isoformat()
+                    if chunk.created_at
+                    else None,
                 }
             }
         )

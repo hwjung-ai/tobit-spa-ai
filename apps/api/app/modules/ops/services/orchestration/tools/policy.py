@@ -9,7 +9,7 @@ P0-2: Tool 실행 정책 가드레일 추가
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any

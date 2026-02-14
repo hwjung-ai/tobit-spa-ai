@@ -1,6 +1,7 @@
 """API Manager Copilot API Schemas."""
 
-from typing import Any, Optional, Literal
+from typing import Any, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 

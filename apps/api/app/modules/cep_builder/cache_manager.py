@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 try:
     import redis.asyncio as redis
     from redis.asyncio import Redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -202,11 +203,11 @@ class CacheManager:
             filters.append(f"channel={channel}")
 
         key = "notifications_list" + (":" + ":".join(filters) if filters else "")
-        return await self.set(
-            key, notifications_data, CACHE_TTL["notifications_list"]
-        )
+        return await self.set(key, notifications_data, CACHE_TTL["notifications_list"])
 
-    async def get_notification_detail(self, notification_id: str) -> Optional[Dict[str, Any]]:
+    async def get_notification_detail(
+        self, notification_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get cached notification detail"""
         return await self.get(f"notification:{notification_id}")
 
@@ -246,9 +247,7 @@ class CacheManager:
         """Get cached rule execution statistics"""
         return await self.get(f"rule_stats:{rule_id}")
 
-    async def set_rule_stats(
-        self, rule_id: str, stats_data: Dict[str, Any]
-    ) -> bool:
+    async def set_rule_stats(self, rule_id: str, stats_data: Dict[str, Any]) -> bool:
         """Cache rule execution statistics"""
         return await self.set(
             f"rule_stats:{rule_id}",
@@ -354,16 +353,8 @@ def with_cache(
             if not cache_manager or not cache_manager.available:
                 return func(*args, **kwargs)
 
-            # Generate cache key
-            if key_builder:
-                key = key_builder(*args, **kwargs)
-            else:
-                key = f"{func.__name__}:{cache_key(*args, **kwargs)}"
-
-            # Try to get from cache
-            cached_result = None
+            # For sync functions, we don't cache (requires async context)
             if cache_manager.redis_client:
-                # For sync functions, we don't cache (requires async context)
                 pass
 
             # Call function

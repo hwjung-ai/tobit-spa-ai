@@ -2,20 +2,19 @@
 
 import logging
 import uuid as _uuid
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, HTTPException
-from schemas import ResponseEnvelope
-from sqlmodel import Session
 
 from core.auth import get_current_user
 from core.db import get_session
+from fastapi import APIRouter, Depends
+from schemas import ResponseEnvelope
+from sqlmodel import Session
+
 from app.modules.auth.models import TbUser
 
-from .schemas import ScreenCopilotRequest, ScreenCopilotResponse
-from .service import get_screen_copilot_service
-from .api_copilot_schemas import ApiCopilotRequest, ApiCopilotResponse
+from .api_copilot_schemas import ApiCopilotRequest
 from .api_copilot_service import get_api_copilot_service
+from .schemas import ScreenCopilotRequest
+from .service import get_screen_copilot_service
 
 logger = logging.getLogger(__name__)
 
@@ -30,41 +29,42 @@ async def generate_screen_patch(
 ) -> ResponseEnvelope:
     """
     Generate JSON Patch operations for screen modification using AI.
-    
+
     Takes a screen schema and natural language prompt, returns JSON Patch
     operations that can be applied to modify the screen.
-    
+
     Requires authentication.
     """
     try:
         # Get service
         service = get_screen_copilot_service()
-        
+
         # Generate patch
         response = await service.generate_patch(
             request=request,
             trace_id=str(_uuid.uuid4()),
             user_id=str(current_user.id) if current_user else None,
         )
-        
+
         # Validate patch
         if response.patch:
             errors = service.validate_patch(response.patch, request.screen_schema)
             if errors:
                 logger.warning(f"Patch validation errors: {errors}")
                 # Still return the patch but with warnings
-                response.suggestions = response.suggestions + [f"Warning: {e}" for e in errors]
-        
+                response.suggestions = response.suggestions + [
+                    f"Warning: {e}" for e in errors
+                ]
+
         return ResponseEnvelope.success(
             data=response.model_dump(),
-            message=response.explanation or "Patch generated successfully"
+            message=response.explanation or "Patch generated successfully",
         )
-        
+
     except Exception as e:
         logger.error(f"Screen copilot error: {e}", exc_info=True)
         return ResponseEnvelope.error(
-            message=f"Failed to generate patch: {str(e)}",
-            error_code="AI_SERVICE_ERROR"
+            message=f"Failed to generate patch: {str(e)}", error_code="AI_SERVICE_ERROR"
         )
 
 
@@ -75,27 +75,25 @@ async def validate_screen_patch(
 ) -> ResponseEnvelope:
     """
     Validate a screen schema without generating patches.
-    
+
     Returns validation result and suggestions for improvement.
     """
     try:
-        service = get_screen_copilot_service()
-        
         # Basic validation
         schema = request.screen_schema
         errors = []
         suggestions = []
-        
+
         # Check required fields
         if not schema.get("screen_id"):
             errors.append("Missing required field: screen_id")
-        
+
         if not schema.get("components"):
             errors.append("Missing or empty components array")
-        
+
         if not schema.get("layout"):
             errors.append("Missing required field: layout")
-        
+
         # Check component IDs
         component_ids = set()
         for i, comp in enumerate(schema.get("components", [])):
@@ -106,26 +104,25 @@ async def validate_screen_patch(
                 errors.append(f"Duplicate component id: {comp_id}")
             else:
                 component_ids.add(comp_id)
-        
+
         # Generate suggestions
         if not errors:
             suggestions.append("Schema looks valid!")
         else:
             suggestions.append("Fix the validation errors above")
-        
+
         return ResponseEnvelope.success(
             data={
                 "valid": len(errors) == 0,
                 "errors": errors,
-                "suggestions": suggestions
+                "suggestions": suggestions,
             }
         )
-        
+
     except Exception as e:
         logger.error(f"Validation error: {e}", exc_info=True)
         return ResponseEnvelope.error(
-            message=f"Validation failed: {str(e)}",
-            error_code="VALIDATION_ERROR"
+            message=f"Validation failed: {str(e)}", error_code="VALIDATION_ERROR"
         )
 
 
@@ -159,20 +156,23 @@ async def generate_api(
             errors, warnings = service.validate_api_draft(response.api_draft)
             if errors:
                 logger.warning(f"API draft validation errors: {errors}")
-                response.suggestions = response.suggestions + [f"Error: {e}" for e in errors]
+                response.suggestions = response.suggestions + [
+                    f"Error: {e}" for e in errors
+                ]
             if warnings:
-                response.suggestions = response.suggestions + [f"Warning: {w}" for w in warnings]
+                response.suggestions = response.suggestions + [
+                    f"Warning: {w}" for w in warnings
+                ]
 
         return ResponseEnvelope.success(
             data=response.model_dump(),
-            message=response.explanation or "API generated successfully"
+            message=response.explanation or "API generated successfully",
         )
 
     except Exception as e:
         logger.error(f"API copilot error: {e}", exc_info=True)
         return ResponseEnvelope.error(
-            message=f"Failed to generate API: {str(e)}",
-            error_code="AI_SERVICE_ERROR"
+            message=f"Failed to generate API: {str(e)}", error_code="AI_SERVICE_ERROR"
         )
 
 
@@ -197,13 +197,14 @@ async def validate_api_draft(
                 "valid": len(errors) == 0,
                 "errors": errors,
                 "warnings": warnings,
-                "suggestions": [f"Fix these errors" if errors else "API draft looks good!"]
+                "suggestions": [
+                    "Fix these errors" if errors else "API draft looks good!"
+                ],
             }
         )
 
     except Exception as e:
         logger.error(f"API validation error: {e}", exc_info=True)
         return ResponseEnvelope.error(
-            message=f"Validation failed: {str(e)}",
-            error_code="VALIDATION_ERROR"
+            message=f"Validation failed: {str(e)}", error_code="VALIDATION_ERROR"
         )

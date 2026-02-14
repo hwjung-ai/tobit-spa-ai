@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import pytest
 from importlib import import_module
+
+import pytest
 from app.modules.auth.models import TbUser, UserRole
 from core.auth import get_current_user
 from fastapi.testclient import TestClient

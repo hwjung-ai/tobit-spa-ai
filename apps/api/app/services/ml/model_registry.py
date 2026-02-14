@@ -7,6 +7,7 @@ Provides:
 - Model versioning
 - Active model management
 """
+
 from __future__ import annotations
 
 import json
@@ -15,8 +16,9 @@ import pickle
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
-from sqlmodel import Column, Field as SQLField, SQLModel, Text
+from pydantic import BaseModel
+from sqlmodel import Column, SQLModel, Text
+from sqlmodel import Field as SQLField
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,7 @@ class TbMLModel(SQLModel, table=True):
 
     Stores trained model metadata and serialized model blobs.
     """
+
     __tablename__ = "tb_ml_models"
 
     id: Optional[int] = SQLField(default=None, primary_key=True)
@@ -63,6 +66,7 @@ class TbMLModel(SQLModel, table=True):
 
 class ModelInfo(BaseModel):
     """Model information summary"""
+
     model_key: str
     tenant_id: str
     service: str
@@ -178,9 +182,11 @@ class ModelRegistry:
         from core.db import get_session_context
 
         with get_session_context() as session:
-            db_model = session.query(TbMLModel).filter(
-                TbMLModel.model_key == model_key
-            ).first()
+            db_model = (
+                session.query(TbMLModel)
+                .filter(TbMLModel.model_key == model_key)
+                .first()
+            )
 
             if not db_model:
                 logger.warning(f"Model not found: {model_key}")
@@ -214,12 +220,17 @@ class ModelRegistry:
         from core.db import get_session_context
 
         with get_session_context() as session:
-            db_model = session.query(TbMLModel).filter(
-                TbMLModel.tenant_id == tenant_id,
-                TbMLModel.service == service,
-                TbMLModel.model_type == model_type,
-                TbMLModel.is_active == True,
-            ).order_by(TbMLModel.created_at.desc()).first()
+            db_model = (
+                session.query(TbMLModel)
+                .filter(
+                    TbMLModel.tenant_id == tenant_id,
+                    TbMLModel.service == service,
+                    TbMLModel.model_type == model_type,
+                    TbMLModel.is_active,
+                )
+                .order_by(TbMLModel.created_at.desc())
+                .first()
+            )
 
             if not db_model:
                 return None
@@ -266,9 +277,7 @@ class ModelRegistry:
         from core.db import get_session_context
 
         with get_session_context() as session:
-            query = session.query(TbMLModel).filter(
-                TbMLModel.tenant_id == tenant_id
-            )
+            query = session.query(TbMLModel).filter(TbMLModel.tenant_id == tenant_id)
 
             if service:
                 query = query.filter(TbMLModel.service == service)
@@ -317,9 +326,11 @@ class ModelRegistry:
 
         with get_session_context() as session:
             # Find the model
-            model = session.query(TbMLModel).filter(
-                TbMLModel.model_key == model_key
-            ).first()
+            model = (
+                session.query(TbMLModel)
+                .filter(TbMLModel.model_key == model_key)
+                .first()
+            )
 
             if not model:
                 logger.warning(f"Model not found for activation: {model_key}")
@@ -356,9 +367,11 @@ class ModelRegistry:
         from core.db import get_session_context
 
         with get_session_context() as session:
-            model = session.query(TbMLModel).filter(
-                TbMLModel.model_key == model_key
-            ).first()
+            model = (
+                session.query(TbMLModel)
+                .filter(TbMLModel.model_key == model_key)
+                .first()
+            )
 
             if not model:
                 logger.warning(f"Model not found for deletion: {model_key}")

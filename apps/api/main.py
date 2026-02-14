@@ -14,8 +14,10 @@ from api.routes.health import router as health_router
 from api.routes.hello import router as hello_router
 from api.routes.history import router as history_router
 from api.routes.threads import router as thread_router
+from app.core.exception_handlers import register_exception_handlers
 from app.modules.admin.routes.logs import router as admin_logs_router
 from app.modules.admin_dashboard.router import router as admin_dashboard_router
+from app.modules.ai.router import router as ai_router
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
@@ -29,10 +31,12 @@ from app.modules.ci_management.router import router as ci_management_router
 from app.modules.data_explorer import router as data_explorer_router
 from app.modules.document_processor.router import router as document_processor_router
 from app.modules.inspector.router import router as inspector_router
-from app.modules.ai.router import router as ai_router
 from app.modules.llm.router import router as llm_logs_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.ops.router import router as ops_router
+from app.modules.ops.services.domain.registry_init import (
+    initialize_domain_planners,  # noqa: E402
+)
 from app.modules.ops.services.orchestration.mappings.registry_init import (
     initialize_mappings,  # noqa: E402
 )
@@ -41,15 +45,12 @@ from app.modules.ops.services.orchestration.mappings.registry_init import (
 from app.modules.ops.services.orchestration.tools.registry_init import (
     initialize_tools,  # noqa: E402
 )
-from app.modules.ops.services.domain.registry_init import (
-    initialize_domain_planners,  # noqa: E402
-)
 from app.modules.permissions.router import router as permissions_router
 from app.modules.simulation.router import router as simulation_router
-from app.workers.api import router as workers_router
 from app.shared import config_loader
-from core.config import get_settings
+from app.workers.api import router as workers_router
 from core.auth import get_current_user
+from core.config import get_settings
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -57,7 +58,6 @@ from apps.api.core.cors_config import CORSConfig
 from apps.api.core.logging import configure_logging
 from apps.api.core.middleware import RequestIDMiddleware
 from apps.api.core.security_middleware import add_security_middleware
-from app.core.exception_handlers import register_exception_handlers
 
 # Note: initialize_domain_planners() and initialize_tools() are now called in on_startup()
 # to avoid duplicate initialization during uvicorn reload
@@ -317,8 +317,8 @@ def health():
     postgres_connected = False
     postgres_error = None
     try:
-        from sqlalchemy import text
         from core.db import engine
+        from sqlalchemy import text
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
             postgres_connected = True

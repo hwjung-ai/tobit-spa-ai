@@ -19,21 +19,9 @@ from app.modules.simulation.schemas import (
     SimulationRealtimeRunRequest,
     SimulationRunRequest,
 )
+from app.modules.simulation.services.simulation.backtest_real import run_backtest_real
 from app.modules.simulation.services.simulation.custom_function_runner import (
     execute_custom_function,
-)
-from app.modules.simulation.services.simulation.backtest_real import run_backtest_real
-from app.modules.simulation.services.simulation.planner import plan_simulation
-from app.modules.simulation.services.simulation.scenario_templates import get_templates
-from app.modules.simulation.services.simulation.simulation_executor import (
-    run_simulation,
-)
-from app.modules.simulation.services.simulation.realtime_executor import (
-    run_realtime_simulation,
-)
-from app.modules.simulation.services.topology_service import (
-    get_topology_data,
-    list_available_services,
 )
 from app.modules.simulation.services.simulation.functions import (
     FunctionCategory,
@@ -42,6 +30,18 @@ from app.modules.simulation.services.simulation.functions import (
     execute_simulation,
     get_function_info,
     list_functions,
+)
+from app.modules.simulation.services.simulation.planner import plan_simulation
+from app.modules.simulation.services.simulation.realtime_executor import (
+    run_realtime_simulation,
+)
+from app.modules.simulation.services.simulation.scenario_templates import get_templates
+from app.modules.simulation.services.simulation.simulation_executor import (
+    run_simulation,
+)
+from app.modules.simulation.services.topology_service import (
+    get_topology_data,
+    list_available_services,
 )
 
 router = APIRouter(prefix="/sim", tags=["simulation"])
@@ -509,7 +509,9 @@ def register_user_function(
     - outputs: List of output definitions
     - tags: Optional list of tags
     """
-    from app.modules.simulation.services.simulation.user_functions import register_user_function_from_spec
+    from app.modules.simulation.services.simulation.user_functions import (
+        register_user_function_from_spec,
+    )
 
     if current_user.tenant_id != tenant_id:
         raise HTTPException(status_code=403, detail="Tenant mismatch")
@@ -544,7 +546,9 @@ def get_user_function_template(
 
     Returns example code and structure for creating custom simulation functions.
     """
-    from app.modules.simulation.services.simulation.user_functions import USER_FUNCTION_TEMPLATE
+    from app.modules.simulation.services.simulation.user_functions import (
+        USER_FUNCTION_TEMPLATE,
+    )
 
     return ResponseEnvelope.success(
         data={
@@ -634,7 +638,9 @@ async def stream_simulation_run(
     if current_user.tenant_id != tenant_id:
         raise HTTPException(status_code=403, detail="Tenant mismatch")
 
-    from app.modules.simulation.services.simulation.sse_handler import simulation_sse_handler
+    from app.modules.simulation.services.simulation.sse_handler import (
+        simulation_sse_handler,
+    )
 
     async def event_generator():
         stream = simulation_sse_handler.stream_simulation(
@@ -681,7 +687,9 @@ async def stream_strategy_comparison(
 
     strategy_list = [s.strip() for s in strategies.split(",") if s.strip()]
 
-    from app.modules.simulation.services.simulation.sse_handler import comparison_sse_handler
+    from app.modules.simulation.services.simulation.sse_handler import (
+        comparison_sse_handler,
+    )
 
     async def event_generator():
         stream = comparison_sse_handler.stream_comparison(
@@ -735,7 +743,9 @@ async def stream_function_execution(
     assumptions_data = json.loads(assumptions) if assumptions else {}
     context_data = json.loads(context) if context else None
 
-    from app.modules.simulation.services.simulation.sse_handler import function_sse_handler
+    from app.modules.simulation.services.simulation.sse_handler import (
+        function_sse_handler,
+    )
 
     async def event_generator():
         stream = function_sse_handler.stream_function_execution(

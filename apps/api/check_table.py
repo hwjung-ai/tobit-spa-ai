@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-import sys, os
+import os
+import sys
+
 os.chdir('/home/spa/tobit-spa-ai/apps/api')
 sys.path.insert(0, '/home/spa/tobit-spa-ai/apps/api')
 
 from dotenv import load_dotenv
+
 load_dotenv('/home/spa/tobit-spa-ai/apps/api/.env')
 
 from sqlalchemy import create_engine, text

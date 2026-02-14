@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Literal, Sequence
 
 from core.logging import get_logger
+
 from app.modules.ops.services.orchestration.planner.planner_llm import (
     _sanitize_korean_particles,
 )

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas import ResponseEnvelope
 from sqlmodel import Session
 
-from ..crud import _parse_api_uuid, list_exec_logs
+from ..crud import list_exec_logs
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])

@@ -3,10 +3,11 @@ Input Validation and Security Hardening for API
 Prevents: XSS, SQL Injection, Command Injection, Path Traversal
 """
 
-import re
 import json
-from typing import Any, Optional, Dict, List, Pattern
-from pydantic import BaseModel, validator
+import re
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel
 
 
 class ValidationRules(BaseModel):

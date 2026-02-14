@@ -1,10 +1,9 @@
 from types import SimpleNamespace
 
 import pytest
-from fastapi import HTTPException
-
 from app.modules.auth.models import UserRole
 from core.auth import require_role
+from fastapi import HTTPException
 
 
 def test_require_role_enforced_by_default(monkeypatch):

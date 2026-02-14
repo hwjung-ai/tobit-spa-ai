@@ -8,13 +8,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from core.config import get_settings
 from core.db import get_session_context
-from fastapi import HTTPException
-from sqlalchemy import func
 from sqlmodel import Session, select
-
-from app.modules.asset_registry.loader import load_catalog_for_source
 
 
 def _get_metric_timeseries(
@@ -44,7 +39,9 @@ def _get_metric_timeseries(
 
     # Build query to load timeseries data
     # Check if tb_metric_timeseries exists
-    from app.modules.simulation.services.simulation.metric_models import TbMetricTimeseries
+    from app.modules.simulation.services.simulation.metric_models import (
+        TbMetricTimeseries,
+    )
 
     query = (
         select(TbMetricTimeseries)
@@ -168,7 +165,9 @@ def get_available_services_from_metrics(tenant_id: str) -> list[str]:
         List of service names with metric data
     """
     with get_session_context() as session:
-        from app.modules.simulation.services.simulation.metric_models import TbMetricTimeseries
+        from app.modules.simulation.services.simulation.metric_models import (
+            TbMetricTimeseries,
+        )
 
         # Check if timeseries table exists and has data
         query = (

@@ -5,8 +5,7 @@ Calculates actual R², MAPE, RMSE, Coverage@90 using train/test split.
 """
 from __future__ import annotations
 
-import itertools
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -16,13 +15,11 @@ from app.modules.simulation.services.simulation.metric_loader import (
     calculate_baseline_statistics,
 )
 from app.modules.simulation.services.simulation.schemas import SimulationPlan
-from app.modules.simulation.services.simulation.strategies.ml_strategy_real import (
-    MLPredictiveStrategyReal,
-    create_ml_strategy_real as create_ml_strategy,
-)
 from app.modules.simulation.services.simulation.strategies.dl_strategy_real import (
-    DeepLearningStrategyReal,
     create_dl_strategy_real as create_dl_strategy,
+)
+from app.modules.simulation.services.simulation.strategies.ml_strategy_real import (
+    create_ml_strategy_real as create_ml_strategy,
 )
 
 

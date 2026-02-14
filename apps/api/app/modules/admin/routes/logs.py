@@ -10,14 +10,13 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
+from app.modules.admin import crud as admin_crud
 from core.db import get_session
 from fastapi import APIRouter, Depends, Query
 from schemas import ResponseEnvelope
 from sqlmodel import Session
-
-from app.modules.admin import crud as admin_crud
 
 router = APIRouter(prefix="/logs", tags=["admin-logs"])
 

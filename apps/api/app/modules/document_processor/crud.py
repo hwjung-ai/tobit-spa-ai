@@ -12,10 +12,9 @@ from datetime import datetime, timezone
 from typing import Any, List, Optional
 from uuid import UUID
 
+from models.document import Document, DocumentChunk
 from sqlalchemy import text
 from sqlmodel import Session, select
-
-from models.document import Document, DocumentChunk
 
 logger = logging.getLogger(__name__)
 

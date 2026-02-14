@@ -60,7 +60,9 @@ class StageExecutor:
         self.stage_inputs: List[StageInput] = []
         self.stage_outputs: List[StageOutput] = []
         self._llm = None  # Lazy-loaded LLM client
-        self._query_asset_results: List[Dict[str, Any]] = []  # Cache Query Asset results per execution
+        self._query_asset_results: List[
+            Dict[str, Any]
+        ] = []  # Cache Query Asset results per execution
 
     def _resolve_asset(self, asset_type: str, default_key: str) -> str:
         """
@@ -279,8 +281,14 @@ class StageExecutor:
                 overridden_asset = self._resolve_asset(asset_type, key_part)
                 applied_assets[asset_type] = overridden_asset
 
-        question_text = stage_input.params.get("question", "") if stage_input.params else ""
-        full_time_range = "전체기간" in question_text or "전체 기간" in question_text or "all time" in question_text.lower()
+        question_text = (
+            stage_input.params.get("question", "") if stage_input.params else ""
+        )
+        full_time_range = (
+            "전체기간" in question_text
+            or "전체 기간" in question_text
+            or "all time" in question_text.lower()
+        )
 
         # Tool execution context
         tool_context = ToolContext(
@@ -289,9 +297,11 @@ class StageExecutor:
             trace_id=self.context.trace_id,
             metadata={
                 "applied_assets": applied_assets,
-                "asset_overrides": self.context.asset_overrides if self.context.test_mode else {},
+                "asset_overrides": self.context.asset_overrides
+                if self.context.test_mode
+                else {},
                 "full_time_range": full_time_range,
-            }
+            },
         )
 
         results = []
@@ -300,12 +310,28 @@ class StageExecutor:
         if plan_output_kind == "plan" and plan_dict:
             # Convert dict back to Plan object for easier access
             from app.modules.ops.services.orchestration.planner.plan_schema import Plan
+
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
             if plan.history and plan.history.enabled:
                 normalized_question = question_text.lower()
-                if plan.history.tool_type in {"history", "event_log", "work_and_maintenance"}:
-                    maintenance_keywords = ("점검", "정비", "maintenance", "inspection", "maint")
-                    work_keywords = ("작업 이력", "작업이력", "work history", "work_history")
+                if plan.history.tool_type in {
+                    "history",
+                    "event_log",
+                    "work_and_maintenance",
+                }:
+                    maintenance_keywords = (
+                        "점검",
+                        "정비",
+                        "maintenance",
+                        "inspection",
+                        "maint",
+                    )
+                    work_keywords = (
+                        "작업 이력",
+                        "작업이력",
+                        "work history",
+                        "work_history",
+                    )
                     event_keywords = ("이벤트", "event", "event_log", "알림", "alert")
                     if any(key in normalized_question for key in maintenance_keywords):
                         source = "maintenance_history"
@@ -328,17 +354,24 @@ class StageExecutor:
             # Check if orchestration should be used
             # IMPORTANT: Default to True to use new orchestration layer with Tool Registry
             enable_orchestration = stage_input.params.get("enable_orchestration", True)
-            has_execution_strategy = hasattr(plan, "execution_strategy") and plan.execution_strategy is not None
+            has_execution_strategy = (
+                hasattr(plan, "execution_strategy")
+                and plan.execution_strategy is not None
+            )
             use_orchestration = enable_orchestration or has_execution_strategy
 
             self.logger.info(
                 "execute_stage.orchestration_check",
                 extra={
                     "use_orchestration": use_orchestration,
-                    "enable_orchestration_param": stage_input.params.get("enable_orchestration"),
+                    "enable_orchestration_param": stage_input.params.get(
+                        "enable_orchestration"
+                    ),
                     "has_execution_strategy": hasattr(plan, "execution_strategy"),
-                    "execution_strategy_value": getattr(plan, "execution_strategy", None),
-                }
+                    "execution_strategy_value": getattr(
+                        plan, "execution_strategy", None
+                    ),
+                },
             )
 
             if use_orchestration:
@@ -350,8 +383,10 @@ class StageExecutor:
                 self.logger.info(
                     "execute_stage.orchestration_enabled",
                     extra={
-                        "strategy": getattr(plan, "execution_strategy", "serial").value if hasattr(plan, "execution_strategy") else "serial",
-                    }
+                        "strategy": getattr(plan, "execution_strategy", "serial").value
+                        if hasattr(plan, "execution_strategy")
+                        else "serial",
+                    },
                 )
 
                 try:
@@ -359,7 +394,11 @@ class StageExecutor:
                     chain_result = await orchestrator.execute()
 
                     # Extract execution_plan_trace from chain_result metadata
-                    execution_plan_trace = chain_result.metadata.get("execution_plan_trace") if chain_result.metadata else None
+                    execution_plan_trace = (
+                        chain_result.metadata.get("execution_plan_trace")
+                        if chain_result.metadata
+                        else None
+                    )
 
                     # Map tool_id to mode for compose stage compatibility
                     tool_id_to_mode = {
@@ -379,14 +418,20 @@ class StageExecutor:
 
                         # Extract orchestration metadata from step_data if available
                         orchestration_metadata = None
-                        if step_data and isinstance(step_data, dict) and "orchestration" in step_data:
+                        if (
+                            step_data
+                            and isinstance(step_data, dict)
+                            and "orchestration" in step_data
+                        ):
                             orchestration_metadata = step_data.get("orchestration")
 
                         # Flatten data structure for compose stage compatibility
                         # If data is {"rows": [...], ...}, promote rows to top level
                         formatted_result = {
                             "tool_name": step_id,  # step_id is the tool identifier (metric, history, etc)
-                            "mode": tool_id_to_mode.get(step_id, step_id),  # Map to mode for compose stage
+                            "mode": tool_id_to_mode.get(
+                                step_id, step_id
+                            ),  # Map to mode for compose stage
                             "success": step_result.success,
                             "data": step_data,
                         }
@@ -420,12 +465,18 @@ class StageExecutor:
                             "tool_count": len(chain_result.step_results),
                             "execution_results_count": len(results),
                             "success": chain_result.success,
-                        }
+                        },
                     )
 
                     # Enrich with CI detail if requested and available
-                    if "구성" in question_text or "configuration" in question_text.lower():
-                        def _rows_from_result(result: Dict[str, Any] | None) -> list[dict[str, Any]]:
+                    if (
+                        "구성" in question_text
+                        or "configuration" in question_text.lower()
+                    ):
+
+                        def _rows_from_result(
+                            result: Dict[str, Any] | None,
+                        ) -> list[dict[str, Any]]:
                             if not result:
                                 return []
                             rows = result.get("rows") or []
@@ -434,7 +485,12 @@ class StageExecutor:
                             return rows if isinstance(rows, list) else []
 
                         def _score_metric_row(row: Dict[str, Any]) -> float:
-                            for key in ("metric_value", "max_cpu_usage", "cpu_usage", "value"):
+                            for key in (
+                                "metric_value",
+                                "max_cpu_usage",
+                                "cpu_usage",
+                                "value",
+                            ):
                                 value = row.get(key)
                                 if isinstance(value, (int, float)):
                                     return float(value)
@@ -450,13 +506,17 @@ class StageExecutor:
                             (r for r in results if r.get("mode") == "aggregate"), None
                         )
 
-                        candidate_result = primary_result or metric_result or aggregate_result
+                        candidate_result = (
+                            primary_result or metric_result or aggregate_result
+                        )
                         candidate_rows = _rows_from_result(candidate_result)
                         if candidate_rows:
                             if candidate_result is primary_result:
                                 selected_row = candidate_rows[0]
                             else:
-                                selected_row = max(candidate_rows, key=_score_metric_row)
+                                selected_row = max(
+                                    candidate_rows, key=_score_metric_row
+                                )
 
                             ci_id = selected_row.get("ci_id")
                             if ci_id:
@@ -470,18 +530,25 @@ class StageExecutor:
                                     "LIMIT 1"
                                 )
                                 try:
-                                    detail_result = await self.tool_executor.execute_tool(
-                                        tool_type="direct_query",
-                                        params={"sql": sql},
-                                        context=tool_context,
+                                    detail_result = (
+                                        await self.tool_executor.execute_tool(
+                                            tool_type="direct_query",
+                                            params={"sql": sql},
+                                            context=tool_context,
+                                        )
                                     )
                                     detail_payload = (
                                         detail_result.get("data")
-                                        if isinstance(detail_result, dict) and "data" in detail_result
+                                        if isinstance(detail_result, dict)
+                                        and "data" in detail_result
                                         else detail_result
                                     )
                                     detail_rows = []
-                                    raw_rows = detail_payload.get("rows", []) if isinstance(detail_payload, dict) else []
+                                    raw_rows = (
+                                        detail_payload.get("rows", [])
+                                        if isinstance(detail_payload, dict)
+                                        else []
+                                    )
                                     for row in raw_rows:
                                         if hasattr(row, "_mapping"):
                                             detail_rows.append(dict(row._mapping))
@@ -506,7 +573,10 @@ class StageExecutor:
 
                     # Fallback: if history returned empty rows but primary has ci_id, retry with explicit ci_id
                     if plan.history and plan.history.enabled:
-                        def _rows_from_result(result: Dict[str, Any] | None) -> list[dict[str, Any]]:
+
+                        def _rows_from_result(
+                            result: Dict[str, Any] | None,
+                        ) -> list[dict[str, Any]]:
                             if not result:
                                 return []
                             rows = result.get("rows") or []
@@ -532,7 +602,10 @@ class StageExecutor:
 
                                 end_time = datetime.utcnow()
                                 time_range = plan.history.time_range
-                                if time_range in {"all_time", "all"} or tool_context.get_metadata("full_time_range"):
+                                if time_range in {
+                                    "all_time",
+                                    "all",
+                                } or tool_context.get_metadata("full_time_range"):
                                     start_time = datetime(1970, 1, 1)
                                 elif time_range == "last_24h":
                                     start_time = end_time - timedelta(hours=24)
@@ -544,25 +617,32 @@ class StageExecutor:
                                     start_time = end_time - timedelta(days=7)
 
                                 try:
-                                    fallback_result = await self.tool_executor.execute_tool(
-                                        tool_type=plan.history.tool_type,
-                                        params={
-                                            "ci_id": ci_id,
-                                            "start_time": start_time.isoformat(),
-                                            "end_time": end_time.isoformat(),
-                                            "time_range": plan.history.time_range,
-                                            "limit": plan.history.limit,
-                                            "tenant_id": self.context.tenant_id,
-                                        },
-                                        context=tool_context,
+                                    fallback_result = (
+                                        await self.tool_executor.execute_tool(
+                                            tool_type=plan.history.tool_type,
+                                            params={
+                                                "ci_id": ci_id,
+                                                "start_time": start_time.isoformat(),
+                                                "end_time": end_time.isoformat(),
+                                                "time_range": plan.history.time_range,
+                                                "limit": plan.history.limit,
+                                                "tenant_id": self.context.tenant_id,
+                                            },
+                                            context=tool_context,
+                                        )
                                     )
                                     payload = (
                                         fallback_result.get("data")
-                                        if isinstance(fallback_result, dict) and "data" in fallback_result
+                                        if isinstance(fallback_result, dict)
+                                        and "data" in fallback_result
                                         else fallback_result
                                     )
                                     fallback_rows = []
-                                    raw_rows = payload.get("rows", []) if isinstance(payload, dict) else []
+                                    raw_rows = (
+                                        payload.get("rows", [])
+                                        if isinstance(payload, dict)
+                                        else []
+                                    )
                                     for row in raw_rows:
                                         if hasattr(row, "_mapping"):
                                             fallback_rows.append(dict(row._mapping))
@@ -669,6 +749,7 @@ class StageExecutor:
                     )
                     # Convert time_range to actual start_time and end_time
                     from datetime import datetime, timedelta
+
                     end_time = datetime.utcnow()
                     time_range = plan.metric.time_range
                     if full_time_range or time_range in {"all_time", "all"}:
@@ -682,10 +763,7 @@ class StageExecutor:
                     else:
                         start_time = end_time - timedelta(hours=24)
 
-                    # Get CI IDs from s1 results if available
                     ci_ids = []
-                    if s1_results:
-                        ci_ids = [r.get("ci_id") for r in s1_results if r.get("ci_id")]
 
                     metric_aggregate_result = await self.tool_executor.execute_tool(
                         tool_type=plan.metric.tool_type,
@@ -706,8 +784,14 @@ class StageExecutor:
                     results.append(metric_aggregate_result)
                     references.extend(metric_aggregate_result.get("references", []))
                 except Exception as e:
-                    self.logger.error(f"Failed to execute metric aggregate query: {str(e)}")
-            elif plan.aggregate and (plan.aggregate.group_by or plan.aggregate.metrics or plan.aggregate.filters):
+                    self.logger.error(
+                        f"Failed to execute metric aggregate query: {str(e)}"
+                    )
+            elif plan.aggregate and (
+                plan.aggregate.group_by
+                or plan.aggregate.metrics
+                or plan.aggregate.filters
+            ):
                 try:
                     limit_value = plan.aggregate.top_n or 10
                     aggregate_params = {
@@ -721,7 +805,12 @@ class StageExecutor:
                     }
                     # DEBUG: Print params
                     import sys
-                    print(f"[DEBUG stage_executor] aggregate_params keys: {list(aggregate_params.keys())}", file=sys.stderr, flush=True)
+
+                    print(
+                        f"[DEBUG stage_executor] aggregate_params keys: {list(aggregate_params.keys())}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
                     aggregate_result = await self.tool_executor.execute_tool(
                         tool_type=plan.aggregate.tool_type,
                         params=aggregate_params,
@@ -779,7 +868,9 @@ class StageExecutor:
             "compose_stage.debug",
             extra={
                 "stage_output_keys": list(stage_output.keys()) if stage_output else [],
-                "result_keys": list(stage_output.get("result", {}).keys()) if stage_output.get("result") else [],
+                "result_keys": list(stage_output.get("result", {}).keys())
+                if stage_output.get("result")
+                else [],
             },
         )
 
@@ -802,7 +893,9 @@ class StageExecutor:
             # First try to get execution_results from stage_output (new orchestration)
             execution_results = stage_output.get("execution_results", [])
             if not execution_results:
-                execution_results = stage_output.get("result", {}).get("execution_results", [])
+                execution_results = stage_output.get("result", {}).get(
+                    "execution_results", []
+                )
 
             # If still no results, use Query Asset
             if not execution_results and real_data_results:
@@ -826,7 +919,9 @@ class StageExecutor:
                 extra={
                     "has_base_result": bool(base_result),
                     "base_result_keys": list(base_result.keys()) if base_result else [],
-                    "blocks_count": len(base_result.get("blocks", [])) if base_result else 0,
+                    "blocks_count": len(base_result.get("blocks", []))
+                    if base_result
+                    else 0,
                 },
             )
             if base_result:
@@ -871,9 +966,17 @@ class StageExecutor:
         # Extract main results based on intent
         intent = "UNKNOWN"
         if plan_output:
-            plan = plan_output.get("plan") if isinstance(plan_output, dict) else getattr(plan_output, "plan", None)
+            plan = (
+                plan_output.get("plan")
+                if isinstance(plan_output, dict)
+                else getattr(plan_output, "plan", None)
+            )
             if plan:
-                intent = plan.get("intent") if isinstance(plan, dict) else getattr(plan, "intent", "UNKNOWN")
+                intent = (
+                    plan.get("intent")
+                    if isinstance(plan, dict)
+                    else getattr(plan, "intent", "UNKNOWN")
+                )
 
             if intent == "LOOKUP":
                 # For lookup, focus on primary results
@@ -928,7 +1031,9 @@ class StageExecutor:
                 ]
                 if ci_detail_results:
                     detail_rows = ci_detail_results[0].get("rows") or []
-                    if not detail_rows and isinstance(ci_detail_results[0].get("data"), dict):
+                    if not detail_rows and isinstance(
+                        ci_detail_results[0].get("data"), dict
+                    ):
                         detail_rows = ci_detail_results[0]["data"].get("rows") or []
                     if detail_rows:
                         detail_row = detail_rows[0]
@@ -952,10 +1057,13 @@ class StageExecutor:
                     primary_data = primary_results[0].get("data", {})
                     if isinstance(primary_results[0].get("rows"), list):
                         primary_rows = primary_results[0].get("rows", [])
-                    elif isinstance(primary_data, dict) and isinstance(primary_data.get("rows"), list):
+                    elif isinstance(primary_data, dict) and isinstance(
+                        primary_data.get("rows"), list
+                    ):
                         primary_rows = primary_data.get("rows", [])
 
                     if primary_rows:
+
                         def _score_row(row: Dict[str, Any]) -> float:
                             for key in ("max_cpu_usage", "cpu_usage", "value"):
                                 value = row.get(key)
@@ -984,12 +1092,20 @@ class StageExecutor:
                     metric_data = metric_results[0].get("data", {})
                     if isinstance(metric_results[0].get("rows"), list):
                         metric_rows = metric_results[0].get("rows", [])
-                    elif isinstance(metric_data, dict) and isinstance(metric_data.get("rows"), list):
+                    elif isinstance(metric_data, dict) and isinstance(
+                        metric_data.get("rows"), list
+                    ):
                         metric_rows = metric_data.get("rows", [])
 
                     if metric_rows:
+
                         def _score_metric_row(row: Dict[str, Any]) -> float:
-                            for key in ("metric_value", "max_cpu_usage", "cpu_usage", "value"):
+                            for key in (
+                                "metric_value",
+                                "max_cpu_usage",
+                                "cpu_usage",
+                                "value",
+                            ):
                                 value = row.get(key)
                                 if isinstance(value, (int, float)):
                                     return float(value)
@@ -1019,11 +1135,13 @@ class StageExecutor:
                 )
 
             # ===== NEW: Handle query_asset results =====
-            query_asset_results = [r for r in execution_results if r.get("mode") == "query_asset"]
+            query_asset_results = [
+                r for r in execution_results if r.get("mode") == "query_asset"
+            ]
             if query_asset_results:
                 composed_result["query_asset_result"] = query_asset_results[0]
-                composed_result["results_summary"] = self._summarize_query_asset_results(
-                    query_asset_results
+                composed_result["results_summary"] = (
+                    self._summarize_query_asset_results(query_asset_results)
                 )
 
         # Merge all references
@@ -1061,39 +1179,63 @@ class StageExecutor:
         # Prepare presentation blocks based on plan
         blocks = []
 
-        plan_kind = plan_output.get("kind") if isinstance(plan_output, dict) else getattr(plan_output, "kind", None)
+        plan_kind = (
+            plan_output.get("kind")
+            if isinstance(plan_output, dict)
+            else getattr(plan_output, "kind", None)
+        )
 
         if plan_kind == "direct":
-            direct_answer = plan_output.get("direct_answer") if isinstance(plan_output, dict) else getattr(plan_output, "direct_answer", None)
+            direct_answer = (
+                plan_output.get("direct_answer")
+                if isinstance(plan_output, dict)
+                else getattr(plan_output, "direct_answer", None)
+            )
             if direct_answer:
                 # Direct answer - simple text block
                 blocks.append(
                     {
                         "type": "text",
-                        "content": direct_answer.get("answer") if isinstance(direct_answer, dict) else direct_answer.answer,
+                        "content": direct_answer.get("answer")
+                        if isinstance(direct_answer, dict)
+                        else direct_answer.answer,
                         "metadata": {
-                            "confidence": direct_answer.get("confidence") if isinstance(direct_answer, dict) else getattr(direct_answer, "confidence", 1.0),
-                            "reasoning": direct_answer.get("reasoning") if isinstance(direct_answer, dict) else getattr(direct_answer, "reasoning", None),
+                            "confidence": direct_answer.get("confidence")
+                            if isinstance(direct_answer, dict)
+                            else getattr(direct_answer, "confidence", 1.0),
+                            "reasoning": direct_answer.get("reasoning")
+                            if isinstance(direct_answer, dict)
+                            else getattr(direct_answer, "reasoning", None),
                         },
                     }
                 )
 
         elif plan_kind == "plan":
             # Check if we have LLM summary from compose stage
-            llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
+            llm_summary = (
+                composed_result.get("llm_summary")
+                if isinstance(composed_result, dict)
+                else None
+            )
 
             # ===== NEW: Use LLM-composed answer from compose stage =====
             if llm_summary:
-                self.logger.info("📊 [PRESENT] Using LLM-composed answer from compose stage")
+                self.logger.info(
+                    "📊 [PRESENT] Using LLM-composed answer from compose stage"
+                )
 
                 # Add LLM summary as the first block
-                blocks.append({
-                    "type": "markdown",
-                    "content": llm_summary,
-                    "metadata": {"generated_by": "llm_compose"},
-                })
+                blocks.append(
+                    {
+                        "type": "markdown",
+                        "content": llm_summary,
+                        "metadata": {"generated_by": "llm_compose"},
+                    }
+                )
 
-                def _build_table_block(title: str, headers: list[str], rows: list[list[Any]]) -> dict[str, Any]:
+                def _build_table_block(
+                    title: str, headers: list[str], rows: list[list[Any]]
+                ) -> dict[str, Any]:
                     return {
                         "type": "table",
                         "title": title,
@@ -1118,11 +1260,15 @@ class StageExecutor:
                             "owner",
                         ]
                         ci_row = [[ci_detail.get(h) for h in ci_headers]]
-                        blocks.append(_build_table_block("CI 구성정보", ci_headers, ci_row))
+                        blocks.append(
+                            _build_table_block("CI 구성정보", ci_headers, ci_row)
+                        )
 
                     history_result = composed_result.get("history_result") or {}
                     history_rows = history_result.get("rows") or []
-                    if not history_rows and isinstance(history_result.get("data"), dict):
+                    if not history_rows and isinstance(
+                        history_result.get("data"), dict
+                    ):
                         history_rows = history_result["data"].get("rows") or []
                     if isinstance(history_rows, list) and history_rows:
                         history_headers = [
@@ -1139,7 +1285,11 @@ class StageExecutor:
                             if isinstance(row, dict):
                                 table_rows.append([row.get(h) for h in history_headers])
                         if table_rows:
-                            blocks.append(_build_table_block("최근 작업 이력", history_headers, table_rows))
+                            blocks.append(
+                                _build_table_block(
+                                    "최근 작업 이력", history_headers, table_rows
+                                )
+                            )
 
                 # Get additional blocks from composed_result if available
                 if isinstance(composed_result, dict):
@@ -1153,17 +1303,27 @@ class StageExecutor:
                         if rows and len(rows) <= 20:
                             if isinstance(rows[0], dict):
                                 columns = list(rows[0].keys())
-                                content_lines = [f"**{asset_name} Data ({len(rows)} rows):**\n"]
+                                content_lines = [
+                                    f"**{asset_name} Data ({len(rows)} rows):**\n"
+                                ]
                                 content_lines.append("| " + " | ".join(columns) + " |")
-                                content_lines.append("|" + "|".join(["---"] * len(columns)) + "|")
+                                content_lines.append(
+                                    "|" + "|".join(["---"] * len(columns)) + "|"
+                                )
                                 for row in rows:
                                     values = [str(row.get(col, "")) for col in columns]
-                                    content_lines.append("| " + " | ".join(values) + " |")
-                                blocks.append({
-                                    "type": "markdown",
-                                    "content": "\n".join(content_lines),
-                                    "metadata": {"generated_by": "query_asset_reference"},
-                                })
+                                    content_lines.append(
+                                        "| " + " | ".join(values) + " |"
+                                    )
+                                blocks.append(
+                                    {
+                                        "type": "markdown",
+                                        "content": "\n".join(content_lines),
+                                        "metadata": {
+                                            "generated_by": "query_asset_reference"
+                                        },
+                                    }
+                                )
 
                 # Create result with LLM summary as answer
                 result = {
@@ -1176,17 +1336,33 @@ class StageExecutor:
             # ===== END NEW =====
 
             # Add LLM summary as the first block if available
-            llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
+            llm_summary = (
+                composed_result.get("llm_summary")
+                if isinstance(composed_result, dict)
+                else None
+            )
             if llm_summary:
-                blocks.append({
-                    "type": "markdown",
-                    "content": llm_summary,
-                    "metadata": {"generated_by": "llm_compose"},
-                })
+                blocks.append(
+                    {
+                        "type": "markdown",
+                        "content": llm_summary,
+                        "metadata": {"generated_by": "llm_compose"},
+                    }
+                )
 
             # Plan execution - compose blocks based on intent
-            plan = plan_output.get("plan") if isinstance(plan_output, dict) else getattr(plan_output, "plan", None)
-            intent = plan.get("intent") if isinstance(plan, dict) else getattr(plan, "intent", None) if plan else None
+            plan = (
+                plan_output.get("plan")
+                if isinstance(plan_output, dict)
+                else getattr(plan_output, "plan", None)
+            )
+            intent = (
+                plan.get("intent")
+                if isinstance(plan, dict)
+                else getattr(plan, "intent", None)
+                if plan
+                else None
+            )
 
             # Always add blocks from runner's base_result if available
             # The runner already has its own blocks from _run_async()
@@ -1197,7 +1373,10 @@ class StageExecutor:
             blocks.extend(runner_blocks)
 
             if isinstance(composed_result, dict):
-                def _build_table_block(title: str, headers: list[str], rows: list[list[Any]]) -> dict[str, Any]:
+
+                def _build_table_block(
+                    title: str, headers: list[str], rows: list[list[Any]]
+                ) -> dict[str, Any]:
                     return {
                         "type": "table",
                         "title": title,
@@ -1242,7 +1421,11 @@ class StageExecutor:
                         if isinstance(row, dict):
                             table_rows.append([row.get(h) for h in history_headers])
                     if table_rows:
-                        blocks.append(_build_table_block("최근 작업 이력", history_headers, table_rows))
+                        blocks.append(
+                            _build_table_block(
+                                "최근 작업 이력", history_headers, table_rows
+                            )
+                        )
 
             # Disable old block creation - using runner's blocks instead
             # if False:  # Disable duplicate block creation
@@ -1276,7 +1459,8 @@ class StageExecutor:
         result = {
             "blocks": blocks,
             "references": composed_result.get("references", []),
-            "summary": composed_result.get("llm_summary") or self._generate_summary(composed_result),
+            "summary": composed_result.get("llm_summary")
+            or self._generate_summary(composed_result),
             "presented_at": time.time(),
         }
 
@@ -1363,7 +1547,9 @@ class StageExecutor:
             summary.append(f"Found {path_count} paths")
         return summary
 
-    def _summarize_query_asset_results(self, results: List[Dict[str, Any]]) -> List[str]:
+    def _summarize_query_asset_results(
+        self, results: List[Dict[str, Any]]
+    ) -> List[str]:
         """Summarize Query Asset results for LLM context."""
         summary = []
 
@@ -1375,18 +1561,22 @@ class StageExecutor:
 
             if rows_count > 0 and rows:
                 # Format all rows for LLM context - not just first value
-                summary_lines = [f"Database query '{asset_name}' found {rows_count} result(s):"]
+                summary_lines = [
+                    f"Database query '{asset_name}' found {rows_count} result(s):"
+                ]
 
                 # Show full row data to LLM
-                for i, row in enumerate(rows[:10]):  # Limit to first 10 rows for summary
+                for i, row in enumerate(
+                    rows[:10]
+                ):  # Limit to first 10 rows for summary
                     if isinstance(row, dict):
                         row_str = ", ".join([f"{k}: {v}" for k, v in row.items()])
-                        summary_lines.append(f"  Result {i+1}: {row_str}")
+                        summary_lines.append(f"  Result {i + 1}: {row_str}")
                     elif isinstance(row, (tuple, list)):
                         row_str = ", ".join([str(v) for v in row])
-                        summary_lines.append(f"  Result {i+1}: {row_str}")
+                        summary_lines.append(f"  Result {i + 1}: {row_str}")
                     else:
-                        summary_lines.append(f"  Result {i+1}: {row}")
+                        summary_lines.append(f"  Result {i + 1}: {row}")
 
                 if len(rows) > 10:
                     summary_lines.append(f"  ... and {len(rows) - 10} more results")
@@ -1456,7 +1646,9 @@ class StageExecutor:
         composed_result: Dict[str, Any],
     ) -> str:
         """Generate LLM summary from execution results."""
-        if ("전체기간" in question or "전체 기간" in question) and composed_result.get("ci_detail"):
+        if ("전체기간" in question or "전체 기간" in question) and composed_result.get(
+            "ci_detail"
+        ):
             ci_detail = composed_result.get("ci_detail") or {}
             ci_name = ci_detail.get("ci_name") or "unknown"
             ci_code = ci_detail.get("ci_code") or "unknown"
@@ -1494,9 +1686,7 @@ class StageExecutor:
             )
             if max_cpu_usage is not None:
                 summary += f" 최대 CPU 사용률은 **{max_cpu_usage:.2f}**입니다."
-            summary += (
-                f" 구성정보: Code **{ci_code}**, Name **{ci_name}**, Type **{ci_type}**, Status **{status}**."
-            )
+            summary += f" 구성정보: Code **{ci_code}**, Name **{ci_name}**, Type **{ci_type}**, Status **{status}**."
             summary += f" 최근 작업 이력은 {len(history_rows)}건입니다."
             return summary
 
@@ -1514,7 +1704,9 @@ class StageExecutor:
             user_template = templates.get("user")
 
             if not system_prompt or not user_template:
-                logging.warning("Compose prompt templates missing, using fallback summary")
+                logging.warning(
+                    "Compose prompt templates missing, using fallback summary"
+                )
                 return self._generate_summary(composed_result)
 
             # Build prompt with question, intent, and evidence
@@ -1551,7 +1743,9 @@ class StageExecutor:
                 rows = data.get("rows", [])
                 rows_count = data.get("count", len(rows))
 
-                lines.append(f"   - Source: Query Asset '{result.get('asset_name', 'unknown')}'")
+                lines.append(
+                    f"   - Source: Query Asset '{result.get('asset_name', 'unknown')}'"
+                )
                 lines.append(f"   - Count: {rows_count}")
 
                 if rows_count > 0:
@@ -1565,7 +1759,9 @@ class StageExecutor:
                             lines.append(f"     {j}. [{row_str}]")
                         elif isinstance(row, dict):
                             # Convert dict to key=value format
-                            row_str = ", ".join(f"{k}={v}" for k, v in list(row.items())[:3])
+                            row_str = ", ".join(
+                                f"{k}={v}" for k, v in list(row.items())[:3]
+                            )
                             lines.append(f"     {j}. {row_str}")
 
                 # Show SQL if available
@@ -1631,7 +1827,9 @@ class StageExecutor:
             # Add tags if available
             tags = ci_detail.get("tags")
             if tags and isinstance(tags, dict):
-                lines.append(f"   - Tags: {', '.join(f'{k}={v}' for k, v in tags.items() if v)}")
+                lines.append(
+                    f"   - Tags: {', '.join(f'{k}={v}' for k, v in tags.items() if v)}"
+                )
 
             # Add attributes if available
             attributes = ci_detail.get("attributes")
@@ -1642,7 +1840,9 @@ class StageExecutor:
                     attr_str = ", ".join(f'{k}="{v}"' for k, v in attr_items)
                     lines.append(f"   - Attributes: {attr_str}")
                     if len(attributes) > 3:
-                        lines.append(f"   - ... and {len(attributes) - 3} more attributes")
+                        lines.append(
+                            f"   - ... and {len(attributes) - 3} more attributes"
+                        )
 
         # Add CI Detail blocks information if available
         ci_detail_blocks = composed_result.get("ci_detail_blocks")
@@ -1667,7 +1867,9 @@ class StageExecutor:
         try:
             prompt_data = load_prompt_asset("ci", "compose", "ci_compose_summary")
             if not prompt_data or "templates" not in prompt_data:
-                logging.warning("Compose prompt templates not found in asset registry, falling back to file")
+                logging.warning(
+                    "Compose prompt templates not found in asset registry, falling back to file"
+                )
                 prompt_data = config_loader.load_yaml("prompts/ci/compose.yaml")
                 if not prompt_data or "templates" not in prompt_data:
                     return {}
@@ -1676,7 +1878,9 @@ class StageExecutor:
                 return {}
             return templates
         except Exception as exc:
-            logging.warning(f"Failed to load compose prompt from asset registry: {exc}, falling back to file")
+            logging.warning(
+                f"Failed to load compose prompt from asset registry: {exc}, falling back to file"
+            )
             prompt_data = config_loader.load_yaml("prompts/ci/compose.yaml")
             if not prompt_data or "templates" not in prompt_data:
                 return {}
@@ -1746,7 +1950,9 @@ class StageExecutor:
 
             # Add count if available
             if isinstance(output_summary, dict):
-                result["count"] = output_summary.get("count", output_summary.get("total", 0))
+                result["count"] = output_summary.get(
+                    "count", output_summary.get("total", 0)
+                )
 
                 # Add headers for table results
                 headers = output_summary.get("headers", [])
@@ -1815,18 +2021,12 @@ class StageExecutor:
 
                 if block_type == "table":
                     rows_count = len(block.get("rows", []))
-                    block_summaries.append(
-                        f"{block_title}: {rows_count} rows"
-                    )
+                    block_summaries.append(f"{block_title}: {rows_count} rows")
                 elif block_type == "markdown":
                     content_preview = (
-                        block.get("content", "")[:100]
-                        if block.get("content")
-                        else ""
+                        block.get("content", "")[:100] if block.get("content") else ""
                     )
-                    block_summaries.append(
-                        f"{block_title}: {content_preview}..."
-                    )
+                    block_summaries.append(f"{block_title}: {content_preview}...")
                 elif block_type == "references":
                     ref_count = len(block.get("items", []))
                     block_summaries.append(f"{block_title}: {ref_count} references")
@@ -1836,9 +2036,7 @@ class StageExecutor:
 
         # Add any metric data if present
         metric_blocks = [
-            b
-            for b in blocks
-            if isinstance(b, dict) and b.get("type") == "metric"
+            b for b in blocks if isinstance(b, dict) and b.get("type") == "metric"
         ]
         if metric_blocks:
             primary_result["has_metrics"] = True
@@ -1872,7 +2070,9 @@ class StageExecutor:
         """
         # ===== CACHE: Return cached results if available =====
         if self._query_asset_results:
-            self.logger.info(f"📋 [QUERY ASSET] Using cached results: {len(self._query_asset_results)} results")
+            self.logger.info(
+                f"📋 [QUERY ASSET] Using cached results: {len(self._query_asset_results)} results"
+            )
             return self._query_asset_results
         # ===== END CACHE =====
 
@@ -1880,7 +2080,7 @@ class StageExecutor:
 
         try:
             # Get the original question from context first (most reliable)
-            question = getattr(self.context, 'question', None)
+            question = getattr(self.context, "question", None)
 
             # If not in context, try to get from params
             if not question:
@@ -1890,13 +2090,17 @@ class StageExecutor:
             # If still not found, try to extract from plan
             if not question:
                 plan_output = params.get("plan_output", {})
-                plan = plan_output.get("plan") if isinstance(plan_output, dict) else None
+                plan = (
+                    plan_output.get("plan") if isinstance(plan_output, dict) else None
+                )
 
                 if plan:
                     # Extract keywords from plan
                     primary = plan.get("primary") if isinstance(plan, dict) else None
                     if primary:
-                        keywords = primary.get("keywords") if isinstance(primary, dict) else []
+                        keywords = (
+                            primary.get("keywords") if isinstance(primary, dict) else []
+                        )
                         if keywords:
                             question = " ".join(keywords)
 
@@ -1904,19 +2108,21 @@ class StageExecutor:
                 self.logger.info("No question found for Query Asset execution")
                 return results
 
-            self.logger.info(f"🔍 [QUERY ASSET] Executing Query Assets for question: {question[:100]}")
+            self.logger.info(
+                f"🔍 [QUERY ASSET] Executing Query Assets for question: {question[:100]}"
+            )
 
             # Load Query Assets from database using CRUD
             from app.modules.asset_registry.crud import list_assets
 
             with get_session_context() as session:
                 query_assets = list_assets(
-                    session=session,
-                    asset_type="query",
-                    status="published"
+                    session=session, asset_type="query", status="published"
                 )
 
-            self.logger.info(f"🔍 [QUERY ASSET] Found {len(query_assets)} Query Assets in database")
+            self.logger.info(
+                f"🔍 [QUERY ASSET] Found {len(query_assets)} Query Assets in database"
+            )
 
             if not query_assets:
                 self.logger.warning("No Query Assets found in database")
@@ -1938,8 +2144,7 @@ class StageExecutor:
                 score = 0.0
                 if asset_keywords:
                     matched = sum(
-                        1 for kw in asset_keywords
-                        if kw.lower() in question_lower
+                        1 for kw in asset_keywords if kw.lower() in question_lower
                     )
                     score = matched / max(len(asset_keywords), 1)
 
@@ -1948,10 +2153,13 @@ class StageExecutor:
                 name_score = 0.0
                 if asset_name_lower:
                     name_match = sum(
-                        1 for word in question_lower.split()
-                        if word in asset_name_lower
+                        1 for word in question_lower.split() if word in asset_name_lower
                     )
-                    name_score = name_match / max(len(question_lower.split()), 1) if question_lower else 0
+                    name_score = (
+                        name_match / max(len(question_lower.split()), 1)
+                        if question_lower
+                        else 0
+                    )
 
                 # NEW: Check SQL table names for matching
                 # Map question words to SQL table names
@@ -1959,7 +2167,7 @@ class StageExecutor:
                     "event": "event_log",
                     "ci": "ci",
                     "metric": "metric",
-                    "audit": "tb_audit_log"
+                    "audit": "tb_audit_log",
                 }
                 sql_score = 0.0
                 if sql:
@@ -1971,7 +2179,9 @@ class StageExecutor:
                                 sql_score += 0.5
 
                     # Penalty for date filters (prefer general queries over specific date ranges)
-                    if "WHERE" in sql.upper() and ("DATE(" in sql or "INTERVAL" in sql or "CURRENT_DATE" in sql):
+                    if "WHERE" in sql.upper() and (
+                        "DATE(" in sql or "INTERVAL" in sql or "CURRENT_DATE" in sql
+                    ):
                         sql_score -= 2.0  # Significant penalty for date filters
 
                     # Penalty for using created_at column (doesn't exist in event_log)
@@ -1986,7 +2196,9 @@ class StageExecutor:
             # Sort by score (descending)
             scored_assets.sort(key=lambda x: x[0], reverse=True)
 
-            self.logger.info(f"🔍 [QUERY ASSET] Scored {len(scored_assets)} assets, trying top matches...")
+            self.logger.info(
+                f"🔍 [QUERY ASSET] Scored {len(scored_assets)} assets, trying top matches..."
+            )
 
             # Try each Query Asset in score order until one succeeds
             for total_score, asset in scored_assets[:5]:  # Try top 5 matches
@@ -1997,10 +2209,14 @@ class StageExecutor:
                 sql = schema.get("sql", "")
 
                 if not sql:
-                    self.logger.warning(f"Query Asset {asset.name} has no SQL, skipping")
+                    self.logger.warning(
+                        f"Query Asset {asset.name} has no SQL, skipping"
+                    )
                     continue
 
-                self.logger.info(f"🔍 [QUERY ASSET] Trying: {asset.name} (score: {total_score:.2f})")
+                self.logger.info(
+                    f"🔍 [QUERY ASSET] Trying: {asset.name} (score: {total_score:.2f})"
+                )
                 self.logger.info(f"🔍 [QUERY ASSET] SQL: {sql[:200]}")
 
                 # Execute SQL directly with error handling
@@ -2011,23 +2227,35 @@ class StageExecutor:
                         query_result = session.exec(text(sql))
                         rows = query_result.fetchall()
 
-                    self.logger.info(f"✅ [QUERY ASSET] Executed successfully: {asset.name}, {len(rows)} rows")
+                    self.logger.info(
+                        f"✅ [QUERY ASSET] Executed successfully: {asset.name}, {len(rows)} rows"
+                    )
 
                     # Extract first value for summary (avoid serialization issues)
                     # Convert SQLAlchemy rows to dictionaries for proper serialization
                     formatted_rows = []
                     if rows:
                         for row in rows:
-                            if hasattr(row, '__iter__') and not isinstance(row, (str, dict)):
+                            if hasattr(row, "__iter__") and not isinstance(
+                                row, (str, dict)
+                            ):
                                 # SQLAlchemy Row objects - convert to dict
                                 try:
-                                    row_dict = dict(row._mapping) if hasattr(row, '_mapping') else {}
+                                    row_dict = (
+                                        dict(row._mapping)
+                                        if hasattr(row, "_mapping")
+                                        else {}
+                                    )
                                     if not row_dict:
                                         # Fallback: convert to list and map to column names if available
-                                        row_dict = {"value": list(row)[0] if list(row) else None}
+                                        row_dict = {
+                                            "value": list(row)[0] if list(row) else None
+                                        }
                                     formatted_rows.append(row_dict)
                                 except Exception as e:
-                                    self.logger.warning(f"Failed to convert row to dict: {e}")
+                                    self.logger.warning(
+                                        f"Failed to convert row to dict: {e}"
+                                    )
                                     formatted_rows.append({"value": str(row)})
                             elif isinstance(row, dict):
                                 formatted_rows.append(row)
@@ -2039,7 +2267,9 @@ class StageExecutor:
                     if formatted_rows:
                         first_row = formatted_rows[0]
                         if isinstance(first_row, dict):
-                            first_value = list(first_row.values())[0] if first_row else None
+                            first_value = (
+                                list(first_row.values())[0] if first_row else None
+                            )
                         else:
                             first_value = first_row
 
@@ -2053,20 +2283,22 @@ class StageExecutor:
                         "data": {
                             "first_value": first_value,
                             "count": len(rows),
-                            "rows": formatted_rows  # Include all rows for proper composition
+                            "rows": formatted_rows,  # Include all rows for proper composition
                         },
                         "query_asset": {
                             "name": asset.name,
                             "keywords": schema.get("keywords", []),
-                            "sql": sql
-                        }
+                            "sql": sql,
+                        },
                     }
 
                     results.append(result)
                     break  # Success! Stop trying other assets
 
                 except Exception as e:
-                    self.logger.warning(f"⚠️ [QUERY ASSET] {asset.name} failed: {str(e)}, trying next...")
+                    self.logger.warning(
+                        f"⚠️ [QUERY ASSET] {asset.name} failed: {str(e)}, trying next..."
+                    )
                     continue  # Try next asset
 
             if not results:
@@ -2075,12 +2307,15 @@ class StageExecutor:
         except Exception as e:
             self.logger.error(f"❌ [QUERY ASSET] Failed: {str(e)}")
             import traceback
+
             traceback.print_exc()
 
         # ===== CACHE: Store results for reuse in present stage =====
         if results:
             self._query_asset_results = results
-            self.logger.info(f"💾 [QUERY ASSET] Cached {len(results)} results for present stage")
+            self.logger.info(
+                f"💾 [QUERY ASSET] Cached {len(results)} results for present stage"
+            )
         # ===== END CACHE =====
 
         return results

@@ -4,10 +4,8 @@ Revision ID: 0049_add_ml_models_table
 Revises: 0048_add_timeseries_metric_table
 Create Date: 2026-02-11
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlmodel import SQLModel
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '0049_add_ml_models_table'

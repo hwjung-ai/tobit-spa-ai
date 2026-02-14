@@ -5,12 +5,12 @@ Tests to verify that Tool Asset definitions are validated for
 completeness, security, and correctness.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 from app.modules.asset_registry.tool_validator import (
     validate_tool_asset,
     validate_tool_for_publication,
-    ToolAssetValidator,
 )
 
 

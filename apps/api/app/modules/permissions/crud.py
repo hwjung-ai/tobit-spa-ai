@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
+from core.config import get_settings
 from sqlmodel import Session, select
 
 from app.modules.auth.models import UserRole
@@ -14,7 +15,6 @@ from app.modules.permissions.models import (
     TbResourcePermission,
     TbRolePermission,
 )
-from core.config import get_settings
 
 # Default role permission sets
 ROLE_PERMISSION_DEFAULTS = {

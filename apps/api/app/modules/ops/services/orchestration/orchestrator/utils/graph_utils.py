@@ -3,7 +3,6 @@
 This module handles graph-related intent detection and fallthrough logic.
 """
 
-from typing import Any
 
 from app.modules.ops.services.orchestration.planner.plan_schema import Intent, View
 

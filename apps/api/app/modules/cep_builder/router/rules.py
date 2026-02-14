@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import uuid
+import uuid as _uuid
 from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from typing import Any
@@ -12,12 +12,11 @@ from core.db import get_session
 from core.tenant import get_current_tenant
 from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
-from sqlalchemy import desc, select
+from sqlalchemy import select
 from sqlmodel import Session
 
-from app.modules.auth.models import TbUser
 from app.modules.audit_log.crud import create_audit_log
-import uuid as _uuid
+from app.modules.auth.models import TbUser
 
 from ..crud import (
     create_rule,

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from core.auth import get_current_user
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)

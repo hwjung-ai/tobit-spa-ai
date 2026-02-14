@@ -133,7 +133,9 @@ class TestOrchestrationIntegration:
         Setup: primary and secondary are independent (both entry points),
                aggregate depends on primary and secondary (convergence point)
         """
-        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import (
+            ToolDependency,
+        )
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE
@@ -313,7 +315,9 @@ class TestOrchestrationTraceMetadata:
 
     def test_create_execution_plan_trace_parallel(self):
         """Should create execution plan trace for parallel execution."""
-        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import (
+            ToolDependency,
+        )
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE
@@ -344,7 +348,9 @@ class TestOrchestrationTraceMetadata:
 
     def test_create_execution_plan_trace_serial(self):
         """Should create execution plan trace for serial execution."""
-        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import (
+            ToolDependency,
+        )
 
         plan = MagicMock()
         plan.intent = Intent.LOOKUP
@@ -379,7 +385,9 @@ class TestOrchestrationTraceMetadata:
 
     def test_create_execution_plan_trace_dag(self):
         """Should create execution plan trace for DAG execution."""
-        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import (
+            ToolDependency,
+        )
 
         plan = MagicMock()
         plan.intent = Intent.LOOKUP
@@ -418,7 +426,9 @@ class TestOrchestrationTraceMetadata:
 
     def test_execution_plan_trace_with_tool_types(self):
         """Should include tool types in execution plan trace."""
-        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import (
+            ToolDependency,
+        )
 
         plan = MagicMock()
         plan.intent = Intent.LOOKUP
@@ -452,7 +462,9 @@ class TestOrchestrationTraceMetadata:
     @pytest.mark.asyncio
     async def test_orchestration_trace_passed_to_executor(self):
         """Should pass execution plan trace to chain executor."""
-        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import (
+            ToolDependency,
+        )
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE

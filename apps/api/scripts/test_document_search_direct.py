@@ -14,7 +14,9 @@ sys.path.insert(0, str(project_root / "apps/api"))
 from core.db import get_session
 
 from apps.api.app.modules.ops.services.orchestration.tools.base import get_tool_registry
-from apps.api.app.modules.ops.services.orchestration.tools.registry_init import initialize_tools
+from apps.api.app.modules.ops.services.orchestration.tools.registry_init import (
+    initialize_tools,
+)
 
 
 async def test_document_search():

@@ -10,7 +10,7 @@ Extracts routing decision logic from runner.py including:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal
 
 from core.logging import get_logger
 

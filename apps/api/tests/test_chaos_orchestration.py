@@ -3,13 +3,11 @@ Chaos Engineering Tests for OPS Orchestration (P1-4)
 Tests failure scenarios, resilience, and graceful degradation
 """
 
-import asyncio
 import unittest
-from unittest.mock import MagicMock, patch, AsyncMock
 
 from app.modules.ops.schemas import (
-    OrchestrationStatus,
     OrchestrationResponse,
+    OrchestrationStatus,
     ToolResult,
 )
 from app.modules.ops.services.orchestration.tools.capability_registry import (

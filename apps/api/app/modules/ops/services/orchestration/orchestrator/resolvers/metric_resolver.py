@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable
+from typing import Any, Iterable
 
 from core.logging import get_logger
 

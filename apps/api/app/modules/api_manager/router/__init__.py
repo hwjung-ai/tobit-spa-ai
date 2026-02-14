@@ -2,12 +2,15 @@
 
 from fastapi import APIRouter
 
-from .crud import router as crud_router
+# Import executor functions for backward compatibility
+from ..executor import execute_http_api, execute_sql_api, is_http_logic_body
+from ..script_executor import execute_script_api
+from ..workflow_executor import execute_workflow_api
 from .crud import (
     CreateApiRequest,
     SaveApiRequest,
-    UpdateApiRequest,
     UpdateApiAuthPolicyRequest,
+    UpdateApiRequest,
     create_api,
     create_or_update_api,
     delete_api,
@@ -16,9 +19,9 @@ from .crud import (
     update_api,
     update_api_auth_policy,
 )
-from .discovery import router as discovery_router
+from .crud import router as crud_router
 from .discovery import list_discovered_endpoints, register_discovered_endpoints
-from .execution import router as execution_router
+from .discovery import router as discovery_router
 from .execution import (
     ExecuteApiRequest,
     dry_run,
@@ -26,21 +29,18 @@ from .execution import (
     run_tests,
     validate_sql,
 )
-# Import executor functions for backward compatibility
-from ..executor import execute_http_api, execute_sql_api, is_http_logic_body
-from ..script_executor import execute_script_api
-from ..workflow_executor import execute_workflow_api
-from .export import router as export_router
+from .execution import router as execution_router
 from .export import (
     ExportApiToToolsRequest,
     export_api_to_tools,
     get_api_export_options,
     unlink_api_from_tool,
 )
-from .logs import router as logs_router
+from .export import router as export_router
 from .logs import get_logs
-from .versioning import router as versioning_router
+from .logs import router as logs_router
 from .versioning import get_versions, rollback_api
+from .versioning import router as versioning_router
 
 # Main router that combines all sub-routers
 router = APIRouter()

@@ -4,7 +4,7 @@ import json
 import os
 import re
 from time import perf_counter
-from typing import Any, Iterable, List, Set, Tuple
+from typing import Any, Dict, Iterable, List, Set, Tuple
 
 from core.logging import get_logger
 
@@ -45,6 +45,7 @@ from app.modules.ops.services.orchestration.planner.plan_schema import (
     PlanMode,
     PlanOutput,
     PlanOutputKind,
+    PrimarySpec,
     RejectPayload,
     SecondarySpec,
     # NEW: Orchestration fields
@@ -57,8 +58,7 @@ logger = get_logger(__name__)
 
 # CI code pattern for extracting CI identifiers like sys-xxx, srv-yyy, etc
 CI_CODE_PATTERN = re.compile(
-    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b",
-    re.IGNORECASE
+    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
 )
 
 # Views that represent graph-based scope analysis
@@ -66,8 +66,19 @@ GRAPH_SCOPE_VIEWS = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.PATH}
 
 # Server filter keywords - used to detect when user is asking about servers specifically
 SERVER_FILTER_KEYWORDS = {
-    "서버", "server", "servers", "호스트", "host", "hosts",
-    "머신", "machine", "노드", "node", "nodes", "인스턴스", "instance"
+    "서버",
+    "server",
+    "servers",
+    "호스트",
+    "host",
+    "hosts",
+    "머신",
+    "machine",
+    "노드",
+    "node",
+    "nodes",
+    "인스턴스",
+    "instance",
 }
 
 # 정규식 패턴 (코드 구조상 필수적, 유지)
@@ -76,37 +87,42 @@ ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 DEPTH_PATTERN = re.compile(r"(?:depth|깊이)\s+(\d+)", re.IGNORECASE)
 
 
-
-
 def determine_output_types(text: str) -> Set[str]:
     normalized = text.lower()
     output_types: Set[str] = set()
-    
+
     # Number keywords (하드코딩 유지 - 코드 구조상 필수적)
     NUMBER_KEYWORDS = {
-        "얼마나", "숫자", "수치", "크다", "얼마나",
-        "얼마", "몇", "count", "total",
+        "얼마나",
+        "숫자",
+        "수치",
+        "크다",
+        "얼마나",
+        "얼마",
+        "몇",
+        "count",
+        "total",
     }
     if any(keyword in normalized for keyword in NUMBER_KEYWORDS):
         output_types.add("number")
-    
+
     # Mapping Asset 로드
     agg_keywords = _get_agg_keywords()
     if any(keyword in normalized for keyword in agg_keywords.keys()):
         output_types.add("aggregate")
-    
+
     series_keywords = _get_series_keywords()
     if any(keyword in normalized for keyword in series_keywords):
         output_types.add("chart")
-    
+
     table_hints = _get_table_hints()
     if any(keyword in normalized for keyword in table_hints):
         output_types.add("table")
-    
+
     graph_scope_keywords = _get_graph_scope_keywords()
     if any(keyword in normalized for keyword in graph_scope_keywords["scope_keywords"]):
         output_types.add("network")
-    
+
     if not output_types:
         output_types.add("text")
     return output_types
@@ -114,9 +130,7 @@ def determine_output_types(text: str) -> Set[str]:
 
 def _build_output_updates(output_types: Set[str]) -> dict[str, list[str] | str]:
     priorities = _get_output_type_priorities()
-    blocks: list[str] = [
-        otype for otype in priorities if otype in output_types
-    ]
+    blocks: list[str] = [otype for otype in priorities if otype in output_types]
     if not blocks:
         blocks = ["text"]
     primary = blocks[0]
@@ -375,7 +389,9 @@ def _call_output_parser_llm(
 def is_metric_requested(text: str) -> bool:
     normalized = text.lower()
     metric_aliases = _get_metric_aliases()
-    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
+    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(
+        metric_aliases.get("keywords", [])
+    )
     return any(keyword in normalized for keyword in metric_keywords)
 
 
@@ -387,7 +403,9 @@ UUID_PATTERN = re.compile(
 )
 GRAPH_DEPTH_PATTERN = re.compile(r"(\d+)\s*(?:단계|depth|깊이)")
 LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
-CI_IDENTIFIER_PATTERN = re.compile(r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE)
+CI_IDENTIFIER_PATTERN = re.compile(
+    r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE
+)
 
 # =============================================
 # Mapping Asset 로드 함수로 대체 (동적 로딩)
@@ -439,7 +457,7 @@ def _extract_keywords(text: str) -> List[str]:
     sanitized = []
     for token in tokens:
         # Check if token looks like a CI identifier (has hyphens)
-        if '-' in token and re.match(r'[a-z0-9_]+(?:-[a-z0-9_]+)+', token.lower()):
+        if "-" in token and re.match(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", token.lower()):
             sanitized.append(_sanitize_korean_particles(token))
         else:
             sanitized.append(token)
@@ -469,12 +487,21 @@ def _extract_natural_language_filters(text: str) -> List[FilterSpec]:
 
     # CI subtype patterns: "서버", "network", "database/db", "was", "web", "app"
     subtype_map = {
-        "서버": "server", "server": "server",
-        "network": "network", "네트워크": "network",
-        "db": "db", "database": "db", "데이터베이스": "db",
-        "was": "was", "웹": "web", "web": "web",
-        "app": "app", "앱": "app", "애플리케이션": "app",
-        "os": "os", "운영체제": "os",
+        "서버": "server",
+        "server": "server",
+        "network": "network",
+        "네트워크": "network",
+        "db": "db",
+        "database": "db",
+        "데이터베이스": "db",
+        "was": "was",
+        "웹": "web",
+        "web": "web",
+        "app": "app",
+        "앱": "app",
+        "애플리케이션": "app",
+        "os": "os",
+        "운영체제": "os",
     }
 
     # Check for subtype patterns followed by particle or at end of sentence
@@ -675,18 +702,27 @@ def create_plan(
         # Auto-detect scope from question keywords for generic orchestration
         # This ensures event questions use event scope, metric questions use metric scope, etc.
         aggregate_scope = "ci"  # default
-        if "event" in normalized and any(kw in normalized for kw in ["event", "alarm", "alert", "log", "audit"]):
+        if "event" in normalized and any(
+            kw in normalized for kw in ["event", "alarm", "alert", "log", "audit"]
+        ):
             aggregate_scope = "event"
             # For event scope, group by event_type instead of ci_type
             if should_group:
                 group_by = ["event_type"]
-        elif "metric" in normalized and any(kw in normalized for kw in ["metric", "measurement", "value"]):
+        elif "metric" in normalized and any(
+            kw in normalized for kw in ["metric", "measurement", "value"]
+        ):
             aggregate_scope = "metric"
             if should_group:
                 group_by = ["metric_name"]
 
         plan.aggregate = plan.aggregate.model_copy(
-            update={"group_by": group_by, "metrics": ["count"], "top_n": 10, "scope": aggregate_scope}
+            update={
+                "group_by": group_by,
+                "metrics": ["count"],
+                "top_n": 10,
+                "scope": aggregate_scope,
+            }
         )
     # Depth 요청 추출 (사용자 질의에서 depth 명시)
     requested_depth = 1  # 기본값
@@ -761,14 +797,24 @@ def create_plan(
     if plan.intent == Intent.AGGREGATE:
         normalized_lower = normalized.lower()
         # Detect event scope
-        if any(kw in normalized_lower for kw in ["event", "alarm", "alert", "log", "audit", "incident"]):
+        if any(
+            kw in normalized_lower
+            for kw in ["event", "alarm", "alert", "log", "audit", "incident"]
+        ):
             if plan.aggregate.scope != "event":
                 plan.aggregate = plan.aggregate.model_copy(update={"scope": "event"})
                 # Also update group_by for event scope
-                if plan.aggregate.group_by == ["ci_type"] or not plan.aggregate.group_by:
-                    plan.aggregate = plan.aggregate.model_copy(update={"group_by": ["event_type"]})
+                if (
+                    plan.aggregate.group_by == ["ci_type"]
+                    or not plan.aggregate.group_by
+                ):
+                    plan.aggregate = plan.aggregate.model_copy(
+                        update={"group_by": ["event_type"]}
+                    )
         # Detect metric scope
-        elif "metric" in normalized_lower and any(kw in normalized_lower for kw in ["metric", "measurement", "value"]):
+        elif "metric" in normalized_lower and any(
+            kw in normalized_lower for kw in ["metric", "measurement", "value"]
+        ):
             if plan.aggregate.scope != "metric":
                 plan.aggregate = plan.aggregate.model_copy(update={"scope": "metric"})
     # ===== END FINAL SCOPE CORRECTION =====
@@ -796,8 +842,10 @@ def _split_path_candidates(text: str) -> Tuple[str, str]:
 def _determine_metric_spec(text: str):
     normalized = text.lower()
     metric_aliases = _get_metric_aliases()
-    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
-    
+    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(
+        metric_aliases.get("keywords", [])
+    )
+
     metric_name = None
     for alias in metric_keywords:
         if alias in normalized:
@@ -805,7 +853,7 @@ def _determine_metric_spec(text: str):
             break
     if not metric_name:
         return None
-    
+
     history_keywords = _get_history_keywords()
     time_map = history_keywords.get("time_map", {})
     if any(
@@ -827,12 +875,12 @@ def _determine_metric_spec(text: str):
             (value for key, value in time_map.items() if key in normalized),
             "last_24h",
         )
-    
+
     agg_keywords = _get_agg_keywords()
     agg = next(
         (value for key, value in agg_keywords.items() if key in normalized), "avg"
     )
-    
+
     series_keywords = _get_series_keywords()
     mode = (
         "series"
@@ -910,15 +958,15 @@ def _determine_graph_depth(text: str, view: View) -> int:
     if match:
         return max(1, int(match.group(1)))
     default_depths = _get_graph_view_default_depth()
-    return default_depths.get(
-        view, default_depths.get(View.DEPENDENCY, 2)
-    )
+    return default_depths.get(view, default_depths.get(View.DEPENDENCY, 2))
 
 
 def _has_graph_scope_keyword(text: str) -> bool:
     normalized = text.lower()
     graph_scope_keywords = _get_graph_scope_keywords()
-    return any(keyword in normalized for keyword in graph_scope_keywords["scope_keywords"])
+    return any(
+        keyword in normalized for keyword in graph_scope_keywords["scope_keywords"]
+    )
 
 
 def _is_graph_force_query(text: str) -> bool:
@@ -940,14 +988,34 @@ def _sanitize_korean_particles(text: str) -> str:
     - 조사 (particles): 의, 을, 를, 이, 가, 은, 는, 과, 와, 부터, 까지, 에서, 으로, 로, 만, 조차, 처럼
     """
     korean_particles = {
-        '의', '을', '를', '이', '가', '은', '는', '과', '와',
-        '부터', '까지', '에서', '으로', '로', '만', '조차', '처럼',
-        '랑', '이나', '나', '께', '한테', '더러'
+        "의",
+        "을",
+        "를",
+        "이",
+        "가",
+        "은",
+        "는",
+        "과",
+        "와",
+        "부터",
+        "까지",
+        "에서",
+        "으로",
+        "로",
+        "만",
+        "조차",
+        "처럼",
+        "랑",
+        "이나",
+        "나",
+        "께",
+        "한테",
+        "더러",
     }
     result = text
     for particle in sorted(korean_particles, key=len, reverse=True):
         if result.endswith(particle):
-            result = result[:-len(particle)]
+            result = result[: -len(particle)]
             break
     return result.strip()
 
@@ -1030,30 +1098,32 @@ def _determine_auto_spec(text: str, plan: Plan) -> AutoSpec:
     normalized = text.lower()
     views = _determine_auto_views(normalized)
     depth_hint = _determine_auto_depth_hint(normalized)
-    
+
     metric_aliases = _get_metric_aliases()
-    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
+    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(
+        metric_aliases.get("keywords", [])
+    )
     include_metric = bool(plan.metric) or any(
         keyword in normalized for keyword in metric_keywords
     )
-    
+
     series_keywords = _get_series_keywords()
     metric_mode = (
         "series"
         if any(keyword in normalized for keyword in series_keywords)
         else "aggregate"
     )
-    
+
     history_keywords = _get_history_keywords()
     include_history = bool(plan.history.enabled) or any(
         keyword in normalized for keyword in history_keywords["keywords"]
     )
-    
+
     cep_keywords = _get_cep_keywords()
     include_cep = bool(plan.cep and plan.cep.rule_id) or any(
         keyword in normalized for keyword in cep_keywords
     )
-    
+
     return AutoSpec(
         views=views,
         depth_hint=depth_hint,
@@ -1085,17 +1155,17 @@ def _determine_auto_path_spec(text: str) -> AutoPathSpec:
 def _determine_graph_scope_spec(text: str, views: List[View]) -> AutoGraphScopeSpec:
     normalized = text.lower()
     has_scope_view = any(view in GRAPH_SCOPE_VIEWS for view in views)
-    
+
     graph_scope_keywords = _get_graph_scope_keywords()
     include_metric = has_scope_view and any(
         keyword in normalized for keyword in graph_scope_keywords["metric_keywords"]
     )
-    
+
     history_keywords = _get_history_keywords()
     include_history = has_scope_view and any(
         keyword in normalized for keyword in history_keywords["keywords"]
     )
-    
+
     return AutoGraphScopeSpec(
         include_metric=include_metric, include_history=include_history
     )
@@ -1112,7 +1182,7 @@ def _determine_history_spec(text: str):
     history_keywords = _get_history_keywords()
     if not any(keyword in normalized for keyword in history_keywords["keywords"]):
         return None
-    
+
     time_map = history_keywords.get("time_map", {})
     if any(
         key in normalized
@@ -1134,7 +1204,7 @@ def _determine_history_spec(text: str):
         if key in normalized:
             time_range = value
             break
-    
+
     limit = 50
     match = re.search(r"(\d{1,3})\s*개", normalized)
     if match:
@@ -1220,9 +1290,28 @@ def create_plan_output(
     # This prevents valid infrastructure queries from being incorrectly classified
     if route in ("reject", "direct"):
         INFRA_KEYWORDS = {
-            "구성", "구성정보", "상태", "정보", "메트릭", "cpu", "memory", "disk",
-            "서버", "server", "database", "db", "app", "application", "네트워크",
-            "config", "configuration", "status", "health", "metric", "연결", "의존",
+            "구성",
+            "구성정보",
+            "상태",
+            "정보",
+            "메트릭",
+            "cpu",
+            "memory",
+            "disk",
+            "서버",
+            "server",
+            "database",
+            "db",
+            "app",
+            "application",
+            "네트워크",
+            "config",
+            "configuration",
+            "status",
+            "health",
+            "metric",
+            "연결",
+            "의존",
         }
         ci_codes = CI_CODE_PATTERN.findall(normalized)
         ci_identifiers = CI_IDENTIFIER_PATTERN.findall(normalized)
@@ -1369,6 +1458,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
 
     # NEW: Load tool registry info
     from app.modules.ops.services.orchestration.tools.base import get_tool_registry
+
     tool_registry = get_tool_registry()
     tools_info = tool_registry.get_all_tools_info()
 
@@ -1376,18 +1466,17 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     catalog_info = None
     if source_ref:
         from app.modules.asset_registry.loader import load_catalog_for_llm
+
         catalog_info = load_catalog_for_llm(
             source_ref=source_ref,
             max_tables=10,
             max_columns_per_table=15,
-            max_sample_rows=3
+            max_sample_rows=3,
         )
 
     # Build enhanced prompt with tool and catalog info
     prompt = _build_enhanced_planner_prompt(
-        question=normalized,
-        tools_info=tools_info,
-        catalog_info=catalog_info
+        question=normalized, tools_info=tools_info, catalog_info=catalog_info
     )
 
     # Call LLM
@@ -1395,18 +1484,21 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     response = await llm.chat_completion(
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"User Question: {normalized}"}
+            {"role": "user", "content": f"User Question: {normalized}"},
         ],
         model=OUTPUT_PARSER_MODEL,
         temperature=0,
     )
 
     elapsed = int((perf_counter() - start) * 1000)
-    logger.info("ci.planner.llm_call", extra={
-        "model": OUTPUT_PARSER_MODEL,
-        "elapsed_ms": elapsed,
-        "status": "ok",
-    })
+    logger.info(
+        "ci.planner.llm_call",
+        extra={
+            "model": OUTPUT_PARSER_MODEL,
+            "elapsed_ms": elapsed,
+            "status": "ok",
+        },
+    )
 
     # Parse LLM response
     content = response.get("content", "")
@@ -1426,7 +1518,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     plan.mode = _determine_mode(normalized)
 
     # Extract and validate tool_type values
-    valid_tool_types = {tool['type'] for tool in tools_info}
+    valid_tool_types = {tool["type"] for tool in tools_info}
 
     # Validate Plan
     validation_errors = _validate_plan(plan, tools_info)
@@ -1442,7 +1534,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             keywords=primary_spec.get("keywords", []),
             filters=[FilterSpec(**f) for f in primary_spec.get("filters", [])],
             limit=primary_spec.get("limit", 5),
-            tool_type=primary_spec.get("tool_type", "ci_lookup")  # Use tool_type
+            tool_type=primary_spec.get("tool_type", "ci_lookup"),  # Use tool_type
         )
         # Validate tool_type
         if plan.primary.tool_type not in valid_tool_types:
@@ -1455,7 +1547,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             keywords=secondary_spec.get("keywords", []),
             filters=[FilterSpec(**f) for f in secondary_spec.get("filters", [])],
             limit=secondary_spec.get("limit", 5),
-            tool_type=secondary_spec.get("tool_type", "ci_lookup")  # Use tool_type
+            tool_type=secondary_spec.get("tool_type", "ci_lookup"),  # Use tool_type
         )
         # Validate tool_type
         if plan.secondary.tool_type not in valid_tool_types:
@@ -1470,7 +1562,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             filters=[FilterSpec(**f) for f in aggregate_spec.get("filters", [])],
             top_n=aggregate_spec.get("top_n", 10),
             scope=aggregate_spec.get("scope", "ci"),
-            tool_type=aggregate_spec.get("tool_type", "ci_aggregate")  # Use tool_type
+            tool_type=aggregate_spec.get("tool_type", "ci_aggregate"),  # Use tool_type
         )
         # Validate tool_type
         if plan.aggregate.tool_type not in valid_tool_types:
@@ -1488,7 +1580,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
                 relationships=graph_spec.get("relationships", 200),
             ),
             user_requested_depth=graph_spec.get("user_requested_depth", 2),
-            tool_type=graph_spec.get("tool_type", "ci_graph")  # Use tool_type
+            tool_type=graph_spec.get("tool_type", "ci_graph"),  # Use tool_type
         )
         # Validate tool_type
         if plan.graph.tool_type not in valid_tool_types:
@@ -1501,7 +1593,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             metric_name=metric_spec.get("metric_name"),
             agg=metric_spec.get("agg", "avg"),
             time_range=metric_spec.get("time_range"),
-            tool_type=metric_spec.get("tool_type", "metric")  # Use tool_type
+            tool_type=metric_spec.get("tool_type", "metric"),  # Use tool_type
         )
         # Validate tool_type
         if plan.metric.tool_type not in valid_tool_types:
@@ -1529,7 +1621,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
 def _validate_plan(plan: Plan, tools_info: List[Dict[str, Any]]) -> List[str]:
     """Validate that Plan uses valid tool_type values."""
     errors = []
-    valid_tool_types = {tool['type'] for tool in tools_info}
+    valid_tool_types = {tool["type"] for tool in tools_info}
 
     # Check primary tool_type
     if plan.primary and plan.primary.tool_type not in valid_tool_types:
@@ -1586,10 +1678,14 @@ Your task is to analyze the user's question and create an execution plan.
         prompt_parts.append("\n## Available Tools\n")
         for tool in tools_info:
             prompt_parts.append(f"\n### {tool['name']} ({tool['type']})")
-            if tool.get('input_schema'):
-                prompt_parts.append(f"Input Schema: {json.dumps(tool['input_schema'], indent=2)}")
-            if tool.get('output_schema'):
-                prompt_parts.append(f"Output Schema: {json.dumps(tool['output_schema'], indent=2)}")
+            if tool.get("input_schema"):
+                prompt_parts.append(
+                    f"Input Schema: {json.dumps(tool['input_schema'], indent=2)}"
+                )
+            if tool.get("output_schema"):
+                prompt_parts.append(
+                    f"Output Schema: {json.dumps(tool['output_schema'], indent=2)}"
+                )
 
     # NEW: Catalog Section
     if catalog_info:
@@ -1597,13 +1693,13 @@ Your task is to analyze the user's question and create an execution plan.
         prompt_parts.append(f"Source: {catalog_info['source_ref']}\n")
         prompt_parts.append(f"Tables: {len(catalog_info.get('tables', []))}\n")
 
-        for table in catalog_info.get('tables', [])[:5]:  # Top 5 tables
+        for table in catalog_info.get("tables", [])[:5]:  # Top 5 tables
             prompt_parts.append(f"\n### Table: {table['name']}")
             prompt_parts.append(f"Rows: {table.get('row_count', 'unknown')}")
             prompt_parts.append("Columns:")
-            for col in table.get('columns', [])[:10]:  # Top 10 columns
+            for col in table.get("columns", [])[:10]:  # Top 10 columns
                 col_info = f"  - {col['name']} ({col['type']})"
-                if col.get('samples'):
+                if col.get("samples"):
                     col_info += f" Examples: {col['samples'][:3]}"
                 prompt_parts.append(col_info)
 

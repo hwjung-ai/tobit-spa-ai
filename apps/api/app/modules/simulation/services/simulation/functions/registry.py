@@ -28,27 +28,25 @@ from app.modules.simulation.services.simulation.functions.ml_functions import (
     ARIMASurrogate,
     GRUSurrogate,
     LSTMSurrogate,
-    MLPredictiveStrategy,
     ProphetSurrogate,
     RandomForestSurrogate,
     SVRSurrogate,
 )
 from app.modules.simulation.services.simulation.functions.rule_functions import (
+    ErlangCRule,
     LinearWeightRule,
+    LittleLawRule,
     PolynomialRule,
     ThresholdRule,
-    LittleLawRule,
-    ErlangCRule,
 )
 from app.modules.simulation.services.simulation.functions.stat_functions import (
-    SimpleMovingAverage,
     ExponentialMovingAverage,
     LinearRegressionForecast,
-    PolynomialRegressionForecast,
-    StandardDeviationImpact,
     PercentileForecast,
+    PolynomialRegressionForecast,
+    SimpleMovingAverage,
+    StandardDeviationImpact,
 )
-
 
 # =============================================================================
 # Function Registry

@@ -8,16 +8,15 @@ from pydantic import BaseModel, ValidationError
 from schemas import AnswerBlock, MarkdownBlock
 
 from app.llm.client import get_llm_client, is_llm_available
-from app.shared import config_loader
 
 # Import real executors
 from app.modules.ops.services.executors import (
     run_config,
-    run_metric,
-    run_hist,
     run_graph,
-    ExecutorResult,
+    run_hist,
+    run_metric,
 )
+from app.shared import config_loader
 
 
 class OpsAllPlan(BaseModel):

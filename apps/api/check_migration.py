@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check current migration status"""
 import sys
+
 sys.path.insert(0, "/home/spa/tobit-spa-ai/apps/api")
 
 from core.db import engine

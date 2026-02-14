@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 from schemas import AnswerBlock, MarkdownBlock, TableBlock

@@ -5,11 +5,10 @@ Tests to verify that all Tool asset management endpoints enforce
 Admin/Manager-only access control.
 """
 
+
 import pytest
-from fastapi import HTTPException, status
-from unittest.mock import MagicMock, patch
-from core.auth import get_current_user
 from app.modules.auth.models import TbUser, UserRole
+from fastapi import status
 
 
 def create_user(role: UserRole) -> TbUser:

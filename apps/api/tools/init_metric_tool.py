@@ -11,7 +11,6 @@ Usage:
 Environment Variables:
     DATABASE_URL: SQLAlchemy database URL
 """
-import json
 import os
 import sys
 
@@ -22,7 +21,6 @@ from app.modules.asset_registry.crud import create_tool_asset, publish_asset
 from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import engine
 from sqlmodel import Session
-
 
 # SQL Query for metric timeseries aggregation
 METRIC_QUERY_SQL = """

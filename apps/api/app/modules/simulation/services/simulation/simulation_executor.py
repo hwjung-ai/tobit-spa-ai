@@ -6,35 +6,34 @@ from fastapi import HTTPException
 from schemas.tool_contracts import ToolCall
 
 from app.modules.simulation.schemas import SimulationRunRequest
-from app.modules.simulation.services.simulation.custom_function_runner import (
-    execute_custom_function,
-)
 from app.modules.simulation.services.simulation.baseline_loader import (
     load_baseline_and_scenario_kpis,
+)
+from app.modules.simulation.services.simulation.custom_function_runner import (
+    execute_custom_function,
 )
 from app.modules.simulation.services.simulation.planner import plan_simulation
 from app.modules.simulation.services.simulation.presenter import (
     build_blocks,
     build_references,
 )
-from app.modules.simulation.services.simulation.schemas import KpiResult, SimulationPlan, SimulationResult
-from app.modules.simulation.services.simulation.strategies.ml_strategy_real import (
-    MLPredictiveStrategyReal,
-    create_ml_strategy_real as create_ml_strategy,
-)
-from app.modules.simulation.services.simulation.strategies.dl_strategy_real import (
-    DeepLearningStrategyReal,
-    create_dl_strategy_real as create_dl_strategy,
+from app.modules.simulation.services.simulation.schemas import (
+    KpiResult,
+    SimulationResult,
 )
 from app.modules.simulation.services.simulation.strategies import (
     RuleBasedStrategy,
     StatisticalStrategy,
 )
+from app.modules.simulation.services.simulation.strategies.dl_strategy_real import (
+    create_dl_strategy_real as create_dl_strategy,
+)
+from app.modules.simulation.services.simulation.strategies.ml_strategy_real import (
+    create_ml_strategy_real as create_ml_strategy,
+)
 from app.modules.simulation.services.simulation.strategy_base import (
     SimulationStrategyExecutor,
 )
-from app.modules.simulation.services.simulation.backtest_real import run_backtest_real
-
 
 # Strategy map with real ML/DL implementations
 _STRATEGY_MAP: dict[str, SimulationStrategyExecutor] = {

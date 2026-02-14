@@ -869,7 +869,6 @@ class DynamicTool(BaseTool):
             - timeout_ms: Request timeout in milliseconds (default 30000)
             - headers: Optional dict of extra HTTP headers
         """
-        import httpx
 
         server_url = self.tool_config.get("server_url")
         transport = self.tool_config.get("transport", "sse")

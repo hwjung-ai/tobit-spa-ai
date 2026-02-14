@@ -10,21 +10,20 @@ Extracts tool execution logic from runner.py including:
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Dict, Iterable, List, Literal, Optional
+from typing import Any, Dict, Iterable, List, Literal
 
 from core.logging import get_logger, get_request_context
 
-from app.modules.ops.services.orchestration.tools import (
-    ToolContext,
-    ToolType,
-)
 from app.modules.ops.services.orchestration.orchestrator.tool_selector import (
     SelectionStrategy,
     SmartToolSelector,
     ToolSelectionContext,
 )
 from app.modules.ops.services.orchestration.planner.plan_schema import PlanMode
+from app.modules.ops.services.orchestration.tools import (
+    ToolContext,
+    ToolType,
+)
 from app.modules.ops.services.orchestration.tools.observability import ExecutionTracer
 
 MODULE_LOGGER = get_logger(__name__)

@@ -13,7 +13,7 @@ import asyncio
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Callable
 
@@ -252,7 +252,7 @@ class RequestTimeoutManager:
             elapsed = (time.time() - start) * 1000
             self.budget.record_phase_time(phase, elapsed)
             return result
-        except Exception as e:
+        except Exception:
             elapsed = (time.time() - start) * 1000
             self.budget.record_phase_time(phase, elapsed)
             raise

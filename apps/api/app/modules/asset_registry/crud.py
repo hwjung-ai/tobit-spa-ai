@@ -33,6 +33,7 @@ from .source_models import (
     SourceType,
 )
 from .validators import validate_asset
+from .loader import load_source_asset
 
 
 def list_assets(
@@ -424,7 +425,9 @@ def delete_asset(
 
     # Delete version history first
     histories = session.exec(
-        select(TbAssetVersionHistory).where(TbAssetVersionHistory.asset_id == asset.asset_id)
+        select(TbAssetVersionHistory).where(
+            TbAssetVersionHistory.asset_id == asset.asset_id
+        )
     ).all()
     for history in histories:
         session.delete(history)
@@ -963,7 +966,9 @@ async def scan_schema_asset(
     """
     from core.logging import get_logger
 
-    from app.modules.ops.services.orchestration.discovery.catalog_factory import CatalogFactory
+    from app.modules.ops.services.orchestration.discovery.catalog_factory import (
+        CatalogFactory,
+    )
 
     logger = get_logger(__name__)
 
@@ -1007,7 +1012,9 @@ async def scan_schema_asset(
                 "schema_names": schema_names,
                 "include_row_counts": include_row_counts,
                 "table_count": len(catalog_result["tables"]),
-                "total_columns": sum(len(t.get("columns", [])) for t in catalog_result["tables"]),
+                "total_columns": sum(
+                    len(t.get("columns", [])) for t in catalog_result["tables"]
+                ),
             },
         }
 
@@ -1016,7 +1023,9 @@ async def scan_schema_asset(
         session.add(asset)
         session.commit()
 
-        logger.info(f"Schema scan completed: {asset.name} ({len(catalog_result['tables'])} tables)")
+        logger.info(
+            f"Schema scan completed: {asset.name} ({len(catalog_result['tables'])} tables)"
+        )
 
         await catalog.close()
 

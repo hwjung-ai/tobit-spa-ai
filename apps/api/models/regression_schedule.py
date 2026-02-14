@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Column, Text, Boolean, Integer, Index
+from sqlalchemy import Boolean, Column, Index, Integer, Text
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlmodel import Field, SQLModel
 

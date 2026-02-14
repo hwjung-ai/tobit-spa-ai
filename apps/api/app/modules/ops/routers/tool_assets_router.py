@@ -6,6 +6,8 @@ This module provides CRUD endpoints for Tool Asset management.
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.modules.asset_registry.crud import (
     create_tool_asset,
     get_tool_asset,

@@ -1,7 +1,6 @@
 """API Manager CRUD endpoints for creating, reading, and updating API definitions."""
 
 import logging
-import uuid
 from datetime import datetime
 from typing import Optional
 
@@ -9,13 +8,13 @@ from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from models.api_definition import ApiAuthMode, ApiDefinition, ApiMode, ApiScope
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from schemas import ResponseEnvelope
 from sqlmodel import Session, select
 
 from app.modules.auth.models import TbUser
 
-from ..crud import _record_api_version, _api_snapshot, _parse_api_uuid
+from ..crud import _parse_api_uuid, _record_api_version
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])

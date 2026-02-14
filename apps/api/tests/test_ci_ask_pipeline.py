@@ -82,7 +82,9 @@ def test_ci_ask_reject_route(monkeypatch, client):
 def test_ci_ask_orchestration_stages(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import (
+        OpsOrchestratorRunner,
+    )
     from app.modules.ops.services.orchestration.planner import planner_llm, validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
@@ -148,7 +150,9 @@ def test_ci_ask_orchestration_stages(monkeypatch, client):
 def test_ci_ask_rerun_replan_events(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import (
+        OpsOrchestratorRunner,
+    )
     from app.modules.ops.services.orchestration.planner import validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
@@ -190,7 +194,9 @@ def test_ci_ask_rerun_replan_events(monkeypatch, client):
 def test_ci_ask_auto_replan_on_error(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import (
+        OpsOrchestratorRunner,
+    )
     from app.modules.ops.services.orchestration.planner import planner_llm, validator
 
     ops_router = importlib.import_module("app.modules.ops.router")

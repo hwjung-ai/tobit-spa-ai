@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test script for PDF report generation."""
 
-import sys
 import os
+import sys
 
 # Add the app directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -52,7 +52,7 @@ def test_simple_pdf():
         with open(output_path, "wb") as f:
             f.write(pdf_content)
 
-        print(f"PDF generated successfully!")
+        print("PDF generated successfully!")
         print(f"   Size: {len(pdf_content)} bytes")
         print(f"   Saved to: {output_path}")
         return True
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         output_path = "/tmp/test_conversation_report.pdf"
         with open(output_path, "wb") as f:
             f.write(pdf_content)
-        print(f"✅ Conversation PDF generated successfully!")
+        print("✅ Conversation PDF generated successfully!")
         print(f"   Size: {len(pdf_content)} bytes")
         print(f"   Saved to: {output_path}")
     except Exception as e:

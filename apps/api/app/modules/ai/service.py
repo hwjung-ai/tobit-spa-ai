@@ -3,12 +3,12 @@
 import logging
 from typing import Any
 
-from app.llm.client import get_llm_client, is_llm_available
-from app.llm.client import LlmCallLogger
 from core.db import get_session_context
 
+from app.llm.client import LlmCallLogger, get_llm_client, is_llm_available
+
 from .prompts import SYSTEM_PROMPT, build_user_prompt, parse_llm_response
-from .schemas import ScreenCopilotRequest, ScreenCopilotResponse, JsonPatchOperation
+from .schemas import JsonPatchOperation, ScreenCopilotRequest, ScreenCopilotResponse
 
 logger = logging.getLogger(__name__)
 

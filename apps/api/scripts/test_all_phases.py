@@ -24,7 +24,9 @@ def test_phase3_tool_limits():
 
     # Test CI tool limits
     try:
-        from app.modules.ops.services.orchestration.tools.ci import _get_limits as ci_get_limits
+        from app.modules.ops.services.orchestration.tools.ci import (
+            _get_limits as ci_get_limits,
+        )
         limits = ci_get_limits()
         print(f"✅ CI tool limits loaded: {limits}")
         assert "max_search_limit" in limits
@@ -123,7 +125,9 @@ def test_phase3_column_allowlist():
     print("=" * 60)
 
     try:
-        from app.modules.ops.services.orchestration.tools.ci import _get_column_allowlist
+        from app.modules.ops.services.orchestration.tools.ci import (
+            _get_column_allowlist,
+        )
         allowlist = _get_column_allowlist()
         print("✅ CI column allowlist loaded")
         assert "search_columns" in allowlist

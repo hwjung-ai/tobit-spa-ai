@@ -6,9 +6,12 @@ from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 from uuid import UUID
 
-from app.modules.operation_settings.crud import get_setting_effective_value
-from app.llm.circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitBreakerManager
 from app.core.exceptions import CircuitOpenError
+from app.llm.circuit_breaker import (
+    CircuitBreakerConfig,
+    CircuitBreakerManager,
+)
+from app.modules.operation_settings.crud import get_setting_effective_value
 from core.config import AppSettings, get_settings
 from core.db import get_session_context
 from openai import AsyncOpenAI, OpenAI

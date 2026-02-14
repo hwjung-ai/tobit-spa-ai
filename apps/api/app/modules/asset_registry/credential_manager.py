@@ -10,6 +10,7 @@ BLOCKER-2: Credential 평문 저장 제거
 from __future__ import annotations
 
 from typing import Any
+
 from core.logging import get_logger
 
 logger = get_logger(__name__)

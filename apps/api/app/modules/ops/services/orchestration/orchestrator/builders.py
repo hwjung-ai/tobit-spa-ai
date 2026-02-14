@@ -10,10 +10,9 @@ import asyncio
 from typing import Any, Dict, List
 
 from core.logging import get_logger
-from app.modules.ops.schemas import StageDiagnostics
+
+from app.modules.ops.services.orchestration.actions import NextAction
 from app.modules.ops.services.orchestration.blocks import (
-    Block,
-    chart_block,
     table_block,
     text_block,
 )
@@ -21,7 +20,6 @@ from app.modules.ops.services.orchestration.planner.plan_schema import (
     MetricSpec,
     View,
 )
-from app.modules.ops.services.orchestration.actions import NextAction
 
 
 class BlockBuilder:

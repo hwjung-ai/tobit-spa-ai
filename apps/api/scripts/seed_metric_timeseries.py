@@ -14,10 +14,10 @@ from uuid import uuid4
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.db import get_session_context
-from sqlalchemy import text
 import random
 
+from core.db import get_session_context
+from sqlalchemy import text
 
 SERVICES = [
     "api-gateway",
@@ -143,7 +143,7 @@ def seed_metric_timeseries(
             print("   Run: python scripts/seed_metric_timeseries.py after migration")
             return 0
 
-        print(f"Seeding metric timeseries data...")
+        print("Seeding metric timeseries data...")
         print(f"  Tenant: {tenant_id}")
         print(f"  Services: {', '.join(services)}")
         print(f"  Hours back: {hours_back}")
@@ -197,7 +197,7 @@ def seed_metric_timeseries(
         session.commit()
 
         # Print summary
-        print(f"\n✅ Seeding complete!")
+        print("\n✅ Seeding complete!")
         print(f"   Total records inserted: {total_inserted}")
         print(f"   Services: {len(services)}")
         print(f"   Metrics per service: {len(METRICS)}")
@@ -220,7 +220,7 @@ def seed_metric_timeseries(
         """)
         results = session.execute(verify_query, {"tenant_id": tenant_id}).fetchall()
 
-        print(f"\n📊 Data Summary:")
+        print("\n📊 Data Summary:")
         print(f"   {'Service':<20} {'Metric':<20} {'Count':>8} {'Avg':>10} {'Min':>10} {'Max':>10}")
         print(f"   {'-'*20} {'-'*20} {'-'*8} {'-'*10} {'-'*10} {'-'*10}")
         for row in results:

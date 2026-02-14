@@ -31,8 +31,6 @@ from typing import Any
 from fastapi import HTTPException
 
 from app.modules.simulation.services.topology_service import get_topology_data
-from core.db import get_session_context
-from sqlmodel import Session, select
 
 
 def _safe_mean(values: list[float]) -> float:
@@ -115,7 +113,9 @@ async def list_available_services(tenant_id: str) -> list[str]:
     """
     # First try Tool-based metric timeseries access
     try:
-        from app.modules.simulation.services.simulation.metric_tool import get_available_services_via_tool
+        from app.modules.simulation.services.simulation.metric_tool import (
+            get_available_services_via_tool,
+        )
 
         metric_services = await get_available_services_via_tool(tenant_id)
 
@@ -126,7 +126,9 @@ async def list_available_services(tenant_id: str) -> list[str]:
 
     # Try direct metric loader
     try:
-        from app.modules.simulation.services.simulation.metric_loader import get_available_services_from_metrics
+        from app.modules.simulation.services.simulation.metric_loader import (
+            get_available_services_from_metrics,
+        )
 
         metric_services = get_available_services_from_metrics(tenant_id)
 
@@ -136,7 +138,9 @@ async def list_available_services(tenant_id: str) -> list[str]:
         pass  # Fall through to topology
 
     # Fallback to topology service list
-    from app.modules.simulation.services.topology_service import list_available_services as topology_services
+    from app.modules.simulation.services.topology_service import (
+        list_available_services as topology_services,
+    )
     return topology_services(tenant_id)
 
 
@@ -161,7 +165,9 @@ async def load_baseline_kpis_async(
     """
     # Try Tool-based access first
     try:
-        from app.modules.simulation.services.simulation.metric_tool import load_metric_kpis_via_tool
+        from app.modules.simulation.services.simulation.metric_tool import (
+            load_metric_kpis_via_tool,
+        )
 
         baseline_kpis = await load_metric_kpis_via_tool(
             tenant_id=tenant_id,
@@ -176,7 +182,9 @@ async def load_baseline_kpis_async(
 
     # Try direct metric loader
     try:
-        from app.modules.simulation.services.simulation.metric_loader import load_baseline_kpis
+        from app.modules.simulation.services.simulation.metric_loader import (
+            load_baseline_kpis,
+        )
 
         baseline_kpis = load_baseline_kpis(
             tenant_id=tenant_id,
@@ -223,7 +231,9 @@ def load_baseline_and_scenario_kpis(
     # Try to load from metric data (Tool or direct)
     try:
         # For async compatibility, use sync version for now
-        from app.modules.simulation.services.simulation.metric_loader import load_baseline_kpis
+        from app.modules.simulation.services.simulation.metric_loader import (
+            load_baseline_kpis,
+        )
 
         baseline_kpis = load_baseline_kpis(tenant_id=tenant_id, service=service, hours_back=168)
     except Exception:

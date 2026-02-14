@@ -1,4 +1,3 @@
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from app.modules.cep_builder import crud

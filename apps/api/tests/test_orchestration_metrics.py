@@ -4,12 +4,13 @@ P0-1: Orchestration Metrics Tests
 Tests for SLO metrics collection and tagging.
 """
 
-import pytest
 import time
+
+import pytest
 from app.modules.ops.services.metrics import (
-    OrchestrationMetrics,
     MetricType,
     MetricValue,
+    OrchestrationMetrics,
     get_orchestration_metrics,
     reset_orchestration_metrics,
 )

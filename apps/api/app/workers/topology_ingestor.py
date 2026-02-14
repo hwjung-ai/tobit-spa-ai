@@ -19,7 +19,6 @@ For actual infrastructure discovery, see:
 """
 from __future__ import annotations
 
-import json
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
@@ -27,8 +26,6 @@ from typing import Any, Optional
 
 import httpx
 from pydantic import BaseModel, Field
-
-from core.config import get_settings
 
 logger = logging.getLogger(__name__)
 

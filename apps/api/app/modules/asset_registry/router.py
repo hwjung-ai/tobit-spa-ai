@@ -535,7 +535,7 @@ def update_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            logger.debug("Invalid UUID format for asset_id, falling back to name/ID lookup")
             asset = None
 
         # If not found by UUID, try to find by asset_id or screen_id (draft first, then published)
@@ -696,7 +696,7 @@ def publish_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            logger.debug("Invalid UUID format for asset_id, falling back to name/ID lookup")
             asset = None
 
         # If not found by UUID, try to find by screen_id (draft first, then published)
@@ -813,7 +813,7 @@ def rollback_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            logger.debug("Invalid UUID format for asset_id, falling back to name/ID lookup")
             asset = None
 
         # If not found by UUID, try to find by screen_id (draft first, then published)
@@ -958,7 +958,7 @@ def delete_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            logger.debug("Invalid UUID format for asset_id, falling back to name/ID lookup")
             asset = None
 
         # If not found by UUID, try to find by screen_id (draft first, then published)
@@ -1676,7 +1676,9 @@ def create_tool(
         )
 
     # BLOCKER-2: Credential validation - prevent plaintext storage
-    from app.modules.asset_registry.credential_manager import validate_tool_config_credentials
+    from app.modules.asset_registry.credential_manager import (
+        validate_tool_config_credentials,
+    )
     tool_config = payload.get("tool_config", {})
     credential_errors = validate_tool_config_credentials(tool_config)
     if credential_errors:
@@ -1756,7 +1758,9 @@ def update_tool(
         )
 
     # BLOCKER-2: Credential validation - prevent plaintext storage
-    from app.modules.asset_registry.credential_manager import validate_tool_config_credentials
+    from app.modules.asset_registry.credential_manager import (
+        validate_tool_config_credentials,
+    )
     if "tool_config" in payload:
         credential_errors = validate_tool_config_credentials(payload.get("tool_config"))
         if credential_errors:
@@ -1847,7 +1851,9 @@ def publish_tool(
             raise HTTPException(status_code=404, detail="Tool not found")
 
         # BLOCKER-3: Enhanced validation for publication
-        from app.modules.asset_registry.tool_validator import validate_tool_for_publication
+        from app.modules.asset_registry.tool_validator import (
+            validate_tool_for_publication,
+        )
         publication_errors = validate_tool_for_publication(asset)
         if publication_errors:
             raise HTTPException(

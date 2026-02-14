@@ -688,7 +688,7 @@ export default function ApiManagerPage() {
       window.localStorage.removeItem(key);
     }
   }, [finalStorageId]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
 
   useEffect(() => {
     if (!draftApi) {
@@ -1197,7 +1197,7 @@ export default function ApiManagerPage() {
     setDraftStatus("idle");
     setDraftNotes(null);
   }, []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
 
   const buildDraftFromDiscovered = useCallback((endpoint: DiscoveredEndpoint): ApiDraft => {
     return {

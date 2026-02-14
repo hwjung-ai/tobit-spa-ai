@@ -12,13 +12,13 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from core.auth import get_current_user
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from schemas import ResponseEnvelope
 
 from app.modules.auth.models import TbUser
-from core.auth import get_current_user
 from app.workers import MetricCollector, TopologyIngestor
-from schemas import ResponseEnvelope
 
 logger = logging.getLogger(__name__)
 
@@ -337,8 +337,11 @@ def train_model(
     else:
         # Load from metric timeseries
         # This would require actual data in database
-        from app.modules.simulation.services.simulation.metric_loader import _get_metric_timeseries
         from core.db import get_session_context
+
+        from app.modules.simulation.services.simulation.metric_loader import (
+            _get_metric_timeseries,
+        )
 
         with get_session_context() as session:
             metric_data = _get_metric_timeseries(

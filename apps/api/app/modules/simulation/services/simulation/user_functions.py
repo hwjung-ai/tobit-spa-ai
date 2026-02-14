@@ -7,13 +7,11 @@ alongside the built-in function library.
 from __future__ import annotations
 
 import hashlib
-import json
 from datetime import datetime, timezone
 from typing import Any
-from uuid import uuid4
 
 from fastapi import HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.modules.simulation.services.simulation.functions.base import (
     FunctionCategory,

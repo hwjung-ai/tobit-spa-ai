@@ -3,7 +3,6 @@
 import json
 import logging
 import time
-from typing import Optional
 from urllib.parse import urlparse, urlunparse
 
 from core.auth import get_current_user
@@ -16,7 +15,7 @@ from sqlmodel import Session
 
 from app.modules.auth.models import TbUser
 
-from ..crud import _parse_api_uuid, DRY_RUN_API_ID
+from ..crud import DRY_RUN_API_ID, _parse_api_uuid
 from ..executor import execute_http_api, execute_sql_api, is_http_logic_body
 from ..script_executor import execute_script_api
 from ..services.sql_validator import SQLValidator

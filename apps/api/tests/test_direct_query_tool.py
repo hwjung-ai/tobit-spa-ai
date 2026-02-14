@@ -10,10 +10,13 @@ Tests for DirectQueryTool including:
 - Connection cleanup
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from app.modules.ops.services.orchestration.tools.base import ToolContext, ToolResult
-from app.modules.ops.services.orchestration.tools.direct_query_tool import DirectQueryTool
+from app.modules.ops.services.orchestration.tools.direct_query_tool import (
+    DirectQueryTool,
+)
 
 
 class TestDirectQueryToolBasics:

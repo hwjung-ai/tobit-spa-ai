@@ -18,7 +18,6 @@ from app.modules.simulation.services.simulation.functions.base import (
     SimulationFunction,
 )
 
-
 # =============================================================================
 # 1. Performance Domain Functions
 # =============================================================================

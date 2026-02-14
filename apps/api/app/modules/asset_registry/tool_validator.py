@@ -9,7 +9,6 @@ BLOCKER-3: Tool Asset 검증 추가
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from core.logging import get_logger
@@ -120,8 +119,8 @@ class ToolAssetValidator:
             # Validate URL format
             if not url.startswith(("http://", "https://", "/")):
                 errors.append(
-                    f"http_api: Invalid URL format in tool_config. "
-                    f"Must start with http://, https://, or / (relative)"
+                    "http_api: Invalid URL format in tool_config. "
+                    "Must start with http://, https://, or / (relative)"
                 )
 
         # Check method

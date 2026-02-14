@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from main import app
 
-
 PUBLIC_PATHS = {
     "/auth/login",
     "/auth/refresh",

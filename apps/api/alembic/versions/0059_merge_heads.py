@@ -7,7 +7,6 @@ Create Date: 2026-02-14
 
 from typing import Sequence, Union
 
-
 revision: str = "0059_merge_heads"
 down_revision: Union[str, Sequence[str], None] = (
     "0058_add_tenant_id_to_cep_rule",

@@ -6,38 +6,36 @@ Provides REST API endpoints for screen management.
 from __future__ import annotations
 
 import logging
-from typing import Optional, List
-
-from fastapi import APIRouter, Depends, HTTPException, Request, Query
-from schemas import ResponseEnvelope
-from sqlmodel import Session
+from typing import Optional
 
 from core.auth import get_current_user
 from core.db import get_session
+from fastapi import APIRouter, Depends, Query, Request
+from schemas import ResponseEnvelope
+from sqlmodel import Session
+
 from app.modules.auth.models import TbUser
 
 from .models import (
     ScreenCreateRequest,
-    ScreenUpdateRequest,
     ScreenPublishRequest,
-    ScreenRollbackRequest,
     ScreenResponse,
-    ScreenListResponse,
-    ScreenVersionResponse,
+    ScreenRollbackRequest,
+    ScreenUpdateRequest,
 )
 from .screen_router import (
-    create_screen,
-    get_screen,
-    list_screens,
-    update_screen,
-    publish_screen,
-    unpublish_screen,
-    rollback_screen,
-    delete_screen,
-    get_screen_versions,
-    get_screen_version,
     ScreenNotFoundError,
     ScreenVersionConflictError,
+    create_screen,
+    delete_screen,
+    get_screen,
+    get_screen_version,
+    get_screen_versions,
+    list_screens,
+    publish_screen,
+    rollback_screen,
+    unpublish_screen,
+    update_screen,
 )
 
 logger = logging.getLogger(__name__)

@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import logging
 
-from app.modules.ops.services.orchestration.planner.ci_planner import get_ci_planner
 from app.modules.ops.services.domain import get_domain_registry, register_domain_planner
+from app.modules.ops.services.orchestration.planner.ci_planner import get_ci_planner
 
 logger = logging.getLogger(__name__)
 

@@ -27,8 +27,12 @@ def initialize_tools() -> None:
     try:
         from app.modules.asset_registry.loader import load_all_published_tools
         from app.modules.ops.services.orchestration.tools.base import get_tool_registry
-        from app.modules.ops.services.orchestration.tools.direct_query_tool import DirectQueryTool
-        from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
+        from app.modules.ops.services.orchestration.tools.direct_query_tool import (
+            DirectQueryTool,
+        )
+        from app.modules.ops.services.orchestration.tools.dynamic_tool import (
+            DynamicTool,
+        )
 
         registry = get_tool_registry()
 

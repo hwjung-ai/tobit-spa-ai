@@ -1,7 +1,6 @@
 """FastAPI global exception handlers"""
 
 import logging
-from typing import Callable
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

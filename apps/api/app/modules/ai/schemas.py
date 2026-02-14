@@ -1,6 +1,7 @@
 """Screen Copilot API Schemas."""
 
 from typing import Any, Optional
+
 from pydantic import BaseModel, Field
 
 

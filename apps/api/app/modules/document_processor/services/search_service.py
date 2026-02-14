@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from ..search_crud import (
-    get_popular_searches,
     get_search_suggestions,
     log_search,
     search_chunks_by_text,

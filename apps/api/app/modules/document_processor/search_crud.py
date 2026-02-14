@@ -8,12 +8,9 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 from sqlalchemy import text
 from sqlmodel import Session
-
-from models.document import DocumentChunk
 
 logger = logging.getLogger(__name__)
 

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from fastapi.testclient import TestClient
-
 import core.db
+from fastapi.testclient import TestClient
 from main import app
 from models.api_definition import ApiAuthMode, ApiDefinition, ApiMode, ApiScope
 

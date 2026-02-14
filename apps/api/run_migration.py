@@ -9,11 +9,12 @@ sys.path.insert(0, '/home/spa/tobit-spa-ai/apps/api')
 
 # Set up environment
 from dotenv import load_dotenv
+
 load_dotenv('/home/spa/tobit-spa-ai/apps/api/.env')
 
 # Import and run alembic
-from alembic.config import Config
 from alembic import command
+from alembic.config import Config
 
 alembic_cfg = Config('/home/spa/tobit-spa-ai/apps/api/alembic.ini')
 alembic_cfg.set_main_option('sqlalchemy.url', os.getenv(

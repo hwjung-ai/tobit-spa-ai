@@ -23,7 +23,6 @@ from ..crud import (
     get_event,
     get_exec_log,
     get_latest_exec_log_for_rule,
-    get_rule,
     list_events,
     summarize_events,
 )

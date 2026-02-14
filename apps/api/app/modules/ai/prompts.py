@@ -3,7 +3,6 @@
 import json
 from typing import Any
 
-
 SYSTEM_PROMPT = """You are a Screen Editor AI Copilot. Your task is to generate JSON Patch operations (RFC6902) to modify screen schemas based on user requests.
 
 ## Available Component Types

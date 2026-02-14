@@ -10,12 +10,12 @@ Extracts response building logic from runner.py including:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from core.logging import get_logger
 
-from app.modules.ops.services.orchestration.blocks import Block
 from app.modules.ops.services.orchestration.actions import NextAction
+from app.modules.ops.services.orchestration.blocks import Block
 
 MODULE_LOGGER = get_logger(__name__)
 

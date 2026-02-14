@@ -5,7 +5,7 @@ Tests for standardized error codes for failure classification.
 """
 
 import pytest
-from schemas.tool_contracts import ToolErrorCode, ToolCall, ToolCallTrace
+from schemas.tool_contracts import ToolCall, ToolCallTrace, ToolErrorCode
 
 
 class TestToolErrorCodeEnum:

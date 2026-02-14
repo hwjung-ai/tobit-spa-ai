@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 
 from app.modules.ops.services.orchestration.blocks import text_block
 
-
 # History fallback keywords
 HISTORY_FALLBACK_KEYWORDS = {
     "이력",

@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional, List
-from sqlmodel import Field, SQLModel, Relationship, Column, JSON
+from typing import List, Optional
+
 from pydantic import BaseModel
+from sqlmodel import JSON, Column, Field, SQLModel
 
 
 class TbScreen(SQLModel, table=True):

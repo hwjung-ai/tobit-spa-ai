@@ -5,12 +5,8 @@ This strategy uses actual machine learning models trained on historical metric d
 """
 from __future__ import annotations
 
-import pickle
 from typing import Any
 
-from fastapi import HTTPException
-
-from app.modules.simulation.services.simulation.metric_loader import load_baseline_kpis
 from app.modules.simulation.services.simulation.schemas import KpiResult, SimulationPlan
 
 

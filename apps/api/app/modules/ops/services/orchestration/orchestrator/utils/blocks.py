@@ -62,7 +62,7 @@ def build_metric_blocks_from_data(
             )
             if chart:
                 blocks.append(chart)
-        except Exception as e:
+        except Exception:
             # Silently skip chart on error, continue with table
             pass
 

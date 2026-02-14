@@ -7,21 +7,20 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from uuid import uuid4
 
-from sqlmodel import Session, select, col
-from fastapi import HTTPException
+from sqlmodel import Session, col, select
 
 from .models import (
-    TbScreen,
-    TbScreenVersion,
-    TbScreenAuditLog,
     ScreenCreateRequest,
-    ScreenUpdateRequest,
-    ScreenResponse,
     ScreenListResponse,
+    ScreenResponse,
+    ScreenUpdateRequest,
     ScreenVersionResponse,
+    TbScreen,
+    TbScreenAuditLog,
+    TbScreenVersion,
 )
 
 logger = logging.getLogger(__name__)

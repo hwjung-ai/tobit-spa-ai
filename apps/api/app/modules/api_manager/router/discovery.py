@@ -13,7 +13,7 @@ from sqlmodel import Session, select
 
 from app.modules.auth.models import TbUser
 
-from ..crud import _record_api_version, _api_snapshot
+from ..crud import _record_api_version
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])

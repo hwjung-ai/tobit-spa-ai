@@ -5,12 +5,8 @@ This strategy uses LSTM/Transformer models for time-series aware KPI prediction.
 """
 from __future__ import annotations
 
-import pickle
 from typing import Any
 
-from fastapi import HTTPException
-
-from app.modules.simulation.services.simulation.metric_loader import load_baseline_kpis
 from app.modules.simulation.services.simulation.schemas import KpiResult, SimulationPlan
 
 
@@ -140,7 +136,7 @@ class DeepLearningStrategyReal:
 
             return kpis, confidence, model_info
 
-        except Exception as e:
+        except Exception:
             # Fallback to sequence-aware statistical on model error
             return self._predict_with_sequence_aware(baseline_data, traffic, cpu, memory, plan.service, "")
 

@@ -291,7 +291,6 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
     monkeypatch.setenv("OPS_ENABLE_LANGGRAPH", "true")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-    from app.modules.ops.services.langgraph import LangGraphAllRunner
     from schemas.tool_contracts import ExecutorResult
 
     def mock_metric_executor(_question: str):
