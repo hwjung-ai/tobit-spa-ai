@@ -1,0 +1,12 @@
+# Development Dependencies
+# Include all production dependencies first
+-r requirements.txt
+
+# Testing
+pytest~=9.0.2
+pytest-asyncio~=1.3.0
+pytest-anyio~=0.0.1
+
+# Code Quality & Linting
+ruff~=0.14.11
+mypy~=1.19.1
