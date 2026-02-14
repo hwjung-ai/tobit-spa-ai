@@ -147,11 +147,19 @@ def _run_migrations(logger) -> None:
             command.upgrade(alembic_cfg, "head")
             logger.info("Database migrations completed successfully")
         except Exception as upgrade_error:
-            logger.warning(
-                "Migration upgrade failed (non-fatal): %s",
-                upgrade_error,
-            )
-            logger.info("Proceeding with current database schema")
+            if settings.app_env == "prod":
+                logger.critical(
+                    "Database migration failed in production - aborting startup: %s",
+                    upgrade_error,
+                    exc_info=True,
+                )
+                raise SystemExit(1) from upgrade_error
+            else:
+                logger.warning(
+                    "Database migration failed in non-production environment (continuing): %s",
+                    upgrade_error,
+                )
+                logger.info("Proceeding with current database schema")
     except Exception as migration_error:
         logger.error(
             "Failed to initialize migrations: %s", migration_error, exc_info=True
