@@ -62,13 +62,6 @@ import { recordCopilotMetric } from "../../lib/copilot/metrics";
 
 /* Types and utilities imported from lib/api-manager */
 
-type ParsedResponsePayload = {
-  data?: Record<string, unknown>;
-  message?: string;
-  detail?: string;
-  [key: string]: unknown;
-};
-
 type SaveApiResult =
   | { ok: true; data: Record<string, unknown> | null }
   | { ok: false; error: string; details: unknown };
@@ -694,7 +687,7 @@ export default function ApiManagerPage() {
     } catch {
       window.localStorage.removeItem(key);
     }
-  }, [finalStorageId]);
+  }, [finalStorageId, applyFinalToForm]);
 
   useEffect(() => {
     if (!draftApi) {
@@ -1202,7 +1195,7 @@ export default function ApiManagerPage() {
     setDraftApi(null);
     setDraftStatus("idle");
     setDraftNotes(null);
-  }, []);
+  }, [applyFinalToForm]);
 
   const buildDraftFromDiscovered = useCallback((endpoint: DiscoveredEndpoint): ApiDraft => {
     return {

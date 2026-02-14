@@ -94,10 +94,9 @@ export default function ExecutionTimeline() {
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded text-xs uppercase tracking-wider transition ${
                 period === p
-                  ? ""
-                  : ""
+                  ? "bg-sky-500/20 text-sky-400 border border-sky-500/50"
+                  : "border border-variant text-muted-foreground"
               }`}
-              className={period === p ? "bg-sky-500/20 text-sky-400 border border-sky-500/50" : "border border-variant text-muted-foreground"}
             >
               {p}
             </button>

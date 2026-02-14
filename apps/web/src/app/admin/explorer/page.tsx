@@ -231,12 +231,6 @@ const normalizeResult = (rows: GridRow[]): NormalizedResult => {
     truncated,
   };
 };
-const normalizeBaseUrl = (value?: string) => {
-  if (!value) {
-    return "";
-  }
-  return value.endsWith("/") ? value.slice(0, -1) : value;
-};
 
 const formatError = (err: unknown) => {
   if (err instanceof Error) {

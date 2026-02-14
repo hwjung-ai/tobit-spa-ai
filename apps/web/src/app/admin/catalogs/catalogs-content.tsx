@@ -18,7 +18,7 @@ interface CatalogAsset {
   content?: {
     source_ref?: string;
     catalog?: {
-      tables?: any[];
+      tables?: Record<string, unknown>[];
       scan_status?: string;
       last_scanned_at?: string;
     };

@@ -15,7 +15,6 @@ import {
   AggregationSection,
   EnrichmentSection,
   ActionsSection,
-  SimulationPanel,
   JsonPreview,
 } from "../../components/cep-form-builder";
 import type {
@@ -89,10 +88,10 @@ export default function CepBuilderPage() {
   const [formConditions, setFormConditions] = useState<Condition[]>([]);
   const [formConditionLogic, setFormConditionLogic] = useState<"AND" | "OR" | "NOT">("AND");
   const [formActions, setFormActions] = useState<Action[]>([]);
-  const [formWindowConfig, setFormWindowConfig] = useState<Record<string, any>>({});
-  const [formAggregations, setFormAggregations] = useState<any[]>([]);
+  const [formWindowConfig, setFormWindowConfig] = useState<Record<string, unknown>>({});
+  const [formAggregations, setFormAggregations] = useState<Record<string, unknown>[]>([]);
   const [formGroupByFields, setFormGroupByFields] = useState<string[]>([]);
-  const [formEnrichments, setFormEnrichments] = useState<any[]>([]);
+  const [formEnrichments, setFormEnrichments] = useState<Record<string, unknown>[]>([]);
 
   const draftStorageId = selectedId ?? "new";
   const finalStorageId = selectedId ?? (ruleName.trim() || "new");
