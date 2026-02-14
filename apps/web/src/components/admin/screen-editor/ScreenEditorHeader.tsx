@@ -152,12 +152,10 @@ export default function ScreenEditorHeader({
                   disabled={isSaving || !isDirty}
                   variant="outline"
                   size="sm"
-                  className={`
-                    ${isSaving || !isDirty
-                      ? "cursor-not-allowed   /50"
-                      : "cursor-pointer  text-foreground 0 hover:"
-                    }
-                  `}
+                  className={isSaving || !isDirty
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer text-foreground hover:text-foreground/80"
+                  }
                   data-testid="btn-save-draft"
                 >
                   {isSaving ? "Saving..." : "Save Draft"}

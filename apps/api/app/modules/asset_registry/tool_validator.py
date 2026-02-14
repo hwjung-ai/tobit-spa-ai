@@ -154,9 +154,14 @@ class ToolAssetValidator:
         errors = []
         config = asset.tool_config or {}
 
-        # Check MCP server reference
-        if not config.get("mcp_server_ref"):
-            errors.append("mcp: mcp_server_ref is required in tool_config")
+        # Check MCP server reference (accept both field names for compatibility)
+        has_server_ref = (
+            config.get("mcp_server_ref")
+            or config.get("mcp_server_url")
+            or config.get("server_url")
+        )
+        if not has_server_ref:
+            errors.append("mcp: mcp_server_ref or mcp_server_url is required in tool_config")
 
         # Check tool name in MCP
         if not config.get("tool_name"):

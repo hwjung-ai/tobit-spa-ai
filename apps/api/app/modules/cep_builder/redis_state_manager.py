@@ -7,6 +7,7 @@ enabling horizontal scaling and high availability.
 
 import json
 import logging
+import os
 from typing import Any, Dict, Optional
 
 try:
@@ -23,16 +24,22 @@ DEFAULT_REDIS_URL = "redis://localhost:6379"
 DEFAULT_EXPIRY_HOURS = 24
 
 
+def _get_redis_url() -> str:
+    """Get Redis URL from environment or default."""
+    return os.getenv("REDIS_URL", os.getenv("CELERY_BROKER_URL", DEFAULT_REDIS_URL))
+
+
 class RedisStateManager:
     """Redis를 기반으로 하는 분산 상태 관리자"""
 
-    def __init__(self, redis_url: str = DEFAULT_REDIS_URL):
+    def __init__(self, redis_url: str | None = None):
         """
         초기화
 
         Args:
-            redis_url: Redis 서버 URL
+            redis_url: Redis 서버 URL (defaults to REDIS_URL env var)
         """
+        self.redis_url = redis_url or _get_redis_url()
         if not REDIS_AVAILABLE:
             logger.warning(
                 "Redis not available. Install 'redis' package to enable distributed state."

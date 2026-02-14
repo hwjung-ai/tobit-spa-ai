@@ -627,6 +627,16 @@ def update_asset(
                 asset.query_metadata = payload.query_metadata
         elif isinstance(payload, ScreenAssetUpdate):
             if payload.screen_schema is not None:
+                # Basic schema validation
+                schema = payload.screen_schema
+                if not isinstance(schema, dict):
+                    raise HTTPException(status_code=400, detail="screen_schema must be a dict")
+                if "screen_id" not in schema:
+                    raise HTTPException(status_code=400, detail="screen_schema.screen_id is required")
+                if "components" not in schema:
+                    raise HTTPException(status_code=400, detail="screen_schema.components is required")
+                if not isinstance(schema.get("components"), list):
+                    raise HTTPException(status_code=400, detail="screen_schema.components must be an array")
                 asset.screen_schema = payload.screen_schema
 
         asset.updated_at = datetime.now()

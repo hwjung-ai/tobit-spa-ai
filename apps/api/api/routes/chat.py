@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, AsyncGenerator
 
 from app.modules.auth.models import TbUser
+from app.modules.security.input_validator import RateLimiter
 from core.auth import get_current_user
 from core.config import get_settings
 from core.db import Session, get_session
@@ -22,6 +23,9 @@ from sqlmodel import select
 from sse_starlette.sse import EventSourceResponse
 
 router = APIRouter(prefix="/chat")
+
+# Rate limiter for chat endpoint (30 requests per minute per user)
+_chat_rate_limiter = RateLimiter(window_seconds=60, max_attempts=30)
 
 CONTRACT_BY_BUILDER: dict[str, str] = {
     "api-manager": "api_draft",
@@ -238,6 +242,14 @@ async def stream_chat(
     if not message and prompt:  # TODO: remove prompt fallback in next release
         message = prompt
     tenant_id, user_id = identity
+
+    # Rate limit check
+    if not _chat_rate_limiter.is_allowed(f"chat:{user_id}"):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests. Please wait before sending more messages.",
+        )
+
     thread = _get_or_create_thread(
         session, tenant_id, user_id, thread_id, resolved_message, builder=builder
     )
