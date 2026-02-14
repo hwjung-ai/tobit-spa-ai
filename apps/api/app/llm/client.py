@@ -7,6 +7,8 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 from uuid import UUID
 
 from app.modules.operation_settings.crud import get_setting_effective_value
+from app.llm.circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitBreakerManager
+from app.core.exceptions import CircuitOpenError
 from core.config import AppSettings, get_settings
 from core.db import get_session_context
 from openai import AsyncOpenAI, OpenAI
@@ -165,6 +167,17 @@ class LlmClient:
         self.client = OpenAI(**kwargs)
         self.async_client = AsyncOpenAI(**kwargs)
 
+        # Initialize circuit breaker for resilience
+        self._circuit_breaker = CircuitBreakerManager.get_or_create(
+            "llm_client",
+            CircuitBreakerConfig(
+                failure_threshold=5,
+                recovery_timeout=60.0,
+                success_threshold=2,
+                expected_exception=Exception,
+            ),
+        )
+
     def create_response(
         self,
         input: Union[List[Dict[str, str]], str],
@@ -173,33 +186,57 @@ class LlmClient:
         **kwargs,
     ) -> Any:
         """
-        Synchronous wrapper for client.responses.create
+        Synchronous wrapper for client.responses.create with circuit breaker protection
         """
+        # Check circuit breaker first
+        if self._circuit_breaker.is_open():
+            logging.error(
+                "LLM circuit breaker is OPEN - fast-failing request to prevent cascading failures"
+            )
+            raise CircuitOpenError("llm_client")
+
         model = model or self.default_model
         logging.debug(
             "LLM create_response: model=%s, input=%s", model, str(input)[:100]
         )
         try:
-            return self.client.responses.create(
+            response = self.client.responses.create(
                 model=model,
                 input=input,
                 tools=tools,
                 stream=False,
                 **kwargs,
             )
-        except Exception:
+            # Record success
+            self._circuit_breaker.record_success()
+            return response
+        except Exception as e:
+            # Record failure
+            self._circuit_breaker.record_failure()
+
             if self.enable_fallback and self.fallback_model and model != self.fallback_model:
                 logging.warning(
                     "LLM primary model failed, retrying with fallback model=%s",
                     self.fallback_model,
                 )
-                return self.client.responses.create(
-                    model=self.fallback_model,
-                    input=input,
-                    tools=tools,
-                    stream=False,
-                    **kwargs,
-                )
+                try:
+                    response = self.client.responses.create(
+                        model=self.fallback_model,
+                        input=input,
+                        tools=tools,
+                        stream=False,
+                        **kwargs,
+                    )
+                    # Record success on fallback
+                    self._circuit_breaker.record_success()
+                    return response
+                except Exception as fallback_error:
+                    # Fallback also failed, record another failure
+                    self._circuit_breaker.record_failure()
+                    logging.error(
+                        "LLM fallback model also failed: %s", str(fallback_error)
+                    )
+                    raise fallback_error from e
             raise
 
     async def acreate_response(
@@ -210,33 +247,57 @@ class LlmClient:
         **kwargs,
     ) -> Any:
         """
-        Asynchronous wrapper for client.responses.create
+        Asynchronous wrapper for client.responses.create with circuit breaker protection
         """
+        # Check circuit breaker first
+        if self._circuit_breaker.is_open():
+            logging.error(
+                "LLM circuit breaker is OPEN - fast-failing request to prevent cascading failures"
+            )
+            raise CircuitOpenError("llm_client")
+
         model = model or self.default_model
         logging.debug(
             "LLM acreate_response: model=%s, input=%s", model, str(input)[:100]
         )
         try:
-            return await self.async_client.responses.create(
+            response = await self.async_client.responses.create(
                 model=model,
                 input=input,
                 tools=tools,
                 stream=False,
                 **kwargs,
             )
-        except Exception:
+            # Record success
+            self._circuit_breaker.record_success()
+            return response
+        except Exception as e:
+            # Record failure
+            self._circuit_breaker.record_failure()
+
             if self.enable_fallback and self.fallback_model and model != self.fallback_model:
                 logging.warning(
                     "LLM async primary model failed, retrying with fallback model=%s",
                     self.fallback_model,
                 )
-                return await self.async_client.responses.create(
-                    model=self.fallback_model,
-                    input=input,
-                    tools=tools,
-                    stream=False,
-                    **kwargs,
-                )
+                try:
+                    response = await self.async_client.responses.create(
+                        model=self.fallback_model,
+                        input=input,
+                        tools=tools,
+                        stream=False,
+                        **kwargs,
+                    )
+                    # Record success on fallback
+                    self._circuit_breaker.record_success()
+                    return response
+                except Exception as fallback_error:
+                    # Fallback also failed, record another failure
+                    self._circuit_breaker.record_failure()
+                    logging.error(
+                        "LLM fallback model also failed: %s", str(fallback_error)
+                    )
+                    raise fallback_error from e
             raise
 
     async def stream_response(

@@ -29,6 +29,7 @@ from app.modules.ci_management.router import router as ci_management_router
 from app.modules.data_explorer import router as data_explorer_router
 from app.modules.document_processor.router import router as document_processor_router
 from app.modules.inspector.router import router as inspector_router
+from app.modules.ai.router import router as ai_router
 from app.modules.llm.router import router as llm_logs_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.ops.router import router as ops_router
@@ -56,6 +57,7 @@ from apps.api.core.cors_config import CORSConfig
 from apps.api.core.logging import configure_logging
 from apps.api.core.middleware import RequestIDMiddleware
 from apps.api.core.security_middleware import add_security_middleware
+from app.core.exception_handlers import register_exception_handlers
 
 # Note: initialize_domain_planners() and initialize_tools() are now called in on_startup()
 # to avoid duplicate initialization during uvicorn reload
@@ -66,6 +68,9 @@ configure_logging(settings.log_level)
 app = FastAPI(redirect_slashes=False)
 app.add_middleware(RequestIDMiddleware)
 add_security_middleware(app, settings)
+
+# Register global exception handlers
+register_exception_handlers(app)
 
 # Configure CORS with advanced settings
 cors_config = CORSConfig(settings)
@@ -103,6 +108,7 @@ app.include_router(audit_log_router, dependencies=auth_required)
 app.include_router(api_manager_router, dependencies=auth_required)
 app.include_router(runtime_router, dependencies=auth_required)
 app.include_router(inspector_router, dependencies=auth_required)
+app.include_router(ai_router, dependencies=auth_required)
 app.include_router(llm_logs_router, prefix="/admin", dependencies=auth_required)
 app.include_router(history_router, dependencies=auth_required)
 
