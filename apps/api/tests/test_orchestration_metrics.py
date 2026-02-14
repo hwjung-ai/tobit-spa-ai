@@ -176,7 +176,7 @@ class TestOrchestrationMetrics:
         """Valid tags should pass validation."""
         tags = {"trace_id": "trace-123", "tenant_id": "tenant-1"}
 
-        missing = OrchestrationMetrics.METRICS["latency_p50"]
+        OrchestrationMetrics.METRICS["latency_p50"]
         # Use class method
         validator = OrchestrationMetrics()
         missing_tags = validator.validate_required_tags(tags)

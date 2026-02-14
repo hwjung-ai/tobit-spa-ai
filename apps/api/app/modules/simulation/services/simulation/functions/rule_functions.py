@@ -523,7 +523,6 @@ class LittleLawRule(SimulationFunction):
 
         base_latency = baseline.get("latency_ms", 50.0)
         base_throughput = baseline.get("throughput_rps", 1000.0)
-        base_queue_length = baseline.get("queue_length", (base_throughput * base_latency) / 1000.0)
 
         # Little's Law: L = λ * W
         # If arrival rate increases by x%, and service time increases by y%:

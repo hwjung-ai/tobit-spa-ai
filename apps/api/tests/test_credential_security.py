@@ -206,9 +206,6 @@ class TestCredentialPatternsEdgeCases:
 
     def test_url_with_credentials_detected(self):
         """Detect credentials embedded in URLs."""
-        config = {
-            "url": "https://user:password@api.example.com/endpoint"
-        }
         # Note: Current implementation doesn't check URLs, but this documents
         # the expected behavior for future enhancement
         pass

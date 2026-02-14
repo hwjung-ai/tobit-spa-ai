@@ -2,6 +2,30 @@
 
 import { cn } from "@/lib/utils";
 
+// FormFieldGroup component for consistent form field styling
+function FormFieldGroup({
+  label,
+  required = false,
+  help,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  help?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-foreground">
+        {label}
+        {required && <span className="text-rose-400 ml-1">*</span>}
+      </label>
+      {children}
+      {help && <p className="text-tiny text-muted-foreground">{help}</p>}
+    </div>
+  );
+}
+
 type TriggerType = "metric" | "event" | "schedule" | "anomaly";
 
 interface TriggerSpec {

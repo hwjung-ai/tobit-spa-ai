@@ -231,7 +231,7 @@ async def test_stage_specific_assets():
                     if isinstance(stage_data, dict):
                         stage = stage_data.get('stage', f'stage_{idx}')
                         assets = stage_data.get('applied_assets', {})
-                        inputs = stage_data.get('inputs', {})
+                        stage_data.get('inputs', {})
                         outputs = stage_data.get('outputs', {})
 
                         # 이 stage에서만 사용되는 asset 찾기

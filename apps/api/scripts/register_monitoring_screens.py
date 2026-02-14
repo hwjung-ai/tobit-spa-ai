@@ -451,7 +451,7 @@ def main():
         sys_monitoring_desc = "System monitoring dashboard with metrics and events"
 
     # Register System Monitoring
-    sys_monitoring = register_screen(
+    register_screen(
         screen_id="system_monitoring",
         name=sys_monitoring_name,
         description=sys_monitoring_desc,
@@ -473,7 +473,7 @@ def main():
         cep_monitoring_desc = "CEP monitoring dashboard with alerts and patterns"
 
     # Register CEP Monitoring
-    cep_monitoring = register_screen(
+    register_screen(
         screen_id="cep_monitoring",
         name=cep_monitoring_name,
         description=cep_monitoring_desc,

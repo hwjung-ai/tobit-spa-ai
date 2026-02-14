@@ -1351,18 +1351,6 @@ class StageExecutor:
                 )
 
             # Plan execution - compose blocks based on intent
-            plan = (
-                plan_output.get("plan")
-                if isinstance(plan_output, dict)
-                else getattr(plan_output, "plan", None)
-            )
-            intent = (
-                plan.get("intent")
-                if isinstance(plan, dict)
-                else getattr(plan, "intent", None)
-                if plan
-                else None
-            )
 
             # Always add blocks from runner's base_result if available
             # The runner already has its own blocks from _run_async()

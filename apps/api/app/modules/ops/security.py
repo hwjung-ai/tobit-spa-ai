@@ -452,8 +452,6 @@ class SecurityUtils:
         if not isinstance(value, str):
             return False
 
-        value_lower = value.lower()
-
         # Check against regex patterns
         for pattern_name, pattern in cls.SENSITIVE_REGEX_PATTERNS.items():
             if pattern.search(value):

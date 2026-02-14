@@ -228,7 +228,6 @@ def test_helper_method_build_metric_blocks_from_data():
         ]
     }
 
-    detail = {"ci_id": "c1", "ci_code": "server-01", "ci_name": "Web Server 01"}
 
     # Call helper (would be bound to real runner in actual use)
     # This validates the helper method signature and logic
@@ -276,7 +275,7 @@ def test_source_ref_in_all_sql_tool_assets():
             pytest.fail(f"Tool {tool_name} not found in register_ops_tools.py")
 
         # Find the next tool definition or end
-        next_tool_idx = content.find('{', tool_start + 20)
+        content.find('{', tool_start + 20)
         next_tool_end_idx = content.find('}, {', tool_start + 20)
         if next_tool_end_idx == -1:
             next_tool_end_idx = content.find(']', tool_start + 20)

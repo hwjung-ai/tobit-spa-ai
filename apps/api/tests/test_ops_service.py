@@ -322,6 +322,7 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
     monkeypatch.setattr(OpsAllRunner, "_call_llm", mock_call_llm)
 
     from core.config import AppSettings
+    from app.modules.ops.services.ops_all_runner import OpsAllRunner
 
     settings = AppSettings(
         openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real"

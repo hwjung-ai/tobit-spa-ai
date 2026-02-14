@@ -256,7 +256,7 @@ class TestSQLInjectionPrevention:
 
     def test_graph_query_node_ids_parameterization(self):
         """Test that graph query node IDs are parameterized"""
-        tool = DynamicTool({
+        DynamicTool({
             "name": "ci_graph_expand",
             "tool_type": "graph_query",
             "description": "Test graph query",

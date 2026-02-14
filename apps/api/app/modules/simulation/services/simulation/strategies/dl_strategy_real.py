@@ -189,7 +189,6 @@ class DeepLearningStrategyReal:
         alpha = 0.3  # EMA smoothing factor
 
         # Calculate EMA of impacts
-        ema_traffic = traffic * alpha
         ema_cpu = cpu * alpha
         ema_memory = memory * alpha
 

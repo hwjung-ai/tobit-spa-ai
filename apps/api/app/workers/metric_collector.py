@@ -391,7 +391,8 @@ class MetricCollector:
             if not self.cloudwatch:
                 return {"error": "CloudWatch not configured"}
             try:
-                query_data = json.loads(query)
+                # Validate query is valid JSON
+                json.loads(query)
                 end_time = datetime.now(timezone.utc)
                 start_time = end_time - timedelta(hours=hours_back)
                 metrics = await self.cloudwatch.collect(

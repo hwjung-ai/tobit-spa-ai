@@ -20,6 +20,8 @@ from sqlmodel import Session, select
 
 logger = logging.getLogger(__name__)
 
+from models.api_definition import ApiDefinition, ApiMode
+
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.asset_registry.schemas import (
     ToolAssetCreate,
@@ -27,7 +29,6 @@ from app.modules.asset_registry.schemas import (
 )
 from app.modules.audit_log.crud import create_audit_log
 from app.modules.auth.models import TbUser
-from models.api_definition import ApiDefinition, ApiMode
 
 router = APIRouter(prefix="/asset-registry/tools", tags=["tool-assets"])
 

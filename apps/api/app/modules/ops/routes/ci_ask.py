@@ -263,7 +263,8 @@ def ask_ops(
             load_source_asset(source_asset_name) if source_asset_name else None
         )
         mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
-        _policy_payload = load_policy_asset("plan_budget", scope="ops")
+        # Load policy asset to ensure tracking (even though we don't use the result)
+        load_policy_asset("plan_budget", scope="ops")
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload

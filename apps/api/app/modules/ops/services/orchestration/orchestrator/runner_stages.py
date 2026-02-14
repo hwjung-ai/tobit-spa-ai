@@ -71,9 +71,6 @@ class StageOrchestrator:
         Returns:
             Tuple of (blocks, answer, full_result)
         """
-        blocks: List[Block] = []
-        answer = "CI insight ready"
-        start = perf_counter()
         stage_inputs: List[Dict[str, Any]] = []
         stage_outputs: List[Dict[str, Any]] = []
         stages: List[Dict[str, Any]] = []

@@ -252,7 +252,7 @@ def main():
 
     try:
         with Session(engine) as session:
-            tool_asset = init_metric_tool(session)
+            init_metric_tool(session)
             print("\n✅ Initialization complete!")
             return 0
 

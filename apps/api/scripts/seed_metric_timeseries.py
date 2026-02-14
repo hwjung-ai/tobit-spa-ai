@@ -244,7 +244,7 @@ def main():
     print("="*70)
 
     try:
-        total = seed_metric_timeseries(
+        seed_metric_timeseries(
             tenant_id=args.tenant,
             services=args.services,
             hours_back=args.hours,

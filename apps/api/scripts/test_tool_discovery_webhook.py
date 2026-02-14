@@ -11,6 +11,7 @@ import asyncio
 import hashlib
 import hmac
 import json
+import os
 import time
 from datetime import datetime
 
@@ -23,16 +24,14 @@ STATUS_URL = f"{BASE_URL}/ops/tool-discovery/status"
 REFRESH_URL = f"{BASE_URL}/ops/tool-discovery/refresh"
 
 # Webhook secret (should match what's configured in the application)
-WEBHOOK_SECRET = "your-webhook-secret-here"
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "your-webhook-secret-here")
 
 
 def generate_webhook_signature(payload: dict) -> str:
     """Generate HMAC-SHA256 signature for webhook payload."""
     payload_str = json.dumps(payload, sort_keys=True)
     signature = hmac.new(
-        WEBHOOK_secret.encode(),
-        payload_str.encode(),
-        hashlib.sha256
+        WEBHOOK_secret.encode(), payload_str.encode(), hashlib.sha256
     ).hexdigest()
     return signature
 
@@ -48,11 +47,8 @@ def test_webhook():
         "tool": {
             "name": "test_ci_search",
             "action": "created",
-            "metadata": {
-                "tool_type": "database_query",
-                "category": "ci"
-            }
-        }
+            "metadata": {"tool_type": "database_query", "category": "ci"},
+        },
     }
 
     # Generate signature
@@ -60,16 +56,11 @@ def test_webhook():
 
     headers = {
         "Content-Type": "application/json",
-        "X-Webhook-Signature": f"sha256={signature}"
+        "X-Webhook-Signature": f"sha256={signature}",
     }
 
     try:
-        response = requests.post(
-            WEBHOOK_URL,
-            json=payload,
-            headers=headers,
-            timeout=10
-        )
+        response = requests.post(WEBHOOK_URL, json=payload, headers=headers, timeout=10)
 
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.json()}")
@@ -117,7 +108,7 @@ async def test_multiple_refreshes():
     print("\n⚡ Testing Multiple Refreshes...")
 
     for i in range(3):
-        print(f"\nRefresh #{i+1}")
+        print(f"\nRefresh #{i + 1}")
         try:
             response = requests.get(f"{REFRESH_URL}?force=true", timeout=10)
             print(f"Status: {response.status_code}")

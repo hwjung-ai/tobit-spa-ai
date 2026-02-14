@@ -228,7 +228,7 @@ class TestDataFlowIntegration:
             })
 
             orchestrator = ToolOrchestrator(plan, context)
-            results = await orchestrator.execute()
+            await orchestrator.execute()
 
             # Get the tool chain that was passed to executor
             call_args = mock_executor.execute_chain.call_args

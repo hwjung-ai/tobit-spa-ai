@@ -229,8 +229,6 @@ class ToolChainExecutor:
         failed_steps: list[str] = []
         completed: set[str] = set()
 
-        # Build step map
-        step_map = {s.step_id: s for s in chain.steps}
         group_index = 0
 
         while len(completed) < len(chain.steps):

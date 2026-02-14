@@ -105,7 +105,7 @@ class TestDocumentSearchService:
         )
 
         # Perform hybrid search
-        results = await search_service.search(
+        await search_service.search(
             query="artificial intelligence",
             filters=search_filters,
             top_k=5,
@@ -125,7 +125,7 @@ class TestDocumentSearchService:
         mock_rows = []
         search_service.db.execute = Mock(return_value=Mock(fetchall=Mock(return_value=mock_rows)))
 
-        results = await search_service._text_search("query", search_filters, top_k=10)
+        await search_service._text_search("query", search_filters, top_k=10)
 
         # Verify DB was called
         search_service.db.execute.assert_called()
@@ -142,7 +142,7 @@ class TestDocumentSearchService:
         mock_rows = []
         search_service.db.execute = Mock(return_value=Mock(fetchall=Mock(return_value=mock_rows)))
 
-        results = await search_service._text_search("query", filters, top_k=10)
+        await search_service._text_search("query", filters, top_k=10)
 
         # Verify DB was called with type filter
         search_service.db.execute.assert_called()

@@ -219,7 +219,7 @@ def main():
 
     try:
         with Session(engine) as session:
-            tool_asset = init_document_search_tool(session)
+            init_document_search_tool(session)
             print("\n✅ Initialization complete!")
             return 0
 

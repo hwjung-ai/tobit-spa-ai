@@ -282,7 +282,6 @@ class PDFReportService:
             if blocks:
                 # Add content blocks
                 for block in blocks:
-                    block_type = block.get("type", "")
                     elements = PDFReportService._add_block_to_elements(
                         block, elements, styles
                     )

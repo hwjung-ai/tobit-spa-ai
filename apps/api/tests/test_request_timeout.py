@@ -47,7 +47,6 @@ class TestTimeoutBudget:
     def test_elapsed_ms_calculation(self):
         """Should track elapsed time correctly."""
         budget = TimeoutBudget(total_timeout_ms=120000)
-        start = budget.start_time
 
         # Manually set start time to 1 second ago
         budget.start_time = datetime.now() - timedelta(seconds=1)

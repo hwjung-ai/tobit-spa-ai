@@ -190,7 +190,7 @@ async def run_single_test(client: httpx.AsyncClient, test_case: dict, api_url: s
 
 async def run_all_tests():
     """Run all test cases."""
-    settings = get_settings()
+    get_settings()
     api_url = "http://localhost:8000/ops/ask"
 
     print("=" * 80)

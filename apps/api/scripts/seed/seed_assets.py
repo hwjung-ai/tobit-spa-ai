@@ -186,7 +186,7 @@ def _seed_resolver(session, name: str, force: bool) -> bool:
         return False
 
     rules = _parse_resolver_rules(payload.get("rules") or [])
-    config = ResolverConfig(
+    ResolverConfig(
         name=payload.get("name", name),
         description=payload.get("description"),
         rules=rules,

@@ -207,7 +207,7 @@ def main():
         "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
 
-    args = parser.parse_args()
+    parser.parse_args()
 
     logger.info("Starting database schema initialization...")
     asyncio.run(init_schemas_from_db())

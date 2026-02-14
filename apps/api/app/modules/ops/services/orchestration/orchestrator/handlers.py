@@ -115,7 +115,7 @@ class AggregationHandler:
             return []
 
         paging_info = self.runner.list_paging_info
-        count = paging_info.get("row_count")
+        paging_info.get("row_count")
         rows = paging_info.get("preview_rows", [])
         columns = paging_info.get("columns", [])
 

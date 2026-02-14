@@ -5733,7 +5733,6 @@ class OpsOrchestratorRunner:
 
                 # compose stage (PLAN path)
                 begin_stage_asset_tracking()
-                compose_start = perf_counter()
 
                 # Create temporary input for stage executor (assets will be captured during execution)
                 temp_compose_input = StageInput(
@@ -6105,7 +6104,6 @@ class OpsOrchestratorRunner:
         # Calculate dependency_groups for each tool
         for group in execution_groups:
             for tool in group["tools"]:
-                tool_id = tool["tool_id"]
                 depends_on = tool.get("depends_on", [])
                 dep_groups = []
                 for dep_tool in depends_on:

@@ -11,6 +11,7 @@ from functools import wraps
 from typing import Any, Dict, Optional
 
 try:
+    # type: ignore[attr-defined]
     import redis.asyncio as redis
     from redis.asyncio import Redis
 
@@ -18,6 +19,8 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
     Redis = None
+
+_redis_client: Redis | None = None
 
 logger = logging.getLogger(__name__)
 

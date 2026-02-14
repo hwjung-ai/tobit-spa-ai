@@ -115,7 +115,6 @@ def _backtest_strategy(
     for metric_name in ["latency_ms", "throughput_rps", "error_rate_pct", "cost_usd_hour"]:
         records = train_data.get(metric_name, [])
         if records:
-            values = [r["value"] for r in records]
             baseline_kpis[metric_name] = calculate_baseline_statistics(
                 [{"timestamp": r["timestamp"], "value": r["value"]} for r in records],
                 aggregation="mean"
@@ -266,8 +265,7 @@ def run_backtest_real(
             "data_points": 0,
         }
 
-    # Split into train and test sets
-    train_size = int(total_records * 0.8)  # 80% train, 20% test
+    # Split into train and test sets (80% train, 20% test)
 
     # Create test plan
     test_plan = SimulationPlan(

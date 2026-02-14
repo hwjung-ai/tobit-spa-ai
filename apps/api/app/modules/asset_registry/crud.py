@@ -10,6 +10,7 @@ from sqlmodel import Session, select
 
 from app.modules.audit_log.crud import create_audit_log
 
+from .loader import load_source_asset
 from .models import TbAssetRegistry, TbAssetVersionHistory
 from .resolver_models import (
     ResolverAsset,
@@ -33,7 +34,6 @@ from .source_models import (
     SourceType,
 )
 from .validators import validate_asset
-from .loader import load_source_asset
 
 
 def list_assets(

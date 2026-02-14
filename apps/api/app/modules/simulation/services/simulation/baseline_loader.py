@@ -293,13 +293,6 @@ async def load_baseline_kpis_realtime(
 
     try:
         if source == "cloudwatch":
-            from app.workers.metric_collector import MetricCollector
-
-            config = MetricCollector.MetricCollectorConfig(
-                cloudwatch_region=source_config.get("cloudwatch_region"),
-            )
-            collector = MetricCollector(config)
-
             # Map KPIs to CloudWatch metrics
             # This would require specific CloudWatch query patterns
             # For now, return error for unimplemented

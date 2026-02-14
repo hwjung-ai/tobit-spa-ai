@@ -603,7 +603,7 @@ class TestManualTriggerWithActions:
 
         # 조건을 만족하는 payload로 트리거
         try:
-            result = manual_trigger(
+            manual_trigger(
                 rule=rule,
                 payload={"cpu": 85},
                 executed_by="test-user",

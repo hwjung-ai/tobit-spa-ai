@@ -213,7 +213,7 @@ class TestChaosInvalidSchemaChange(unittest.TestCase):
         """Missing required fields should be caught"""
         try:
             # Create capability without required fields
-            cap = ToolCapability(
+            ToolCapability(
                 tool_id="test_tool",
                 tool_name="Test Tool",
                 tool_type="sql",

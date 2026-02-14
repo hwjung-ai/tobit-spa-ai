@@ -27,7 +27,7 @@ def test_get_available_services():
     print("="*70)
 
     try:
-        with get_session_context() as session:
+        with get_session_context():
             services = get_available_services_from_metrics(tenant_id="default")
 
             if services:
