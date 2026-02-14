@@ -811,19 +811,19 @@ function InspectorContent() {
           className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4"
         >
           <div
-            className="border max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col border-border bg-surface-elevated"
+            className="border border-border max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col bg-surface-elevated"
           >
             <header
-              className="px-6 py-4 border-b flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+              className="px-6 py-4 border-b border-border flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
             >
               <div className="space-y-3">
                 <p
-                  className="text-xs uppercase tracking-wider "
+                  className="text-xs uppercase tracking-wider text-muted-foreground"
                 >
                   Trace Overview
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-sm font-semibold text-white tracking-tight">
+                  <h2 className="text-sm font-semibold text-foreground tracking-tight">
                     {traceDetail.question}
                   </h2>
                   <span
@@ -835,7 +835,7 @@ function InspectorContent() {
                   </span>
                 </div>
                 <div
-                  className="flex flex-wrap gap-3 text-xs "
+                  className="flex flex-wrap gap-3 text-xs text-muted-foreground"
                 >
                   <span>Feature: {traceDetail.feature}</span>
                   <span>Mode: {traceDetail.ops_mode}</span>
@@ -843,12 +843,12 @@ function InspectorContent() {
                   <span>Method: {traceDetail.method}</span>
                 </div>
                 <div
-                  className="flex flex-wrap items-center gap-2 text-sm "
+                  className="flex flex-wrap items-center gap-2 text-sm"
                 >
-                  <span className="font-mono">{traceDetail.trace_id}</span>
+                  <span className="font-mono text-foreground">{traceDetail.trace_id}</span>
                   <button
                     onClick={handleCopyTraceId}
-                    className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition "
+                    className="px-3 py-1 rounded-lg border border-border text-xs uppercase tracking-wider transition text-foreground hover:bg-surface-overlay"
                   >
                     {traceCopyStatus === "copied"
                       ? "복사됨"
@@ -858,7 +858,7 @@ function InspectorContent() {
                   </button>
                   <button
                     onClick={handleCopyLink}
-                    className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition "
+                    className="px-3 py-1 rounded-lg border border-border text-xs uppercase tracking-wider transition text-foreground hover:bg-surface-overlay"
                   >
                     {linkCopyStatus === "copied"
                       ? "Link copied"
@@ -869,14 +869,14 @@ function InspectorContent() {
                   {traceDetail.parent_trace_id && (
                     <button
                       onClick={() => fetchTraceDetail(traceDetail.parent_trace_id!)}
-                      className="px-3 py-1 rounded-lg border text-xs uppercase tracking-wider transition "
+                      className="px-3 py-1 rounded-lg border border-border text-xs uppercase tracking-wider transition text-foreground hover:bg-surface-overlay"
                     >
                       View parent
                     </button>
                   )}
                 </div>
                 <div
-                  className="flex flex-wrap gap-4 text-sm "
+                  className="flex flex-wrap gap-4 text-sm text-muted-foreground"
                 >
                   <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                   <span>{formatTimestamp(traceDetail.created_at)}</span>
@@ -887,20 +887,25 @@ function InspectorContent() {
                 <button
                   onClick={handleRunSingleRca}
                   disabled={singleRcaLoading}
-                  className="px-3 py-2 rounded-xl border border-fuchsia-600 bg-fuchsia-900/20 text-xs uppercase tracking-wider text-fuchsia-200 bg-fuchsia-900/40 transition opacity-50 cursor-not-allowed"
+                  className={cn(
+                    "px-3 py-2 rounded-xl border text-xs uppercase tracking-wider transition",
+                    singleRcaLoading
+                      ? "border-border text-muted-foreground opacity-50 cursor-not-allowed"
+                      : "border-fuchsia-600 bg-fuchsia-900/20 text-fuchsia-200 hover:bg-fuchsia-900/30"
+                  )}
                   data-testid="drawer-run-rca"
                 >
                   {singleRcaLoading ? "Analyzing..." : "Run RCA"}
                 </button>
                 <button
                   onClick={handleCompareClick}
-                  className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-wider text-emerald-200 bg-emerald-900/40 transition"
+                  className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-emerald-200 text-xs uppercase tracking-wider transition hover:bg-emerald-900/30"
                 >
                   Compare
                 </button>
                 <button
                   onClick={handleStageCompareClick}
-                  className="px-3 py-2 rounded-xl border border-amber-700 bg-amber-900/20 text-xs uppercase tracking-wider text-amber-200 bg-amber-900/40 transition"
+                  className="px-3 py-2 rounded-xl border border-amber-700 bg-amber-900/20 text-amber-200 text-xs uppercase tracking-wider transition hover:bg-amber-900/30"
                 >
                   Stage Compare
                 </button>
@@ -912,7 +917,7 @@ function InspectorContent() {
                     setDetailError(null);
                     setShowDiffView(false);
                   }}
-                  className="px-3 py-2 rounded-xl border text-xs uppercase tracking-wider "
+                  className="px-3 py-2 rounded-xl border border-border text-foreground text-xs uppercase tracking-wider transition hover:bg-surface-overlay"
                 >
                   Close
                 </button>
@@ -945,45 +950,45 @@ function InspectorContent() {
                 <>
                   <section
                     data-testid="flow-section"
-                    className="border rounded-2xl p-5 space-y-3 border-border bg-surface-base"
+                    className="border border-border rounded-2xl p-5 space-y-3 bg-surface-base"
                   >
                     <div className="flex items-center justify-between">
                       <p
-                        className="text-xs uppercase tracking-wider "
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
                       >
                         Overview
                       </p>
-                      <span className="text-xs text-muted-standard">
+                      <span className="text-xs text-muted-foreground">
                         Request & Context
                       </span>
                     </div>
-                    <p className="text-sm text-white">{traceDetail.question}</p>
+                    <p className="text-sm text-foreground">{traceDetail.question}</p>
                     <div
                       className="flex flex-wrap gap-2 text-sm"
                     >
                       <span
-                        className="px-2 py-1 rounded-full bg-surface-elevated"
+                        className="px-2 py-1 rounded-full bg-surface-elevated text-foreground"
                       >
                         Mode: {traceDetail.ops_mode}
                       </span>
                       <span
-                        className="px-2 py-1 rounded-full bg-surface-elevated"
+                        className="px-2 py-1 rounded-full bg-surface-elevated text-foreground"
                       >
                         Endpoint: {traceDetail.endpoint}
                       </span>
                       <span
-                        className="px-2 py-1 rounded-full bg-surface-elevated"
+                        className="px-2 py-1 rounded-full bg-surface-elevated text-foreground"
                       >
                         Method: {traceDetail.method}
                       </span>
                       <span
-                        className="px-2 py-1 rounded-full bg-surface-elevated"
+                        className="px-2 py-1 rounded-full bg-surface-elevated text-foreground"
                       >
                         Route: {traceDetail.route ?? "orch"}
                       </span>
                     </div>
                     <div
-                      className="flex flex-wrap gap-3 text-sm"
+                      className="flex flex-wrap gap-3 text-sm text-muted-foreground"
                     >
                       <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                       <span>{formatTimestamp(traceDetail.created_at)}</span>
@@ -993,11 +998,11 @@ function InspectorContent() {
                   </section>
 
                   <section
-                    className="border rounded-2xl p-5 space-y-3 border-border bg-surface-base"
+                    className="border border-border rounded-2xl p-5 space-y-3 bg-surface-base"
                   >
                     <div className="flex items-center justify-between">
                       <p
-                        className="text-xs uppercase tracking-wider "
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
                       >
                         Applied Assets
                       </p>
@@ -1005,30 +1010,30 @@ function InspectorContent() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div
-                        className="rounded-xl border px-4 py-3 border-border bg-surface-elevated"
+                        className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
                       >
                         <p
-                          className="text-xs uppercase tracking-wider "
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Prompt
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.prompt ?? null)}
                       </div>
                       <div
-                        className="rounded-xl border px-4 py-3 border-border bg-surface-elevated"
+                        className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
                       >
                         <p
-                          className="text-xs uppercase tracking-wider "
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Policy
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.policy ?? null)}
                       </div>
                       <div
-                        className="rounded-xl border px-4 py-3 border-border bg-surface-elevated"
+                        className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
                       >
                         <p
-                          className="text-xs uppercase tracking-wider "
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Mapping
                         </p>
@@ -1036,7 +1041,7 @@ function InspectorContent() {
                       </div>
                       <div className="md:col-span-2 space-y-2">
                         <p
-                          className="text-xs uppercase tracking-wider "
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Queries
                         </p>
@@ -1050,7 +1055,7 @@ function InspectorContent() {
                               }) => (
                                 <li
                                   key={query.asset_id || `${query.name}-${query.source}`}
-                                  className="border rounded-xl px-3 py-2 text-sm border-border text-foreground bg-surface-elevated"
+                                  className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-surface-elevated"
                                 >
                                   {query.name || "query"} · {query.source} ·{" "}
                                   {query.asset_id ?? "seed"}
@@ -1059,14 +1064,14 @@ function InspectorContent() {
                             )}
                           </ul>
                         ) : (
-                          <p className="text-xs text-muted-standard">
+                          <p className="text-xs text-muted-foreground">
                             Query asset 없음
                           </p>
                         )}
                       </div>
                       <div className="md:col-span-2 space-y-2">
                         <p
-                          className="text-xs uppercase tracking-wider "
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Screens
                         </p>
@@ -1075,7 +1080,7 @@ function InspectorContent() {
                             {traceDetail.applied_assets.screens.map((screen) => (
                               <li
                                 key={screen.asset_id || `${screen.screen_id}-${screen.status}`}
-                                className="border rounded-xl px-3 py-2 text-sm border-border text-foreground bg-surface-elevated"
+                                className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-surface-elevated"
                               >
                                 {screen.screen_id || "screen"} · {screen.status ?? "unknown"} ·{" "}
                                 {screen.version ?? "?"}
@@ -1083,7 +1088,7 @@ function InspectorContent() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs text-muted-standard">
+                          <p className="text-xs text-muted-foreground">
                             Screen asset 없음
                           </p>
                         )}
@@ -1093,28 +1098,34 @@ function InspectorContent() {
 
                   <section
                     data-testid="regression-panel"
-                    className="border rounded-2xl p-5 space-y-4 border-border bg-surface-base"
+                    className="border border-border rounded-2xl p-5 space-y-4 bg-surface-base"
                   >
                     <div className="flex items-center justify-between">
                       <p
-                        className="text-xs uppercase tracking-wider "
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
                       >
                         Plan
                       </p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setPlanView("raw")}
-                          className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
-                            planView === "raw" ? " text-white" : " border "
-                          }`}
+                          className={cn(
+                            "px-3 py-1 rounded-full text-xs uppercase tracking-wider transition",
+                            planView === "raw"
+                              ? "bg-surface-elevated border border-border text-foreground"
+                              : "border border-border text-muted-foreground hover:text-foreground hover:bg-surface-overlay"
+                          )}
                         >
                           Raw
                         </button>
                         <button
                           onClick={() => setPlanView("validated")}
-                          className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
-                            planView === "validated" ? " text-white" : " border "
-                          }`}
+                          className={cn(
+                            "px-3 py-1 rounded-full text-xs uppercase tracking-wider transition",
+                            planView === "validated"
+                              ? "bg-surface-elevated border border-border text-foreground"
+                              : "border border-border text-muted-foreground hover:text-foreground hover:bg-surface-overlay"
+                          )}
                         >
                           Validated
                         </button>
@@ -1126,7 +1137,7 @@ function InspectorContent() {
                     )}
                     <div>
                       <p
-                        className="text-xs uppercase tracking-wider "
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
                       >
                         Plan steps
                       </p>
@@ -1137,7 +1148,7 @@ function InspectorContent() {
                           >
                             <thead>
                               <tr
-                                className="text-left text-xs uppercase tracking-wider border-b border-border text-foreground"
+                                className="text-left text-xs uppercase tracking-wider border-b border-border text-muted-foreground"
                               >
                                 <th className="px-2 py-2">Step</th>
                                 <th className="px-2 py-2">Tool</th>
@@ -1150,13 +1161,13 @@ function InspectorContent() {
                               {traceDetail.execution_steps.map((step: ExecutionStep) => (
                                 <tr
                                   key={`${step.step_id}-${step.tool_name}-${step.duration_ms}`}
-                                  className="border-b"
+                                  className="border-b border-border"
                                 >
-                                  <td className="px-2 py-2">{step.step_id || "step"}</td>
-                                  <td className="px-2 py-2">{step.tool_name || "tool"}</td>
+                                  <td className="px-2 py-2 text-foreground">{step.step_id || "step"}</td>
+                                  <td className="px-2 py-2 text-foreground">{step.tool_name || "tool"}</td>
                                   <td className="px-2 py-2">
                                     <span
-                                      className={`px-2 py-1 rounded-full ${
+                                      className={`px-2 py-1 rounded-full text-xs ${
                                         step.status === "success"
                                           ? "bg-emerald-900/40 text-emerald-200"
                                           : "bg-rose-900/40 text-rose-200"
@@ -1165,8 +1176,8 @@ function InspectorContent() {
                                       {step.status}
                                     </span>
                                   </td>
-                                  <td className="px-2 py-2">{formatDuration(step.duration_ms)}</td>
-                                  <td className="px-2 py-2">
+                                  <td className="px-2 py-2 text-foreground">{formatDuration(step.duration_ms)}</td>
+                                  <td className="px-2 py-2 text-muted-foreground">
                                     {summarizeStepPayload(step.request || step.response)}
                                   </td>
                                 </tr>
@@ -1174,7 +1185,7 @@ function InspectorContent() {
                             </tbody>
                           </table>
                         ) : (
-                          <p className="text-xs text-muted-standard">
+                          <p className="text-xs text-muted-foreground">
                             Plan step 정보가 없습니다.
                           </p>
                         )}
@@ -1183,31 +1194,31 @@ function InspectorContent() {
                   </section>
 
                   <section
-                    className="border rounded-2xl p-5 space-y-4 border-border bg-surface-base"
+                    className="border border-border rounded-2xl p-5 space-y-4 bg-surface-base"
                   >
                     <div className="flex items-center justify-between flex-wrap gap-3">
                       <div className="flex items-center gap-3">
                         <p
-                          className="text-xs uppercase tracking-wider "
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Stage Pipeline
                         </p>
-                        <span className="text-xs text-muted-standard">
+                        <span className="text-xs text-muted-foreground">
                           Route: {traceDetail.route ?? "orch"}
                         </span>
-                        <span className="text-xs text-muted-standard">
+                        <span className="text-xs text-muted-foreground">
                           {traceDetail.stage_outputs?.length ?? 0} stages
                         </span>
                       </div>
                       <button
                         onClick={() => setShowAssetOverrideModal(true)}
-                        className="px-3 py-2 rounded-xl border text-xs uppercase tracking-wider border-border text-foreground"
+                        className="px-3 py-2 rounded-xl border border-border text-foreground text-xs uppercase tracking-wider transition hover:bg-surface-overlay"
                       >
                         Asset Override Test
                       </button>
                       {assetOverrideLoading && (
                         <span
-                          className="text-xs uppercase tracking-wider"
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Loading assets...
                         </span>
@@ -1226,7 +1237,7 @@ function InspectorContent() {
                         assetNames={assetNames}
                       />
                     ) : (
-                      <p className="text-xs  text-muted-standard">
+                      <p className="text-xs text-muted-foreground">
                         Stage trace가 아직 없습니다.
                       </p>
                     )}
@@ -1246,29 +1257,29 @@ function InspectorContent() {
                         return (
                           <article
                             key={stage}
-                            className="border rounded-xl p-4 space-y-3 border-border bg-surface-elevated"
+                            className="border border-border rounded-xl p-4 space-y-3 bg-surface-elevated"
                           >
                             <div className="flex items-center justify-between">
                               <div>
                                 <p
-                                  className="text-xs uppercase tracking-wider "
+                                  className="text-xs uppercase tracking-wider text-muted-foreground"
                                 >
                                   {STAGE_LABELS[stage] ?? stage.toUpperCase()}
                                 </p>
                                 <p
-                                  className="text-sm font-mono"
+                                  className="text-sm font-mono text-foreground"
                                 >
                                   {stage}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span
-                                  className="text-xs uppercase tracking-wider "
+                                  className="text-xs uppercase tracking-wider text-muted-foreground"
                                 >
                                   {stageOutput?.duration_ms ? `${stageOutput.duration_ms}ms` : "-"}
                                 </span>
                                 <span
-                                  className="px-2 py-1 rounded-full text-xs uppercase tracking-wider text-foreground bg-surface-base"
+                                  className="px-2 py-1 rounded-full text-xs uppercase tracking-wider text-foreground bg-surface-base border border-border"
                                 >
                                   {status}
                                 </span>
@@ -1281,7 +1292,7 @@ function InspectorContent() {
                                 className="rounded-lg p-3 border border-border bg-surface-base"
                               >
                                 <p
-                                  className="text-xs uppercase tracking-wider mb-2"
+                                  className="text-xs uppercase tracking-wider mb-2 text-muted-foreground"
                                 >
                                   Applied Assets
                                 </p>
@@ -1289,16 +1300,16 @@ function InspectorContent() {
                                   {Object.entries(appliedAssets).map(([type, value]) => {
                                     if (!value) return null;
                                     const config = {
-                                      prompt: { icon: "⭐", color: "text-sky-400" },
-                                      policy: { icon: "🛡️", color: "text-emerald-400" },
-                                      mapping: { icon: "🗺️", color: "text-amber-400" },
+                                      prompt: { icon: "⭐", color: "text-sky-300" },
+                                      policy: { icon: "🛡️", color: "text-emerald-300" },
+                                      mapping: { icon: "🗺️", color: "text-amber-300" },
                                       source: {
                                         icon: "💾",
-                                        color: "text-muted-standard",
+                                        color: "text-muted-foreground",
                                       },
                                       schema: { icon: "📊", color: "text-fuchsia-300" },
                                       resolver: { icon: "🔧", color: "text-orange-300" },
-                                      query: { icon: "🔍", color: "text-purple-400" },
+                                      query: { icon: "🔍", color: "text-purple-300" },
                                     }[type] || {
                                       icon: "📄",
                                       color: "text-muted-foreground",
@@ -1370,15 +1381,15 @@ function InspectorContent() {
                   </section>
 
                   <section
-                    className="border rounded-2xl p-5 space-y-4 border-border bg-surface-base"
+                    className="border border-border rounded-2xl p-5 space-y-4 bg-surface-base"
                   >
                     <div className="flex items-center justify-between">
                       <p
-                        className="text-xs uppercase tracking-wider "
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
                       >
                         Execution
                       </p>
-                      <span className="text-xs text-muted-standard">
+                      <span className="text-xs text-muted-foreground">
                         {traceDetail.execution_steps?.length ?? 0} steps
                       </span>
                     </div>
@@ -1387,15 +1398,15 @@ function InspectorContent() {
                         {traceDetail.execution_steps.map((step: ExecutionStep, index: number) => (
                           <article
                             key={`${step.step_id ?? index}-${step.tool_name ?? "tool"}`}
-                            className="border rounded-xl p-4 space-y-3 border-border bg-surface-elevated"
+                            className="border border-border rounded-xl p-4 space-y-3 bg-surface-elevated"
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm text-white font-semibold">
+                                <p className="text-sm text-foreground font-semibold">
                                   {step.step_id || `step-${index + 1}`}
                                 </p>
                                 <p
-                                  className="text-sm "
+                                  className="text-sm text-muted-foreground"
                                 >
                                   {step.tool_name || "tool"}
                                 </p>
@@ -1411,7 +1422,7 @@ function InspectorContent() {
                                   {step.status}
                                 </span>
                                 <span
-                                  className="text-sm "
+                                  className="text-sm text-muted-foreground"
                                 >
                                   {formatDuration(step.duration_ms)}
                                 </span>
@@ -1435,7 +1446,7 @@ function InspectorContent() {
                               </details>
                             )}
                             {step.references && step.references.length ? (
-                              <p className="text-sm  text-muted-standard">
+                              <p className="text-sm text-muted-foreground">
                                 References:{" "}
                                 {step.references
                                   .map((ref: { name: string }) => ref.name)
@@ -1446,22 +1457,22 @@ function InspectorContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-standard">
+                      <p className="text-xs text-muted-foreground">
                         Tool execution trace가 없습니다.
                       </p>
                     )}
                   </section>
 
                   <section
-                    className="border rounded-2xl p-5 space-y-4 border-border bg-surface-base"
+                    className="border border-border rounded-2xl p-5 space-y-4 bg-surface-base"
                   >
                     <div className="flex items-center justify-between">
                       <p
-                        className="text-xs uppercase tracking-wider"
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
                       >
                         Control Loop
                       </p>
-                      <span className="text-xs text-muted-standard">
+                      <span className="text-xs text-muted-foreground">
                         {traceDetail.replan_events?.length ?? 0} events
                       </span>
                     </div>
