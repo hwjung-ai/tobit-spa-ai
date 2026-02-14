@@ -2,6 +2,56 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
+/** @type {import('eslint').Rule.RuleModule} */
+const noDirectFetchToApi = {
+  meta: {
+    type: "suggestion",
+    docs: {
+      description: "Disallow direct fetch() calls to /api/* endpoints",
+      recommended: true,
+    },
+    messages: {
+      useAuthenticatedFetch: "Use authenticatedFetch from @/lib/apiClient for API endpoints. This ensures Authorization headers and tenant isolation are properly handled.",
+    },
+    schema: [],
+  },
+  create(context) {
+    return {
+      CallExpression(node) {
+        if (
+          node.callee.type === "Identifier" &&
+          node.callee.name === "fetch" &&
+          node.arguments.length > 0
+        ) {
+          const arg = node.arguments[0];
+          let url = null;
+
+          // Handle string literals: fetch("/api/...")
+          if (arg.type === "Literal" && typeof arg.value === "string") {
+            url = arg.value;
+          }
+          // Handle template literals: fetch(`/api/...`)
+          else if (
+            arg.type === "TemplateLiteral" &&
+            arg.quasis.length > 0 &&
+            arg.quasis[0].value.raw
+          ) {
+            url = arg.quasis[0].value.raw;
+          }
+
+          // Check if URL starts with /api/
+          if (url && url.startsWith("/api/")) {
+            context.report({
+              node,
+              messageId: "useAuthenticatedFetch",
+            });
+          }
+        }
+      },
+    };
+  },
+};
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -11,6 +61,20 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
       "react/no-unescaped-entities": "warn",
+    },
+  },
+  {
+    // Custom rule: Warn about direct fetch() calls to /api/ endpoints
+    files: ["src/**/*.{ts,tsx}"],
+    plugins: {
+      "tobit-custom": {
+        rules: {
+          "no-direct-fetch-to-api": noDirectFetchToApi,
+        },
+      },
+    },
+    rules: {
+      "tobit-custom/no-direct-fetch-to-api": "warn",
     },
   },
   // Override default ignores of eslint-config-next.

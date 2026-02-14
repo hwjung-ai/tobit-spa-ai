@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 import { BasicInfoSection } from "./BasicInfoSection";
 import { TriggerSection } from "./TriggerSection";
 import { ConditionsSection } from "./ConditionsSection";
@@ -168,9 +169,8 @@ export function CepRuleFormPage({
 
   const handleSimulate = useCallback(
     async (testPayload: Record<string, any>) => {
-      const response = await fetch("/api/cep/rules/preview", {
+      const response = await authenticatedFetch("/api/cep/rules/preview", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           trigger_spec: formData.triggerSpec,
           conditions: formData.conditions,

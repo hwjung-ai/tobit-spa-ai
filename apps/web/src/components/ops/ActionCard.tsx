@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { formatError } from "../../lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import type { ReplanTrigger } from "../../types/ops-schemas";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 interface ActionCardProps {
   trigger?: ReplanTrigger;
@@ -45,9 +46,8 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
 
   const executeActionMutation = useMutation({
     mutationFn: async ({ action, params }: { action: ActionType; params: ActionParams }) => {
-      const response = await fetch(`/api/ops/actions`, {
+      const response = await authenticatedFetch(`/api/ops/actions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
           trigger,
