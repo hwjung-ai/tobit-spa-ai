@@ -119,10 +119,20 @@ class SourceConnection(ABC):
             except Exception as e:
                 logger.error(f"Failed to decrypt password: {e}")
 
-        # Method 3: direct password (for testing/dev)
+        # Method 3: direct password (for testing/dev only)
         password = conn_config.get("password")
         if password:
-            logger.warning("Using direct password (not recommended for production)")
+            # BLOCKER-2: Block plaintext passwords in production
+            is_production = os.getenv("ENV") in ("production", "prod")
+            if is_production:
+                raise ValueError(
+                    "BLOCKER-2: Plaintext password not allowed in production. "
+                    "Use secret_key_ref (env:VAR_NAME) or password_encrypted instead."
+                )
+            logger.warning(
+                "Using direct password (not recommended for production). "
+                "Migrate to secret_key_ref or password_encrypted."
+            )
             return password
 
         raise ValueError(

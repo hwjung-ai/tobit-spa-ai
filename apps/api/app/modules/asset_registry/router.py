@@ -1647,13 +1647,23 @@ def create_tool(
             detail="Tool 생성 권한이 없습니다 (Admin/Manager만 가능)",
         )
 
+    # BLOCKER-2: Credential validation - prevent plaintext storage
+    from app.modules.asset_registry.credential_manager import validate_tool_config_credentials
+    tool_config = payload.get("tool_config", {})
+    credential_errors = validate_tool_config_credentials(tool_config)
+    if credential_errors:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Tool configuration contains plaintext credentials: {'; '.join(credential_errors)}",
+        )
+
     with get_session_context() as session:
         asset = create_tool_asset(
             session,
             name=payload.get("name", ""),
             description=payload.get("description", ""),
             tool_type=payload.get("tool_type", "database_query"),
-            tool_config=payload.get("tool_config", {}),
+            tool_config=tool_config,
             tool_input_schema=payload.get("tool_input_schema", {}),
             tool_output_schema=payload.get("tool_output_schema"),
             tool_catalog_ref=payload.get("tool_catalog_ref"),
@@ -1703,6 +1713,16 @@ def update_tool(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tool 수정 권한이 없습니다 (Admin/Manager만 가능)",
         )
+
+    # BLOCKER-2: Credential validation - prevent plaintext storage
+    from app.modules.asset_registry.credential_manager import validate_tool_config_credentials
+    if "tool_config" in payload:
+        credential_errors = validate_tool_config_credentials(payload.get("tool_config"))
+        if credential_errors:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Tool configuration contains plaintext credentials: {'; '.join(credential_errors)}",
+            )
 
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
