@@ -430,7 +430,7 @@ export default function CepBuilderPage() {
 
     // 윈도우 설정 추출
     if (triggerSpec.window_config) {
-      setFormWindowConfig(triggerSpec.window_config as Record<string, any>);
+      setFormWindowConfig(triggerSpec.window_config as Record<string, unknown>);
     } else {
       setFormWindowConfig({});
     }
@@ -707,29 +707,6 @@ export default function CepBuilderPage() {
     setDraftNotes("드래프트를 미리보기로 렌더링합니다.");
   };
 
-  const handleTestDraft = () => {
-    if (!draftApi) {
-      setDraftErrors(["CEP 드래프트가 없습니다."]);
-      return;
-    }
-    setDraftStatus("testing");
-    const errors: string[] = [];
-    if (!draftApi.rule_name.trim()) {
-      errors.push("rule_name은 필수입니다.");
-    }
-    if (!draftApi.trigger || typeof draftApi.trigger !== "object") {
-      errors.push("trigger는 JSON 객체여야 합니다.");
-    }
-    if (!Array.isArray(draftApi.actions)) {
-      errors.push("actions 배열이 필요합니다.");
-    }
-    setDraftErrors(errors);
-    setDraftWarnings([]);
-    setDraftTestOk(errors.length === 0);
-    setDraftNotes(errors.length === 0 ? "테스트 통과" : "테스트 실패");
-    setDraftStatus(errors.length === 0 ? "draft_ready" : "error");
-  };
-
   const handleTestDraftWithSimulation = async () => {
     if (!draftApi) {
       setDraftErrors(["CEP 드래프트가 없습니다."]);
@@ -962,7 +939,7 @@ export default function CepBuilderPage() {
       />
 
       <TriggerSection
-        triggerType={triggerType as any}
+        triggerType={triggerType}
         triggerSpec={(() => {
           try {
             return parseJsonObject(triggerSpecText);

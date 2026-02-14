@@ -348,7 +348,7 @@ export default function ApiManagerPage() {
         };
       }
     },
-    [apiBaseUrl, parseResponsePayload, selectedApi],
+    [apiBaseUrl, selectedApi],
   );
   const draftStorageId = selectedId === "applied-draft-temp" ? "new" : (selectedId ?? "new");
   const finalStorageId =
@@ -687,7 +687,8 @@ export default function ApiManagerPage() {
     } catch {
       window.localStorage.removeItem(key);
     }
-  }, [finalStorageId, applyFinalToForm]);
+  }, [finalStorageId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!draftApi) {
@@ -1195,7 +1196,8 @@ export default function ApiManagerPage() {
     setDraftApi(null);
     setDraftStatus("idle");
     setDraftNotes(null);
-  }, [applyFinalToForm]);
+  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const buildDraftFromDiscovered = useCallback((endpoint: DiscoveredEndpoint): ApiDraft => {
     return {

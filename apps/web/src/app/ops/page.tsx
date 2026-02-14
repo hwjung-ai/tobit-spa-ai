@@ -35,7 +35,6 @@ import {
   normalizeAnswerMeta,
   buildStageSnapshots,
   parseReplanEvents,
-  extractSummary,
   normalizeError,
   buildErrorEnvelope,
   normalizeHistoryResponse,
@@ -68,7 +67,7 @@ export default function OpsPage() {
   const [traceOpen, setTraceOpen] = useState(false);
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
-  const [summaryData, setSummaryData] = useState<any>(null);
+  const [summaryData, setSummaryData] = useState<Record<string, unknown> | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [summaryType, setSummaryType] = useState<"individual" | "overall">("individual");
@@ -178,7 +177,7 @@ export default function OpsPage() {
     // Otherwise, return the most recent entry (first in array)
     return history[0] ?? null;
   }, [history, selectedId]);
-  const meta = ((selectedEntry?.response as any)?.data?.meta ?? null) as AnswerMeta | null;
+  const meta = ((selectedEntry?.response as Record<string, unknown>)?.data as Record<string, unknown>)?.meta as AnswerMeta | null ?? null;
   const traceData = selectedEntry?.trace as
     | {
         plan_validated?: unknown;
@@ -308,7 +307,6 @@ export default function OpsPage() {
     let status: LocalOpsHistoryEntry["status"] = "ok";
     let errorDetails: string | undefined;
     let trace: unknown;
-    let nextActions: NextAction[] | undefined;
     try {
       if (requestedMode.id === "all") {
         // "all" mode uses /ops/ask endpoint for orchestration
@@ -326,7 +324,6 @@ export default function OpsPage() {
           blocks: ciPayload.blocks,
         };
         trace = ciPayload.trace;
-        nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
       } else {
         // All other modes (ci/config, metric, history, relation, document) use /ops/query
         const data = await authenticatedFetch<
