@@ -9,7 +9,7 @@
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "test": "node --test src/lib/apiManagerSave.test.js",
+    "test": "node --test src/lib/apiManagerSave.test.js src/lib/ui-screen/editor-state.test.mjs src/lib/orchestrationTraceUtils.test.mjs src/lib/adminUtils.test.mjs",
     "test:e2e": "playwright test",
     "dev:log": "node -e \"require('fs').mkdirSync('logs', { recursive: true })\" && next dev > logs/web.log 2>&1"
   },

@@ -44,11 +44,20 @@
   - UI 정의(`tb_ui_def`) 관리 + 런타임 엔드포인트 바인딩
   - Grid/Chart/Dashboard 스키마 + Preview
   - Dashboard 위젯 refresh/last updated
-  - **Screen Editor Operations (U3-2 NEW)**:
+  - **Screen Editor Operations (U3-2)**:
     - Screen Diff / Compare UI (Draft vs Published)
     - Safe Publish Gate (4-step validation)
     - Regression Hook (post-publish testing)
-    - Template-based Creation (3 templates + Blank)
+    - Template-based Creation (8 templates + Blank)
+    - **AI Copilot** (2026-02-14 NEW):
+      - POST /ai/screen-copilot API
+      - 자연어 → JSON Patch 변환
+      - 신뢰도 점수, 설명, 제안
+      - 빠른 액션 버튼 6개
+    - **온보딩 시스템** (2026-02-14 NEW):
+      - 7단계 튜토리얼 (환영, 컴포넌트, 속성, 액션, 바인딩, Copilot, 미리보기)
+      - localStorage 완료 상태 저장
+      - 빈 상태 안내 컴포넌트
 - Data Explorer UI (`/data`)
   - Postgres/Neo4j/Redis 조회 전용 탭
   - Allowlist/limit 정책, AG Grid + 인스펙터
