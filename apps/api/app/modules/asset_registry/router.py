@@ -1671,6 +1671,19 @@ def create_tool(
             created_by=current_user.id if current_user else "admin",
         )
 
+        # BLOCKER-3: Tool Asset validation
+        from app.modules.asset_registry.tool_validator import validate_tool_asset
+        validation_errors = validate_tool_asset(asset)
+        if validation_errors:
+            # Delete the asset since it failed validation
+            session.delete(asset)
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Tool validation failed: {'; '.join(validation_errors)}",
+            )
+
+        session.refresh(asset)
         return ResponseEnvelope.success(
             data={"asset": _to_tool_dict(asset)},
             message="Tool asset created successfully",
@@ -1804,6 +1817,15 @@ def publish_tool(
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
         if not asset or asset.asset_type != "tool":
             raise HTTPException(status_code=404, detail="Tool not found")
+
+        # BLOCKER-3: Enhanced validation for publication
+        from app.modules.asset_registry.tool_validator import validate_tool_for_publication
+        publication_errors = validate_tool_for_publication(asset)
+        if publication_errors:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Tool publication validation failed: {'; '.join(publication_errors)}",
+            )
 
         asset.status = "published"
         asset.published_by = current_user.id if current_user else "admin"
