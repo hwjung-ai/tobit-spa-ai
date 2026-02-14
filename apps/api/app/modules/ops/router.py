@@ -205,7 +205,10 @@ def query_ops(
 
 
 @router.get("/observability/kpis", response_model=ResponseEnvelope)
-def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvelope:
+def observability_kpis(
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+) -> ResponseEnvelope:
     try:
         payload = collect_observability_metrics(session)
         if not payload:

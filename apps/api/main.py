@@ -297,7 +297,8 @@ async def on_shutdown() -> None:
 
 
 @app.get("/health")
-def health(_current_user=Depends(get_current_user)):
+def health():
+    """Public health check endpoint for Kubernetes probes (no auth required)."""
     global _startup_ready, _startup_error
 
     # Determine overall status based on startup and DB connection

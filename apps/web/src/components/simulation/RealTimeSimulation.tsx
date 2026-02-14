@@ -147,12 +147,15 @@ export default function RealTimeSimulation({
         try {
           const data = JSON.parse(e.data);
           setKpis((prev) => {
-            const next = [...prev, data.kpi];
-            const existing = next.findIndex((k) => k.kpi === data.kpi.kpi);
-            if (existing >= 0) {
-              next[existing] = data.kpi;
+            const existingIdx = prev.findIndex((k) => k.kpi === data.kpi.kpi);
+            if (existingIdx >= 0) {
+              // Update existing KPI
+              const next = [...prev];
+              next[existingIdx] = data.kpi;
+              return next;
             }
-            return next;
+            // Add new KPI
+            return [...prev, data.kpi];
           });
         } catch {
           // Ignore parse errors
