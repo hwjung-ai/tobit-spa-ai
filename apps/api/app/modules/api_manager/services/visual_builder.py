@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class NodeTemplate(BaseModel):
     """Template for a visual builder node."""
-    
+
     node_id: str
     node_type: str  # sql, http, python, workflow, condition, loop
     name: str
@@ -29,7 +29,7 @@ class NodeTemplate(BaseModel):
 
 class ConnectionTemplate(BaseModel):
     """Template for node connections."""
-    
+
     source_node_type: str
     target_node_type: str
     allowed: bool
@@ -38,7 +38,7 @@ class ConnectionTemplate(BaseModel):
 
 class VisualBuilderTemplate:
     """Manages visual builder templates and schemas."""
-    
+
     # Node templates
     NODE_TEMPLATES: Dict[str, NodeTemplate] = {
         "sql": NodeTemplate(
@@ -216,7 +216,7 @@ class VisualBuilderTemplate:
             }
         )
     }
-    
+
     # Connection rules
     CONNECTION_RULES: List[ConnectionTemplate] = [
         ConnectionTemplate(source_node_type="sql", target_node_type="http", allowed=True),
@@ -238,7 +238,7 @@ class VisualBuilderTemplate:
         ConnectionTemplate(source_node_type="loop", target_node_type="http", allowed=True),
         ConnectionTemplate(source_node_type="loop", target_node_type="python", allowed=True),
     ]
-    
+
     @staticmethod
     def get_node_templates() -> Dict[str, Dict[str, Any]]:
         """Get all node templates for visual builder."""
@@ -246,13 +246,13 @@ class VisualBuilderTemplate:
             node_id: node.model_dump()
             for node_id, node in VisualBuilderTemplate.NODE_TEMPLATES.items()
         }
-    
+
     @staticmethod
     def get_node_template(node_type: str) -> Optional[Dict[str, Any]]:
         """Get specific node template."""
         node = VisualBuilderTemplate.NODE_TEMPLATES.get(node_type)
         return node.model_dump() if node else None
-    
+
     @staticmethod
     def validate_connection(
         source_node_type: str,
@@ -271,19 +271,19 @@ class VisualBuilderTemplate:
             True if connection is allowed
         """
         for rule in VisualBuilderTemplate.CONNECTION_RULES:
-            if (rule.source_node_type == source_node_type and 
+            if (rule.source_node_type == source_node_type and
                 rule.target_node_type == target_node_type and
                 rule.allowed):
-                
+
                 # Check condition if specified
                 if rule.condition:
                     if condition != rule.condition:
                         continue
-                
+
                 return True
-        
+
         return False
-    
+
     @staticmethod
     def validate_workflow(workflow_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -297,92 +297,92 @@ class VisualBuilderTemplate:
         """
         errors = []
         warnings = []
-        
+
         nodes = workflow_data.get("nodes", [])
         edges = workflow_data.get("edges", [])
-        
+
         # Check if workflow has nodes
         if not nodes:
             errors.append("Workflow must have at least one node")
             return {"valid": False, "errors": errors, "warnings": warnings}
-        
+
         # Check for start nodes
         start_nodes = [n for n in nodes if n.get("data", {}).get("isStart", False)]
         if not start_nodes:
             warnings.append("No start node defined")
-        
+
         # Validate each node
         node_ids = set()
         for node in nodes:
             node_id = node.get("id")
             node_type = node.get("data", {}).get("type")
-            
+
             if not node_id:
                 errors.append(f"Node missing id: {node}")
                 continue
-            
+
             if node_id in node_ids:
                 errors.append(f"Duplicate node id: {node_id}")
                 continue
-            
+
             node_ids.add(node_id)
-            
+
             # Validate node type exists
             template = VisualBuilderTemplate.NODE_TEMPLATES.get(node_type)
             if not template:
                 errors.append(f"Unknown node type: {node_type}")
                 continue
-            
+
             # Validate required fields
             config = node.get("data", {}).get("config", {})
             for field_name, field_config in template.config_schema.get("properties", {}).items():
                 if field_config.get("required", False) and field_name not in config:
                     errors.append(f"Node {node_id} missing required field: {field_name}")
-        
+
         # Validate each edge
         for edge in edges:
             source = edge.get("source")
             target = edge.get("target")
             source_handle = edge.get("sourceHandle")
-            
+
             if not source or not target:
                 errors.append(f"Edge missing source or target: {edge}")
                 continue
-            
+
             source_node = next((n for n in nodes if n.get("id") == source), None)
             if not source_node:
                 errors.append(f"Edge source node not found: {source}")
                 continue
-            
+
             source_node_type = source_node.get("data", {}).get("type")
             target_node = next((n for n in nodes if n.get("id") == target), None)
             if not target_node:
                 errors.append(f"Edge target node not found: {target}")
                 continue
-            
+
             target_node_type = target_node.get("data", {}).get("type")
-            
+
             # Validate connection
             condition = None
             if source_node_type == "condition" and source_handle:
                 condition = source_handle
-            
+
             if not VisualBuilderTemplate.validate_connection(
-                source_node_type, 
-                target_node_type, 
+                source_node_type,
+                target_node_type,
                 condition
             ):
                 errors.append(
                     f"Invalid connection: {source_node_type} -> {target_node_type}"
                 )
-        
+
         is_valid = len(errors) == 0
         return {
             "valid": is_valid,
             "errors": errors,
             "warnings": warnings
         }
-    
+
     @staticmethod
     def export_workflow_to_json(workflow_data: Dict[str, Any]) -> str:
         """
@@ -395,7 +395,7 @@ class VisualBuilderTemplate:
             JSON string
         """
         return json.dumps(workflow_data, indent=2, default=str)
-    
+
     @staticmethod
     def import_workflow_from_json(json_str: str) -> Dict[str, Any]:
         """
@@ -409,14 +409,14 @@ class VisualBuilderTemplate:
         """
         try:
             workflow_data = json.loads(json_str)
-            
+
             # Validate
             validation = VisualBuilderTemplate.validate_workflow(workflow_data)
             if not validation["valid"]:
                 raise ValueError(f"Invalid workflow: {validation['errors']}")
-            
+
             return workflow_data
-            
+
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON: {e}")
         except Exception as e:

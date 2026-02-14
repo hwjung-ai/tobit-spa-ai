@@ -55,12 +55,6 @@ function formatTimestamp(isoString: string | undefined): string {
   });
 }
 
-function getStatusBadgeClass(status: string): string {
-  return status === "success"
-    ? "bg-emerald-900/40 text-emerald-200 border-emerald-700"
-    : "bg-rose-900/40 text-rose-200 border-rose-700";
-}
-
 interface ChangeIndicatorProps {
   changeType: string;
 }

@@ -14,7 +14,6 @@ import {
   CartesianGrid,
 } from "recharts";
 import "reactflow/dist/style.css";
-import Link from "next/link";
 import { type NextAction } from "../../app/ops/nextActions";
 import UIPanelRenderer from "./UIPanelRenderer";
 import UIScreenRenderer from "./UIScreenRenderer";
@@ -24,11 +23,7 @@ import type {
   ChartPoint,
   GraphBlock,
   NetworkEdge,
-  NetworkBlock,
   NetworkNode,
-  PathBlock,
-  ReferencesBlock,
-  ReferenceEntry,
   TableBlock,
   TimeSeriesSeries,
   TimeSeriesBlock,
@@ -143,7 +138,6 @@ const BLOCK_COMPONENT_NAMES: Record<string, string> = {
 const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "";
 
 export default function BlockRenderer({ blocks, nextActions, onAction, traceId }: BlockRendererProps) {
-  const router = useRouter();
   const [fullscreenGraph, setFullscreenGraph] = useState<GraphBlock | null>(null);
 
   // PDF viewer modal state (for references)

@@ -102,11 +102,7 @@ export default function LlmLogsContent() {
         refetchInterval: 60000,
     });
 
-    useEffect(() => {
-        if (analyticsResponse?.data) {
-            setAnalytics(analyticsResponse.data);
-        }
-    }, [analyticsResponse]);
+    const analytics = useMemo(() => analyticsResponse?.data, [analyticsResponse]);
 
     const handleLogClick = async (log: LlmCallLog) => {
         setSelectedLog(log);
@@ -175,7 +171,6 @@ export default function LlmLogsContent() {
             case "7d":
             case "30d":
                 const fromDate = new Date(now);
-                const toDate = new Date(now);
 
                 switch (range) {
                     case "1h":
@@ -212,10 +207,6 @@ export default function LlmLogsContent() {
         if (!dateStr) return "";
         const date = new Date(dateStr);
         return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
-    };
-
-    const handleDateRangeChange = (newRange: DateRangeOption) => {
-        setDateRange(newRange);
     };
 
     return (

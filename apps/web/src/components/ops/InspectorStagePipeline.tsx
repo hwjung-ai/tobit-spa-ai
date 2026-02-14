@@ -44,14 +44,6 @@ const STATUS_STYLES: Record<StageStatusType, { badge: string; icon: React.ReactE
   skipped: { badge: "bg-surface-elevated text-muted-foreground", icon: <Clock className="h-3 w-3 text-muted-foreground" /> },
 };
 
-const STAGE_STYLES: Record<string, string> = {
-  route_plan: "border-sky-400/50 bg-sky-500/10",
-  validate: "border-emerald-400/50 bg-emerald-500/10",
-  execute: "border-amber-400/50 bg-amber-500/10",
-  compose: "border-purple-400/50 bg-purple-500/10",
-  present: "border-rose-400/50 bg-rose-500/10",
-};
-
 const ASSET_CONFIG: Record<string, { icon: React.ReactElement; color: string; label: string }> = {
   prompt: { icon: <Star className="h-3 w-3" />, color: "text-sky-400", label: "Prompt" },
   policy: { icon: <Shield className="h-3 w-3" />, color: "text-emerald-400", label: "Policy" },

@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { FormFieldGroup } from "./FormFieldGroup";
-
 interface Condition {
   id: string;
   field: string;
@@ -66,7 +63,7 @@ export function ConditionsSection({
 
       {conditions.length > 0 && (
         <div className="space-y-3">
-          {conditions.map((condition, index) => (
+          {conditions.map((condition, _index) => (
             <div
               key={condition.id}
               className="cep-condition-group flex items-end gap-2"

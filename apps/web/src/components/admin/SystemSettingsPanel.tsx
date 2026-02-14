@@ -18,7 +18,6 @@ interface SystemSettingsPanelProps {
 }
 
 const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) => {
-  const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [categories, setCategories] = useState<Record<string, Setting[]>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('api');
   const [loading, setLoading] = useState(false);

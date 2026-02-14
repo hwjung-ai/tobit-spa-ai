@@ -1356,7 +1356,6 @@ export default function UIScreenRenderer({
       const yTitle = String(yAxis.title || "");
       const legendCfg = (props.legend || {}) as Record<string, unknown>;
       const tooltipCfg = (props.tooltip || {}) as Record<string, unknown>;
-      const containerHeight = Number(props.height || 208);
       const isResponsive = props.responsive !== false;
       const pieDataKey = seriesDefs[0]?.dataKey || "value";
 

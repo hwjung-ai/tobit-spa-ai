@@ -605,9 +605,6 @@ export default function OpsPage() {
     [currentModeDefinition.backend, fetchHistory, selectedEntry],
   );
 
-  const gridColsClass = isFullScreen
-    ? "lg:grid-cols-[minmax(0,1fr)]"
-    : "lg:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]";
   const shouldShowSidebar = !isFullScreen;
 
   return (

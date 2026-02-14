@@ -371,7 +371,7 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "created_at": asset.created_at,
         "updated_at": asset.updated_at,
     }
-    
+
     # Add type-specific fields for Source, Catalog, Resolver assets
     if asset.asset_type == "source":
         result["source_type"] = content.get("source_type")
@@ -380,7 +380,7 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         result["catalog"] = content.get("catalog", {})
     elif asset.asset_type == "resolver":
         result["config"] = content.get("config", {})
-    
+
     return result
 
 
@@ -1025,7 +1025,7 @@ def delete_asset(
             ).all()
             for history in histories:
                 session.delete(history)
-            
+
             # Delete the asset
             session.delete(asset)
             session.commit()
@@ -1033,7 +1033,7 @@ def delete_asset(
         except Exception as e:
             session.rollback()
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail=f"Failed to delete asset: {str(e)}"
             )
 

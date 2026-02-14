@@ -140,10 +140,6 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
     );
   };
 
-  const handleQueryChange = (query: QueryGroup) => {
-    setWhereConditions(query);
-  };
-
   const currentSQL = selectedTable
     ? generateSQL()
     : (query?.trim() || "-- Select a table first");

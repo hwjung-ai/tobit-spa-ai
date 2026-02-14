@@ -60,14 +60,14 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
   }>({ include: [], exclude: [] });
 
   // Provide default catalog if not present
-  const catalog = asset.catalog ?? {
+  const catalog = useMemo(() => asset.catalog ?? {
     name: asset.name,
     source_ref: "",
     tables: [],
     scan_status: "pending" as const,
     table_count: 0,
     column_count: 0,
-  };
+  }, [asset.catalog]);
 
   const sourcesQuery = useQuery({
     queryKey: ["asset-registry", "sources"],

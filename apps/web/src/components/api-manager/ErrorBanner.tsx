@@ -20,16 +20,9 @@ export default function ErrorBanner({
   onDismiss,
   autoDismissMs = 0,
 }: ErrorBannerProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => !(errors.length === 0 && warnings.length === 0));
 
   useEffect(() => {
-    if (errors.length === 0 && warnings.length === 0) {
-      setIsVisible(false);
-      return;
-    }
-
-    setIsVisible(true);
-
     if (autoDismissMs > 0) {
       const timer = setTimeout(() => {
         setIsVisible(false);

@@ -1,7 +1,5 @@
 "use client";
 
-import { FormFieldGroup } from "./FormFieldGroup";
-
 interface Enrichment {
   id: string;
   type: "lookup" | "aggregate" | "ml_model";

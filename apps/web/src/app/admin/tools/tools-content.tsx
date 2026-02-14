@@ -45,20 +45,29 @@ export default function ToolsPageContent() {
     const [refreshNonce, setRefreshNonce] = useState(0);
 
     // Initialize filters from URL query parameters
-    useEffect(() => {
-        const statusParam = searchParams.get("status") as ToolStatus | null;
-        const typeParam = searchParams.get("tool_type") as ToolType | null;
+    const statusParam = searchParams.get("status") as ToolStatus | null;
+    const typeParam = searchParams.get("tool_type") as ToolType | null;
 
+    const initialStatusFilter = useMemo(() => {
         if (statusParam && ["all", "draft", "published"].includes(statusParam)) {
-            setStatusFilter(statusParam);
+            return statusParam;
         }
+        return "all";
+    }, [statusParam]);
 
+    const initialTypeFilter = useMemo(() => {
         if (typeParam && ["all", "database_query", "http_api", "graph_query", "mcp", "python_script"].includes(typeParam)) {
-            setToolTypeFilter(typeParam);
+            return typeParam;
         }
+        return "all";
+    }, [typeParam]);
 
+    const [statusFilter, setStatusFilter] = useState<ToolStatus>(initialStatusFilter);
+    const [toolTypeFilter, setToolTypeFilter] = useState<ToolType>(initialTypeFilter);
+
+    useEffect(() => {
         setIsInitialized(true);
-    }, [searchParams]);
+    }, []);
 
     // Update URL when filters change
     const handleStatusFilterChange = (value: ToolStatus) => {
@@ -203,7 +212,7 @@ export default function ToolsPageContent() {
             {showCreateModal && (
                 <CreateToolModal
                     onClose={() => setShowCreateModal(false)}
-                    onSuccess={(assetId) => {
+                    onSuccess={() => {
                         void handleRefresh();
                         setShowCreateModal(false);
                     }}

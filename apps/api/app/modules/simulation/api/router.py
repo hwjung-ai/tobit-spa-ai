@@ -287,7 +287,7 @@ def get_topology(
     """
     if current_user.tenant_id != tenant_id:
         raise HTTPException(status_code=403, detail="Tenant mismatch")
-    
+
     assumptions: dict[str, float] = {}
     for key in ("traffic_change_pct", "cpu_change_pct", "memory_change_pct"):
         raw = request.query_params.get(key)
@@ -296,14 +296,14 @@ def get_topology(
                 assumptions[key] = float(raw)
             except ValueError:
                 raise HTTPException(status_code=400, detail=f"Invalid numeric assumption: {key}") from None
-    
+
     topology = get_topology_data(
         tenant_id=tenant_id,
         service=service,
         scenario_type=scenario_type,
         assumptions=assumptions
     )
-    
+
     return ResponseEnvelope.success(data={"topology": topology})
 
 

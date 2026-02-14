@@ -96,15 +96,16 @@ interface OnboardingTourProps {
 }
 
 export function OnboardingTour({ onComplete, forceShow = false }: OnboardingTourProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const completed = useMemo(() => {
+    const savedCompleted = localStorage.getItem(STORAGE_KEY);
+    return !!savedCompleted;
+  }, []);
 
-  useEffect(() => {
-    const completed = localStorage.getItem(STORAGE_KEY);
-    if (!completed || forceShow) {
-      setIsOpen(true);
-    }
-  }, [forceShow]);
+  const [isOpen, setIsOpen] = useState(() => {
+    const savedCompleted = localStorage.getItem(STORAGE_KEY);
+    return !savedCompleted || forceShow;
+  });
+  const [currentStep, setCurrentStep] = useState(0);
 
   const handleNext = () => {
     if (currentStep < TOUR_STEPS.length - 1) {
@@ -206,12 +207,10 @@ export function OnboardingTour({ onComplete, forceShow = false }: OnboardingTour
 }
 
 export function useOnboardingStatus() {
-  const [isCompleted, setIsCompleted] = useState(true);
-
-  useEffect(() => {
+  const [isCompleted, setIsCompleted] = useState(() => {
     const completed = localStorage.getItem(STORAGE_KEY);
-    setIsCompleted(!!completed);
-  }, []);
+    return !!completed;
+  });
 
   const resetOnboarding = () => {
     localStorage.removeItem(STORAGE_KEY);

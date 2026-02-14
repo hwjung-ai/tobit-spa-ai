@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { FormFieldGroup } from "./FormFieldGroup";
-
 interface Action {
   id: string;
   type: "webhook" | "notify" | "trigger" | "store";

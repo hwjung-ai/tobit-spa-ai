@@ -14,12 +14,12 @@ T = TypeVar('T')
 
 class CacheManager:
     """Manages Redis-based caching with TTL and key management."""
-    
+
     def __init__(self, redis_client=None):
         """Initialize cache manager."""
         self.redis_client = redis_client or get_redis_client()
         self.default_ttl = get_settings().cache_ttl if hasattr(get_settings(), 'cache_ttl') else 3600
-        
+
     def get(self, key: str) -> Optional[Any]:
         """
         Get value from cache.
@@ -38,7 +38,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache get error for key {key}: {e}")
             return None
-    
+
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """
         Set value in cache.
@@ -59,7 +59,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache set error for key {key}: {e}")
             return False
-    
+
     def delete(self, key: str) -> bool:
         """
         Delete value from cache.
@@ -76,7 +76,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache delete error for key {key}: {e}")
             return False
-    
+
     def delete_pattern(self, pattern: str) -> int:
         """
         Delete all keys matching a pattern.
@@ -95,7 +95,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache delete pattern error for pattern {pattern}: {e}")
             return 0
-    
+
     def exists(self, key: str) -> bool:
         """
         Check if key exists in cache.
@@ -111,7 +111,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache exists error for key {key}: {e}")
             return False
-    
+
     def clear_all(self) -> bool:
         """
         Clear all cached data (use with caution!).
@@ -166,22 +166,22 @@ def cached(
                 args_str = "_".join(str(arg) for arg in args)
                 kwargs_str = "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
                 cache_key = f"{key_prefix}:{func.__name__}:{args_str}:{kwargs_str}"
-            
+
             # Try to get from cache
             cached_value = cache_manager.get(cache_key)
             if cached_value is not None:
                 logger.debug(f"Cache hit for key: {cache_key}")
                 return cached_value
-            
+
             # Execute function
             logger.debug(f"Cache miss for key: {cache_key}")
             result = func(*args, **kwargs)
-            
+
             # Cache result
             cache_manager.set(cache_key, result, ttl=ttl)
-            
+
             return result
-        
+
         return wrapper
     return decorator
 
@@ -203,35 +203,35 @@ def cache_invalidate_pattern(pattern: str) -> bool:
 
 class CacheKeys:
     """Standardized cache key patterns."""
-    
+
     # User data
     USER_PROFILE = "user:profile:{user_id}"
     USER_PERMISSIONS = "user:permissions:{user_id}"
-    
+
     # Asset data
     ASSET = "asset:{asset_type}:{asset_id}"
     ASSET_LIST = "asset:list:{asset_type}"
-    
+
     # OPS queries
     OPS_QUERY_RESULT = "ops:query:{query_hash}"
     OPS_ORCHESTRATION_RESULT = "ops:orchestration:{trace_id}"
-    
+
     # Regression data
     REGRESSION_BASELINE = "regression:baseline:{query_id}"
     REGRESSION_RESULT = "regression:result:{run_id}"
-    
+
     # CEP data
     CEP_TRIGGER_STATE = "cep:state:{trigger_id}"
     CEP_NOTIFICATION = "cep:notification:{notification_id}"
-    
+
     # Screen data
     SCREEN_SCHEMA = "screen:schema:{screen_id}"
     SCREEN_RENDER_CACHE = "screen:render:{screen_id}:{version}:{params_hash}"
-    
+
     # Session data
     SESSION_DATA = "session:{session_id}"
     CHAT_CONTEXT = "chat:context:{session_id}"
-    
+
     # API Engine
     API_DEFINITION = "api:def:{api_id}"
     API_EXECUTION_CACHE = "api:exec:{api_id}:{params_hash}"
@@ -261,10 +261,10 @@ def cache_asset_invalidation(asset_type: str, asset_id: str):
     """
     # Invalidate specific asset
     cache_manager.delete(build_cache_key(CacheKeys.ASSET, asset_type=asset_type, asset_id=asset_id))
-    
+
     # Invalidate asset list
     cache_manager.delete(build_cache_key(CacheKeys.ASSET_LIST, asset_type=asset_type))
-    
+
     logger.info(f"Invalidated cache for {asset_type}:{asset_id}")
 
 
@@ -279,7 +279,7 @@ def cache_ops_invalidation(query_text: str):
     import hashlib
     query_hash = hashlib.md5(query_text.encode()).hexdigest()
     cache_manager.delete(build_cache_key(CacheKeys.OPS_QUERY_RESULT, query_hash=query_hash))
-    
+
     logger.info(f"Invalidated OPS query cache for hash: {query_hash}")
 
 

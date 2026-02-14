@@ -79,6 +79,7 @@ export default function FunctionComparison({
     setLoading(false);
   }, [assumptions, baseline, functionIds]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void runComparison();
   }, [runComparison]);

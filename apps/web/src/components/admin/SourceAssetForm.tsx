@@ -41,10 +41,6 @@ const STATUS_LABELS: Record<string, string> = {
   deprecated: "Deprecated",
 };
 
-const formatStatus = (status: string) => {
-  return STATUS_LABELS[status] || status;
-};
-
 interface SourceAssetFormProps {
   asset: SourceAssetResponse;
   onSave: () => void;

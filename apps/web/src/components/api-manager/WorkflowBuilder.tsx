@@ -2,13 +2,9 @@
 
 import React, { useState, useCallback } from "react";
 import {
-  ReactFlow,
-  Background,
-  Controls,
   MiniMap,
   addEdge,
   Connection,
-  Edge,
   Node,
   NodeTypes,
   useNodesState,
@@ -102,7 +98,6 @@ const createNode = (type: "sql" | "http" | "python"): Node<WorkflowNodeData> => 
 export default function WorkflowBuilder({ workflow, onChange, readOnly }: WorkflowBuilderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNodeType, setSelectedNodeType] = useState<"sql" | "http" | "python" | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(null);
   const [workflowName, setWorkflowName] = useState<string>("");
 
@@ -427,7 +422,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           </button>
           <button
             onClick={() => {
-              const json = generateWorkflowJSON();
+              generateWorkflowJSON();
               alert("Workflow execution would start here. (In production, integrate with Workflow Executor)");
             }}
             disabled={readOnly}

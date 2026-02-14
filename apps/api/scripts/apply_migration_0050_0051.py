@@ -26,19 +26,19 @@ with engine.connect() as conn:
         print("  ✓ linked_to_tool_id")
     except Exception as e:
         print(f"  ! linked_to_tool_id: {e}")
-    
+
     try:
         conn.execute(text("ALTER TABLE api_definitions ADD COLUMN IF NOT EXISTS linked_to_tool_name TEXT"))
         print("  ✓ linked_to_tool_name")
     except Exception as e:
         print(f"  ! linked_to_tool_name: {e}")
-    
+
     try:
         conn.execute(text("ALTER TABLE api_definitions ADD COLUMN IF NOT EXISTS linked_at TIMESTAMP"))
         print("  ✓ linked_at")
     except Exception as e:
         print(f"  ! linked_at: {e}")
-    
+
     # 0051: Add API linkage to tb_asset_registry
     print("\n[0051] Adding columns to tb_asset_registry...")
     try:
@@ -46,31 +46,31 @@ with engine.connect() as conn:
         print("  ✓ linked_from_api_id")
     except Exception as e:
         print(f"  ! linked_from_api_id: {e}")
-    
+
     try:
         conn.execute(text("ALTER TABLE tb_asset_registry ADD COLUMN IF NOT EXISTS linked_from_api_name TEXT"))
         print("  ✓ linked_from_api_name")
     except Exception as e:
         print(f"  ! linked_from_api_name: {e}")
-    
+
     try:
         conn.execute(text("ALTER TABLE tb_asset_registry ADD COLUMN IF NOT EXISTS linked_from_api_at TIMESTAMP WITH TIME ZONE"))
         print("  ✓ linked_from_api_at")
     except Exception as e:
         print(f"  ! linked_from_api_at: {e}")
-    
+
     try:
         conn.execute(text("ALTER TABLE tb_asset_registry ADD COLUMN IF NOT EXISTS import_mode TEXT"))
         print("  ✓ import_mode")
     except Exception as e:
         print(f"  ! import_mode: {e}")
-    
+
     try:
         conn.execute(text("ALTER TABLE tb_asset_registry ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMP WITH TIME ZONE"))
         print("  ✓ last_synced_at")
     except Exception as e:
         print(f"  ! last_synced_at: {e}")
-    
+
     # Update alembic_version
     print("\n[Update] Updating alembic_version...")
     try:
@@ -78,12 +78,12 @@ with engine.connect() as conn:
         print("  ✓ alembic_version updated to 0051")
     except Exception as e:
         print(f"  ! alembic_version: {e}")
-    
+
     conn.commit()
     print("\n" + "=" * 50)
     print("✅ Migration completed successfully!")
     print("=" * 50)
-    
+
     # Verify
     print("\n[Verify] Checking migration status...")
     result = conn.execute(text("SELECT version_num FROM alembic_version"))

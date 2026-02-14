@@ -181,9 +181,6 @@ export default function PublishGateModal({
   useEffect(() => {
     if (open) {
       runValidation();
-    } else {
-      setChecks([]);
-      setIsRunning(false);
     }
   }, [open, runValidation]);
 

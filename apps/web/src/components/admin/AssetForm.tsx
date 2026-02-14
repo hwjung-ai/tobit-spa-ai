@@ -18,16 +18,6 @@ interface AssetFormProps {
 }
 
 export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormProps) {
-    const readOnlyPayload = useMemo(() => {
-        if (!asset.content) {
-            return "";
-        }
-        try {
-            return JSON.stringify(asset.content, null, 2);
-        } catch {
-            return String(asset.content);
-        }
-    }, [asset.content]);
     const [formData, setFormData] = useState({
         name: asset.name,
         description: asset.description || "",

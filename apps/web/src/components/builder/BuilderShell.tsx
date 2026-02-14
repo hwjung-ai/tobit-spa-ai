@@ -55,8 +55,6 @@ export default function BuilderShell({
     };
   }, [isResizingLeft, isResizingRight]);
 
-  const userSelectStyle = (isResizingLeft || isResizingRight) ? "none" : "auto";
-
   return (
     <div
       ref={containerRef}

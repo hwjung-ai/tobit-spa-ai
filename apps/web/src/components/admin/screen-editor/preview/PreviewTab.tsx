@@ -11,12 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type PreviewViewport = "desktop" | "tablet" | "mobile";
 
-const VIEWPORT_WIDTH: Record<PreviewViewport, string> = {
-  desktop: "100%",
-  tablet: "820px",
-  mobile: "390px",
-};
-
 function prettyJson(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);

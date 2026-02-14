@@ -29,7 +29,7 @@ def upgrade() -> None:
         sa.Column('import_mode', sa.Text(), nullable=True))
     op.add_column('tb_asset_registry',
         sa.Column('last_synced_at', sa.TIMESTAMP(timezone=True), nullable=True))
-    
+
     # No FK constraint - managed at application level to avoid bidirectional FK issues
     # when unlinking. Linkage is enforced by business logic.
 

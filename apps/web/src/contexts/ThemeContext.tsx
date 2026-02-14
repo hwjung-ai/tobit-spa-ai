@@ -49,12 +49,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const savedTheme = useMemo(() => getInitialTheme(), []);
+
   useEffect(() => {
-    const savedTheme = getInitialTheme();
     setCurrentTheme(savedTheme);
     setTokens(THEME_PRESETS[savedTheme]);
     applyTheme(savedTheme);
-  }, [applyTheme]);
+  }, [savedTheme, applyTheme]);
 
   useEffect(() => {
     applyTheme(currentTheme);

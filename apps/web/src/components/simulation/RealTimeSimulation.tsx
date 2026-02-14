@@ -89,9 +89,6 @@ export default function RealTimeSimulation({
 
   useEffect(() => {
     stoppedRef.current = false;
-    setKpis([]);
-    setResult(null);
-    setError(null);
     reconnectAttemptsRef.current = 0;
 
     const closeCurrentSource = () => {

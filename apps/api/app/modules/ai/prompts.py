@@ -65,16 +65,16 @@ def build_user_prompt(
     state_paths: list[str] | None = None,
 ) -> str:
     """Build the user prompt for the LLM."""
-    
+
     parts = []
-    
+
     # Screen schema
     parts.append("## Current Screen Schema")
     parts.append("```json")
     parts.append(json.dumps(screen_schema, indent=2, ensure_ascii=False))
     parts.append("```")
     parts.append("")
-    
+
     # Selected component
     if selected_component:
         parts.append(f"## Selected Component: `{selected_component}`")
@@ -88,40 +88,40 @@ def build_user_prompt(
                 parts.append(f"Component index: {i}")
                 break
         parts.append("")
-    
+
     # Available handlers
     if available_handlers:
         parts.append("## Available Action Handlers")
         for handler in available_handlers[:20]:  # Limit to 20
             parts.append(f"- {handler}")
         parts.append("")
-    
+
     # State paths
     if state_paths:
         parts.append("## Available State Paths")
         for path in state_paths[:30]:  # Limit to 30
             parts.append(f"- {path}")
         parts.append("")
-    
+
     # User request
     parts.append("## User Request")
     parts.append(prompt)
-    
+
     return "\n".join(parts)
 
 
 def parse_llm_response(response_text: str) -> dict[str, Any]:
     """Parse LLM response text to extract JSON."""
-    
+
     # Strip whitespace
     text = response_text.strip()
-    
+
     # Try direct JSON parse
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
-    
+
     # Try extracting JSON from markdown code block
     if "```json" in text:
         start = text.find("```json") + 7
@@ -132,7 +132,7 @@ def parse_llm_response(response_text: str) -> dict[str, Any]:
                 return json.loads(json_str)
             except json.JSONDecodeError:
                 pass
-    
+
     # Try finding JSON object in text
     start = text.find("{")
     end = text.rfind("}")
@@ -142,7 +142,7 @@ def parse_llm_response(response_text: str) -> dict[str, Any]:
             return json.loads(json_str)
         except json.JSONDecodeError:
             pass
-    
+
     # Return default empty response
     return {
         "patch": [],

@@ -72,7 +72,6 @@ export default function SystemStatusIndicator() {
   }, [checkApi]);
 
   useEffect(() => {
-    fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
     return () => clearInterval(interval);
   }, [fetchHealth]);

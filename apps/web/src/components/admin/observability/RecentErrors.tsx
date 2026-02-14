@@ -13,14 +13,6 @@ interface Error {
   duration_ms: number;
 }
 
-interface ErrorsData {
-  timeline: Array<{ timestamp: string; error_count: number }>;
-  error_distribution: Record<string, number>;
-  recent_errors: Error[];
-  period: string;
-  total_errors: number;
-}
-
 export default function RecentErrors() {
   const [errors, setErrors] = useState<Error[]>([]);
   const [loading, setLoading] = useState(true);

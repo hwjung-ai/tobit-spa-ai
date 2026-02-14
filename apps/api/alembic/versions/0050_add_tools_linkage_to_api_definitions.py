@@ -19,13 +19,13 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add tools linkage fields to api_definitions table."""
-    op.add_column('api_definitions', 
+    op.add_column('api_definitions',
         sa.Column('linked_to_tool_id', sa.UUID(), nullable=True))
     op.add_column('api_definitions',
         sa.Column('linked_to_tool_name', sa.Text(), nullable=True))
     op.add_column('api_definitions',
         sa.Column('linked_at', sa.DateTime(), nullable=True))
-    
+
     # No FK constraint - managed at application level to avoid bidirectional FK issues
     # when unlinking. Linkage is enforced by business logic.
 

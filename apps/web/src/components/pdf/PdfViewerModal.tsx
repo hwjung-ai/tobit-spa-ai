@@ -183,14 +183,18 @@ export function PdfViewerModal({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const initialModalRect = useMemo(() => {
+    const initial = getInitialRect();
+    return clampRect(initial);
+  }, [getInitialRect]);
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
-    const initial = getInitialRect();
-    setModalRect(clampRect(initial));
+    setModalRect(initialModalRect);
     setIsFullscreen(false);
-  }, [isOpen, getInitialRect, clampRect]);
+  }, [isOpen, initialModalRect]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -214,14 +218,14 @@ export function PdfViewerModal({
     return () => window.removeEventListener("resize", handleViewportResize);
   }, [isOpen, isFullscreen, clampRect]);
 
-  // Convert blob to File and manage state
+  const shouldResetPdf = useMemo(() => !isOpen, [isOpen]);
+
   useEffect(() => {
-    if (!isOpen) {
+    if (shouldResetPdf) {
       setPdfLoading(true);
       setPdfError(null);
       setNumPages(0);
       setPdfFile(null);
-      return;
     }
 
     if (!pdfBlob && !pdfBlobUrl) {

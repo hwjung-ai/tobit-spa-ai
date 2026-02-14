@@ -40,7 +40,6 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     tags: "",
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [refreshTrigger] = useState(0);
   const [confirm, ConfirmDialogComponent] = useConfirm();
 
   // Fetch screens when URL params change

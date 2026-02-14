@@ -6,7 +6,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Legend,
   Tooltip,
 } from "recharts";
 import { authenticatedFetch } from "@/lib/apiClient";

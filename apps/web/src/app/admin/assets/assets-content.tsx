@@ -23,20 +23,29 @@ export default function AssetsPageContent() {
     const [refreshNonce, setRefreshNonce] = useState(0);
 
     // Initialize filters from URL query parameters
-    useEffect(() => {
-        const typeParam = searchParams.get("type") as AssetType | null;
-        const statusParam = searchParams.get("status") as AssetStatus | null;
+    const typeParam = searchParams.get("type") as AssetType | null;
+    const statusParam = searchParams.get("status") as AssetStatus | null;
 
+    const initialTypeFilter = useMemo(() => {
         if (typeParam && ["all", "prompt", "mapping", "policy", "query", "source", "resolver"].includes(typeParam)) {
-            setTypeFilter(typeParam);
+            return typeParam;
         }
+        return "all";
+    }, [typeParam]);
 
+    const initialStatusFilter = useMemo(() => {
         if (statusParam && ["all", "draft", "published"].includes(statusParam)) {
-            setStatusFilter(statusParam);
+            return statusParam;
         }
+        return "all";
+    }, [statusParam]);
 
+    const [typeFilter, setTypeFilter] = useState<AssetType>(initialTypeFilter);
+    const [statusFilter, setStatusFilter] = useState<AssetStatus>(initialStatusFilter);
+
+    useEffect(() => {
         setIsInitialized(true);
-    }, [searchParams]);
+    }, []);
 
     // Update URL when filters change
     const handleTypeFilterChange = (value: AssetType) => {

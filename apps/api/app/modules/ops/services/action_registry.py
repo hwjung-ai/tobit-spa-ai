@@ -291,7 +291,7 @@ async def handle_list_maintenance_filtered(
         AnswerBlock with table of maintenance tickets
     """
     from core.config import get_settings
-    
+
     device_id = inputs.get("device_id", "").strip()
     offset = inputs.get("offset", 0)
     limit = inputs.get("limit", 20)
@@ -456,7 +456,7 @@ async def handle_create_maintenance_ticket(
     from datetime import datetime, timezone
 
     from core.config import get_settings
-    
+
     device_id = inputs.get("device_id", "").strip()
     maint_type = inputs.get("maintenance_type", "").strip()
     scheduled_date = inputs.get("scheduled_date", "").strip()

@@ -366,7 +366,7 @@ def register_screen(screen_id: str, name: str, description: str, schema: dict):
         if existing:
             logger.info(f"Updating existing screen '{name}' (screen_id={screen_id})")
             print(f"Updating existing screen '{name}' (screen_id={screen_id})")
-            
+
             # Update asset
             existing.name = name
             existing.description = description
@@ -375,9 +375,9 @@ def register_screen(screen_id: str, name: str, description: str, schema: dict):
             existing.status = "published"
             existing.published_at = datetime.now()
             existing.updated_at = datetime.now()
-            
+
             session.add(existing)
-            
+
             # Create version history
             history = TbAssetVersionHistory(
                 asset_id=existing.asset_id,
@@ -484,7 +484,7 @@ def main():
     print("\n✓ All monitoring screens registered successfully!")
     print("\nYou can now view these screens at:")
     print("  - http://localhost:3000/admin/screens")
-    
+
     logger.info("=" * 70)
     logger.info("✓ All monitoring screens registered successfully!")
     logger.info("=" * 70)

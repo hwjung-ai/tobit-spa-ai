@@ -194,8 +194,6 @@ function GridItem({ component, colWidth, rowHeight, onStop, isSelected, onSelect
     // Calculate pixel position
     const x = layout.x * colWidth;
     const y = layout.y * rowHeight;
-    const w = layout.w * colWidth;
-    const h = layout.h * rowHeight;
 
     if (colWidth === 0) return null;
 
@@ -203,8 +201,8 @@ function GridItem({ component, colWidth, rowHeight, onStop, isSelected, onSelect
         <Draggable
             position={{ x, y }}
             grid={[colWidth, rowHeight]}
-            onStop={(e, data) => onStop(component.id, e, data)}
-            onMouseDown={(e) => {
+            onStop={(_e, data) => onStop(component.id, _e, data)}
+            onMouseDown={() => {
                 // Prevent event bubbling if clicking inside input etc (optional)
                 onSelect();
             }}

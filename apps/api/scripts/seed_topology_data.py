@@ -19,13 +19,13 @@ from neo4j import GraphDatabase
 
 class Neo4jTopologySeeder:
     """Neo4j 토폴로지 시드 데이터 생성기"""
-    
+
     def __init__(self, settings):
         self.driver = GraphDatabase.driver(
             settings.neo4j_uri,
             auth=(settings.neo4j_user, settings.neo4j_password)
         )
-    
+
     def seed_topology(self, tenant_id="default"):
         """
         토폴로지 데이터 시드 생성
@@ -35,7 +35,7 @@ class Neo4jTopologySeeder:
         """
         with self.driver.session() as session:
             print(f"Seeding topology data for tenant: {tenant_id}")
-            
+
             # 노드 생성
             nodes = [
                 {"name": "loadbalancer", "type": "network", "baseline_load": 50.0},
@@ -46,13 +46,13 @@ class Neo4jTopologySeeder:
                 {"name": "db-postgres", "type": "db", "baseline_load": 65.0},
                 {"name": "storage-nfs", "type": "storage", "baseline_load": 40.0},
             ]
-            
+
             # 기존 데이터 삭제 (갱신을 위해)
             session.run("""
                 MATCH (n {tenant_id: $tenant_id})
                 DETACH DELETE n
             """, {"tenant_id": tenant_id})
-            
+
             # 노드 생성
             session.run("""
                 UNWIND $nodes AS node
@@ -64,7 +64,7 @@ class Neo4jTopologySeeder:
                 "tenant_id": tenant_id
             })
             print(f"✓ Created {len(nodes)} nodes")
-            
+
             # 관계 생성
             session.run("""
                 MATCH (lb:Network {name: "loadbalancer", tenant_id: $tenant_id})
@@ -94,14 +94,14 @@ class Neo4jTopologySeeder:
                 MERGE (pg)-[:DEPENDS_ON {baseline_traffic: 300.0}]->(nfs)
             """, {"tenant_id": tenant_id})
             print("✓ Created 8 relationships")
-            
+
             # 검증: 노드 수 확인
             node_count = session.run("""
                 MATCH (n {tenant_id: $tenant_id})
                 RETURN count(n) AS count
             """, {"tenant_id": tenant_id}).single()["count"]
             print(f"✓ Total nodes: {node_count}")
-            
+
             # 검증: 관계 수 확인
             rel_count = session.run("""
                 MATCH ()-[r]->() 
@@ -109,9 +109,9 @@ class Neo4jTopologySeeder:
                 RETURN count(r) AS count
             """).single()["count"]
             print(f"✓ Total relationships: {rel_count}")
-            
+
             print(f"\n✅ Topology seeding completed for tenant: {tenant_id}")
-    
+
     def close(self):
         self.driver.close()
 
@@ -132,10 +132,10 @@ def main():
         help="Clear all topology data before seeding"
     )
     args = parser.parse_args()
-    
+
     settings = get_settings()
     seeder = Neo4jTopologySeeder(settings)
-    
+
     try:
         seeder.seed_topology(tenant_id=args.tenant_id)
     finally:
