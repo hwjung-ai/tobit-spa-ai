@@ -15,6 +15,13 @@ from core.db import get_session, get_session_context
 from core.logging import get_logger, get_request_context
 from core.security import decode_token
 from core.tenant import get_current_tenant
+from app.core.exceptions import (
+    ConnectionError as CoreConnectionError,
+    TimeoutError as CoreTimeoutError,
+    DatabaseError,
+    PlanningError,
+    ToolExecutionError,
+)
 from fastapi import (
     APIRouter,
     Depends,
@@ -159,8 +166,11 @@ def query_ops(
             session.commit()
             session.refresh(history_entry)
         history_id = history_entry.id
+    except DatabaseError as exc:
+        logger.error(f"Failed to create query history record: {exc}")
+        history_id = None
     except Exception as exc:
-        logger.exception("ops.query.history.create_failed", exc_info=exc)
+        logger.exception(f"Unexpected error creating history: {exc}", exc_info=exc)
         history_id = None
 
     # OPS 쿼리 실행
@@ -309,9 +319,12 @@ def conversation_summary(
 
         return ResponseEnvelope.success(data=summary_data)
 
+    except DatabaseError as e:
+        logger.error(f"Database error retrieving conversation: {e}")
+        return ResponseEnvelope.error(message="Failed to retrieve conversation data")
     except Exception as e:
-        logger.error(f"Failed to get conversation summary: {e}", exc_info=True)
-        return ResponseEnvelope.error(message=str(e))
+        logger.exception(f"Unexpected error generating summary: {e}", exc_info=True)
+        return ResponseEnvelope.error(message="Failed to generate summary")
 
 
 @router.post("/conversation/export/pdf", response_model=ResponseEnvelope)
@@ -714,8 +727,11 @@ def ask_ops(
             session.commit()
             session.refresh(history_entry)
         history_id = history_entry.id
+    except DatabaseError as exc:
+        logger.error(f"Failed to create CI history record: {exc}")
+        history_id = None
     except Exception as exc:
-        logger.exception("ci.history.create_failed", exc_info=exc)
+        logger.exception(f"Unexpected error creating CI history: {exc}", exc_info=exc)
         history_id = None
 
     logger.info(
@@ -885,7 +901,15 @@ def ask_ops(
                 # Calculate route_plan time for rerun (validation time only)
                 planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
                 logger.info(f"ci.runner.rerun.route_plan_time: {planner_elapsed_ms}ms")
+            except (PlanningError, ToolExecutionError) as e:
+                logger.error(f"Plan validation error during rerun: {e}")
+                end_span(
+                    validator_span,
+                    status="error",
+                    summary={"error_type": type(e).__name__, "error_message": str(e)},
+                )
             except Exception as e:
+                logger.exception(f"Unexpected error validating plan: {e}", exc_info=True)
                 end_span(
                     validator_span,
                     status="error",
@@ -957,7 +981,16 @@ def ask_ops(
                     extra={"llm_called": False, "elapsed_ms": planner_elapsed_ms},
                 )
                 end_span(planner_span, links={"plan_path": "plan.raw"})
+            except PlanningError as e:
+                logger.error(f"LLM plan generation failed: {e}")
+                end_span(
+                    planner_span,
+                    status="error",
+                    summary={"error_type": "PlanningError", "error_message": str(e)},
+                )
+                raise
             except Exception as e:
+                logger.exception(f"Unexpected error in planning phase: {e}", exc_info=True)
                 end_span(
                     planner_span,
                     status="error",
@@ -1387,10 +1420,24 @@ def ask_ops(
         result["trace"]["parent_trace_id"] = parent_trace_id
         response: CiAskResponse = CiAskResponse(**result)
         response_payload = ResponseEnvelope.success(data=response.model_dump())
+    except (PlanningError, ToolExecutionError) as exc:
+        status = "error"
+        logger.error(f"Orchestration error in ask endpoint: {exc}")
+        error_body = ResponseEnvelope.error(message="Tool orchestration failed").model_dump(mode="json")
+        error_response = JSONResponse(status_code=500, content=error_body)
+        response_payload = None
+        result = None
+    except DatabaseError as exc:
+        status = "error"
+        logger.error(f"Database error during ask: {exc}")
+        error_body = ResponseEnvelope.error(message="Data access failed").model_dump(mode="json")
+        error_response = JSONResponse(status_code=503, content=error_body)
+        response_payload = None
+        result = None
     except Exception as exc:
         status = "error"
-        logger.exception("ops.ask.error", exc_info=exc)
-        error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
+        logger.exception(f"Unexpected error in ask endpoint: {exc}", exc_info=exc)
+        error_body = ResponseEnvelope.error(message="Internal error").model_dump(mode="json")
         error_response = JSONResponse(status_code=500, content=error_body)
         response_payload = None
         result = None
