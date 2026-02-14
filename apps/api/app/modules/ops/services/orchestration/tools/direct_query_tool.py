@@ -14,6 +14,9 @@ from core.config import get_settings
 
 from app.modules.asset_registry.loader import load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
+from app.modules.ops.services.orchestration.tools.query_safety import (
+    validate_direct_query,
+)
 
 from .base import BaseTool, ToolContext, ToolResult
 
@@ -47,9 +50,9 @@ class DirectQueryTool(BaseTool):
             params: Parameters including 'sql' key
 
         Returns:
-            True if sql parameter exists
+            True if sql parameter exists and is not empty
         """
-        return "sql" in params and params["sql"]
+        return bool("sql" in params and params["sql"])
 
     async def execute(
         self, context: ToolContext, params: Dict[str, Any]
@@ -71,6 +74,33 @@ class DirectQueryTool(BaseTool):
                 success=False,
                 error="No SQL query provided",
                 error_details={"param": "sql"}
+            )
+
+        # P0-4: Query Safety Validation
+        # Enforce read-only access, block DDL/DCL, check tenant isolation
+        is_valid, violations = validate_direct_query(
+            query=sql_query,
+            tenant_id=context.tenant_id,
+            enforce_readonly=True,
+            block_ddl=True,
+            block_dcl=True,
+            max_rows=10000
+        )
+
+        if not is_valid:
+            error_msg = violations[0] if violations else "Query validation failed"
+            logger.warning(
+                f"Query validation failed for tenant '{context.tenant_id}': {error_msg}"
+            )
+            return ToolResult(
+                success=False,
+                error=f"Query validation failed: {error_msg}",
+                error_details={
+                    "violation_type": "query_safety",
+                    "violations": violations,
+                    "sql_preview": sql_query[:100],
+                    "tenant_id": context.tenant_id,
+                }
             )
 
         source_ref = params.get("source_ref")
