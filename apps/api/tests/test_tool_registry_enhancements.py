@@ -1,14 +1,14 @@
 """Unit tests for Tool Registry enhancements (Phase 2)."""
 
 
-from app.modules.ops.services.ci.tools.base import (
+from app.modules.ops.services.orchestration.tools.base import (
     BaseTool,
     ToolContext,
     ToolRegistry,
     ToolResult,
     get_tool_registry,
 )
-from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
 
 class MockTool(BaseTool):

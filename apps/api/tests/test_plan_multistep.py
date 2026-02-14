@@ -11,7 +11,7 @@ import pytest
 
 # Import schema classes - avoid importing router
 try:
-    from app.modules.ops.services.ci.planner.plan_schema import (
+    from app.modules.ops.services.orchestration.planner.plan_schema import (
         BudgetSpec,
         Intent,
         Plan,
@@ -22,7 +22,7 @@ try:
         StepCondition,
         View,
     )
-    from app.modules.ops.services.ci.planner.validator import validate_plan
+    from app.modules.ops.services.orchestration.planner.validator import validate_plan
 except ImportError:
     # Fallback: define minimal classes for testing
     from enum import Enum

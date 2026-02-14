@@ -9,11 +9,11 @@ import asyncio
 import pytest
 import time
 from typing import Any, Dict
-from app.modules.ops.services.ci.orchestrator.runner_base import (
+from app.modules.ops.services.orchestration.orchestrator.runner_base import (
     RunnerContext,
     BaseRunner,
 )
-from app.modules.ops.services.ci.orchestrator.parallel_executor import (
+from app.modules.ops.services.orchestration.orchestrator.parallel_executor import (
     ToolExecutionTask,
     ParallelExecutor,
     DependencyAwareExecutor,

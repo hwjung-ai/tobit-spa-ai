@@ -63,7 +63,7 @@ async def execute_isolated_stage_test(
         ExecutionContext,
         StageInput,
     )
-    from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
+    from app.modules.ops.services.orchestration.orchestrator.stage_executor import StageExecutor
 
     logger_inst = get_logger(__name__)
     get_settings()

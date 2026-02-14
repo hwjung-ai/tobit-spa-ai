@@ -15,7 +15,7 @@ def main():
     print("   KEYWORD MAPPING ASSETS 로딩 테스트")
     print("=" * 70)
 
-    from app.modules.ops.services.ci.planner.planner_llm import (
+    from app.modules.ops.services.orchestration.planner.planner_llm import (
         _get_agg_keywords,
         _get_auto_keywords,
         _get_cep_keywords,

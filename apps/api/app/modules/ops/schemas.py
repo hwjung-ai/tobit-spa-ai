@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph", "document"]
 
-from app.modules.ops.services.ci.planner.plan_schema import Plan, View
+from app.modules.ops.services.orchestration.planner.plan_schema import Plan, View
 
 
 class OpsQueryRequest(BaseModel):

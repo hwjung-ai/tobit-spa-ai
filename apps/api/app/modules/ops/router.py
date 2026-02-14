@@ -64,10 +64,10 @@ from .schemas import (
 )
 from .services import handle_ops_query
 from .services.action_registry import list_registered_actions
-from .services.ci.blocks import text_block
-from .services.ci.orchestrator.runner import OpsOrchestratorRunner
-from .services.ci.planner import planner_llm, validator
-from .services.ci.planner.plan_schema import (
+from .services.orchestration.blocks import text_block
+from .services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+from .services.orchestration.planner import planner_llm, validator
+from .services.orchestration.planner.plan_schema import (
     Intent,
     Plan,
     PlanOutput,
@@ -2622,7 +2622,7 @@ def execute_action(
     """
     import uuid
 
-    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
     from app.modules.ops.services.control_loop import ControlLoop
 
     try:
@@ -2732,7 +2732,7 @@ async def execute_isolated_stage_test(
     from core.logging import get_logger
 
     from app.modules.ops.schemas import ExecutionContext
-    from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
+    from app.modules.ops.services.orchestration.orchestrator.stage_executor import StageExecutor
 
     logger = get_logger(__name__)
     get_settings()
@@ -3008,7 +3008,7 @@ async def tool_discovery_webhook(
         payload = await request.json()
 
         # Get discovery instance
-        from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
+        from .services.orchestration.tools.runtime_tool_discovery import get_runtime_discovery
         discovery = get_runtime_discovery()
 
         # Process webhook
@@ -3049,7 +3049,7 @@ async def get_tool_discovery_status() -> JSONResponse:
     - Configuration settings
     """
     try:
-        from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
+        from .services.orchestration.tools.runtime_tool_discovery import get_runtime_discovery
         discovery = get_runtime_discovery()
 
         status = discovery.get_discovery_status()
@@ -3081,7 +3081,7 @@ async def refresh_tool_discovery(
     - force: Force refresh regardless of scan interval
     """
     try:
-        from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
+        from .services.orchestration.tools.runtime_tool_discovery import get_runtime_discovery
         discovery = get_runtime_discovery()
 
         # Check if discovery is running

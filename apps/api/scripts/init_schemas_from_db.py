@@ -31,7 +31,7 @@ if env_file.exists():
 from datetime import datetime
 
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
-from app.modules.ops.services.ci.discovery.catalog_factory import CatalogFactory
+from app.modules.ops.services.orchestration.discovery.catalog_factory import CatalogFactory
 from core.db import get_session_context
 from core.logging import get_logger
 

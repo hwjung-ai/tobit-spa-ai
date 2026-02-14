@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from app.modules.asset_registry.loader import load_catalog_for_llm
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     ExecutionStrategy,
 )
-from app.modules.ops.services.ci.planner.planner_llm import (
+from app.modules.ops.services.orchestration.planner.planner_llm import (
     _build_enhanced_planner_prompt,
     _validate_plan,
     plan_llm_query,
@@ -216,13 +216,13 @@ class TestIntegration:
         }
 
         # Mock dependencies
-        import app.modules.ops.services.ci.tools.base
+        import app.modules.ops.services.orchestration.tools.base
         from app.llm.client import get_llm_client
 
-        original_get_tool_registry = app.modules.ops.services.ci.tools.base.get_tool_registry
+        original_get_tool_registry = app.modules.ops.services.orchestration.tools.base.get_tool_registry
         original_get_llm_client = get_llm_client
 
-        app.modules.ops.services.ci.tools.base.get_tool_registry = MagicMock(return_value=mock_tool_registry)
+        app.modules.ops.services.orchestration.tools.base.get_tool_registry = MagicMock(return_value=mock_tool_registry)
 
         # Create a mock class for get_llm_client
         class MockLlmClient:
@@ -240,7 +240,7 @@ class TestIntegration:
             assert result.plan.primary.tool_type == "ci_lookup"
         finally:
             # Restore original functions
-            app.modules.ops.services.ci.tools.base.get_tool_registry = original_get_tool_registry
+            app.modules.ops.services.orchestration.tools.base.get_tool_registry = original_get_tool_registry
             get_llm_client = original_get_llm_client
 
     @pytest.mark.asyncio
@@ -264,14 +264,14 @@ class TestIntegration:
         }
 
         # Mock dependencies
-        import app.modules.ops.services.ci.tools.base
+        import app.modules.ops.services.orchestration.tools.base
         from app.llm.client import get_llm_client
 
-        original_get_tool_registry = app.modules.ops.services.ci.tools.base.get_tool_registry
+        original_get_tool_registry = app.modules.ops.services.orchestration.tools.base.get_tool_registry
         original_get_llm_client = get_llm_client
         original_load_catalog = load_catalog_for_llm
 
-        app.modules.ops.services.ci.tools.base.get_tool_registry = MagicMock(return_value=mock_tool_registry)
+        app.modules.ops.services.orchestration.tools.base.get_tool_registry = MagicMock(return_value=mock_tool_registry)
 
         class MockLlmClient:
             def __init__(self):
@@ -289,6 +289,6 @@ class TestIntegration:
             load_catalog_for_llm.assert_called_once()
         finally:
             # Restore original functions
-            app.modules.ops.services.ci.tools.base.get_tool_registry = original_get_tool_registry
+            app.modules.ops.services.orchestration.tools.base.get_tool_registry = original_get_tool_registry
             get_llm_client = original_get_llm_client
             load_catalog_for_llm = original_load_catalog

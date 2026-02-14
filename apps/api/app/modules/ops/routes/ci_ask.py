@@ -49,10 +49,10 @@ from app.modules.ops.schemas import (
     RerunContext,
 )
 from app.modules.ops.security import SecurityUtils
-from app.modules.ops.services.ci.blocks import text_block
-from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
-from app.modules.ops.services.ci.planner import planner_llm, validator
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.blocks import text_block
+from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+from app.modules.ops.services.orchestration.planner import planner_llm, validator
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     Intent,
     Plan,
     PlanOutput,

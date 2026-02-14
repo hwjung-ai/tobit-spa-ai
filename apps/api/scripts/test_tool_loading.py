@@ -9,8 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.modules.ops.services.ci.tools.base import get_tool_registry
-from app.modules.ops.services.ci.tools.registry_init import initialize_tools
+from app.modules.ops.services.orchestration.tools.base import get_tool_registry
+from app.modules.ops.services.orchestration.tools.registry_init import initialize_tools
 
 
 def main():

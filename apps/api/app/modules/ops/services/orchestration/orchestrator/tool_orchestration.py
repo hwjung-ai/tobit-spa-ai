@@ -17,16 +17,16 @@ from typing import Any, Dict, List, Optional, Set
 from core.logging import get_logger
 
 from app.llm.client import get_llm_client
-from app.modules.ops.services.ci.orchestrator.chain_executor import (
+from app.modules.ops.services.orchestration.orchestrator.chain_executor import (
     ToolChain,
     ToolChainStep,
 )
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     ExecutionStrategy,
     Plan,
     ToolDependency,
 )
-from app.modules.ops.services.ci.tools.base import ToolContext
+from app.modules.ops.services.orchestration.tools.base import ToolContext
 
 logger = get_logger(__name__)
 
@@ -449,7 +449,7 @@ class ToolOrchestrator:
         self.execution_planner = ExecutionPlanner()
         self.llm_decider = IntermediateLLMDecider() if plan.enable_intermediate_llm else None
         # Use get_chain_executor() to get the global executor which has proper registry
-        from app.modules.ops.services.ci.orchestrator.chain_executor import (
+        from app.modules.ops.services.orchestration.orchestrator.chain_executor import (
             get_chain_executor,
         )
         self.chain_executor = get_chain_executor()

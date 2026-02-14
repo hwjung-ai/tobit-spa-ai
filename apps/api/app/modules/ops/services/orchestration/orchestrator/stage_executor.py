@@ -25,8 +25,8 @@ from app.modules.ops.schemas import (
     StageInput,
     StageOutput,
 )
-from app.modules.ops.services.ci.tools.base import ToolContext
-from app.modules.ops.services.ci.tools.executor import ToolExecutor
+from app.modules.ops.services.orchestration.tools.base import ToolContext
+from app.modules.ops.services.orchestration.tools.executor import ToolExecutor
 from app.shared import config_loader
 
 logger = get_logger(__name__)
@@ -299,7 +299,7 @@ class StageExecutor:
 
         if plan_output_kind == "plan" and plan_dict:
             # Convert dict back to Plan object for easier access
-            from app.modules.ops.services.ci.planner.plan_schema import Plan
+            from app.modules.ops.services.orchestration.planner.plan_schema import Plan
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
             if plan.history and plan.history.enabled:
                 normalized_question = question_text.lower()
@@ -343,7 +343,7 @@ class StageExecutor:
 
             if use_orchestration:
                 # NEW: Use orchestration layer for tool execution
-                from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
+                from app.modules.ops.services.orchestration.orchestrator.tool_orchestration import (
                     ToolOrchestrator,
                 )
 

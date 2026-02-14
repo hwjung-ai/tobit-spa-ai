@@ -1,7 +1,7 @@
 """Unit tests for Plan schema with tool_type field."""
 
 
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     AggregateSpec,
     AutoSpec,
     CepSpec,

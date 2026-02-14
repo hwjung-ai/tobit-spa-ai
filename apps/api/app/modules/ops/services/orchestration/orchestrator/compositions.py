@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from app.modules.ops.services.ci.orchestrator.tool_composition import (
+from app.modules.ops.services.orchestration.orchestrator.tool_composition import (
     CompositionPipeline,
     CompositionStep,
 )
-from app.modules.ops.services.ci.tools.base import CommonToolTypes
+from app.modules.ops.services.orchestration.tools.base import CommonToolTypes
 
 COMPOSITION_SEARCH_WITH_CONTEXT = CompositionPipeline(
     [

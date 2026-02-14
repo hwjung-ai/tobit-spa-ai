@@ -138,7 +138,7 @@ def _run_rollback(
 ) -> Dict[str, Any]:
     """Rollback to a previous execution state by re-running with the original params."""
     from app.modules.inspector.crud import get_execution_trace
-    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
 
     rollback_id = str(uuid.uuid4())
 
@@ -218,7 +218,7 @@ def execute_action(
     Returns:
         ResponseEnvelope with action result and metadata
     """
-    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
     from app.modules.ops.services.control_loop import ControlLoop
 
     try:

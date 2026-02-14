@@ -7,7 +7,7 @@ Tests for tool execution policies, circuit breaker, and rate limiting.
 import pytest
 import time
 from datetime import datetime, timedelta
-from app.modules.ops.services.ci.tools.policy import (
+from app.modules.ops.services.orchestration.tools.policy import (
     ToolExecutionPolicy,
     CircuitBreaker,
     RateLimiter,

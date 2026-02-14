@@ -32,12 +32,12 @@ from app.modules.inspector.router import router as inspector_router
 from app.modules.llm.router import router as llm_logs_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.ops.router import router as ops_router
-from app.modules.ops.services.ci.mappings.registry_init import (
+from app.modules.ops.services.orchestration.mappings.registry_init import (
     initialize_mappings,  # noqa: E402
 )
 
 # Initialize OPS tool registry
-from app.modules.ops.services.ci.tools.registry_init import (
+from app.modules.ops.services.orchestration.tools.registry_init import (
     initialize_tools,  # noqa: E402
 )
 from app.modules.ops.services.domain.registry_init import (
@@ -174,7 +174,7 @@ def _run_heavy_startup_sync(logger) -> None:
     logger.info("Startup: Starting runtime tool discovery system...")
     import asyncio
 
-    from app.modules.ops.services.ci.tools.runtime_tool_discovery import (
+    from app.modules.ops.services.orchestration.tools.runtime_tool_discovery import (
         start_runtime_discovery,
     )
 
@@ -260,7 +260,7 @@ async def on_shutdown() -> None:
 
     logger.info("Shutdown: Stopping runtime tool discovery system...")
     try:
-        from app.modules.ops.services.ci.tools.runtime_tool_discovery import (
+        from app.modules.ops.services.orchestration.tools.runtime_tool_discovery import (
             get_runtime_discovery,
         )
         discovery = get_runtime_discovery()

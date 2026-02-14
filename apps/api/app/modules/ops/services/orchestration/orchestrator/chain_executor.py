@@ -15,7 +15,7 @@ from typing import Any
 from core.logging import get_logger
 from pydantic import BaseModel, Field
 
-from app.modules.ops.services.ci.tools.base import (
+from app.modules.ops.services.orchestration.tools.base import (
     ToolContext,
     ToolResult,
     get_tool_registry,

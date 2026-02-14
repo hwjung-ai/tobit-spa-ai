@@ -7,8 +7,8 @@ Tests verify that handlers correctly use Tool Assets and produce expected blocks
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     MetricSpec,
     Plan,
     View,
@@ -201,7 +201,7 @@ async def test_graph_blocks_uses_ci_graph_query_tool_asset():
 
 def test_helper_method_build_metric_blocks_from_data():
     """Test _build_metric_blocks_from_data() helper converts data correctly."""
-    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
 
     runner = MagicMock(spec=OpsOrchestratorRunner)
     runner.logger = MagicMock()

@@ -8,7 +8,7 @@ import asyncio
 import pytest
 import time
 from datetime import datetime, timedelta
-from app.modules.ops.services.ci.tools.request_timeout import (
+from app.modules.ops.services.orchestration.tools.request_timeout import (
     TimeoutBudget,
     TimeoutPhase,
     RequestTimeoutManager,

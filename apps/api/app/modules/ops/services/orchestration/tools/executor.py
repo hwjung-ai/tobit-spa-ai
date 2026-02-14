@@ -13,13 +13,13 @@ from typing import Any, Dict, Optional
 
 from core.logging import get_logger
 
-from app.modules.ops.services.ci.tools.base import (
+from app.modules.ops.services.orchestration.tools.base import (
     ToolContext,
     ToolRegistry,
     ToolResult,
     get_tool_registry,
 )
-from app.modules.ops.services.ci.tools.cache import ToolResultCache
+from app.modules.ops.services.orchestration.tools.cache import ToolResultCache
 
 logger = get_logger(__name__)
 

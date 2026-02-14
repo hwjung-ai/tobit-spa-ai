@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List
 from core.logging import get_logger
 from schemas import ReferenceItem, ReferencesBlock
 
-from app.modules.ops.services.ci.blocks import (
+from app.modules.ops.services.orchestration.blocks import (
     network_block,
     number_block,
     path_block,

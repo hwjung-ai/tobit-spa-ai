@@ -27,25 +27,25 @@ from app.modules.ops.schemas import (
     StageInput,
     StageOutput,
 )
-from app.modules.ops.services.ci import policy, response_builder
-from app.modules.ops.services.ci.actions import NextAction, RerunPayload
-from app.modules.ops.services.ci.blocks import (
+from app.modules.ops.services.orchestration import policy, response_builder
+from app.modules.ops.services.orchestration.actions import NextAction, RerunPayload
+from app.modules.ops.services.orchestration.blocks import (
     Block,
     chart_block,
     number_block,
     table_block,
     text_block,
 )
-from app.modules.ops.services.ci.orchestrator.compositions import (
+from app.modules.ops.services.orchestration.orchestrator.compositions import (
     COMPOSITION_SEARCH_WITH_CONTEXT,
 )
-from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
-from app.modules.ops.services.ci.orchestrator.tool_selector import (
+from app.modules.ops.services.orchestration.orchestrator.stage_executor import StageExecutor
+from app.modules.ops.services.orchestration.orchestrator.tool_selector import (
     SelectionStrategy,
     SmartToolSelector,
     ToolSelectionContext,
 )
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     AutoSpec,
     Intent,
     MetricSpec,
@@ -55,18 +55,18 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     PlanOutputKind,
     View,
 )
-from app.modules.ops.services.ci.planner.planner_llm import (
+from app.modules.ops.services.orchestration.planner.planner_llm import (
     ISO_DATE_PATTERN,
     _sanitize_korean_particles,
 )
-from app.modules.ops.services.ci.services.ci_cache import CICache
-from app.modules.ops.services.ci.tools import (
+from app.modules.ops.services.orchestration.services.ci_cache import CICache
+from app.modules.ops.services.orchestration.tools import (
     ToolContext,
     ToolType,
     get_tool_executor,
 )
-from app.modules.ops.services.ci.tools.cache import ToolResultCache
-from app.modules.ops.services.ci.tools.observability import ExecutionTracer
+from app.modules.ops.services.orchestration.tools.cache import ToolResultCache
+from app.modules.ops.services.orchestration.tools.observability import ExecutionTracer
 
 # NOTE: Built-in tools (ci, graph, metric, history, cep) have been removed for
 # generic orchestration. All tool functionality should be implemented as Tool Assets
@@ -969,7 +969,7 @@ class OpsOrchestratorRunner:
 
     def _sanitize_ci_keywords(self, keywords: Sequence[str]) -> List[str]:
         # Import functions locally to avoid circular dependency
-        from app.modules.ops.services.ci.mappings.compat import (
+        from app.modules.ops.services.orchestration.mappings.compat import (
             _get_agg_keywords,
             _get_history_keywords,
             _get_list_keywords,
@@ -5771,7 +5771,7 @@ class OpsOrchestratorRunner:
                 # This replaces Query Asset fallback and legacy _run_async()
                 # Tools are executed first, Query Assets are used only as fallback
                 try:
-                    from app.modules.ops.services.ci.orchestrator.stage_executor import (
+                    from app.modules.ops.services.orchestration.orchestrator.stage_executor import (
                         ExecutionContext,
                         StageExecutor,
                     )
@@ -6065,7 +6065,7 @@ class OpsOrchestratorRunner:
         Returns:
             Orchestration trace dict matching UI component expectations
         """
-        from app.modules.ops.services.ci.tools.base import get_tool_registry
+        from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 
         # If execution_plan_trace is provided, use it directly
         # This is the most accurate source of orchestration information
@@ -6305,7 +6305,7 @@ class OpsOrchestratorRunner:
 
     async def _present_stage_async(self, plan_output: PlanOutput) -> Dict[str, Any]:
         """Handle present stage for direct answers."""
-        from app.modules.ops.services.ci.blocks import text_block
+        from app.modules.ops.services.orchestration.blocks import text_block
 
         if plan_output.direct_answer:
             blocks = [text_block(plan_output.direct_answer.answer)]

@@ -24,7 +24,7 @@ def test_phase3_tool_limits():
 
     # Test CI tool limits
     try:
-        from app.modules.ops.services.ci.tools.ci import _get_limits as ci_get_limits
+        from app.modules.ops.services.orchestration.tools.ci import _get_limits as ci_get_limits
         limits = ci_get_limits()
         print(f"✅ CI tool limits loaded: {limits}")
         assert "max_search_limit" in limits
@@ -37,7 +37,7 @@ def test_phase3_tool_limits():
 
     # Test History tool limits
     try:
-        from app.modules.ops.services.ci.tools.history import (
+        from app.modules.ops.services.orchestration.tools.history import (
             _get_limits as history_get_limits,
         )
         limits = history_get_limits()
@@ -50,7 +50,7 @@ def test_phase3_tool_limits():
 
     # Test Graph tool limits
     try:
-        from app.modules.ops.services.ci.tools.graph import (
+        from app.modules.ops.services.orchestration.tools.graph import (
             _get_limits as graph_get_limits,
         )
         limits = graph_get_limits()
@@ -67,7 +67,7 @@ def test_phase3_tool_limits():
 
     # Test Metric tool limits
     try:
-        from app.modules.ops.services.ci.tools.metric import (
+        from app.modules.ops.services.orchestration.tools.metric import (
             _get_limits as metric_get_limits,
         )
         limits = metric_get_limits()
@@ -89,7 +89,7 @@ def test_phase3_time_ranges():
 
     # Test History time ranges
     try:
-        from app.modules.ops.services.ci.tools.history import (
+        from app.modules.ops.services.orchestration.tools.history import (
             _get_time_ranges as history_get_time_ranges,
         )
         time_ranges = history_get_time_ranges()
@@ -102,7 +102,7 @@ def test_phase3_time_ranges():
 
     # Test Metric time ranges
     try:
-        from app.modules.ops.services.ci.tools.metric import (
+        from app.modules.ops.services.orchestration.tools.metric import (
             _get_time_ranges as metric_get_time_ranges,
         )
         time_ranges = metric_get_time_ranges()
@@ -123,7 +123,7 @@ def test_phase3_column_allowlist():
     print("=" * 60)
 
     try:
-        from app.modules.ops.services.ci.tools.ci import _get_column_allowlist
+        from app.modules.ops.services.orchestration.tools.ci import _get_column_allowlist
         allowlist = _get_column_allowlist()
         print("✅ CI column allowlist loaded")
         assert "search_columns" in allowlist
@@ -150,7 +150,7 @@ def test_phase4_discovery_config():
 
     # Test PostgreSQL discovery config
     try:
-        from app.modules.ops.services.ci.discovery.postgres_catalog import (
+        from app.modules.ops.services.orchestration.discovery.postgres_catalog import (
             _get_discovery_config as postgres_get_discovery_config,
         )
         config = postgres_get_discovery_config()
@@ -165,7 +165,7 @@ def test_phase4_discovery_config():
 
     # Test Neo4j discovery config
     try:
-        from app.modules.ops.services.ci.discovery.neo4j_catalog import (
+        from app.modules.ops.services.orchestration.discovery.neo4j_catalog import (
             _get_discovery_config as neo4j_get_discovery_config,
         )
         config = neo4j_get_discovery_config()

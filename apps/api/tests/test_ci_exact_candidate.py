@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.modules.ops.services.ci.orchestrator.runner import _find_exact_candidate
+from app.modules.ops.services.orchestration.orchestrator.runner import _find_exact_candidate
 
 
 def test_find_exact_candidate_matches_ci_name_case_insensitive() -> None:

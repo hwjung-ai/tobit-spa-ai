@@ -13,7 +13,7 @@ from core.logging import get_logger
 from sqlmodel import Session
 
 from app.modules.asset_registry.loader import load_source_asset
-from app.modules.ops.services.ci.tools.base import ToolContext, ToolResult
+from app.modules.ops.services.orchestration.tools.base import ToolContext, ToolResult
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,7 @@ async def load_metric_kpis_via_tool(
         return _get_fallback_baseline()
 
     # Execute tool to get metric data
-    from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+    from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
     tool = DynamicTool(tool_asset)
 
@@ -171,7 +171,7 @@ async def get_available_services_via_tool(tenant_id: str) -> list[str]:
     if not tool_asset:
         return []
 
-    from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+    from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
     tool = DynamicTool(tool_asset)
 

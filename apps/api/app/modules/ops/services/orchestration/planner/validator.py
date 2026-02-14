@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Tuple
 
 from core.logging import get_logger
 
-from app.modules.ops.services.ci import policy
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration import policy
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     AutoSpec,
     BudgetSpec,
     Intent,

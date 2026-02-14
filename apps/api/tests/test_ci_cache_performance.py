@@ -13,7 +13,7 @@ import asyncio
 from datetime import timedelta
 
 import pytest
-from app.modules.ops.services.ci.services.ci_cache import CICache
+from app.modules.ops.services.orchestration.services.ci_cache import CICache
 
 
 class TestCICacheBasic:

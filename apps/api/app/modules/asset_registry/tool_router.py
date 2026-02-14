@@ -88,7 +88,7 @@ def list_tools(
         # Get built-in tools from registry if requested
         builtin_tools = []
         if include_builtin:
-            from app.modules.ops.services.ci.tools.base import get_tool_registry
+            from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 
             registry = get_tool_registry()
             builtin_tool_instances = registry.get_available_tools()
@@ -455,7 +455,7 @@ async def test_tool(
             raise HTTPException(status_code=404, detail="Tool asset not found")
 
         # Create test context
-        from app.modules.ops.services.ci.tools.base import ToolContext
+        from app.modules.ops.services.orchestration.tools.base import ToolContext
 
         context = ToolContext(
             tenant_id="test",
@@ -466,7 +466,7 @@ async def test_tool(
         # Execute tool
         try:
             from app.modules.asset_registry.schemas import ToolAssetRead
-            from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+            from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
             # Create DynamicTool instance
             tool_asset_read = ToolAssetRead(
@@ -521,7 +521,7 @@ def reload_tools(
 ):
     """Reload all published tools into the tool registry."""
     try:
-        from app.modules.ops.services.ci.tools.base import get_tool_registry
+        from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 
         registry = get_tool_registry()
 
@@ -537,7 +537,7 @@ def reload_tools(
             for asset in assets:
                 try:
                     from app.modules.asset_registry.schemas import ToolAssetRead
-                    from app.modules.ops.services.ci.tools.dynamic_tool import (
+                    from app.modules.ops.services.orchestration.tools.dynamic_tool import (
                         DynamicTool,
                     )
 

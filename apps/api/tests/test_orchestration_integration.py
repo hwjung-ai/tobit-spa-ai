@@ -11,10 +11,10 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
+from app.modules.ops.services.orchestration.orchestrator.tool_orchestration import (
     ToolOrchestrator,
 )
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     AggregateSpec,
     ExecutionStrategy,
     GraphSpec,
@@ -22,7 +22,7 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     PrimarySpec,
     SecondarySpec,
 )
-from app.modules.ops.services.ci.tools.base import ToolContext
+from app.modules.ops.services.orchestration.tools.base import ToolContext
 
 
 class TestOrchestrationIntegration:
@@ -43,7 +43,7 @@ class TestOrchestrationIntegration:
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
         # Mock the chain executor to return mock results
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 
@@ -88,7 +88,7 @@ class TestOrchestrationIntegration:
 
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 
@@ -133,7 +133,7 @@ class TestOrchestrationIntegration:
         Setup: primary and secondary are independent (both entry points),
                aggregate depends on primary and secondary (convergence point)
         """
-        from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE
@@ -151,7 +151,7 @@ class TestOrchestrationIntegration:
 
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 
@@ -203,7 +203,7 @@ class TestDataFlowIntegration:
 
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 
@@ -257,7 +257,7 @@ class TestExecutionMetrics:
 
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 
@@ -295,7 +295,7 @@ class TestExecutionMetrics:
 
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 
@@ -313,7 +313,7 @@ class TestOrchestrationTraceMetadata:
 
     def test_create_execution_plan_trace_parallel(self):
         """Should create execution plan trace for parallel execution."""
-        from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE
@@ -344,7 +344,7 @@ class TestOrchestrationTraceMetadata:
 
     def test_create_execution_plan_trace_serial(self):
         """Should create execution plan trace for serial execution."""
-        from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
 
         plan = MagicMock()
         plan.intent = Intent.LOOKUP
@@ -379,7 +379,7 @@ class TestOrchestrationTraceMetadata:
 
     def test_create_execution_plan_trace_dag(self):
         """Should create execution plan trace for DAG execution."""
-        from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
 
         plan = MagicMock()
         plan.intent = Intent.LOOKUP
@@ -418,7 +418,7 @@ class TestOrchestrationTraceMetadata:
 
     def test_execution_plan_trace_with_tool_types(self):
         """Should include tool types in execution plan trace."""
-        from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
 
         plan = MagicMock()
         plan.intent = Intent.LOOKUP
@@ -452,7 +452,7 @@ class TestOrchestrationTraceMetadata:
     @pytest.mark.asyncio
     async def test_orchestration_trace_passed_to_executor(self):
         """Should pass execution plan trace to chain executor."""
-        from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
+        from app.modules.ops.services.orchestration.planner.plan_schema import ToolDependency
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE
@@ -468,7 +468,7 @@ class TestOrchestrationTraceMetadata:
 
         context = ToolContext(tenant_id="test-tenant", trace_id="test-trace")
 
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.ToolChainExecutor') as MockExecutor:
             mock_executor = AsyncMock()
             MockExecutor.return_value = mock_executor
 

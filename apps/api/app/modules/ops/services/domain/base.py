@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from app.modules.ops.services.ci.planner.plan_schema import PlanOutput
+from app.modules.ops.services.orchestration.planner.plan_schema import PlanOutput
 
 logger = logging.getLogger(__name__)
 

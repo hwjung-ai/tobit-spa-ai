@@ -16,7 +16,7 @@ from fastapi import Depends, HTTPException
 
 from app.modules.auth.models import TbUser
 from app.modules.ops.schemas import RerunPatch
-from app.modules.ops.services.ci.planner.plan_schema import Plan
+from app.modules.ops.services.orchestration.planner.plan_schema import Plan
 
 
 def _tenant_id(

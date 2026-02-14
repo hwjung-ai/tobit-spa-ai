@@ -14,7 +14,7 @@ from typing import Any
 from core.logging import get_logger
 from pydantic import BaseModel, Field
 
-from app.modules.ops.services.ci.tools.base import get_tool_registry
+from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 
 logger = get_logger(__name__)
 
@@ -220,7 +220,7 @@ JSON 응답:"""
 
         # Call LLM
         try:
-            from app.modules.ops.services.ci.planner.planner_llm import (
+            from app.modules.ops.services.orchestration.planner.planner_llm import (
                 call_openai_json,
             )
 

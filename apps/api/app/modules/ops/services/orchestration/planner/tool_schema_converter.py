@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 from core.logging import get_logger
 
-from app.modules.ops.services.ci.tools.base import get_tool_registry
+from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 
 logger = get_logger(__name__)
 

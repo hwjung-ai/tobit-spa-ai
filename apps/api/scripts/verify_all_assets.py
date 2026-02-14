@@ -20,7 +20,7 @@ def main():
     # 1. View Registry
     print("\n1️⃣  View Registry (view_depth)")
     try:
-        from app.modules.ops.services.ci.view_registry import get_view_registry
+        from app.modules.ops.services.orchestration.view_registry import get_view_registry
         registry = get_view_registry()
         print(f"   ✅ Loaded {len(registry)} views from DB")
         tests.append(("View Registry", True))
@@ -31,12 +31,12 @@ def main():
     # 2. Tool Limits
     print("\n2️⃣  Tool Limits (tool_limits)")
     try:
-        from app.modules.ops.services.ci.tools.ci import _get_limits as ci_limits
-        from app.modules.ops.services.ci.tools.graph import _get_limits as graph_limits
-        from app.modules.ops.services.ci.tools.history import (
+        from app.modules.ops.services.orchestration.tools.ci import _get_limits as ci_limits
+        from app.modules.ops.services.orchestration.tools.graph import _get_limits as graph_limits
+        from app.modules.ops.services.orchestration.tools.history import (
             _get_limits as history_limits,
         )
-        from app.modules.ops.services.ci.tools.metric import (
+        from app.modules.ops.services.orchestration.tools.metric import (
             _get_limits as metric_limits,
         )
 
@@ -57,10 +57,10 @@ def main():
     # 3. Time Ranges
     print("\n3️⃣  Time Ranges (time_ranges)")
     try:
-        from app.modules.ops.services.ci.tools.history import (
+        from app.modules.ops.services.orchestration.tools.history import (
             _get_time_ranges as history_ranges,
         )
-        from app.modules.ops.services.ci.tools.metric import (
+        from app.modules.ops.services.orchestration.tools.metric import (
             _get_time_ranges as metric_ranges,
         )
 
@@ -77,7 +77,7 @@ def main():
     # 4. Column Allowlist
     print("\n4️⃣  Column Allowlist (column_allowlist)")
     try:
-        from app.modules.ops.services.ci.tools.ci import _get_column_allowlist
+        from app.modules.ops.services.orchestration.tools.ci import _get_column_allowlist
         allowlist = _get_column_allowlist()
         print(f"   ✅ Search columns: {len(allowlist['search_columns'])}")
         print(f"   ✅ Filter fields: {len(allowlist['filter_fields'])}")
@@ -89,10 +89,10 @@ def main():
     # 5. Discovery Config
     print("\n5️⃣  Discovery Config (discovery_config)")
     try:
-        from app.modules.ops.services.ci.discovery.neo4j_catalog import (
+        from app.modules.ops.services.orchestration.discovery.neo4j_catalog import (
             _get_discovery_config as neo4j_config,
         )
-        from app.modules.ops.services.ci.discovery.postgres_catalog import (
+        from app.modules.ops.services.orchestration.discovery.postgres_catalog import (
             _get_discovery_config as pg_config,
         )
 

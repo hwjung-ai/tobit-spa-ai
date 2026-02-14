@@ -10,7 +10,7 @@ from core.config import get_settings
 from core.logging import get_logger
 
 from app.modules.asset_registry.loader import load_mapping_asset
-from app.modules.ops.services.ci.view_registry import get_view_policy, get_view_registry
+from app.modules.ops.services.orchestration.view_registry import get_view_policy, get_view_registry
 
 logger = get_logger(__name__)
 

@@ -5,8 +5,8 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.modules.ops.services.ci.planner import planner_llm
-from app.modules.ops.services.ci.planner.plan_schema import Intent
+from app.modules.ops.services.orchestration.planner import planner_llm
+from app.modules.ops.services.orchestration.planner.plan_schema import Intent
 
 
 def test_llm_list_payload_forces_list_intent(monkeypatch):

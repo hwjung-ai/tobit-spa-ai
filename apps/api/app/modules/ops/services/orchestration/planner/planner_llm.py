@@ -10,7 +10,7 @@ from core.logging import get_logger
 
 from app.llm.client import get_llm_client
 from app.modules.asset_registry.loader import load_prompt_asset
-from app.modules.ops.services.ci.mappings.compat import (
+from app.modules.ops.services.orchestration.mappings.compat import (
     _get_agg_keywords,
     _get_auto_keywords,
     _get_auto_view_preferences,
@@ -27,7 +27,7 @@ from app.modules.ops.services.ci.mappings.compat import (
     _get_series_keywords,
     _get_table_hints,
 )
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     AggregateSpec,
     AutoGraphScopeSpec,
     AutoPathSpec,
@@ -273,7 +273,7 @@ def _call_output_parser_llm(
     Falls back to JSON extraction from text if function calling unavailable.
     """
     try:
-        from app.modules.ops.services.ci.planner.tool_schema_converter import (
+        from app.modules.ops.services.orchestration.planner.tool_schema_converter import (
             build_tools_for_llm_prompt,
             extract_tool_call_from_response,
         )
@@ -1368,7 +1368,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     )
 
     # NEW: Load tool registry info
-    from app.modules.ops.services.ci.tools.base import get_tool_registry
+    from app.modules.ops.services.orchestration.tools.base import get_tool_registry
     tool_registry = get_tool_registry()
     tools_info = tool_registry.get_all_tools_info()
 

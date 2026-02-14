@@ -13,7 +13,7 @@ from typing import Any
 from core.logging import get_logger
 from pydantic import BaseModel, Field
 
-from app.modules.ops.services.ci.tools.base import ToolContext
+from app.modules.ops.services.orchestration.tools.base import ToolContext
 from app.modules.ops.services.domain.base import BaseDomainPlanner, DomainMetadata
 from app.modules.ops.services.domain.tool_selector_llm import (
     ToolSelection,

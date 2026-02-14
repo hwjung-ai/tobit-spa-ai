@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List
 
 from core.logging import get_logger
 
-from app.modules.ops.services.ci.tools.base import ToolType
-from app.modules.ops.services.ci.tools.executor import ToolExecutor
+from app.modules.ops.services.orchestration.tools.base import ToolType
+from app.modules.ops.services.orchestration.tools.executor import ToolExecutor
 
 logger = get_logger(__name__)
 

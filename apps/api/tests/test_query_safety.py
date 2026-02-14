@@ -5,7 +5,7 @@ Tests for SQL query validation and safety enforcement.
 """
 
 import pytest
-from app.modules.ops.services.ci.tools.query_safety import (
+from app.modules.ops.services.orchestration.tools.query_safety import (
     QuerySafetyValidator,
     validate_direct_query,
     SQLKeywordType,

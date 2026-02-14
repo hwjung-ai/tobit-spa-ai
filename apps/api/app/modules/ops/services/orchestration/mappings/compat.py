@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from app.modules.ops.services.ci.planner.plan_schema import View
+from app.modules.ops.services.orchestration.planner.plan_schema import View
 
 from .registry import get_mapping
 

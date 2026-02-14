@@ -11,13 +11,13 @@ import logging
 import re
 from typing import Any
 
-from app.modules.ops.services.ci.planner.plan_schema import PlanOutput
+from app.modules.ops.services.orchestration.planner.plan_schema import PlanOutput
 from app.modules.ops.services.domain.base import BaseDomainPlanner, DomainMetadata
 
 logger = logging.getLogger(__name__)
 
 # Import the existing CI planner functions
-from app.modules.ops.services.ci.planner import planner_llm
+from app.modules.ops.services.orchestration.planner import planner_llm
 
 
 class CIPlanner(BaseDomainPlanner):

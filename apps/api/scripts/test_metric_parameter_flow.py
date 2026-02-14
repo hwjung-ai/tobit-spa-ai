@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.modules.ops.services.ci.orchestrator.chain_executor import (
+from app.modules.ops.services.orchestration.orchestrator.chain_executor import (
     StepResult,
     ToolChainExecutor,
 )
@@ -58,7 +58,7 @@ def test_empty_ci_ids_query_processing():
     """Test that empty ci_ids are handled by removing the filter clause."""
     print("\n=== Test 2: Empty CI_IDs Query Processing ===")
 
-    from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+    from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
     tool = DynamicTool({
         "name": "metric_test",
@@ -106,7 +106,7 @@ def test_filled_ci_ids_query_processing():
     """Test that filled ci_ids are processed correctly."""
     print("\n=== Test 3: Filled CI_IDs Query Processing ===")
 
-    from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+    from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
     tool = DynamicTool({
         "name": "metric_test",
@@ -140,10 +140,10 @@ def test_output_mapping_definition():
     """Test that metric tool output_mapping is defined."""
     print("\n=== Test 4: Metric Tool Output Mapping Definition ===")
 
-    from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
+    from app.modules.ops.services.orchestration.orchestrator.tool_orchestration import (
         DependencyAnalyzer,
     )
-    from app.modules.ops.services.ci.planner.plan_schema import (
+    from app.modules.ops.services.orchestration.planner.plan_schema import (
         AggregateSpec,
         MetricSpec,
         Plan,

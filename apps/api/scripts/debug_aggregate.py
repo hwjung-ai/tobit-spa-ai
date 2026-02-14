@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+from app.modules.ops.services.orchestration.tools.dynamic_tool import DynamicTool
 
 
 def test_aggregate_query_processing():

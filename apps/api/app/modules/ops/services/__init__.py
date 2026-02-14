@@ -100,9 +100,9 @@ def execute_universal(
     import asyncio
 
     # Ensure tools are initialized (no-op if already done)
-    import app.modules.ops.services.ci.tools.registry_init  # noqa: F401
-    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
-    from app.modules.ops.services.ci.planner.plan_schema import Plan
+    import app.modules.ops.services.orchestration.tools.registry_init  # noqa: F401
+    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.planner.plan_schema import Plan
 
     logger = logging.getLogger(__name__)
     logger.info(f"Executing universal mode '{mode}' for question: {question[:100]}")
@@ -219,7 +219,7 @@ def execute_universal(
 
 def _create_simple_plan(mode: str, question: str = "") -> Any:
     """Create a simple plan based on mode."""
-    from app.modules.ops.services.ci.planner.plan_schema import (
+    from app.modules.ops.services.orchestration.planner.plan_schema import (
         AggregateSpec,
         ExecutionStrategy,
         GraphSpec,
@@ -1031,9 +1031,9 @@ def _run_all_orchestration(
     question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str], str | None]:
     """Intelligent orchestration for ALL mode using planner and orchestrator."""
-    import app.modules.ops.services.ci.tools.registry_init  # noqa: F401
-    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
-    from app.modules.ops.services.ci.planner.plan_schema import Plan
+    import app.modules.ops.services.orchestration.tools.registry_init  # noqa: F401
+    from app.modules.ops.services.orchestration.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.orchestration.planner.plan_schema import Plan
 
     logger = logging.getLogger(__name__)
     logger.info(f"Running intelligent ALL orchestration for: {question[:100]}")
@@ -1092,7 +1092,7 @@ def _run_all_orchestration(
 
 def _create_all_plan(question: str) -> Any:
     """Create a comprehensive plan for ALL mode."""
-    from app.modules.ops.services.ci.planner.plan_schema import (
+    from app.modules.ops.services.orchestration.planner.plan_schema import (
         AggregateSpec,
         ExecutionStrategy,
         GraphSpec,

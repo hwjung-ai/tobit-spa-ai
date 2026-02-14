@@ -11,7 +11,7 @@ Tests cover:
 
 
 import pytest
-from app.modules.ops.services.ci.orchestrator.runner import (
+from app.modules.ops.services.orchestration.orchestrator.runner import (
     OpsOrchestratorRunner,
     RerunContext,
 )

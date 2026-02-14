@@ -10,14 +10,14 @@ Tests for:
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
+from app.modules.ops.services.orchestration.orchestrator.tool_orchestration import (
     DataFlowMapper,
     DependencyAnalyzer,
     ExecutionPlanner,
     IntermediateLLMDecider,
     ToolOrchestrator,
 )
-from app.modules.ops.services.ci.planner.plan_schema import (
+from app.modules.ops.services.orchestration.planner.plan_schema import (
     AggregateSpec,
     ExecutionStrategy,
     FilterSpec,
@@ -28,7 +28,7 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     SecondarySpec,
     ToolDependency,
 )
-from app.modules.ops.services.ci.tools.base import ToolContext
+from app.modules.ops.services.orchestration.tools.base import ToolContext
 
 
 class TestDependencyAnalyzer:
@@ -350,7 +350,7 @@ class TestIntermediateLLMDecider:
     @pytest.mark.asyncio
     async def test_should_execute_next_yes_response(self):
         """Should return True for 'Yes' responses."""
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.get_llm_client') as mock_get_llm:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.get_llm_client') as mock_get_llm:
             mock_llm = AsyncMock()
             mock_llm.chat_completion = AsyncMock(return_value={
                 "content": "Yes, we should execute metric next because we need to get performance data."
@@ -369,7 +369,7 @@ class TestIntermediateLLMDecider:
     @pytest.mark.asyncio
     async def test_should_execute_next_no_response(self):
         """Should return False for 'No' responses."""
-        with patch('app.modules.ops.services.ci.orchestrator.tool_orchestration.get_llm_client') as mock_get_llm:
+        with patch('app.modules.ops.services.orchestration.orchestrator.tool_orchestration.get_llm_client') as mock_get_llm:
             mock_llm = AsyncMock()
             mock_llm.chat_completion = AsyncMock(return_value={
                 "content": "No, we have enough data already."

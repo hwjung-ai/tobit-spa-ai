@@ -17,7 +17,7 @@ from app.modules.ops.schemas import (
     StageInput,
     StageOutput,
 )
-from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
+from app.modules.ops.services.orchestration.orchestrator.stage_executor import StageExecutor
 
 
 @pytest.fixture
