@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
@@ -99,8 +100,10 @@ def list_events_endpoint(
     limit: int = Query(200, ge=1, le=500),
     offset: int = Query(0, ge=0),
     session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ) -> ResponseEnvelope:
-    """List CEP events with optional filters."""
+    """List CEP events with optional filters. Tenant-isolated."""
+    tenant_id = getattr(current_user, "tenant_id", None)
     rows = list_events(
         session,
         acked=acked,
@@ -109,6 +112,7 @@ def list_events_endpoint(
         until=until,
         limit=limit,
         offset=offset,
+        tenant_id=tenant_id,
     )
     events: list[dict[str, Any]] = []
     for log, notification, rule in rows:
@@ -138,9 +142,13 @@ def list_events_endpoint(
 
 
 @router.get("/summary")
-def event_summary_endpoint(session: Session = Depends(get_session)) -> ResponseEnvelope:
-    """Get event summary (counts by severity and ack status)."""
-    summary = summarize_events(session)
+def event_summary_endpoint(
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
+) -> ResponseEnvelope:
+    """Get event summary (counts by severity and ack status). Tenant-isolated."""
+    tenant_id = getattr(current_user, "tenant_id", None)
+    summary = summarize_events(session, tenant_id=tenant_id)
     payload = CepEventSummary(**summary).model_dump()
     return ResponseEnvelope.success(data={"summary": payload})
 
@@ -148,7 +156,8 @@ def event_summary_endpoint(session: Session = Depends(get_session)) -> ResponseE
 @router.get("/stream")
 async def event_stream(
     request: Request,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ) -> EventSourceResponse:
     """
     Real-time event streaming via SSE (Server-Sent Events).
@@ -161,7 +170,8 @@ async def event_stream(
     """
     await event_broadcaster.ensure_redis_listener()
 
-    summary = summarize_events(session)
+    tenant_id = getattr(current_user, "tenant_id", None)
+    summary = summarize_events(session, tenant_id=tenant_id)
 
     async def event_generator():
         try:
@@ -286,14 +296,16 @@ def ack_event_endpoint(
     event_id: str,
     ack_by: str | None = Query(None),
     session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ) -> ResponseEnvelope:
-    """Acknowledge (mark as read) a specific event."""
+    """Acknowledge (mark as read) a specific event. Tenant-isolated."""
+    tenant_id = getattr(current_user, "tenant_id", None)
     log = session.get(TbCepNotificationLog, event_id)
     if not log:
         raise HTTPException(status_code=404, detail="Event not found")
     updated = acknowledge_event(session, log, ack_by=ack_by)
     payload = CepNotificationLogRead.from_orm(updated).model_dump()
-    summary = summarize_events(session)
+    summary = summarize_events(session, tenant_id=tenant_id)
     event_broadcaster.publish(
         "ack_event",
         {

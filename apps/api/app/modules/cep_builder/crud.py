@@ -44,13 +44,18 @@ def get_rule(session: Session, rule_id: str) -> TbCepRule | None:
     return session.get(TbCepRule, rule_id)
 
 
-def create_rule(session: Session, payload: CepRuleCreate) -> TbCepRule:
+def create_rule(
+    session: Session,
+    payload: CepRuleCreate,
+    tenant_id: str | None = None,
+) -> TbCepRule:
     rule = TbCepRule(
         rule_name=payload.rule_name,
         trigger_type=payload.trigger_type,
         trigger_spec=payload.trigger_spec,
         action_spec=payload.action_spec,
         is_active=payload.is_active,
+        tenant_id=tenant_id,
         created_by=payload.created_by,
     )
     session.add(rule)
@@ -226,12 +231,15 @@ def list_events(
     until: datetime | None = None,
     limit: int = 200,
     offset: int = 0,
+    tenant_id: str | None = None,
 ) -> list[tuple[TbCepNotificationLog, TbCepNotification, TbCepRule | None]]:
     """
     List events with optional filtering.
 
     Performance: Optimized JOIN with indexes on fired_at DESC and composite indexes
     Avoids N+1 by joining all tables at once instead of lazy loading
+
+    Security: Filters by tenant_id to ensure multi-tenant isolation
     """
     query = (
         select(TbCepNotificationLog, TbCepNotification, TbCepRule)
@@ -244,6 +252,11 @@ def list_events(
     )
 
     # Apply filters in order of selectivity (most selective first)
+    # Tenant isolation - filter by tenant or include global rules (tenant_id is NULL)
+    if tenant_id:
+        query = query.where(
+            (TbCepRule.tenant_id == tenant_id) | (TbCepRule.tenant_id.is_(None))
+        )
     if acked is not None:
         query = query.where(TbCepNotificationLog.ack.is_(acked))
     if rule_id:
@@ -302,28 +315,59 @@ def get_latest_exec_log_for_rule(
     return session.exec(query).scalars().first()
 
 
-def summarize_events(session: Session) -> dict[str, Any]:
+def summarize_events(
+    session: Session,
+    tenant_id: str | None = None,
+) -> dict[str, Any]:
     """
     Summarize events by ACK status and severity.
 
     Performance: Uses index on (ack) for unacked count and aggregates in single query
+
+    Security: Filters by tenant_id to ensure multi-tenant isolation
     """
-    unacked = session.exec(
-        select(func.count())
-        .select_from(TbCepNotificationLog)
-        .where(TbCepNotificationLog.ack.is_(False))
-    ).one()[0]
+    # Build base query with optional tenant filter
+    if tenant_id:
+        unacked_query = (
+            select(func.count())
+            .select_from(TbCepNotificationLog)
+            .join(
+                TbCepNotification,
+                TbCepNotificationLog.notification_id == TbCepNotification.notification_id,
+            )
+            .outerjoin(TbCepRule, TbCepRule.rule_id == TbCepNotification.rule_id)
+            .where(TbCepNotificationLog.ack.is_(False))
+            .where(
+                (TbCepRule.tenant_id == tenant_id) | (TbCepRule.tenant_id.is_(None))
+            )
+        )
+    else:
+        unacked_query = (
+            select(func.count())
+            .select_from(TbCepNotificationLog)
+            .where(TbCepNotificationLog.ack.is_(False))
+        )
+
+    unacked = session.exec(unacked_query).one()[0]
 
     severity_expr = func.coalesce(TbCepNotification.trigger["severity"].astext, "info")
-    rows = session.exec(
+    severity_query = (
         select(severity_expr.label("severity"), func.count())
         .select_from(TbCepNotificationLog)
         .join(
             TbCepNotification,
             TbCepNotificationLog.notification_id == TbCepNotification.notification_id,
         )
-        .group_by(severity_expr)
-    ).all()
+        .outerjoin(TbCepRule, TbCepRule.rule_id == TbCepNotification.rule_id)
+    )
+
+    if tenant_id:
+        severity_query = severity_query.where(
+            (TbCepRule.tenant_id == tenant_id) | (TbCepRule.tenant_id.is_(None))
+        )
+
+    severity_query = severity_query.group_by(severity_expr)
+    rows = session.exec(severity_query).all()
 
     by_severity: dict[str, int] = {}
     for severity, count in rows:

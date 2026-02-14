@@ -24,20 +24,46 @@ def _table_exists(session: Session, table_name: str) -> bool:
 
 
 def list_api_definitions(
-    session: Session, api_type: ApiType | None = None
+    session: Session,
+    api_type: ApiType | None = None,
+    tenant_id: str | None = None,
 ) -> list[TbApiDef]:
+    """List API definitions with optional filtering.
+
+    Security: Filters by tenant_id for multi-tenant isolation.
+    """
     statement = select(TbApiDef)
+    if tenant_id:
+        statement = statement.where(
+            (TbApiDef.tenant_id == tenant_id) | (TbApiDef.tenant_id.is_(None))
+        )
     if api_type:
         statement = statement.where(TbApiDef.api_type == api_type)
     statement = statement.order_by(TbApiDef.updated_at.desc())
     return session.exec(statement).all()
 
 
-def get_api_definition(session: Session, api_id: str) -> TbApiDef | None:
-    return session.get(TbApiDef, api_id)
+def get_api_definition(
+    session: Session,
+    api_id: str,
+    tenant_id: str | None = None,
+) -> TbApiDef | None:
+    """Get API definition by ID.
+
+    Security: Returns None if tenant_id doesn't match (for isolation).
+    """
+    api = session.get(TbApiDef, api_id)
+    if api and tenant_id and api.tenant_id and api.tenant_id != tenant_id:
+        return None
+    return api
 
 
-def create_api_definition(session: Session, payload: ApiDefinitionCreate) -> TbApiDef:
+def create_api_definition(
+    session: Session,
+    payload: ApiDefinitionCreate,
+    tenant_id: str | None = None,
+) -> TbApiDef:
+    """Create API definition with tenant isolation."""
     if payload.logic_type not in VALID_LOGIC_TYPES:
         raise ValueError("Unsupported logic_type")
     obj = TbApiDef(
@@ -53,6 +79,7 @@ def create_api_definition(session: Session, payload: ApiDefinitionCreate) -> TbA
         runtime_policy=payload.runtime_policy,
         logic_spec=payload.logic_spec,
         is_active=payload.is_active,
+        tenant_id=tenant_id,
         created_by=payload.created_by,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),

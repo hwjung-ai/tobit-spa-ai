@@ -48,10 +48,15 @@ class ApiDefinition(SQLModel, table=True):
         sa_column=Column(JSON, default=list, nullable=False),
     )
     is_enabled: bool = Field(default=True)
+    tenant_id: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True, index=True),
+        description="Tenant ID for multi-tenant isolation",
+    )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     deleted_at: datetime | None = Field(default=None)
-    
+
     # Tools export linkage (to be completed after Tools refactor)
     linked_to_tool_id: uuid.UUID | None = Field(
         default=None,

@@ -96,12 +96,21 @@ def _normalize_required_scopes(scopes: list[str] | None) -> list[str]:
 
 @router.get("/apis", response_model=ResponseEnvelope)
 async def list_apis(
-    scope: Optional[str] = Query(None), session: Session = Depends(get_session)
+    scope: Optional[str] = Query(None),
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ):
-    """List all available APIs."""
+    """List all available APIs. Tenant-isolated."""
 
     try:
+        tenant_id = getattr(current_user, "tenant_id", None)
         statement = select(ApiDefinition).where(ApiDefinition.deleted_at.is_(None))
+
+        # Tenant isolation
+        if tenant_id:
+            statement = statement.where(
+                (ApiDefinition.tenant_id == tenant_id) | (ApiDefinition.tenant_id.is_(None))
+            )
 
         if scope:
             try:
@@ -325,11 +334,17 @@ async def create_api(
 async def get_api(
     api_id: str,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ):
-    """Get API definition by ID"""
+    """Get API definition by ID. Tenant-isolated."""
     try:
+        tenant_id = getattr(current_user, "tenant_id", None)
         api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
+
+        # Check tenant access
+        if tenant_id and api.tenant_id and api.tenant_id != tenant_id:
             raise HTTPException(status_code=404, detail="API not found")
 
         return ResponseEnvelope.success(data={
