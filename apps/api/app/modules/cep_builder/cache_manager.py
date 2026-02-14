@@ -12,8 +12,8 @@ from typing import Any, Dict, Optional
 
 try:
     # type: ignore[attr-defined]
-    import redis.asyncio as redis
     from redis.asyncio import Redis
+    import redis.asyncio as redis  # noqa: F401
 
     REDIS_AVAILABLE = True
 except ImportError:

@@ -5,11 +5,9 @@ This module implements schema discovery for PostgreSQL databases,
 extracting table, column, and constraint metadata.
 """
 
-
 from .base_catalog import BaseCatalog
 
 try:
-    import psycopg
     from psycopg import AsyncConnection
 except ImportError:
     AsyncConnection = None
@@ -56,6 +54,7 @@ class PostgresCatalog(BaseCatalog):
         if conn_config.get("password_encrypted"):
             try:
                 from core.encryption import get_encryption_manager
+
                 manager = get_encryption_manager()
                 return manager.decrypt(conn_config["password_encrypted"])
             except Exception as e:
@@ -98,7 +97,9 @@ class PostgresCatalog(BaseCatalog):
         except Exception as e:
             raise RuntimeError(f"Failed to fetch tables: {e}")
 
-    async def fetch_columns(self, table_name: str, schema_name: str | None = None) -> list[dict]:
+    async def fetch_columns(
+        self, table_name: str, schema_name: str | None = None
+    ) -> list[dict]:
         """Fetch column metadata for a table"""
         if not self.connection:
             raise RuntimeError("Not connected to database")
@@ -134,7 +135,9 @@ class PostgresCatalog(BaseCatalog):
         except Exception as e:
             raise RuntimeError(f"Failed to fetch columns for table {table_name}: {e}")
 
-    async def fetch_primary_keys(self, table_name: str, schema_name: str | None = None) -> list[str]:
+    async def fetch_primary_keys(
+        self, table_name: str, schema_name: str | None = None
+    ) -> list[str]:
         """Fetch primary key column names"""
         if not self.connection:
             raise RuntimeError("Not connected to database")
@@ -156,7 +159,9 @@ class PostgresCatalog(BaseCatalog):
         except Exception as e:
             raise RuntimeError(f"Failed to fetch primary keys for {table_name}: {e}")
 
-    async def fetch_foreign_keys(self, table_name: str, schema_name: str | None = None) -> list[dict]:
+    async def fetch_foreign_keys(
+        self, table_name: str, schema_name: str | None = None
+    ) -> list[dict]:
         """Fetch foreign key constraints"""
         if not self.connection:
             raise RuntimeError("Not connected to database")
@@ -195,7 +200,9 @@ class PostgresCatalog(BaseCatalog):
         except Exception as e:
             raise RuntimeError(f"Failed to fetch foreign keys for {table_name}: {e}")
 
-    async def fetch_indexes(self, table_name: str, schema_name: str | None = None) -> list[dict]:
+    async def fetch_indexes(
+        self, table_name: str, schema_name: str | None = None
+    ) -> list[dict]:
         """Fetch index information"""
         if not self.connection:
             raise RuntimeError("Not connected to database")
@@ -224,7 +231,9 @@ class PostgresCatalog(BaseCatalog):
         except Exception as e:
             raise RuntimeError(f"Failed to fetch indexes for {table_name}: {e}")
 
-    async def fetch_row_count(self, table_name: str, schema_name: str | None = None) -> int:
+    async def fetch_row_count(
+        self, table_name: str, schema_name: str | None = None
+    ) -> int:
         """Fetch table row count (can be slow for large tables)"""
         if not self.connection:
             raise RuntimeError("Not connected to database")

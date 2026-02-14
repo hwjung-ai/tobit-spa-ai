@@ -49,7 +49,7 @@ class CepEventBroadcaster:
     def _setup_redis(self, redis_url: str) -> None:
         """Redis 연결 설정"""
         try:
-            import redis.asyncio as redis
+            import redis.asyncio as redis  # noqa: F401
 
             self._redis_url = redis_url
             logger.info(f"Redis Pub/Sub 초기화 예정: {redis_url}")

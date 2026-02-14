@@ -1136,7 +1136,6 @@ def _run_all_orchestration(
     from app.modules.ops.services.orchestration.orchestrator.runner import (
         OpsOrchestratorRunner,
     )
-    from app.modules.ops.services.orchestration.planner.plan_schema import Plan
 
     logger = logging.getLogger(__name__)
     logger.info(f"Running intelligent ALL orchestration for: {question[:100]}")

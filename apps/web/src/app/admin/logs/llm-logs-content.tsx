@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 import { useQuery } from "@tanstack/react-query";
 
@@ -66,7 +66,6 @@ export default function LlmLogsContent() {
     const [selectedLog, setSelectedLog] = useState<LlmCallLog | null>(null);
     const [logDetail, setLogDetail] = useState<LlmLogDetail | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [analytics, setAnalytics] = useState<LlmCallAnalytics | null>(null);
 
     // Fetch logs
     const { data: logsResponse, isLoading, error, refetch } = useQuery({

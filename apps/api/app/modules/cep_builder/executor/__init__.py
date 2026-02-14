@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from time import perf_counter
 from typing import Any, Dict
 
 from core.db import get_session_context

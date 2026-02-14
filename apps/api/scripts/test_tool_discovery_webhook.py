@@ -31,7 +31,7 @@ def generate_webhook_signature(payload: dict) -> str:
     """Generate HMAC-SHA256 signature for webhook payload."""
     payload_str = json.dumps(payload, sort_keys=True)
     signature = hmac.new(
-        WEBHOOK_secret.encode(), payload_str.encode(), hashlib.sha256
+        WEBHOOK_SECRET.encode(), payload_str.encode(), hashlib.sha256
     ).hexdigest()
     return signature
 
