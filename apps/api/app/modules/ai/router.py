@@ -4,12 +4,12 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from schemas import ResponseEnvelope
 from sqlmodel import Session
 
-from api.deps import get_current_user
+from core.auth import get_current_user
 from core.db import get_session
-from core.response import ResponseEnvelope
-from models.user import TbUser
+from app.modules.auth.models import TbUser
 
 from .schemas import ScreenCopilotRequest, ScreenCopilotResponse
 from .service import get_screen_copilot_service
@@ -41,7 +41,7 @@ async def generate_screen_patch(
         response = await service.generate_patch(
             request=request,
             trace_id=None,  # Could extract from request context
-            user_id=str(current_user.user_id) if current_user else None,
+            user_id=str(current_user.id) if current_user else None,
         )
         
         # Validate patch

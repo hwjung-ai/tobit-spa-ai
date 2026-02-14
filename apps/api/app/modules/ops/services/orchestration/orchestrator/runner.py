@@ -45,6 +45,12 @@ from app.modules.ops.services.orchestration.orchestrator.tool_selector import (
     SmartToolSelector,
     ToolSelectionContext,
 )
+from app.modules.ops.services.orchestration.orchestrator.builders import BlockBuilder
+from app.modules.ops.services.orchestration.orchestrator.handlers import (
+    AggregationHandler,
+    ListPreviewHandler,
+    PathHandler,
+)
 from app.modules.ops.services.orchestration.planner.plan_schema import (
     AutoSpec,
     Intent,
@@ -214,6 +220,11 @@ class OpsOrchestratorRunner:
             self._execution_context, tool_executor=self._tool_executor
         )
         self._composition_pipeline = COMPOSITION_SEARCH_WITH_CONTEXT
+        # Module initialization for decomposed functionality (Phase 4-9)
+        self._block_builder = BlockBuilder(self)
+        self._aggregation_handler = AggregationHandler(self)
+        self._list_preview_handler = ListPreviewHandler(self)
+        self._path_handler = PathHandler(self)
 
     def _build_execution_context(self) -> ExecutionContext:
         context = get_request_context()
@@ -3094,59 +3105,12 @@ class OpsOrchestratorRunner:
         self.next_actions = prioritized + self.next_actions
 
     def _handle_aggregate(self) -> tuple[List[Block], str]:
-        return asyncio.run(self._handle_aggregate_async())
+        """Delegate to AggregationHandler (Phase 5 decomposition)."""
+        return self._aggregation_handler.handle_aggregate()
 
     async def _handle_aggregate_async(self) -> tuple[List[Block], str]:
-        agg_filters = [filter.dict() for filter in self.plan.aggregate.filters]
-
-        # ===== GENERIC ORCHESTRATION: Check scope for appropriate tool =====
-        aggregate_scope = self.plan.aggregate.scope or "ci"
-
-        if aggregate_scope == "event":
-            # Use event_aggregate tool
-            agg = await self._execute_tool_with_tracing(
-                "event_aggregate",
-                "aggregate",
-                group_by=list(self.plan.aggregate.group_by) if self.plan.aggregate.group_by else [],
-                metrics=list(self.plan.aggregate.metrics) if self.plan.aggregate.metrics else [],
-                filters=agg_filters or None,
-                top_n=self.plan.aggregate.top_n,
-            )
-        elif aggregate_scope == "metric":
-            # Use metric tool
-            agg = await self._execute_tool_with_tracing(
-                "metric",
-                "aggregate",
-                group_by=list(self.plan.aggregate.group_by) if self.plan.aggregate.group_by else [],
-                metrics=list(self.plan.aggregate.metrics) if self.plan.aggregate.metrics else [],
-                filters=agg_filters or None,
-                top_n=self.plan.aggregate.top_n,
-            )
-        else:
-            # Use ci_aggregate
-            agg = await self._ci_aggregate_async(
-                self.plan.aggregate.group_by,
-                self.plan.aggregate.metrics,
-                filters=agg_filters or None,
-                top_n=self.plan.aggregate.top_n,
-            )
-        # ===== END GENERIC ORCHESTRATION =====
-        blocks: List[Block] = []
-        total_count = agg.get("total_count")
-        if isinstance(total_count, int):
-            blocks.append(response_builder.build_aggregate_summary_block(total_count))
-            self.aggregation_summary = {
-                "total_count": total_count,
-                "group_by": list(self.plan.aggregate.group_by),
-            }
-        block = response_builder.build_aggregate_block(agg)
-        blocks.append(block)
-        query = agg.get("query")
-        params = agg.get("params")
-        if query and params is not None:
-            blocks.append(response_builder.build_sql_reference_block(query, params))
-        answer = f"Aggregated {len(agg.get('rows', []))} groups"
-        blocks.extend(await self._build_list_preview_blocks_async())
+        """Delegate to AggregationHandler (Phase 5 decomposition)."""
+        return await self._aggregation_handler.handle_aggregate_async()
         return blocks, answer
 
     def _handle_list_preview(self) -> tuple[List[Block], str]:
@@ -3574,129 +3538,14 @@ class OpsOrchestratorRunner:
     def _metric_blocks(
         self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None
     ) -> List[Dict[str, Any]]:
-        return asyncio.run(self._metric_blocks_async(detail, graph_payload))
+        """Delegate to BlockBuilder (Phase 4 decomposition)."""
+        return self._block_builder.metric_blocks(detail, graph_payload)
 
     async def _metric_blocks_async(
         self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None
     ) -> List[Dict[str, Any]]:
-        metric_spec = self.plan.metric
-        if not metric_spec:
-            return []
-        metric_trace = self.plan_trace.setdefault("metric", {})
-        # NOTE: metric_tools.metric_exists removed for generic orchestration
-        if True:  # Treat metrics as unavailable until Tool Assets are created
-            metric_trace.update({"status": "missing", "requested": metric_spec.dict()})
-            # NOTE: metric_tools.list_metric_names removed for generic orchestration
-            candidates = []  # Should retrieve from Tool Assets instead
-            rows = [[name] for name in candidates]
-            blocks = [
-                text_block(
-                    f"Metric '{metric_spec.metric_name}' not found",
-                    title="Metric lookup",
-                ),
-                table_block(["metric_name"], rows, title="Available metrics"),
-            ]
-            self._log_metric_blocks_return(blocks)
-            return blocks
-        if metric_spec.scope == "graph":
-            return await self._graph_metric_blocks_async(
-                detail, metric_spec, metric_trace, graph_payload=graph_payload
-            )
-        if metric_spec.mode == "series":
-            series = await self._metric_series_table_async(
-                detail["ci_id"],
-                metric_spec.metric_name,
-                metric_spec.time_range,
-            )
-            rows = [list(row) for row in series["rows"]]
-            metric_trace.update(
-                {
-                    "status": "series",
-                    "requested": metric_spec.dict(),
-                    "rows": len(rows),
-                }
-            )
-            self.next_actions.extend(self._metric_next_actions(metric_spec.time_range))
-            if not rows:
-                ci_code = detail.get("ci_code") or detail.get("ci_id") or "unknown"
-                reason = (
-                    f"{metric_spec.metric_name} ({metric_spec.time_range}) returned no data "
-                    f"for CI {ci_code}"
-                )
-                blocks = [
-                    text_block(reason, title="Metric data unavailable"),
-                    table_block(
-                        ["metric", "time_range", "ci_code"],
-                        [[metric_spec.metric_name, metric_spec.time_range, ci_code]],
-                        title="Metric request details",
-                    ),
-                ]
-                self._log_metric_blocks_return(blocks)
-                return blocks
-            table_block_rows = table_block(["ts", "value"], rows, title="Metric series")
-            chart = None
-            try:
-                chart = self._series_chart_block(detail, metric_spec, rows)
-                if chart:
-                    metric_trace.setdefault("chart", {})["rendered"] = True
-            except Exception as exc:  # pragma: no cover
-                metric_trace.setdefault("chart", {}).setdefault("warnings", []).append(
-                    str(exc)
-                )
-                chart = None
-            blocks: List[Dict[str, Any]] = []
-            if chart:
-                blocks.append(chart)
-            blocks.append(table_block_rows)
-            if rows:
-                latest = rows[0]
-                self.metric_context = {
-                    "metric_name": metric_spec.metric_name,
-                    "time_range": metric_spec.time_range,
-                    "agg": metric_spec.agg,
-                    "value": float(latest[1])
-                    if len(latest) > 1 and latest[1] not in (None, "<null>")
-                    else None,
-                }
-            return blocks
-        aggregate = await self._metric_aggregate_async(
-            metric_spec.metric_name,
-            metric_spec.agg,
-            metric_spec.time_range,
-            detail["ci_id"],
-        )
-        metric_trace.update(
-            {
-                "status": "aggregate",
-                "requested": metric_spec.dict(),
-                "result": aggregate,
-            }
-        )
-        self.next_actions.extend(self._metric_next_actions(metric_spec.time_range))
-        rows = [
-            [
-                aggregate["metric_name"],
-                aggregate["agg"],
-                aggregate["time_from"],
-                aggregate["time_to"],
-                str(aggregate["value"]) if aggregate["value"] is not None else "<null>",
-            ]
-        ]
-        self.metric_context = {
-            "metric_name": aggregate["metric_name"],
-            "time_range": aggregate["time_range"],
-            "agg": aggregate["agg"],
-            "value": aggregate.get("value"),
-        }
-        blocks = [
-            table_block(
-                ["metric_name", "agg", "time_from", "time_to", "value"],
-                rows,
-                title="Metric aggregate",
-            )
-        ]
-        self._log_metric_blocks_return(blocks)
-        return blocks
+        """Delegate to BlockBuilder (Phase 4 decomposition)."""
+        return await self._block_builder.metric_blocks_async(detail, graph_payload)
 
     def _graph_metric_blocks(
         self,
@@ -3705,8 +3554,9 @@ class OpsOrchestratorRunner:
         metric_trace: Dict[str, Any],
         graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
+        """Delegate to BlockBuilder (Phase 4 decomposition)."""
         return asyncio.run(
-            self._graph_metric_blocks_async(
+            self._block_builder.graph_metric_blocks_async(
                 detail, metric_spec, metric_trace, graph_payload
             )
         )
@@ -3718,80 +3568,10 @@ class OpsOrchestratorRunner:
         metric_trace: Dict[str, Any],
         graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
-        graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
-        graph_depth = self.plan.graph.depth
-        graph_limits = self.plan.graph.limits.dict()
-        if not graph_payload:
-            graph_payload = await self._graph_expand_async(
-                detail["ci_id"], graph_view.value, graph_depth, graph_limits
-            )
-        node_ids = graph_payload.get("ids") or [detail["ci_id"]]
-        aggregate = await self._metric_aggregate_async(
-            metric_spec.metric_name,
-            metric_spec.agg,
-            metric_spec.time_range,
-            ci_ids=node_ids,
+        """Delegate to BlockBuilder (Phase 4 decomposition)."""
+        return await self._block_builder.graph_metric_blocks_async(
+            detail, metric_spec, metric_trace, graph_payload
         )
-        graph_meta = graph_payload.get("meta", {})
-        graph_summary = graph_payload.get("summary", {})
-        depth_applied = graph_meta.get("depth", graph_depth)
-        truncated = graph_payload.get("truncated", False)
-        metric_trace.update(
-            {
-                "status": "graph_aggregate",
-                "requested": metric_spec.dict(),
-                "scope": metric_spec.scope,
-                "graph_expand": {
-                    "view": graph_view.value,
-                    "depth_requested": graph_depth,
-                    "depth_applied": depth_applied,
-                    "node_count": graph_summary.get("node_count"),
-                    "edge_count": graph_summary.get("edge_count"),
-                    "rel_types": graph_meta.get("rel_types"),
-                    "truncated": truncated,
-                },
-                "result": aggregate,
-            }
-        )
-        rows = [
-            [
-                "graph",
-                graph_view.value,
-                str(depth_applied),
-                str(aggregate.get("ci_count_used")),
-                aggregate["metric_name"],
-                aggregate["agg"],
-                aggregate["time_from"],
-                aggregate["time_to"],
-                str(aggregate["value"]) if aggregate["value"] is not None else "<null>",
-            ]
-        ]
-        self.next_actions.extend(
-            self._graph_metric_next_actions(
-                graph_view.value,
-                depth_applied,
-                truncated,
-                metric_spec,
-            )
-        )
-        title = f"Graph metric ({metric_spec.metric_name})"
-        return [
-            table_block(
-                [
-                    "scope",
-                    "view",
-                    "depth",
-                    "ci_count",
-                    "metric_name",
-                    "agg",
-                    "time_from",
-                    "time_to",
-                    "value",
-                ],
-                rows,
-                title=title,
-            )
-        ]
 
     def _metric_next_actions(self, current_range: str) -> List[NextAction]:
         actions: List[NextAction] = []

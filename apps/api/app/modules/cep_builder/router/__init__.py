@@ -11,7 +11,9 @@ from .scheduler import router as scheduler_router
 from .simulation import router as simulation_router
 
 # Main combined router
-router = APIRouter(prefix="/cep", tags=["cep-builder"])
+# Sub-routers already include `/cep/...` prefixes. Keep this router prefix-less
+# to avoid duplicated paths such as `/cep/cep/events/...`.
+router = APIRouter(tags=["cep-builder"])
 
 # Include all sub-routers
 router.include_router(rules_router)
