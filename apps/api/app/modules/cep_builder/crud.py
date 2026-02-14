@@ -16,13 +16,22 @@ from .models import (
 from .schemas import CepRuleCreate, CepRuleUpdate
 
 
-def list_rules(session: Session, trigger_type: str | None = None, active_only: bool = False) -> list[TbCepRule]:
+def list_rules(
+    session: Session,
+    trigger_type: str | None = None,
+    active_only: bool = False,
+    tenant_id: str | None = None,
+) -> list[TbCepRule]:
     """
     List CEP rules with optional filtering.
 
     Performance: Uses indexes on (is_active, updated_at DESC) and (trigger_type)
     """
     query = select(TbCepRule)
+    if tenant_id:
+        query = query.where(
+            (TbCepRule.tenant_id == tenant_id) | (TbCepRule.tenant_id.is_(None))
+        )
     if active_only:
         query = query.where(TbCepRule.is_active.is_(True))
     if trigger_type:

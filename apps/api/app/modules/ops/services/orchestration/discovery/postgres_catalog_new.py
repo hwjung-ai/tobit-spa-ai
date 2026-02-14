@@ -42,7 +42,10 @@ class PostgresCatalog(BaseCatalog):
 
     def _resolve_password(self, conn_config: dict) -> str | None:
         """Resolve password from multiple sources"""
+        import logging
         import os
+
+        _logger = logging.getLogger(__name__)
 
         # Priority: secret_key_ref > password_encrypted > password
         secret_key_ref = conn_config.get("secret_key_ref")
@@ -51,8 +54,13 @@ class PostgresCatalog(BaseCatalog):
             return os.environ.get(env_var)
 
         if conn_config.get("password_encrypted"):
-            # TODO: Decrypt using EncryptionManager
-            return conn_config.get("password_encrypted")
+            try:
+                from core.encryption import get_encryption_manager
+                manager = get_encryption_manager()
+                return manager.decrypt(conn_config["password_encrypted"])
+            except Exception as e:
+                _logger.error(f"Failed to decrypt password_encrypted: {e}")
+                return None
 
         return conn_config.get("password")
 

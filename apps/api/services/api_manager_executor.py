@@ -17,6 +17,10 @@ import httpx
 from models import ApiDefinition, ApiExecutionLog, ApiMode
 from sqlmodel import Session, text
 
+class SecurityError(Exception):
+    """Raised when script contains forbidden patterns."""
+
+
 # Configuration constants
 STATEMENT_TIMEOUT_MS = 3000  # 3 seconds
 DEFAULT_LIMIT = 200
@@ -379,31 +383,62 @@ def execute_python_api(
     error_stacktrace = None
     result_data = None
     
+    # Validate logic before execution - block dangerous patterns
+    _BLOCKED_PATTERNS = [
+        r"\b__import__\b", r"\bimport\s+", r"\bfrom\s+\w+\s+import\b",
+        r"\bopen\s*\(", r"\beval\s*\(", r"\bexec\s*\(",
+        r"\bos\.", r"\bsys\.", r"\bsubprocess\.",
+        r"\b__subclasses__\b", r"\b__bases__\b", r"\b__globals__\b",
+        r"\b__builtins__\b", r"\bgetattr\s*\(", r"\bsetattr\s*\(",
+        r"\bdelattr\s*\(", r"\b__class__\b", r"\bbreakpoint\s*\(",
+        r"\bcompile\s*\(", r"\bglobals\s*\(", r"\blocals\s*\(",
+    ]
+
     try:
-        # Create a restricted execution environment
-        exec_globals = {
-            "__builtins__": {
-                "len": len,
-                "str": str,
-                "int": int,
-                "float": float,
-                "dict": dict,
-                "list": list,
-                "tuple": tuple,
-                "bool": bool,
-            },
+        for pattern in _BLOCKED_PATTERNS:
+            if re.search(pattern, logic):
+                raise SecurityError(
+                    f"Blocked: script contains forbidden pattern '{pattern}'"
+                )
+
+        # Create a tightly restricted execution environment
+        _SAFE_BUILTINS = {
+            "len": len, "str": str, "int": int, "float": float,
+            "dict": dict, "list": list, "tuple": tuple, "bool": bool,
+            "range": range, "enumerate": enumerate, "zip": zip,
+            "min": min, "max": max, "sum": sum, "abs": abs,
+            "round": round, "sorted": sorted, "reversed": reversed,
+            "map": map, "filter": filter, "isinstance": isinstance,
+            "True": True, "False": False, "None": None,
+            "print": lambda *a, **kw: None,  # no-op print
+        }
+
+        exec_globals: dict[str, Any] = {
+            "__builtins__": _SAFE_BUILTINS,
             "params": params,
         }
-        
-        # Execute the script
-        exec(logic, exec_globals)
-        
+        exec_locals: dict[str, Any] = {}
+
+        # Compile first to catch syntax errors before exec
+        compiled = compile(logic, "<api_script>", "exec")
+
+        # Execute the compiled code
+        exec(compiled, exec_globals, exec_locals)  # noqa: S102
+
         # Get the result from 'result' variable if defined
-        if "result" in exec_globals:
+        if "result" in exec_locals:
+            result_data = exec_locals["result"]
+        elif "result" in exec_globals:
             result_data = exec_globals["result"]
         else:
             result_data = {"message": "Script executed successfully (no result variable)"}
-    
+
+    except SecurityError as e:
+        error_message = str(e)
+        error_stacktrace = None
+    except SyntaxError as e:
+        error_message = f"Syntax error in script: {e}"
+        error_stacktrace = traceback.format_exc()
     except Exception as e:
         error_message = str(e)
         error_stacktrace = traceback.format_exc()

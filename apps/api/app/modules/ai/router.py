@@ -1,6 +1,7 @@
 """AI Copilot API Router - Screen and API Manager copilots."""
 
 import logging
+import uuid as _uuid
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -42,7 +43,7 @@ async def generate_screen_patch(
         # Generate patch
         response = await service.generate_patch(
             request=request,
-            trace_id=None,  # Could extract from request context
+            trace_id=str(_uuid.uuid4()),
             user_id=str(current_user.id) if current_user else None,
         )
         
@@ -149,7 +150,7 @@ async def generate_api(
         # Generate API
         response = await service.generate_api(
             request=request,
-            trace_id=None,  # Could extract from request context
+            trace_id=str(_uuid.uuid4()),
             user_id=str(current_user.id) if current_user else None,
         )
 

@@ -120,6 +120,13 @@ class TbAssetRegistry(SQLModel, table=True):
         description="Last sync timestamp from source API"
     )
 
+    # Tenant isolation
+    tenant_id: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True, index=True),
+        description="Tenant ID for multi-tenant isolation",
+    )
+
     # Metadata
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     published_by: str | None = Field(

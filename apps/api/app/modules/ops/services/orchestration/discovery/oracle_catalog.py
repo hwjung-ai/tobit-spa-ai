@@ -50,7 +50,10 @@ class OracleCatalog(BaseCatalog):
 
     def _resolve_password(self, conn_config: dict) -> str | None:
         """Resolve password from multiple sources"""
+        import logging
         import os
+
+        _logger = logging.getLogger(__name__)
 
         secret_key_ref = conn_config.get("secret_key_ref")
         if secret_key_ref and secret_key_ref.startswith("env:"):
@@ -58,7 +61,13 @@ class OracleCatalog(BaseCatalog):
             return os.environ.get(env_var)
 
         if conn_config.get("password_encrypted"):
-            return conn_config.get("password_encrypted")
+            try:
+                from core.encryption import get_encryption_manager
+                manager = get_encryption_manager()
+                return manager.decrypt(conn_config["password_encrypted"])
+            except Exception as e:
+                _logger.error(f"Failed to decrypt password_encrypted: {e}")
+                return None
 
         return conn_config.get("password")
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from app.modules.auth.models import TbUser
 from models import ApiDefinition, ApiMode, ApiScope
 from schemas import (
     ApiDefinitionCreate,
@@ -42,6 +44,7 @@ def to_read(definition: ApiDefinition) -> ApiDefinitionRead:
 def list_definitions(
     session: Session = Depends(get_session),
     scope: ApiScope | None = Query(None),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     items = list_api_definitions(session, scope)
     data = [to_read(item).model_dump() for item in items]
@@ -50,7 +53,9 @@ def list_definitions(
 
 @router.get("/apis/{api_id}", response_model=ResponseEnvelope)
 def get_definition(
-    api_id: str, session: Session = Depends(get_session)
+    api_id: str,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
@@ -60,7 +65,9 @@ def get_definition(
 
 @router.post("/apis", response_model=ResponseEnvelope)
 def create_definition(
-    payload: ApiDefinitionCreate, session: Session = Depends(get_session)
+    payload: ApiDefinitionCreate,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     data = payload.model_dump()
     created = create_custom_definition(session, data)
@@ -72,6 +79,7 @@ def update_definition_endpoint(
     api_id: str,
     payload: ApiDefinitionUpdate,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
@@ -93,7 +101,9 @@ def update_definition_endpoint(
 
 @router.delete("/apis/{api_id}", response_model=ResponseEnvelope)
 def delete_definition(
-    api_id: str, session: Session = Depends(get_session)
+    api_id: str,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
@@ -104,7 +114,9 @@ def delete_definition(
 
 @router.post("/apis/{api_id}/test", response_model=ResponseEnvelope)
 def test_definition(
-    api_id: str, session: Session = Depends(get_session)
+    api_id: str,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
@@ -127,7 +139,9 @@ def test_definition(
 
 @router.post("/sync/system", response_model=ResponseEnvelope)
 def sync_system(
-    request: Request, session: Session = Depends(get_session)
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     schema = request.app.openapi()
     synced, skipped = sync_system_definitions(session, schema)

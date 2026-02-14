@@ -37,6 +37,11 @@ class TbCepRule(SQLModel, table=True):
         default=True,
         sa_column=Column(Boolean, nullable=False, server_default=text("true")),
     )
+    tenant_id: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True, index=True),
+        description="Tenant ID for multi-tenant isolation",
+    )
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     created_at: datetime = Field(
         default_factory=datetime.utcnow,

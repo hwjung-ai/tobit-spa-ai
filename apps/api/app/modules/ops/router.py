@@ -1820,7 +1820,12 @@ async def ui_editor_collab_websocket(websocket: WebSocket) -> None:
                 else:
                     user_id = "dev-user"
                     user_label = "debug@dev"
-    except Exception:
+    except Exception as ws_auth_err:
+        logger.error(
+            f"WebSocket auth/setup failed for screen_id={screen_id}: "
+            f"{type(ws_auth_err).__name__}: {ws_auth_err}",
+            exc_info=True,
+        )
         await websocket.close(code=1011)
         return
 
@@ -2061,7 +2066,11 @@ async def execute_ui_action(
 
 
 @router.get("/golden-queries")
-def list_golden_queries(session: Any = Depends(get_session)) -> ResponseEnvelope:
+def list_golden_queries(
+    session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> ResponseEnvelope:
     """List all golden queries"""
     from app.modules.inspector.crud import list_golden_queries
 
@@ -2087,6 +2096,8 @@ def list_golden_queries(session: Any = Depends(get_session)) -> ResponseEnvelope
 def create_golden_query(
     payload: Dict[str, Any],
     session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Create a new golden query"""
     from app.modules.inspector.crud import create_golden_query as crud_create
@@ -2118,6 +2129,8 @@ def update_golden_query(
     query_id: str,
     payload: Dict[str, Any],
     session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Update golden query"""
     from app.modules.inspector.crud import update_golden_query as crud_update
@@ -2152,6 +2165,8 @@ def update_golden_query(
 def delete_golden_query(
     query_id: str,
     session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Delete golden query"""
     from app.modules.inspector.crud import delete_golden_query as crud_delete
@@ -2171,6 +2186,8 @@ def set_baseline(
     query_id: str,
     payload: Dict[str, Any],
     session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Set baseline trace for a golden query"""
     from app.modules.inspector.crud import (
@@ -2346,6 +2363,8 @@ def list_regression_runs(
     golden_query_id: str | None = None,
     limit: int = 50,
     session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """List regression runs"""
     from app.modules.inspector.crud import list_regression_runs
@@ -2380,6 +2399,8 @@ def list_regression_runs(
 def get_regression_run(
     run_id: str,
     session: Any = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Get regression run details"""
     from app.modules.inspector.crud import get_regression_run
@@ -3038,12 +3059,13 @@ def _calculate_performance_change(comparison_results: List[Dict]) -> Dict[str, f
 async def tool_discovery_webhook(
     request: Request,
     x_webhook_signature: Optional[str] = Header(None),
-    x_webhook_secret: Optional[str] = Header(None)
+    x_webhook_secret: Optional[str] = Header(None),
+    current_user: TbUser = Depends(get_current_user),
 ) -> JSONResponse:
     """
     Webhook endpoint for tool discovery updates.
 
-    Allows external systems to trigger immediate tool discovery scans
+    Allows authorized users to trigger immediate tool discovery scans
     when new tools are added to the Asset Registry.
 
     Headers:
@@ -3080,7 +3102,7 @@ async def tool_discovery_webhook(
         logger.error(f"Webhook error: {str(e)}", exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"message": f"Internal server error: {str(e)}"}
+            content={"message": "Internal server error"}
         )
 
 

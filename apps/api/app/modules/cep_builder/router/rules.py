@@ -7,11 +7,15 @@ from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from typing import Any
 
+from core.auth import get_current_user
 from core.db import get_session
+from core.tenant import get_current_tenant
 from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
 from sqlalchemy import desc, select
 from sqlmodel import Session
+
+from app.modules.auth.models import TbUser
 
 from ..crud import (
     create_rule,
@@ -45,9 +49,11 @@ router = APIRouter(prefix="/cep/rules", tags=["cep-rules"])
 def list_rules_endpoint(
     trigger_type: str | None = Query(None),
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """List all CEP rules, optionally filtered by trigger type."""
-    rules = list_rules(session, trigger_type=trigger_type)
+    rules = list_rules(session, trigger_type=trigger_type, tenant_id=tenant_id)
     payload = [CepRuleRead.from_orm(rule).model_dump() for rule in rules]
     return ResponseEnvelope.success(data={"rules": payload})
 

@@ -13,6 +13,7 @@ from typing import Any
 
 from core.auth import get_current_user
 from core.db import get_session, get_session_context
+from core.tenant import get_current_tenant
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
@@ -24,6 +25,7 @@ from app.modules.asset_registry.schemas import (
     ToolAssetCreate,
     ToolAssetUpdate,
 )
+from app.modules.audit_log.crud import create_audit_log
 from app.modules.auth.models import TbUser
 
 router = APIRouter(prefix="/asset-registry/tools", tags=["tool-assets"])
@@ -43,6 +45,7 @@ def _serialize_tool_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "tool_input_schema": asset.tool_input_schema,
         "tool_output_schema": asset.tool_output_schema,
         "tags": asset.tags,
+        "tenant_id": asset.tenant_id,
         "created_by": asset.created_by,
         "published_by": asset.published_by,
         "published_at": asset.published_at,
@@ -72,11 +75,15 @@ def list_tools(
     page_size: int = Query(20, ge=1, le=100),
     include_builtin: bool = Query(True, description="Include built-in tools (CI, Graph, Metric, etc)"),
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """List all tool assets (both database and built-in tools)."""
     with get_session_context() as session:
-        # Get tools from database
+        # Get tools from database (tenant-scoped)
         query = select(TbAssetRegistry).where(TbAssetRegistry.asset_type == "tool")
+        query = query.where(
+            (TbAssetRegistry.tenant_id == tenant_id) | (TbAssetRegistry.tenant_id.is_(None))
+        )
 
         if status:
             query = query.where(TbAssetRegistry.status == status)
@@ -167,6 +174,7 @@ def list_tools(
 def create_tool(
     payload: ToolAssetCreate,
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """Create a new tool asset."""
     with get_session_context() as session:
@@ -194,6 +202,7 @@ def create_tool(
             tool_output_schema=payload.tool_output_schema,
             tags=payload.tags,
             created_by=payload.created_by or str(current_user.id),
+            tenant_id=tenant_id,
             status="draft",
             version=1,
         )
@@ -216,6 +225,16 @@ def create_tool(
         )
         session.add(history)
         session.commit()
+
+        create_audit_log(
+            session=session,
+            trace_id=str(uuid.uuid4()),
+            resource_type="tool_asset",
+            resource_id=str(asset.asset_id),
+            action="create",
+            actor=str(current_user.id),
+            changes={"name": asset.name, "tool_type": asset.tool_type},
+        )
 
         return ResponseEnvelope.success(data={"asset": _serialize_tool_asset(asset)})
 
@@ -356,8 +375,21 @@ def delete_tool(
             for history in histories:
                 session.delete(history)
 
+            deleted_name = asset.name
+            deleted_id = str(asset.asset_id)
             session.delete(asset)
             session.commit()
+
+            create_audit_log(
+                session=session,
+                trace_id=str(uuid.uuid4()),
+                resource_type="tool_asset",
+                resource_id=deleted_id,
+                action="delete",
+                actor=str(current_user.id),
+                changes={"name": deleted_name},
+            )
+
             return ResponseEnvelope.success(message="Tool asset deleted")
         except Exception as e:
             session.rollback()
@@ -428,6 +460,16 @@ def publish_tool(
         session.commit()
         session.refresh(asset)
 
+        create_audit_log(
+            session=session,
+            trace_id=str(uuid.uuid4()),
+            resource_type="tool_asset",
+            resource_id=str(asset.asset_id),
+            action="publish",
+            actor=str(current_user.id),
+            changes={"name": asset.name, "version": asset.version},
+        )
+
         return ResponseEnvelope.success(data={"asset": _serialize_tool_asset(asset)})
 
 
@@ -436,6 +478,7 @@ async def test_tool(
     asset_id: str,
     test_input: dict[str, Any] = Body(...),
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """Test a tool asset with given input."""
     with get_session_context() as session:
@@ -466,9 +509,9 @@ async def test_tool(
         from app.modules.ops.services.orchestration.tools.base import ToolContext
 
         context = ToolContext(
-            tenant_id="test",
+            tenant_id=tenant_id,
             user_id=str(current_user.id),
-            request_id="test_request",
+            request_id=f"test_{uuid.uuid4().hex[:8]}",
         )
 
         # Execute tool
@@ -573,8 +616,8 @@ def reload_tools(
                         asset_data=tool_asset_read,
                     )
 
-                    # Register with tool name
-                    registry._instances[asset.name] = tool
+                    # Register instance with registry
+                    registry.register_dynamic(tool)
                     loaded_count += 1
                 except Exception as e:
                     logger.warning(
@@ -837,7 +880,7 @@ async def sync_tool_from_api(
             "synced_at": tool.last_synced_at.isoformat(),
             "api_version": api.updated_at.isoformat() if api.updated_at else None,
             "message": "Tool synced successfully from API Manager",
-            "asset": _serialize_tool_asset(tool_asset=tool)
+            "asset": _serialize_tool_asset(tool)
         })
 
 

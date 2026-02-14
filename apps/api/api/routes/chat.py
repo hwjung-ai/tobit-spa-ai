@@ -294,15 +294,31 @@ async def stream_chat(
         )
 
     # 2. Add builder context for stronger deterministic generation
+    #    Sanitize to prevent prompt injection: only allow known safe keys
+    _ALLOWED_CONTEXT_KEYS = {
+        "screen_id", "screen_schema", "components", "layout", "bindings",
+        "api_id", "api_name", "method", "path", "logic", "mode",
+        "rule_id", "rule_name", "trigger_spec", "action_spec",
+        "current_draft", "selected_component", "field_name",
+    }
     if builder_context:
         try:
             context_obj = json.loads(builder_context)
-            prompt_for_orchestrator = (
-                f"{prompt_for_orchestrator}\n\n"
-                "Builder Context (JSON):\n"
-                f"{json.dumps(context_obj, ensure_ascii=False)}"
-            )
-        except Exception:
+            if not isinstance(context_obj, dict):
+                logging.warning("builder_context is not a dict; ignoring")
+            else:
+                # Filter to only allowed keys to prevent prompt injection
+                safe_context = {
+                    k: v for k, v in context_obj.items()
+                    if k in _ALLOWED_CONTEXT_KEYS
+                }
+                if safe_context:
+                    prompt_for_orchestrator = (
+                        f"{prompt_for_orchestrator}\n\n"
+                        "Builder Context (JSON):\n"
+                        f"```json\n{json.dumps(safe_context, ensure_ascii=False)}\n```"
+                    )
+        except (json.JSONDecodeError, TypeError):
             logging.warning("Invalid builder_context JSON; ignoring it")
 
     resolved_contract = expected_contract or (
