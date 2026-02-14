@@ -182,3 +182,75 @@ def list_exec_logs(
         )
         return session.exec(statement).all()
     return []
+
+
+# Helper functions for the new modular router structure
+def _api_snapshot(api: Any) -> dict:
+    """Create a snapshot of the API definition state."""
+    return {
+        "id": str(api.id),
+        "scope": api.scope.value if hasattr(api.scope, "value") else str(api.scope),
+        "name": api.name,
+        "method": api.method,
+        "path": api.path,
+        "description": api.description,
+        "tags": api.tags or [],
+        "mode": api.mode.value if api.mode else None,
+        "logic": api.logic,
+        "runtime_policy": api.runtime_policy or {},
+        "auth_mode": (
+            api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+        ),
+        "required_scopes": list(api.required_scopes or []),
+        "is_enabled": api.is_enabled,
+        "created_at": api.created_at.isoformat() if api.created_at else None,
+        "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+    }
+
+
+def _next_version(session: Session, api_id: uuid.UUID) -> int:
+    """Get the next version number for an API."""
+    from models.api_definition import ApiDefinitionVersion
+
+    statement = (
+        select(ApiDefinitionVersion)
+        .where(ApiDefinitionVersion.api_id == api_id)
+        .order_by(ApiDefinitionVersion.version.desc())
+        .limit(1)
+    )
+    latest = session.exec(statement).first()
+    return (latest.version + 1) if latest else 1
+
+
+def _record_api_version(
+    session: Session,
+    api: Any,
+    *,
+    change_type: str,
+    created_by: str | None,
+    change_summary: str | None = None,
+) -> Any:
+    """Record an API version in the version history table."""
+    from models.api_definition import ApiDefinitionVersion
+
+    version_row = ApiDefinitionVersion(
+        api_id=api.id,
+        version=_next_version(session, api.id),
+        change_type=change_type,
+        change_summary=change_summary,
+        snapshot=_api_snapshot(api),
+        created_by=created_by,
+    )
+    session.add(version_row)
+    session.commit()
+    session.refresh(version_row)
+    return version_row
+
+
+def _parse_api_uuid(api_id: str) -> uuid.UUID:
+    """Parse and validate API ID as UUID."""
+    try:
+        return uuid.UUID(str(api_id))
+    except (ValueError, TypeError) as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Invalid API ID format") from exc
