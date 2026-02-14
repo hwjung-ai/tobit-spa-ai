@@ -674,6 +674,33 @@ test("should handle special URL characters", () => {
   assert.equal(result.includes("%3D"), true);
 });
 
+test("should normalize non-string error payload values", () => {
+  const payload = { message: [], detail: { reason: "invalid_state" } };
+
+  const stringifyErrorValue = (value) => {
+    if (typeof value === "string") return value.trim();
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (Array.isArray(value)) {
+      const joined = value
+        .map((item) => (typeof item === "string" ? item.trim() : JSON.stringify(item)))
+        .filter(Boolean)
+        .join(", ");
+      return joined || JSON.stringify(value);
+    }
+    if (value && typeof value === "object") {
+      return JSON.stringify(value);
+    }
+    return "";
+  };
+
+  const message =
+    stringifyErrorValue(payload.detail) ||
+    stringifyErrorValue(payload.message) ||
+    "fallback";
+
+  assert.equal(message, "{\"reason\":\"invalid_state\"}");
+});
+
 test("should safely clear sensitive data", () => {
   const token = "sensitive_token_12345";
   const cleared = "";

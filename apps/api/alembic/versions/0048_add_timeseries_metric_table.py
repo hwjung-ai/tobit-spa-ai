@@ -1,7 +1,7 @@
 """Add timeseries metric table for simulation
 
-Revision ID: 0048
-Revises:
+Revision ID: 0048_add_timeseries_metric_table
+Revises: 0047_add_document_search_indexes
 Create Date: 2026-02-11
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '0048'
-down_revision = '0047'
+revision = '0048_add_timeseries_metric_table'
+down_revision = '0047_add_document_search_indexes'
 branch_labels = None
 depends_on = None
 
@@ -22,7 +22,7 @@ def upgrade() -> None:
     """Create timeseries metric table with indexes."""
     op.create_table(
         'tb_metric_timeseries',
-        sa.Column('id', sa postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column('tenant_id', sa.Text(), nullable=False, index=True, comment='Tenant identifier'),
         sa.Column('service', sa.Text(), nullable=False, index=True, comment='Service name (e.g., api-gateway)'),
         sa.Column('metric_name', sa.Text(), nullable=False, index=True, comment='Metric name (latency_ms, throughput_rps, error_rate_pct, cost_usd_hour)'),

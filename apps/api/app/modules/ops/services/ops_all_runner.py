@@ -10,26 +10,18 @@ from schemas import AnswerBlock, MarkdownBlock
 from app.llm.client import get_llm_client, is_llm_available
 from app.shared import config_loader
 
-
-# Executor imports removed for generic orchestration
-# These functions are stubbed as they use deleted executor files
-# They will be properly implemented via Tool Assets
-def run_metric(question: str, **kwargs):
-    """Stub: metric executor removed"""
-    return [], []
-
-
-def run_hist(question: str, **kwargs):
-    """Stub: hist executor removed"""
-    return [], []
-
-
-def run_graph(question: str, **kwargs):
-    """Stub: graph executor removed"""
-    return [], []
+# Import real executors
+from app.modules.ops.services.executors import (
+    run_config,
+    run_metric,
+    run_hist,
+    run_graph,
+    ExecutorResult,
+)
 
 
 class OpsAllPlan(BaseModel):
+    run_config: bool = True  # Always run config by default
     run_metric: bool = False
     run_hist: bool = False
     run_graph: bool = False
@@ -39,9 +31,10 @@ class OpsAllPlan(BaseModel):
 
 
 class OpsAllRunner:
-    """OPS ALL mode runner - executes metric, hist, and graph executors in sequence"""
-    EXECUTOR_ORDER = ("metric", "hist", "graph")
+    """OPS ALL mode runner - executes config, metric, hist, and graph executors in sequence"""
+    EXECUTOR_ORDER = ("config", "metric", "hist", "graph")
     EXECUTOR_MAP = {
+        "config": run_config,
         "metric": run_metric,
         "hist": run_hist,
         "graph": run_graph,
@@ -134,8 +127,8 @@ class OpsAllRunner:
             raise RuntimeError(f"OPS ALL plan validation failed: {exc}")
 
     def _ensure_default_plan(self, plan: OpsAllPlan) -> OpsAllPlan:
-        if not any((plan.run_metric, plan.run_hist, plan.run_graph)):
-            return OpsAllPlan(run_metric=True, run_hist=True)
+        if not any((plan.run_config, plan.run_metric, plan.run_hist, plan.run_graph)):
+            return OpsAllPlan(run_config=True, run_metric=True, run_hist=True)
         return plan
 
     def _apply_hints(self, question: str, plan: OpsAllPlan) -> str:

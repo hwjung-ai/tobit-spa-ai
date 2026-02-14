@@ -1,7 +1,7 @@
 """Add ML Models Registry Table
 
-Revision ID: 0049
-Revises: 0048
+Revision ID: 0049_add_ml_models_table
+Revises: 0048_add_timeseries_metric_table
 Create Date: 2026-02-11
 """
 from alembic import op
@@ -10,8 +10,8 @@ from sqlmodel import SQLModel
 
 
 # revision identifiers, used by Alembic.
-revision = '0049'
-down_revision = '0048'
+revision = '0049_add_ml_models_table'
+down_revision = '0048_add_timeseries_metric_table'
 branch_labels = None
 depends_on = None
 

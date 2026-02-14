@@ -105,6 +105,26 @@ export interface FetchApiOptions extends RequestInit {
   timeout?: number; // Timeout in milliseconds
 }
 
+function stringifyErrorValue(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((item) => (typeof item === "string" ? item.trim() : JSON.stringify(item)))
+      .filter(Boolean)
+      .join(", ");
+    return joined || JSON.stringify(value);
+  }
+  if (value && typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
 export async function fetchApi<T = any>(
   endpoint: string,
   options?: FetchApiOptions
@@ -253,11 +273,15 @@ export async function fetchApi<T = any>(
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
+      const authError = new Error("Authentication required. Redirecting to login.");
+      (authError as unknown as { statusCode: number }).statusCode = 401;
+      throw authError;
     }
 
     if (process.env.NODE_ENV === 'development') {
       console.error("[API] Request failed:", {
         endpoint,
+        url,
         method: options?.method || "GET",
         status: response.status,
         statusText: response.statusText,
@@ -266,7 +290,13 @@ export async function fetchApi<T = any>(
       });
     }
 
-    const errorMessage = (errorData as Record<string, unknown>)?.detail || (errorData as Record<string, unknown>)?.message || `HTTP ${response.status}: ${response.statusText}`;
+    const errorRecord = errorData as Record<string, unknown>;
+    const errorMessage =
+      stringifyErrorValue(errorRecord?.detail) ||
+      stringifyErrorValue(errorRecord?.message) ||
+      stringifyErrorValue(errorData) ||
+      rawText.trim() ||
+      `HTTP ${response.status}: ${response.statusText}`;
     const error = new Error(String(errorMessage));
     (error as unknown as { statusCode: number }).statusCode = response.status;
     throw error;

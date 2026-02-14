@@ -81,7 +81,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
 
   if (loading) {
     return (
-      <div className="rounded-xl border   p-6 text-center ">
+      <div className="rounded-xl border border-variant bg-surface-elevated p-6 text-center text-muted-foreground">
         Loading screen...
       </div>
     );
@@ -98,30 +98,30 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div className="rounded-2xl border   p-4 flex-shrink-0">
-        <h2 className="text-lg font-semibold text-white">
+      <div className="flex-shrink-0 rounded-2xl border border-variant bg-surface-overlay p-4">
+        <h2 className="text-lg font-semibold text-foreground">
           {asset.name || asset.screen_id}
         </h2>
-        <p className="text-xs ">
+        <p className="text-xs text-muted-foreground">
           Screen ID: {asset.screen_id} · Version {asset.version}
         </p>
         {asset.description && (
-          <p className="text-sm  mt-1">{asset.description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{asset.description}</p>
         )}
-        <p className="text-xs ">
+        <p className="text-xs text-muted-foreground">
           Published: {formatTimestamp(asset.published_at)} · Last update: {formatTimestamp(asset.updated_at)}
         </p>
         {asset.tags && Object.keys(asset.tags).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {Object.entries(asset.tags).map(([key, value]) => (
-              <span key={key} className="rounded-full border  px-2 py-0.5 text-xs ">
+              <span key={key} className="rounded-full border border-variant bg-surface-base px-2 py-0.5 text-xs text-muted-foreground">
                 {key}: {String(value)}
               </span>
             ))}
           </div>
         )}
       </div>
-      <div className="flex-1 overflow-auto rounded-2xl border  /70 p-4">
+      <div className="flex-1 overflow-auto rounded-2xl border border-variant bg-surface-base p-4">
         <UIScreenRenderer
           block={previewBlock!}
           schemaOverride={(typeof asset.schema_json === "object" && asset.schema_json !== null && "screen_id" in asset.schema_json)
