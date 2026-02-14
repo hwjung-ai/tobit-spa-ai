@@ -6,7 +6,7 @@ Tests for SLO metrics collection and tagging.
 
 import pytest
 import time
-from app.modules.ops.services.ci.metrics import (
+from app.modules.ops.services.metrics import (
     OrchestrationMetrics,
     MetricType,
     MetricValue,
