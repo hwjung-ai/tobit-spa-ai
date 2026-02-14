@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime
 from typing import Any, List
@@ -9,6 +10,8 @@ from core.db import get_session, get_session_context
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
+
+logger = logging.getLogger(__name__)
 
 from app.modules.asset_registry.crud import (
     build_schema_catalog,
@@ -523,7 +526,8 @@ def update_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            asset = None
 
         # If not found by UUID, try to find by asset_id or screen_id (draft first, then published)
         if not asset:
@@ -673,7 +677,8 @@ def publish_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            asset = None
 
         # If not found by UUID, try to find by screen_id (draft first, then published)
         if not asset:
@@ -789,7 +794,8 @@ def rollback_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            asset = None
 
         # If not found by UUID, try to find by screen_id (draft first, then published)
         if not asset:
@@ -933,7 +939,8 @@ def delete_asset(
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name/ID lookup")
+            asset = None
 
         # If not found by UUID, try to find by screen_id (draft first, then published)
         if not asset:

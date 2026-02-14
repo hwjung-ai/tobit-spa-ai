@@ -6,6 +6,7 @@ Provides CRUD endpoints for Tool Assets and tool testing functionality.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -15,6 +16,8 @@ from core.db import get_session, get_session_context
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
+
+logger = logging.getLogger(__name__)
 
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.asset_registry.schemas import (
@@ -233,7 +236,8 @@ def get_tool(
             if asset and asset.asset_type != "tool":
                 asset = None
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name lookup")
+            asset = None
 
         # Try by name
         if not asset:
@@ -266,7 +270,8 @@ def update_tool(
             if asset and asset.asset_type != "tool":
                 asset = None
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name lookup")
+            asset = None
 
         # Try by name
         if not asset:
@@ -324,7 +329,8 @@ def delete_tool(
             if asset and asset.asset_type != "tool":
                 asset = None
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name lookup")
+            asset = None
 
         # Try by name
         if not asset:
@@ -380,7 +386,8 @@ def publish_tool(
             if asset and asset.asset_type != "tool":
                 asset = None
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name lookup")
+            asset = None
 
         # Try by name
         if not asset:
@@ -441,7 +448,8 @@ async def test_tool(
             if asset and asset.asset_type != "tool":
                 asset = None
         except ValueError:
-            pass
+            logger.debug(f"Invalid UUID format for asset_id, falling back to name lookup")
+            asset = None
 
         # Try by name
         if not asset:
@@ -568,8 +576,13 @@ def reload_tools(
                     # Register with tool name
                     registry._instances[asset.name] = tool
                     loaded_count += 1
-                except Exception:
-                    pass  # Skip failed tools
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to load tool asset '{asset.name}' (ID: {asset.asset_id}) - "
+                        f"{type(e).__name__}: {str(e)}",
+                        exc_info=True
+                    )
+                    # Continue loading remaining tools
 
             return ResponseEnvelope.success(
                 data={
