@@ -1,4 +1,13 @@
-"""CEP Engine API routes for rule management, execution, and monitoring"""
+"""
+CEP Engine API routes for rule management, execution, and monitoring.
+
+DEPRECATED: This module uses in-memory storage (cep_engine.rules) which does not
+persist across server restarts. For production use, prefer the DB-backed routes at:
+- /cep/rules (router/rules.py) - CRUD operations with TbCepRule persistence
+- /cep/events (router/events.py) - Event streaming with tenant isolation
+
+This module is kept for backward compatibility but should not be used in production.
+"""
 
 import logging
 from datetime import datetime
