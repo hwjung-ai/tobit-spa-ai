@@ -6,9 +6,43 @@ enabling type-safe tool integration and API contracts.
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
+
+
+# P0-3: Error Classification
+class ToolErrorCode(str, Enum):
+    """Standardized Tool execution error codes for failure classification."""
+
+    # Policy violations
+    POLICY_DENY = "POLICY_DENY"  # Request denied by policy
+    RATE_LIMITED = "RATE_LIMITED"  # Rate limit exceeded
+    CIRCUIT_OPEN = "CIRCUIT_OPEN"  # Circuit breaker open
+
+    # Execution failures
+    TOOL_TIMEOUT = "TOOL_TIMEOUT"  # Tool execution timeout
+    TOOL_BAD_REQUEST = "TOOL_BAD_REQUEST"  # Invalid input to tool
+    UPSTREAM_UNAVAILABLE = "UPSTREAM_UNAVAILABLE"  # External service unavailable
+    INTERNAL_ERROR = "INTERNAL_ERROR"  # Unexpected internal error
+
+    # Orchestration failures
+    PLAN_INVALID = "PLAN_INVALID"  # Planning phase failed
+    PLAN_TIMEOUT = "PLAN_TIMEOUT"  # Planning timeout
+    EXECUTE_TIMEOUT = "EXECUTE_TIMEOUT"  # Execution timeout
+    COMPOSE_TIMEOUT = "COMPOSE_TIMEOUT"  # Compose timeout
+
+    # Security violations
+    SQL_BLOCKED = "SQL_BLOCKED"  # SQL statement blocked by policy
+    TENANT_MISMATCH = "TENANT_MISMATCH"  # Tenant context mismatch
+    AUTH_FAILED = "AUTH_FAILED"  # Authorization failed
+    PERMISSION_DENIED = "PERMISSION_DENIED"  # Permission denied
+
+    # Data errors
+    DATA_NOT_FOUND = "DATA_NOT_FOUND"  # Requested data not found
+    INVALID_PARAMS = "INVALID_PARAMS"  # Invalid parameters
+    MAX_ROWS_EXCEEDED = "MAX_ROWS_EXCEEDED"  # Result set exceeded max rows
 
 
 # Graph Tool Contracts
@@ -133,6 +167,7 @@ class ToolCall(BaseModel):
     input_params: Dict[str, Any] = Field(default_factory=dict)
     output_summary: Dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
+    error_code: str | None = None  # P0-3: Standardized error code (ToolErrorCode value)
     query_asset: str | None = (
         None  # Query asset identifier: "{asset_id}:v{version}" if used
     )
