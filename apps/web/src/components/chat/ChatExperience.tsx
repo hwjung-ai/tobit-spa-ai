@@ -237,7 +237,7 @@ export default function ChatExperience({
             expectedContract &&
             !validation.ok &&
             enableAutoRepair &&
-            repairAttemptRef.current < 1
+            repairAttemptRef.current < 3
           ) {
             recordCopilotMetric(builderSlug, "auto_repair_attempt", validation.reason);
             const invalidAssistantMessageId = assistantMessageIdRef.current;

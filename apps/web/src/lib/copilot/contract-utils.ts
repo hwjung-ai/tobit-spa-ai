@@ -40,7 +40,10 @@ export const validateCopilotContract = (
 
   const parsed = parseCandidateObjects(text);
   if (parsed.length === 0) {
-    return { ok: false, reason: "JSON payload를 추출하지 못했습니다." };
+    return {
+      ok: false,
+      reason: `❌ JSON 파싱 실패: 유효한 JSON을 찾을 수 없습니다. 응답 내 유효한 JSON 객체를 반환해주세요. (${contract} 타입 필요)`
+    };
   }
 
   if (contract === "screen_patch") {
@@ -54,7 +57,10 @@ export const validateCopilotContract = (
     });
     return hasPatch
       ? { ok: true, reason: null }
-      : { ok: false, reason: "JSON Patch 배열 또는 patch 필드가 필요합니다." };
+      : {
+        ok: false,
+        reason: `❌ 잘못된 screen_patch 형식: JSON Patch 배열 또는 {"patch": [...]} 구조가 필요합니다 (RFC 6902 표준 준수)`
+      };
   }
 
   const expectedType = contract;
@@ -65,7 +71,20 @@ export const validateCopilotContract = (
 
   if (hasTypedObject) return { ok: true, reason: null };
 
-  return { ok: false, reason: `type=${expectedType} 객체가 필요합니다.` };
+  // Provide more helpful error message with context
+  const foundTypes = parsed
+    .filter(v => v && typeof v === "object" && !Array.isArray(v))
+    .map(v => (v as { type?: unknown }).type)
+    .filter(Boolean);
+
+  const typeInfo = foundTypes.length > 0
+    ? `발견된 type: [${foundTypes.join(", ")}]`
+    : "type 필드를 찾을 수 없습니다";
+
+  return {
+    ok: false,
+    reason: `❌ 계약 위반: {"type": "${expectedType}"} 형식의 JSON 객체가 필요합니다. ${typeInfo}`
+  };
 };
 
 export const buildRepairPrompt = (params: {
@@ -75,17 +94,23 @@ export const buildRepairPrompt = (params: {
 }) => {
   const contractGuide =
     params.contract === "screen_patch"
-      ? "Return ONLY valid JSON patch array (RFC 6902) or {\"patch\": [...]}."
-      : `Return ONLY one JSON object with type="${params.contract}".`;
+      ? "Return ONLY valid JSON Patch operations (RFC 6902). Format: {\"patch\": [{\"op\": \"add\", \"path\": \"/...\", \"value\": ...}, ...]} or just the patch array."
+      : `Return ONLY one JSON object with type="${params.contract}". Example: {"type": "${params.contract}", ...}`;
 
   return [
-    "Reformat your previous answer to satisfy the output contract.",
+    "⚠️ CRITICAL: Your previous response violated the output contract. Please fix it.",
+    "",
+    "REQUIREMENTS:",
     contractGuide,
-    "No markdown, no explanation, no code fences.",
+    "- Return ONLY pure JSON, no markdown, no code fences, no explanations",
+    "- Ensure all required fields are included",
+    "- Do not add any text before or after the JSON",
     "",
     `Original user request: ${params.originalUserPrompt}`,
     "",
-    "Previous invalid response:",
+    "Your previous response (invalid):",
     params.previousAssistantResponse,
+    "",
+    "Please respond with ONLY valid JSON now:"
   ].join("\n");
 };

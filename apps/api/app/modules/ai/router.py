@@ -1,4 +1,4 @@
-"""Screen Copilot API Router."""
+"""AI Copilot API Router - Screen and API Manager copilots."""
 
 import logging
 from uuid import UUID
@@ -13,6 +13,8 @@ from app.modules.auth.models import TbUser
 
 from .schemas import ScreenCopilotRequest, ScreenCopilotResponse
 from .service import get_screen_copilot_service
+from .api_copilot_schemas import ApiCopilotRequest, ApiCopilotResponse
+from .api_copilot_service import get_api_copilot_service
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +122,86 @@ async def validate_screen_patch(
         
     except Exception as e:
         logger.error(f"Validation error: {e}", exc_info=True)
+        return ResponseEnvelope.error(
+            message=f"Validation failed: {str(e)}",
+            error_code="VALIDATION_ERROR"
+        )
+
+
+@router.post("/api-copilot", response_model=ResponseEnvelope)
+async def generate_api(
+    request: ApiCopilotRequest,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+) -> ResponseEnvelope:
+    """
+    Generate or improve an API using AI.
+
+    Takes a natural language prompt and optionally an existing API draft,
+    returns a complete API definition with HTTP spec, examples, and suggestions.
+
+    Requires authentication.
+    """
+    try:
+        # Get service
+        service = get_api_copilot_service()
+
+        # Generate API
+        response = await service.generate_api(
+            request=request,
+            trace_id=None,  # Could extract from request context
+            user_id=str(current_user.id) if current_user else None,
+        )
+
+        # Validate draft
+        if response.api_draft:
+            errors, warnings = service.validate_api_draft(response.api_draft)
+            if errors:
+                logger.warning(f"API draft validation errors: {errors}")
+                response.suggestions = response.suggestions + [f"Error: {e}" for e in errors]
+            if warnings:
+                response.suggestions = response.suggestions + [f"Warning: {w}" for w in warnings]
+
+        return ResponseEnvelope.success(
+            data=response.model_dump(),
+            message=response.explanation or "API generated successfully"
+        )
+
+    except Exception as e:
+        logger.error(f"API copilot error: {e}", exc_info=True)
+        return ResponseEnvelope.error(
+            message=f"Failed to generate API: {str(e)}",
+            error_code="AI_SERVICE_ERROR"
+        )
+
+
+@router.post("/api-copilot/validate", response_model=ResponseEnvelope)
+async def validate_api_draft(
+    api_draft: dict,
+    current_user: TbUser = Depends(get_current_user),
+) -> ResponseEnvelope:
+    """
+    Validate an API draft without generating modifications.
+
+    Returns validation result and suggestions for improvement.
+    """
+    try:
+        service = get_api_copilot_service()
+
+        # Validate draft
+        errors, warnings = service.validate_api_draft(api_draft)
+
+        return ResponseEnvelope.success(
+            data={
+                "valid": len(errors) == 0,
+                "errors": errors,
+                "warnings": warnings,
+                "suggestions": [f"Fix these errors" if errors else "API draft looks good!"]
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"API validation error: {e}", exc_info=True)
         return ResponseEnvelope.error(
             message=f"Validation failed: {str(e)}",
             error_code="VALIDATION_ERROR"
