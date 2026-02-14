@@ -1,6 +1,6 @@
 # Tobit SPA AI - 기능
 
-> 최종 업데이트: 2026-02-11  
+> 최종 업데이트: 2026-02-14  
 > **전체 완성도: 94%**
 
 ## 1. 문서 개요
@@ -61,7 +61,7 @@
   - 필터 상태 URL 동기화, CSV/JSON 내보내기
   - Event run 조회(`/cep/events/run`)
 - OPS/CI UI (`/ops`)
-  - CI 디스커버리/정책 + `/ops/ci/ask` 질문/답변
+  - CI 디스커버리/정책 + `/ops/ask` 질문/답변
   - 그래프/메트릭/히스토리/시리즈 조회
   - AUTO 모드(레시피/동적/PATH/인사이트)
   - CEP simulate 연계 + Event Browser 링크
@@ -79,6 +79,7 @@
   - LLM Settings 탭: provider(`openai|internal`), base URL, default/fallback model, timeout/retry, routing policy를 런타임 운영값으로 관리
   - LLM Runtime: `app/llm/client.py`가 operation settings의 published value를 우선 사용하고, 미설정 시 `.env` 값을 fallback으로 사용
   - Inspector: Trace ID 검색/필터, parent_trace 연결, Applied Assets · Plan · Execution · References · Answer Blocks · UI Render 섹션으로 전체 흐름 확인, UI Render telemetry/동작 상태 보기, Audit Log 추적
+  - Inspector Trace 목록 검색은 `asset_id` 대신 `asset_name` 기준 필터를 사용하며, 그리드의 Applied Assets는 Asset ID 대신 등록된 Asset 이름으로 우선 표시
   - 상세 명세: `docs/ADMIN_UI_SPEC.md`, `docs/QUERY_ASSET_OPERATION_GUIDE.md`
 
 ### Copilot 안정화 (2026-02-10)
@@ -887,7 +888,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 1. Step 1 discovery와 Step 2 catalog/policy refresh를 수행한다.
 2. 백엔드 + web UI를 실행하고 OPS CI 탭을 선택한 뒤 자연어 질문을 입력한다.
 3. 답변 하단의 `next_actions` 버튼(또는 후보 테이블 내부 “선택” 버튼)으로 CI를 확정하거나 depth를 확장/뷰를 전환한다. UI는 `trace.plan_validated`를 재사용하므로 새 LLM plan을 생성하지 않는다.
-4. Trace 패널에서 `policy_decisions.allowed_rel_types`, `graph.depth` clamp, `/ops/ci/ask`로 보낼 `rerun.base_plan` payload를 확인한다.
+4. Trace 패널에서 `policy_decisions.allowed_rel_types`, `graph.depth` clamp, `/ops/ask`로 보낼 `rerun.base_plan` payload를 확인한다.
 5. 필요하면 아래 예시처럼 rerun curl을 호출해 동일한 trace + policy 정보가 반환되는지 확인한다.
 
 #### Next-action 계약
@@ -897,7 +898,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
   - `{ type: "copy_payload", label, payload }` (rerun payload 복사)
 - rerun 요청 payload 형태:
   ```bash
-  curl -s -X POST http://localhost:8000/ops/ci/ask \
+  curl -s -X POST http://localhost:8000/ops/ask \
     -H "Content-Type: application/json" \
     -d '{ 
       "question": "시스템 뭐야",
@@ -938,7 +939,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 
 #### 실행
 1. `metric_def`/`metric_value`가 존재하도록 metric discovery(Step 1)를 수행한다.
-2. `/ops/ci/ask`(CI 탭)로 메트릭 질문을 보낸다. 응답에는 기존 CI 상세 + aggregate/series 결과를 요약한 metric 테이블이 포함된다.
+2. `/ops/ask`(CI 탭)로 메트릭 질문을 보낸다. 응답에는 기존 CI 상세 + aggregate/series 결과를 요약한 metric 테이블이 포함된다.
 3. 메트릭 테이블 하단의 “최근 1시간/24시간/7일” next-action 버튼으로 동일 메트릭을 다른 윈도우로 rerun한다.
 
 #### 샘플 질문

@@ -207,7 +207,7 @@ All OPS routes now include security enhancements:
   - Sanitizes trace data before returning to client
   - Maintains full functionality while protecting data
 
-#### POST /ops/ci/ask (`/apps/api/app/modules/ops/routes/ci_ask.py`)
+#### POST /ops/ask (`/apps/api/app/modules/ops/routes/ci_ask.py`)
 - **Enhancement:** Request payload masking in logging
 - **Implementation:**
   ```python

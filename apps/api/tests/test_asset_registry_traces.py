@@ -46,3 +46,37 @@ def test_list_asset_traces_returns_traces(session: Session) -> None:
     assert data["total"] == 1
     assert data["traces"][0]["trace_id"] == "trace-asset-001"
     assert str(asset.asset_id) in data["traces"][0]["applied_asset_versions"]
+
+
+def test_list_inspector_traces_filters_by_asset_name(session: Session) -> None:
+    asset = TbAssetRegistry(
+        asset_type="source",
+        name="orders_source_asset",
+    )
+    session.add(asset)
+    session.commit()
+    session.refresh(asset)
+
+    trace = TbExecutionTrace(
+        trace_id="trace-asset-name-001",
+        feature="ci",
+        endpoint="/ops/ask",
+        method="POST",
+        ops_mode="real",
+        question="Find order impact",
+        status="success",
+        duration_ms=88,
+        asset_versions=[str(asset.asset_id)],
+    )
+    session.add(trace)
+    session.commit()
+
+    client = _make_client(session)
+    response = client.get("/inspector/traces?asset_name=orders_source")
+
+    assert response.status_code == 200
+    payload = response.json()
+    data = payload["data"]
+    assert data["total"] >= 1
+    trace_ids = [item["trace_id"] for item in data["traces"]]
+    assert "trace-asset-name-001" in trace_ids

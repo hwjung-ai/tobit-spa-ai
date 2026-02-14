@@ -446,7 +446,7 @@ def test_tenant_isolation():
 - [ ] OPS CI 통합 테스트
   ```bash
   # OPS CI Ask에서 문서 질의 테스트
-  POST /ops/ci/ask
+  POST /ops/ask
   {
     "question": "문서에서 성능 최적화 관련 내용은?"
   }
@@ -563,7 +563,7 @@ alembic upgrade head
 python tools/init_document_search_tool.py
 
 # 3. OPS CI Ask에서 문서 검색 사용
-POST /ops/ci/ask
+POST /ops/ask
 { "question": "문서에서 관련 정보를 찾아줄 수 있나?" }
 ```
 

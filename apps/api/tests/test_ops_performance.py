@@ -449,7 +449,7 @@ class TestEndpointResponseTime:
         pass
 
     def test_ci_ask_endpoint_response_time(self):
-        """Test /ci/ask endpoint response time (target: < 5000ms)."""
+        """Test /ask endpoint response time (target: < 5000ms)."""
         # This would require TestClient setup
         pass
 

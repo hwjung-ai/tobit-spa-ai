@@ -1,7 +1,7 @@
 # OPS-Docs 통합 아키텍처 검토 분석
 
 **작성일**: 2026-02-06
-**주제**: ops/ci/ask에서 docs 메뉴의 문서를 소스로 사용하기 위한 최적 아키텍처
+**주제**: ops/ask에서 docs 메뉴의 문서를 소스로 사용하기 위한 최적 아키텍처
 **요청**: Gemini의 외부 HTTP API 기반 접근 검토
 
 ---
@@ -9,7 +9,7 @@
 ## 1. 문제 정의
 
 ### 사용자 요구사항
-ops/ci/ask API로 질의할 때, docs 메뉴에서 업로드한 문서를 **답변의 소스**로 활용하려면:
+ops/ask API로 질의할 때, docs 메뉴에서 업로드한 문서를 **답변의 소스**로 활용하려면:
 - **Q1**: Tools 설정만으로 가능한가?
 - **Q2**: 추가 개발이 필요한가?
 
@@ -550,7 +550,7 @@ Gemini의 주장:
    └─ body_template: {query, top_k}
 
 3. OPS CI Ask 사용
-   POST /ops/ci/ask
+   POST /ops/ask
    ├─ "서버 성능 관련 문서는?"
    └─ 자동으로 document_search 도구 호출
 ```

@@ -15,7 +15,7 @@ def test_regression_analysis_endpoint(e2e_client, e2e_artifact_collector):
 
     trace_ids = []
     for question in questions:
-        response = e2e_client.post("/ops/ci/ask", json={"question": question})
+        response = e2e_client.post("/ops/ask", json={"question": question})
         assert response.status_code == 200
 
         trace_data = response.json()
@@ -87,7 +87,7 @@ def test_analyze_regression_workflow(e2e_client, e2e_artifact_collector):
 
     base_traces = []
     for question in base_questions:
-        response = e2e_client.post("/ops/ci/ask", json={"question": question})
+        response = e2e_client.post("/ops/ask", json={"question": question})
         if response.status_code == 200:
             trace_data = response.json()
             trace_id = trace_data.get("data", {}).get("trace", {}).get("trace_id")

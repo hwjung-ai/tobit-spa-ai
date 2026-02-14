@@ -60,7 +60,7 @@ Successfully completed comprehensive security enhancement of the OPS module with
 - ✅ Trace data protection
 - ✅ Backward compatibility maintained
 
-**b) POST /ops/ci/ask** (`ci_ask.py`)
+**b) POST /ops/ask** (`ci_ask.py`)
 - ✅ Incoming payload masking
 - ✅ Enhanced logging with masked data
 - ✅ Trace ID protection

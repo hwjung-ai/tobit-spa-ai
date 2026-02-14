@@ -6,11 +6,17 @@ export const getStatusBadgeClass = (status: string) =>
 
 export const formatDuration = (ms: number) => `${ms}ms`;
 
-export const formatAppliedAssetSummary = (trace: TraceSummaryRow) => {
+export const formatAppliedAssetSummary = (
+  trace: TraceSummaryRow,
+  resolveDisplay?: (value: string) => string,
+) => {
   if (!trace.applied_asset_versions.length) {
     return "Assets: none";
   }
-  const preview = trace.applied_asset_versions.slice(0, 3).join(" / ");
+  const mapped = resolveDisplay
+    ? trace.applied_asset_versions.map((value) => resolveDisplay(value))
+    : trace.applied_asset_versions;
+  const preview = mapped.slice(0, 3).join(" / ");
   const extra = trace.applied_asset_versions.length - 3;
   return extra > 0 ? `${preview} / +${extra} more` : preview;
 };

@@ -2,7 +2,7 @@
   "metadata": {
     "ops_assume_real_mode": "true",
     "base_url": "http://localhost:8000",
-    "ci_endpoint": "/ops/ci/ask",
+    "ci_endpoint": "/ops/ask",
     "seed_range": {
       "from": "2025-12-01",
       "to": "2025-12-31"
@@ -18,7 +18,7 @@
     {
       "test_name": "lookup_server_status",
       "query": "srv-erp-01의 현재 상태와 기본 정보를 알려줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -61,7 +61,7 @@
     {
       "test_name": "metric_cpu_usage",
       "query": "srv-erp-01의 2025-12-01~2025-12-31 cpu_usage 평균과 마지막 값을 알려줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -104,7 +104,7 @@
     {
       "test_name": "history_events",
       "query": "srv-erp-01의 2025-12-01~2025-12-31 severity 2 이상 이벤트를 요약해줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -147,7 +147,7 @@
     {
       "test_name": "list_servers",
       "query": "owner=erp-platform status=monitoring 서버 목록을 보여줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -190,7 +190,7 @@
     {
       "test_name": "multi_step_app_history",
       "query": "app-erp-alert-01-1의 2025-12-01~2025-12-31 작업/배포 이력과 구동 호스트를 함께 보여줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -230,7 +230,7 @@
     {
       "test_name": "no_data_guidance",
       "query": "srv-erp-99의 상태를 알려줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -270,7 +270,7 @@
     {
       "test_name": "ambiguous_integration",
       "query": "integration 앱의 최근 배포 상태를 알려줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"
@@ -313,7 +313,7 @@
     {
       "test_name": "policy_depth",
       "query": "app-erp-alert-01-1 영향 그래프를 depth 10으로 확장해줘.",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "seed_range": {
         "from": "2025-12-01",
         "to": "2025-12-31"

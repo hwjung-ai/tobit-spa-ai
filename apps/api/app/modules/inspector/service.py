@@ -28,12 +28,15 @@ def _summarize_asset(asset: Dict[str, Any] | None) -> Dict[str, Any] | None:
 
 
 def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
+    catalog_or_schema = state.get("catalog") or state.get("schema")
     return {
         "prompt": _summarize_asset(state.get("prompt")),
         "policy": _summarize_asset(state.get("policy")),
         "mapping": _summarize_asset(state.get("mapping")),
         "source": _summarize_asset(state.get("source")),
-        "schema": _summarize_asset(state.get("schema")),
+        "catalog": _summarize_asset(catalog_or_schema),
+        # Backward compatibility for clients still reading `schema`.
+        "schema": _summarize_asset(catalog_or_schema),
         "resolver": _summarize_asset(state.get("resolver")),
         "queries": [
             _summarize_asset(entry) for entry in state.get("queries", []) if entry
@@ -44,7 +47,7 @@ def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
 
 def _compute_asset_versions(state: dict[str, Any]) -> List[str]:
     versions: List[str] = []
-    for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
+    for key in ("prompt", "policy", "mapping", "source", "resolver"):
         info = state.get(key)
         if info:
             asset_id = info.get("asset_id")
@@ -52,6 +55,15 @@ def _compute_asset_versions(state: dict[str, Any]) -> List[str]:
                 versions.append(asset_id)
             else:
                 versions.append(f"{info.get('name')}@{info.get('source')}")
+    catalog_or_schema = state.get("catalog") or state.get("schema")
+    if catalog_or_schema:
+        asset_id = catalog_or_schema.get("asset_id")
+        if asset_id:
+            versions.append(asset_id)
+        else:
+            versions.append(
+                f"{catalog_or_schema.get('name')}@{catalog_or_schema.get('source')}"
+            )
     for entry in state.get("queries", []):
         if not entry:
             continue
@@ -118,12 +130,15 @@ def _compute_fallbacks(state: dict[str, Any]) -> Dict[str, bool]:
             return True
         return info.get("source") != "asset_registry"
 
+    catalog_or_schema = state.get("catalog") or state.get("schema")
     return {
         "prompt": _is_external(state.get("prompt")),
         "policy": _is_external(state.get("policy")),
         "mapping": _is_external(state.get("mapping")),
         "source": _is_external(state.get("source")),
-        "schema": _is_external(state.get("schema")),
+        "catalog": _is_external(catalog_or_schema),
+        # Backward compatibility for clients still reading `schema`.
+        "schema": _is_external(catalog_or_schema),
         "resolver": _is_external(state.get("resolver")),
         "query": any(
             entry.get("source") != "asset_registry"

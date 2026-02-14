@@ -571,7 +571,7 @@ export default function OpsPage() {
         if (action.payload?.patch) {
           rerunBody.rerun.patch = action.payload.patch;
         }
-        const data = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ci/ask`, {
+        const data = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ask`, {
           method: "POST",
           body: JSON.stringify(rerunBody),
         });

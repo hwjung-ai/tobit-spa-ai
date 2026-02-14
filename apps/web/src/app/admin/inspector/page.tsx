@@ -125,7 +125,7 @@ function InspectorContent() {
         if (filters.status) params.set("status", filters.status);
         if (filters.from) params.set("from", filters.from);
         if (filters.to) params.set("to", filters.to);
-        if (filters.assetId) params.set("asset_id", filters.assetId);
+        if (filters.assetName) params.set("asset_name", filters.assetName);
         const response = await fetchApi<TraceListResponse>(
           `/inspector/traces?${params.toString()}`,
         );
@@ -221,7 +221,7 @@ function InspectorContent() {
   // Load asset names when trace detail is loaded (for InspectorStagePipeline)
   useEffect(() => {
     const loadAssetNames = async () => {
-      if (traceDetail && Object.keys(availableAssets).length === 0) {
+      if (Object.keys(availableAssets).length === 0) {
         try {
           const response = await fetchApi<{ assets: Asset[] }>("/asset-registry/assets");
           const grouped: Record<string, AssetVersion[]> = {};
@@ -253,7 +253,7 @@ function InspectorContent() {
       }
     };
     loadAssetNames();
-  }, [traceDetail, availableAssets]);
+  }, [availableAssets]);
 
   useEffect(() => {
     setTraceCopyStatus("idle");
@@ -405,20 +405,20 @@ function InspectorContent() {
   const renderAppliedAsset = (asset: AssetSummary | null | undefined) => {
     if (!asset) {
       return (
-        <span className="text-xs text-muted-standard">
+        <span className="text-xs text-muted-foreground">
           미적용
         </span>
       );
     }
     return (
-      <div className="text-xs space-y-1 text-muted-standard">
+      <div className="space-y-1 text-xs text-muted-foreground">
         {asset.name && <p>{asset.name}</p>}
-        <p className="font-mono text-sm">
+        <p className="font-mono text-sm text-foreground">
           {asset.asset_id || `${asset.name || "asset"}@${asset.source || "fallback"}`}
           {asset.version ? ` · v${asset.version}` : ""}
         </p>
         {asset.source && (
-          <p className="uppercase text-xs tracking-wider text-muted-standard">
+          <p className="uppercase text-xs tracking-wider text-muted-foreground">
             {asset.source}
           </p>
         )}
@@ -428,14 +428,26 @@ function InspectorContent() {
 
   const highlightFallbacks = (fallbacks: Record<string, boolean> | null | undefined) => {
     if (!fallbacks) return null;
+    const entries = Object.entries(fallbacks).filter(([key]) => {
+      // Prefer catalog label when both keys exist.
+      if (key === "schema" && Object.prototype.hasOwnProperty.call(fallbacks, "catalog")) {
+        return false;
+      }
+      return true;
+    });
     return (
       <div className="flex gap-2 flex-wrap text-sm">
-        {Object.entries(fallbacks).map(([key, value]) => (
+        {entries.map(([key, value]) => (
           <span
             key={key}
-            className={`px-2 py-1 rounded-full font-semibold uppercase tracking-wider text-xs ${value ? "bg-yellow-900/60 text-yellow-200" : "bg-green-900/30 text-emerald-300"}`}
+            className={cn(
+              "px-2 py-1 rounded-full border font-semibold uppercase tracking-wider text-xs",
+              value
+                ? "border-amber-500/50 bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                : "border-emerald-500/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+            )}
           >
-            {key}: {value ? "fallback" : "asset"}
+            {key === "schema" ? "catalog" : key}: {value ? "fallback" : "asset"}
           </span>
         ))}
       </div>
@@ -489,6 +501,29 @@ function InspectorContent() {
     });
     return names;
   }, [availableAssets]);
+
+  const resolveAssetDisplayName = useCallback(
+    (value: string): string => {
+      if (!value) {
+        return value;
+      }
+      const raw = value.trim();
+      const versionMatch = raw.match(/:v(\d+)$/);
+      const normalizedId = versionMatch ? raw.slice(0, versionMatch.index) : raw;
+      const found = assetNames[normalizedId];
+      if (found?.name) {
+        if (versionMatch?.[1]) {
+          return `${found.name} (v${versionMatch[1]})`;
+        }
+        if (found.version) {
+          return `${found.name} (v${found.version})`;
+        }
+        return found.name;
+      }
+      return raw;
+    },
+    [assetNames],
+  );
 
   const loadOverrideAssets = useCallback(async () => {
     setAssetOverrideLoading(true);
@@ -550,7 +585,7 @@ function InspectorContent() {
           answer: string;
           trace: Record<string, unknown>;
           meta?: Record<string, unknown>;
-        }>("/ops/ci/ask", {
+        }>("/ops/ask", {
           method: "POST",
           body: JSON.stringify({
             question: traceDetail.question,
@@ -595,7 +630,7 @@ function InspectorContent() {
               value={lookupTraceId}
               onChange={(event) => setLookupTraceId(event.target.value)}
               placeholder="Trace ID를 입력하세요"
-              className="input-container flex-1 font-mono text-xs"
+              className="input-container flex-1"
             />
             <button
               onClick={handleLookup}
@@ -627,11 +662,11 @@ function InspectorContent() {
               />
               <input
                 type="text"
-                value={filters.assetId}
+                value={filters.assetName}
                 onChange={(event) =>
-                  setFilters((prev) => ({ ...prev, assetId: event.target.value }))
+                  setFilters((prev) => ({ ...prev, assetName: event.target.value }))
                 }
-                placeholder="Asset ID 기준"
+                placeholder="Asset name 기준"
                 className="input-container"
               />
               <div className="flex items-center justify-end">
@@ -790,7 +825,7 @@ function InspectorContent() {
                     <td
                       className="px-4 py-3 text-xs "
                     >
-                      {formatAppliedAssetSummary(trace)}
+                      {formatAppliedAssetSummary(trace, resolveAssetDisplayName)}
                     </td>
                   </tr>
                 ))}
@@ -899,7 +934,7 @@ function InspectorContent() {
                     "px-3 py-2 rounded-xl border text-xs uppercase tracking-wider transition",
                     singleRcaLoading
                       ? "border-border text-muted-foreground opacity-50 cursor-not-allowed"
-                      : "border-fuchsia-600 bg-fuchsia-900/20 text-fuchsia-200 hover:bg-fuchsia-900/30"
+                      : "border-sky-600 bg-sky-600 text-white hover:bg-sky-500 dark:border-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600"
                   )}
                   data-testid="drawer-run-rca"
                 >
@@ -907,13 +942,13 @@ function InspectorContent() {
                 </button>
                 <button
                   onClick={handleCompareClick}
-                  className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-emerald-200 text-xs uppercase tracking-wider transition hover:bg-emerald-900/30"
+                  className="px-3 py-2 rounded-xl border border-emerald-600 bg-emerald-600 text-xs uppercase tracking-wider text-white transition hover:bg-emerald-500 dark:border-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
                 >
                   Compare
                 </button>
                 <button
                   onClick={handleStageCompareClick}
-                  className="px-3 py-2 rounded-xl border border-amber-700 bg-amber-900/20 text-amber-200 text-xs uppercase tracking-wider transition hover:bg-amber-900/30"
+                  className="px-3 py-2 rounded-xl border border-amber-600 bg-amber-600 text-xs uppercase tracking-wider text-white transition hover:bg-amber-500 dark:border-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
                 >
                   Stage Compare
                 </button>
@@ -1305,19 +1340,52 @@ function InspectorContent() {
                                   Applied Assets
                                 </p>
                                 <div className="flex flex-wrap gap-2">
-                                  {Object.entries(appliedAssets).map(([type, value]) => {
+                                  {Object.entries(appliedAssets)
+                                    .filter(([type]) => {
+                                      // Prefer catalog label when both keys exist.
+                                      if (
+                                        type === "schema" &&
+                                        Object.prototype.hasOwnProperty.call(appliedAssets, "catalog")
+                                      ) {
+                                        return false;
+                                      }
+                                      return true;
+                                    })
+                                    .map(([type, value]) => {
                                     if (!value) return null;
                                     const config = {
-                                      prompt: { icon: "⭐", color: "text-sky-300" },
-                                      policy: { icon: "🛡️", color: "text-emerald-300" },
-                                      mapping: { icon: "🗺️", color: "text-amber-300" },
+                                      prompt: {
+                                        icon: "⭐",
+                                        color: "text-sky-700 dark:text-sky-300",
+                                      },
+                                      policy: {
+                                        icon: "🛡️",
+                                        color: "text-emerald-700 dark:text-emerald-300",
+                                      },
+                                      mapping: {
+                                        icon: "🗺️",
+                                        color: "text-amber-700 dark:text-amber-300",
+                                      },
                                       source: {
                                         icon: "💾",
                                         color: "text-muted-foreground",
                                       },
-                                      schema: { icon: "📊", color: "text-fuchsia-300" },
-                                      resolver: { icon: "🔧", color: "text-orange-300" },
-                                      query: { icon: "🔍", color: "text-purple-300" },
+                                      catalog: {
+                                        icon: "📊",
+                                        color: "text-fuchsia-700 dark:text-fuchsia-300",
+                                      },
+                                      schema: {
+                                        icon: "📊",
+                                        color: "text-fuchsia-700 dark:text-fuchsia-300",
+                                      },
+                                      resolver: {
+                                        icon: "🔧",
+                                        color: "text-orange-700 dark:text-orange-300",
+                                      },
+                                      query: {
+                                        icon: "🔍",
+                                        color: "text-violet-700 dark:text-violet-300",
+                                      },
                                     }[type] || {
                                       icon: "📄",
                                       color: "text-muted-foreground",
@@ -1340,7 +1408,7 @@ function InspectorContent() {
                                         <span
                                           className=" capitalize"
                                         >
-                                          {type}:
+                                          {type === "schema" ? "catalog" : type}:
                                         </span>
                                         <span className={cn("font-mono", config.color)}>
                                           {displayValue}

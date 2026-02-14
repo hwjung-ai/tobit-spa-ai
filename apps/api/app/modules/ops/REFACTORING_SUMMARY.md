@@ -25,7 +25,7 @@ The OPS module has been successfully refactored to improve code organization and
 | File | Endpoints | Lines | Purpose |
 |------|-----------|-------|---------|
 | `routes/query.py` | `/query`, `/observability/kpis` | ~130 | Standard OPS query processing |
-| `routes/ci_ask.py` | `/ask`, `/ci/ask` | ~750 | OPS ask processing with planning |
+| `routes/ci_ask.py` | `/ask`, `/ask` | ~750 | OPS ask processing with planning |
 | `routes/ui_actions.py` | `/ui-actions` | ~220 | Deterministic UI action execution |
 | `routes/rca.py` | `/rca/*` | ~150 | Root cause analysis |
 | `routes/regression.py` | `/golden-queries/*`, `/regression-runs/*` | ~650 | Golden query management and regression |

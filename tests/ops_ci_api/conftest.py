@@ -113,7 +113,7 @@ def artifact_collector(request) -> ArtifactCollector:
     request.config.ops_ci_artifacts = collector
     collector.set_metadata("ops_assume_real_mode", os.environ.get("OPS_ASSUME_REAL_MODE", "true"))
     collector.set_metadata("base_url", os.environ.get("OPS_BASE_URL", "http://localhost:8000"))
-    collector.set_metadata("ci_endpoint", os.environ.get("OPS_CI_ENDPOINT", "/ops/ci/ask"))
+    collector.set_metadata("ci_endpoint", os.environ.get("OPS_CI_ENDPOINT", "/ops/ask"))
     collector.set_metadata("seed_range", {
         "from": os.environ.get("OPS_SEED_FROM", "2025-12-01"),
         "to": os.environ.get("OPS_SEED_TO", "2025-12-31"),
@@ -128,7 +128,7 @@ def base_url() -> str:
 
 @pytest.fixture(scope="session")
 def ci_endpoint() -> str:
-    return os.environ.get("OPS_CI_ENDPOINT", "/ops/ci/ask")
+    return os.environ.get("OPS_CI_ENDPOINT", "/ops/ask")
 
 
 @pytest.fixture(scope="session")

@@ -14,7 +14,7 @@ def test_orchestration_trace_lifecycle(e2e_client, e2e_artifact_collector):
     entry = {
         "test_name": test_name,
         "query": question,
-        "endpoint": "/ops/ci/ask",
+        "endpoint": "/ops/ask",
         "pass": False,
         "reason": "",
         "status": "pending"
@@ -23,7 +23,7 @@ def test_orchestration_trace_lifecycle(e2e_client, e2e_artifact_collector):
     try:
         # Start orchestration
         start_time = time.time()
-        response = e2e_client.post("/ops/ci/ask", json={"question": question})
+        response = e2e_client.post("/ops/ask", json={"question": question})
         duration = time.time() - start_time
 
         entry["status_code"] = response.status_code
@@ -76,7 +76,7 @@ def test_inspector_trace_retrieval(e2e_client, e2e_artifact_collector):
     test_name = "inspector_trace_retrieval"
 
     # First create a trace
-    create_response = e2e_client.post("/ops/ci/ask", json={
+    create_response = e2e_client.post("/ops/ask", json={
         "question": "CPU 사용률을 확인해주세요"
     })
     assert create_response.status_code == 200
@@ -138,7 +138,7 @@ def test_inspector_trace_search(e2e_client, e2e_artifact_collector):
 
     trace_ids = []
     for question in questions:
-        response = e2e_client.post("/ops/ci/ask", json={"question": question})
+        response = e2e_client.post("/ops/ask", json={"question": question})
         assert response.status_code == 200
 
         trace_data = response.json()
@@ -193,14 +193,14 @@ def test_control_loop_replan_mechanism(e2e_client, e2e_artifact_collector):
     entry = {
         "test_name": test_name,
         "query": question,
-        "endpoint": "/ops/ci/ask",
+        "endpoint": "/ops/ask",
         "pass": False,
         "reason": "",
         "status": "pending"
     }
 
     try:
-        response = e2e_client.post("/ops/ci/ask", json={"question": question})
+        response = e2e_client.post("/ops/ask", json={"question": question})
         entry["status_code"] = response.status_code
 
         assert response.status_code == 200, "Status code must be 200"

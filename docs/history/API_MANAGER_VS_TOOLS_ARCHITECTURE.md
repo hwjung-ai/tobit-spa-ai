@@ -57,7 +57,7 @@ Asset Registry (Tools)
 │   ├─ Input/Output Schema (JSON Schema)
 │   └─ Tags (메타데이터)
 ├─> Tool 실행
-│   ├─ OPS CI/Ask에서 자동 발견
+│   ├─ OPS Ask에서 자동 발견
 │   ├─ LLM이 도구로 선택하여 호출
 │   └─ 결과를 LLM 컨텍스트에 포함
 ├─> 상태 관리

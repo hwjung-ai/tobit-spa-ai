@@ -62,7 +62,7 @@ def test_ci_ask_endpoint_performance(e2e_client, profiler, e2e_artifact_collecto
 
     entry = {
         "test_name": test_name,
-        "endpoint": "/ops/ci/ask",
+        "endpoint": "/ops/ask",
         "iterations": 5,
         "pass": False,
         "reason": "",
@@ -73,7 +73,7 @@ def test_ci_ask_endpoint_performance(e2e_client, profiler, e2e_artifact_collecto
         # Measure performance
         stats = profiler.measure_endpoint(
             e2e_client,
-            "/ops/ci/ask",
+            "/ops/ask",
             {"question": question},
             iterations=5
         )
@@ -117,7 +117,7 @@ def test_inspector_traces_performance(e2e_client, profiler, e2e_artifact_collect
 
     # First create some traces
     for i in range(3):
-        response = e2e_client.post("/ops/ci/ask", json={
+        response = e2e_client.post("/ops/ask", json={
             "question": f"Test query {i} for performance testing"
         })
         assert response.status_code == 200
@@ -172,7 +172,7 @@ def test_memory_usage_profiling(e2e_client, e2e_artifact_collector):
     # Note: This is a basic test that checks response size as a proxy for memory usage
     entry = {
         "test_name": test_name,
-        "endpoint": "/ops/ci/ask",
+        "endpoint": "/ops/ask",
         "pass": False,
         "reason": "",
         "status": "pending"
@@ -180,7 +180,7 @@ def test_memory_usage_profiling(e2e_client, e2e_artifact_collector):
 
     try:
         # Test with simple question
-        response = e2e_client.post("/ops/ci/ask", json={"question": "Simple query"})
+        response = e2e_client.post("/ops/ask", json={"question": "Simple query"})
         data = response.json()
 
         # Calculate response size
@@ -190,7 +190,7 @@ def test_memory_usage_profiling(e2e_client, e2e_artifact_collector):
         assert response_size < 1024 * 1024, f"Response size {response_size} bytes exceeds 1MB limit"
 
         # Test with complex question that might generate larger responses
-        response = e2e_client.post("/ops/ci/ask", json={
+        response = e2e_client.post("/ops/ask", json={
             "question": "複雑なクエリで詳細なレポートを生成してください"
         })
         data = response.json()
@@ -225,7 +225,7 @@ def test_concurrent_requests_performance(e2e_client, e2e_artifact_collector):
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
             None,
-            lambda: client.post("/ops/ci/ask", json={"question": question})
+            lambda: client.post("/ops/ask", json={"question": question})
         )
         return response
 
@@ -246,7 +246,7 @@ def test_concurrent_requests_performance(e2e_client, e2e_artifact_collector):
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
                 executor.submit(
-                    lambda q: e2e_client.post("/ops/ci/ask", json={"question": q}),
+                    lambda q: e2e_client.post("/ops/ask", json={"question": q}),
                     question
                 )
                 for question in questions

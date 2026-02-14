@@ -144,7 +144,7 @@ def generate_test_section(
     # 엔드포인트 및 요청
     sections.append("**API 호출:**")
     sections.append("```")
-    sections.append("POST /ops/ci/ask")
+    sections.append("POST /ops/ask")
     sections.append(f'{{"question": "{question}"}}')
     sections.append("```")
     sections.append("")
@@ -224,7 +224,7 @@ def generate_report(artifacts_dir: Path) -> str:
     sections.append("| 항목 | 값 |")
     sections.append("|------|-----|")
     sections.append("| 백엔드 URL | `http://localhost:8000` |")
-    sections.append("| 엔드포인트 | `POST /ops/ci/ask` |")
+    sections.append("| 엔드포인트 | `POST /ops/ask` |")
     sections.append("| OPS_MODE | `real` (환경변수 및 .env 확인됨) |")
     sections.append("| 테스트 기간 범위 | `2025-12-01` ~ `2025-12-31` |")
     sections.append("| DB 상태 | Postgres 연결 활성 ✅ |")

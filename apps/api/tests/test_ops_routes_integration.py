@@ -3,7 +3,7 @@ Integration tests for OPS Routes - HTTP endpoint testing.
 
 Tests cover:
 - /query endpoint
-- /ci/ask endpoint
+- /ask endpoint
 - /ui-actions endpoint
 - /rca endpoint
 - Error responses and edge cases
@@ -92,7 +92,7 @@ class TestCiAskEndpoint:
     """Integration tests for /ops/ask endpoint."""
 
     def test_ci_ask_with_valid_request(self, client):
-        """Test /ci/ask with valid request."""
+        """Test /ask with valid request."""
         payload = {
             "question": "Why is srv-erp-01 slow?"
         }
@@ -101,7 +101,7 @@ class TestCiAskEndpoint:
         assert response.status_code in [200, 500]  # May fail due to missing data
 
     def test_ci_ask_missing_tenant_id(self, client):
-        """Test /ci/ask without X-Tenant-Id header."""
+        """Test /ask without X-Tenant-Id header."""
         payload = {
             "question": "Why is srv-erp-01 slow?"
         }
@@ -109,7 +109,7 @@ class TestCiAskEndpoint:
         assert response.status_code == 400
 
     def test_ci_ask_with_rerun_context(self, client):
-        """Test /ci/ask with rerun context."""
+        """Test /ask with rerun context."""
         payload = {
             "question": "Why is srv-erp-01 slow?",
             "rerun": {
@@ -121,7 +121,7 @@ class TestCiAskEndpoint:
         assert response.status_code in [200, 500]
 
     def test_ci_ask_response_structure(self, client):
-        """Test /ci/ask response structure."""
+        """Test /ask response structure."""
         payload = {
             "question": "Is system healthy?"
         }
@@ -134,7 +134,7 @@ class TestCiAskEndpoint:
             assert "data" in data or "error" in data
 
     def test_ci_ask_with_asset_overrides(self, client):
-        """Test /ci/ask with asset overrides."""
+        """Test /ask with asset overrides."""
         payload = {
             "question": "Test question",
             "asset_overrides": {
@@ -146,7 +146,7 @@ class TestCiAskEndpoint:
         assert response.status_code in [200, 400, 500]
 
     def test_ci_ask_complex_question(self, client):
-        """Test /ci/ask with complex multi-part question."""
+        """Test /ask with complex multi-part question."""
         payload = {
             "question": "Compare CPU usage between srv-erp-01 and srv-erp-02 over the last week and identify anomalies"
         }

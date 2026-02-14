@@ -4,9 +4,10 @@ from datetime import datetime
 from typing import Tuple
 from uuid import uuid4
 
-from sqlalchemy import func, or_
+from sqlalchemy import Text, cast, func, or_
 from sqlmodel import Session, select
 
+from app.modules.asset_registry.models import TbAssetRegistry
 from app.modules.inspector.models import (
     TbExecutionTrace,
     TbGoldenQuery,
@@ -36,6 +37,7 @@ def list_execution_traces(
     from_ts: datetime | None = None,
     to_ts: datetime | None = None,
     asset_id: str | None = None,
+    asset_name: str | None = None,
     parent_trace_id: str | None = None,
     route: str | None = None,
     replan_count: int | None = None,
@@ -69,6 +71,30 @@ def list_execution_traces(
             filters.append(TbExecutionTrace.asset_versions.like(f"%{asset_id}%"))
         else:
             filters.append(TbExecutionTrace.asset_versions.contains([asset_id]))
+    if asset_name:
+        term = f"%{asset_name}%"
+        matching_asset_ids = [
+            str(asset_id)
+            for asset_id in session.exec(
+                select(TbAssetRegistry.asset_id).where(TbAssetRegistry.name.ilike(term))
+            ).all()
+        ]
+        name_filters: list[object] = [
+            cast(TbExecutionTrace.asset_versions, Text).ilike(term)
+        ]
+        dialect = session.get_bind().dialect.name
+        if matching_asset_ids:
+            if dialect == "sqlite":
+                name_filters.extend(
+                    TbExecutionTrace.asset_versions.like(f"%{candidate_id}%")
+                    for candidate_id in matching_asset_ids
+                )
+            else:
+                name_filters.extend(
+                    TbExecutionTrace.asset_versions.contains([candidate_id])
+                    for candidate_id in matching_asset_ids
+                )
+        filters.append(or_(*name_filters))
     if route:
         filters.append(TbExecutionTrace.route == route)
     if replan_count is not None:

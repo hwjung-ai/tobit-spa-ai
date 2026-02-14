@@ -11,7 +11,7 @@ from typing import Dict, Any, List
 
 # API endpoint
 BASE_URL = "http://localhost:8000"
-CI_ASK_ENDPOINT = f"{BASE_URL}/ops/ci/ask"
+CI_ASK_ENDPOINT = f"{BASE_URL}/ops/ask"
 
 # Test queries designed for orchestration
 TEST_QUERIES = [
@@ -49,7 +49,7 @@ TEST_QUERIES = [
 
 
 def send_query(query_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Send a single query to the ops/ci/ask endpoint."""
+    """Send a single query to the ops/ask endpoint."""
     request_payload = {
         "question": query_data["question"]
     }

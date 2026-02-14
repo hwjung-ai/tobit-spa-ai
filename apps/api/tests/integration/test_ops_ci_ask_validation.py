@@ -1,5 +1,5 @@
 """
-실제 ops/ci/ask API를 통한 통합 테스트
+실제 ops/ask API를 통한 통합 테스트
 Trace ID 기반 상세 분석 및 검증
 """
 
@@ -15,7 +15,7 @@ TRACE_ID = "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1"
 async def test_ops_ci_ask_real_query():
     """
     실제 LLM 기반 질의 테스트
-    ops/ci/ask 엔드포인트를 직접 호출
+    ops/ask 엔드포인트를 직접 호출
     """
     async with httpx.AsyncClient(timeout=60) as client:
         payload = {
@@ -24,7 +24,7 @@ async def test_ops_ci_ask_real_query():
         }
 
         print("\n" + "="*80)
-        print("📍 실제 ops/ci/ask API 테스트")
+        print("📍 실제 ops/ask API 테스트")
         print("="*80)
         print(f"엔드포인트: POST {API_BASE_URL}/ops/ask")
         print(f"질의: {payload['question']}")

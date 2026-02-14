@@ -1,6 +1,6 @@
 """
 OPS CI API Integration Tests (Content-Based Enhanced Validation)
-테스트: /ops/ci/ask 엔드포인트의 범용 질의 + 오케스트레이션
+테스트: /ops/ask 엔드포인트의 범용 질의 + 오케스트레이션
 검증: HTTP 200 + blocks + trace/meta 존재 + mock 금지
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ import httpx
 import pytest
 
 BASE_URL = os.environ.get("OPS_BASE_URL", "http://localhost:8000")
-CI_ENDPOINT = "/ops/ci/ask"
+CI_ENDPOINT = "/ops/ask"
 TIME_RANGE_FROM = "2025-12-01"
 TIME_RANGE_TO = "2025-12-31"
 

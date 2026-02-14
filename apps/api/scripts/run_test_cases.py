@@ -1,5 +1,5 @@
 """
-Run 20 test cases against /ops/ci/ask API and generate detailed results.
+Run 20 test cases against /ops/ask API and generate detailed results.
 """
 
 from __future__ import annotations
@@ -191,7 +191,7 @@ async def run_single_test(client: httpx.AsyncClient, test_case: dict, api_url: s
 async def run_all_tests():
     """Run all test cases."""
     settings = get_settings()
-    api_url = "http://localhost:8000/ops/ci/ask"
+    api_url = "http://localhost:8000/ops/ask"
 
     print("=" * 80)
     print("Running 20 Test Cases for Generic Orchestration")
@@ -242,7 +242,7 @@ def generate_report(results: list[dict], pass_rate: float, output_path: Path):
     report = f"""# 📊 20개 테스트 케이스 실행 결과
 
 **실행일시**: {timestamp}
-**API**: /ops/ci/ask
+**API**: /ops/ask
 **결과**: {'✅' if pass_rate >= 90 else '❌'} {passed_count}/{total_count} (통과율: {pass_rate:.1f}%)
 
 ---

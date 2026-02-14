@@ -42,6 +42,7 @@ def list_traces(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     asset_id: str | None = Query(None),
+    asset_name: str | None = Query(None),
     parent_trace_id: str | None = Query(None),
     route: str | None = Query(
         None, description="Filter by route: direct, orch, reject"
@@ -57,6 +58,7 @@ def list_traces(
         from_ts=from_ts,
         to_ts=to_ts,
         asset_id=asset_id,
+        asset_name=asset_name,
         parent_trace_id=parent_trace_id,
         route=route,
         replan_count=replan_count,

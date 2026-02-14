@@ -177,7 +177,7 @@ class TestOrchestratorRetryLogic:
 | 범주 | 테스트 수 | 엔드포인트 |
 |------|---------|----------|
 | Query 엔드포인트 | 6개 | POST /ops/query |
-| CI Ask 엔드포인트 | 5개 | POST /ops/ci/ask |
+| CI Ask 엔드포인트 | 5개 | POST /ops/ask |
 | UI Actions 엔드포인트 | 6개 | POST /ops/ui-actions |
 | RCA 엔드포인트 | 5개 | POST /ops/rca/* |
 | 에러 응답 | 3개 | 전역 에러 처리 |
@@ -196,7 +196,7 @@ test_query_with_different_modes()
 test_query_empty_question()
 test_query_response_includes_trace()
 
-# /ops/ci/ask
+# /ops/ask
 test_ci_ask_with_valid_request()
 test_ci_ask_missing_tenant_id()
 test_ci_ask_with_rerun_context()
@@ -254,7 +254,7 @@ test_multiple_concurrent_requests()
 | 확장성 | 3개 | 대규모 템플릿, 깊은 중첩, 다중 바인딩 |
 | 리소스 정리 | 2개 | 핸들러 정리, 컨텍스트 정리 |
 | 회귀 방지 | 2개 | 성능 기준선 검증 |
-| 엔드포인트 성능 | 3개 | /query, /ui-actions, /ci/ask |
+| 엔드포인트 성능 | 3개 | /query, /ui-actions, /ask |
 | 부하 테스트 | 2개 | 지속 로드 테스트 (5초) |
 
 #### 성능 기준
@@ -273,7 +273,7 @@ concurrent_lookups:       < 1s for 1000 lookups
 # Endpoints (목표)
 /query endpoint:          < 1000ms
 /ui-actions endpoint:     < 500ms
-/ci/ask endpoint:         < 5000ms
+/ask endpoint:         < 5000ms
 
 # Throughput
 BindingEngine rendering:  > 1000 renders/sec
@@ -398,7 +398,7 @@ Total: 67 passed in 5.70s
 | 엔드포인트 | 테스트 | 상태 |
 |-----------|-------|------|
 | POST /ops/query | 6개 | 설계 |
-| POST /ops/ci/ask | 5개 | 설계 |
+| POST /ops/ask | 5개 | 설계 |
 | POST /ops/ui-actions | 6개 | 설계 |
 | POST /ops/rca/analyze-trace | 3개 | 설계 |
 | POST /ops/rca/analyze-regression | 2개 | 설계 |
@@ -437,7 +437,7 @@ Total: 67 passed in 5.70s
 1. **통합 테스트 활성화**
    - `/ops/query` 엔드포인트 테스트
    - `/ops/ui-actions` 엔드포인트 테스트
-   - `/ops/ci/ask` 엔드포인트 테스트
+   - `/ops/ask` 엔드포인트 테스트
 
 2. **성능 테스트 실행**
    - 응답 시간 기준선 설정

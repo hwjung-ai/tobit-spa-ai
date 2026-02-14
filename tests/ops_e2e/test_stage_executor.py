@@ -8,7 +8,7 @@ def test_stage_execution_with_override(e2e_client, e2e_artifact_collector):
     test_name = "stage_execution_with_override"
 
     # Create a trace first
-    create_response = e2e_client.post("/ops/ci/ask", json={
+    create_response = e2e_client.post("/ops/ask", json={
         "question": "서버 상태를 확인해주세요"
     })
     assert create_response.status_code == 200
@@ -76,14 +76,14 @@ def test_stage_isolation_and_testing(e2e_client, e2e_artifact_collector):
     # For now, we'll test the trace structure that would support this
     entry = {
         "test_name": test_name,
-        "endpoint": "/ops/ci/ask",
+        "endpoint": "/ops/ask",
         "pass": False,
         "reason": "",
         "status": "pending"
     }
 
     try:
-        response = e2e_client.post("/ops/ci/ask", json={
+        response = e2e_client.post("/ops/ask", json={
             "question": "서버 상태를 확인해주세요"
         })
         entry["status_code"] = response.status_code

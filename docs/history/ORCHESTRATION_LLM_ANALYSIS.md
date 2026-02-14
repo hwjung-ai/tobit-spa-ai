@@ -2,14 +2,14 @@
 
 ## 개요
 
-이 문서는 `/ops/ci/ask` 엔드포인트로 질의를 처리하는 범용 오케스트레이션 시스템의 동작 프로세스와 LLM 호출 지점을 상세하게 설명합니다.
+이 문서는 `/ops/ask` 엔드포인트로 질의를 처리하는 범용 오케스트레이션 시스템의 동작 프로세스와 LLM 호출 지점을 상세하게 설명합니다.
 
 ---
 
 ## 전체 아키텍처
 
 ```
-HTTP POST /ops/ci/ask
+HTTP POST /ops/ask
     ↓
 1. Router Layer (ops/router.py)
     ↓
@@ -28,7 +28,7 @@ HTTP POST /ops/ci/ask
 
 ### 1. Router Layer (`apps/api/app/modules/ops/router.py`)
 
-**엔드포인트**: `@router.post("/ci/ask")`
+**엔드포인트**: `@router.post("/ask")`
 
 **주요 동작**:
 - 요청 수신 및 History 생성 (QueryHistory 레코드)
@@ -39,7 +39,7 @@ HTTP POST /ops/ci/ask
 
 **코드 흐름**:
 ```python
-@router.post("/ci/ask")
+@router.post("/ask")
 def ask_ci(payload: CiAskRequest, request: Request, tenant_id: str = Depends(_tenant_id)):
     # 1. History 생성
     history_entry = QueryHistory(...)
@@ -568,7 +568,7 @@ sys-prod-web-01 서버가 활성 상태입니다. 이 서버는 웹 타입으로
 
 1. **Router Layer**
    - `apps/api/app/modules/ops/router.py`
-   - `/ops/ci/ask` 엔드포인트 정의
+   - `/ops/ask` 엔드포인트 정의
 
 2. **Planner Layer**
    - `apps/api/app/modules/ops/services/ci/planner/planner_llm.py`

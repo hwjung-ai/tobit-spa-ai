@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel
@@ -7,6 +8,15 @@ from pydantic import BaseModel
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph", "document"]
 
 from app.modules.ops.services.orchestration.planner.plan_schema import Plan, View
+
+
+# P1-3: Orchestration Status Enum
+class OrchestrationStatus(str, Enum):
+    """Status of orchestration execution (P1-3)"""
+    SUCCESS = "success"              # All tools succeeded
+    PARTIAL_SUCCESS = "partial"      # Some tools succeeded, some failed
+    DEGRADED = "degraded"            # All tools failed, fallback applied
+    FAILED = "failed"                # Complete failure, no results
 
 
 class OpsQueryRequest(BaseModel):
@@ -103,6 +113,35 @@ class CiAskResponse(BaseModel):
     trace: Dict[str, Any]
     next_actions: List[Dict[str, Any]]
     meta: Dict[str, Any] | None
+
+
+# P1-3: Orchestration Response with Status
+class ToolResult(BaseModel):
+    """Result from a single tool execution (P1-3)"""
+    tool_id: str
+    tool_name: str
+    success: bool
+    data: Dict[str, Any] | None = None
+    error: str | None = None
+    error_code: str | None = None  # P0-5: ToolErrorCode
+    duration_ms: int | None = None
+
+
+class OrchestrationResponse(BaseModel):
+    """Response from orchestration with detailed status (P1-3)"""
+    status: OrchestrationStatus  # SUCCESS | PARTIAL_SUCCESS | DEGRADED | FAILED
+    answer: str | None = None
+    blocks: List[Dict[str, Any]] = []
+    results: List[ToolResult] = []
+    trace: Dict[str, Any] | None = None
+
+    # Metrics for observability
+    successful_tools: int = 0
+    failed_tools: int = 0
+    fallback_applied: bool = False
+    fallback_reason: str | None = None
+    total_duration_ms: int | None = None
+    error_message: str | None = None
 
 
 # UI Actions schemas

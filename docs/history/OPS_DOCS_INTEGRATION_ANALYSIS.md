@@ -1,14 +1,14 @@
 # OPS 모듈과 Docs 메뉴 통합 분석 보고서
 
 **작성일**: 2026-02-06
-**분석 범위**: /ops/ci/ask 엔드포인트와 Document 시스템 통합 전략
+**분석 범위**: /ops/ask 엔드포인트와 Document 시스템 통합 전략
 **상태**: 상세 분석 완료
 
 ---
 
 ## 1. 현재 아키텍처 다이어그램
 
-### 1.1 /ops/ci/ask 엔드포인트 흐름
+### 1.1 /ops/ask 엔드포인트 흐름
 
 ```
 [Client Request (CiAskRequest)]

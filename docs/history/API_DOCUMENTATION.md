@@ -22,7 +22,7 @@ Authorization: Bearer <your-api-key>
 
 ### 1. CI Orchestration Endpoints
 
-#### POST /ops/ci/ask
+#### POST /ops/ask
 
 Execute a CI orchestration query.
 

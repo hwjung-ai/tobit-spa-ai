@@ -6,7 +6,7 @@ export interface FilterState {
   status: string;
   from: string;
   to: string;
-  assetId: string;
+  assetName: string;
 }
 
 export interface TraceDetailResponse {
@@ -35,7 +35,7 @@ export const initialFilters: FilterState = {
   status: "",
   from: "",
   to: "",
-  assetId: "",
+  assetName: "",
 };
 
 export const createPlaceholderTraceDetail = (traceId: string): ExecutionTraceDetail => ({

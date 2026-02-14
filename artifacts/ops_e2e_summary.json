@@ -12,7 +12,7 @@
     {
       "test_name": "orchestration_trace_lifecycle",
       "query": "서버 상태를 확인해주세요",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "pass": false,
       "reason": "Status code must be 200\nassert 500 == 200\n +  where 500 = <Response [500 Internal Server Error]>.status_code",
       "status": "fail",
@@ -40,7 +40,7 @@
     {
       "test_name": "control_loop_replan_mechanism",
       "query": "complex query that needs replan",
-      "endpoint": "/ops/ci/ask",
+      "endpoint": "/ops/ask",
       "pass": false,
       "reason": "No replan triggered (expected)",
       "status": "pass",
