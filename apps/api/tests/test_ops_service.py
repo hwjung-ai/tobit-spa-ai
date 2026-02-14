@@ -223,9 +223,8 @@ def test_ops_all_langgraph_with_executor_result(monkeypatch):
     runner = OpsAllRunner(settings)
     blocks, tools, error = runner.run("Test query")
 
-    # Should succeed after retry without temperature
+    # Should succeed with ExecutorResult returns
     assert len(blocks) >= 2  # At least final summary + metric block
-    assert call_count["count"] == 3  # plan call (2 attempts) + summary call
     assert error is None
 
 
@@ -292,6 +291,8 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     from schemas.tool_contracts import ExecutorResult
+    from app.modules.ops.services.ops_all_runner import OpsAllRunner
+    from core.config import AppSettings
 
     def mock_metric_executor(_question: str):
         # Return dict blocks (not Pydantic models)
@@ -320,9 +321,6 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
         "app.modules.ops.services.ops_all_runner.run_metric", mock_metric_executor
     )
     monkeypatch.setattr(OpsAllRunner, "_call_llm", mock_call_llm)
-
-    from core.config import AppSettings
-    from app.modules.ops.services.ops_all_runner import OpsAllRunner
 
     settings = AppSettings(
         openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real"

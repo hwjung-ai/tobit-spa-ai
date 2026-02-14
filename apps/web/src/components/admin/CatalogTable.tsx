@@ -10,7 +10,7 @@ interface CatalogAsset {
   description?: string;
   status: string;
   version: number;
-  content?: any;
+  content?: Record<string, unknown>;
   created_at?: string;
   updated_at?: string;
 }

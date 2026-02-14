@@ -4,7 +4,7 @@ import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface SchemaViewerPanelProps {
-  schema: any;
+  schema: Record<string, unknown>;
   onRefresh: () => void;
 }
 
@@ -75,7 +75,7 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
 }
 
 interface TableItemProps {
-  table: any;
+  table: Record<string, unknown>;
   isExpanded: boolean;
   onToggleExpanded: () => void;
   onToggleEnabled: (enabled: boolean) => void;

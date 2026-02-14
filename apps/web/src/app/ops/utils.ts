@@ -229,11 +229,11 @@ export const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEn
 
   // Fix document URLs: replace old /documents/ URLs with /api/documents/
   if (blocks && Array.isArray(blocks)) {
-    blocks = blocks.map((block: any) => {
+    blocks = blocks.map((block: Record<string, unknown>) => {
       if (block?.type === "references" && Array.isArray(block.items)) {
         return {
           ...block,
-          items: block.items.map((item: any) => {
+          items: (block.items as Array<Record<string, unknown>>).map((item) => {
             if (item?.url && item.url.includes("/documents/") && !item.url.includes("/api/documents/")) {
               return {
                 ...item,

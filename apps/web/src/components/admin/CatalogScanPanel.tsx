@@ -4,7 +4,7 @@ import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface SchemaScanPanelProps {
-  schema: any;
+  schema: Record<string, unknown>;
   onScanComplete: () => void;
 }
 
@@ -102,7 +102,7 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
             disabled={scanning}
           />
           <p className="mt-2 text-xs ">
-            For PostgreSQL, typically "public". For MySQL, use database name. For Oracle, use owner name.
+            For PostgreSQL, typically &quot;public&quot;. For MySQL, use database name. For Oracle, use owner name.
           </p>
         </div>
 

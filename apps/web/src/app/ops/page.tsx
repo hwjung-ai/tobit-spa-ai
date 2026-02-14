@@ -304,9 +304,6 @@ export default function OpsPage() {
     const requestedMode = currentModeDefinition;
     const payload = { mode: requestedMode.backend, question: question.trim() };
     let envelope: AnswerEnvelope = buildErrorEnvelope(requestedMode.backend, "No response");
-    let status: LocalOpsHistoryEntry["status"] = "ok";
-    let errorDetails: string | undefined;
-    let trace: unknown;
     try {
       if (requestedMode.id === "all") {
         // "all" mode uses /ops/ask endpoint for orchestration
@@ -372,20 +369,10 @@ export default function OpsPage() {
             throw new Error("Invalid OPS response format");
           }
         }
-        trace =
-          (payloadData as { trace?: unknown })?.trace ??
-          (payloadData as { data?: { trace?: unknown } })?.data?.trace;
       }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
       envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
-      status = "error";
-      if (normalized.details) {
-        errorDetails =
-          typeof normalized.details === "string"
-            ? normalized.details
-            : JSON.stringify(normalized.details, null, 2);
-      }
       setStatusMessage(`Error: ${normalized.message}`);
     } finally {
       // Refresh history from server (server writes final history entry)
@@ -540,10 +527,7 @@ export default function OpsPage() {
         selectedEntry.backendMode ?? "config",
         "No response",
       );
-      let trace: unknown;
       let nextActions: NextAction[] | undefined;
-      let status: LocalOpsHistoryEntry["status"] = "ok";
-      let errorDetails: string | undefined;
       try {
         const rerunBody: {
           question: string;
@@ -581,18 +565,10 @@ export default function OpsPage() {
           meta: meta as unknown as AnswerEnvelope["meta"],
           blocks: ciPayload.blocks,
         };
-        trace = ciPayload.trace;
         nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
       } catch (rawError) {
         const normalized = await normalizeError(rawError);
         envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
-        status = "error";
-        if (normalized.details) {
-          errorDetails =
-            typeof normalized.details === "string"
-              ? normalized.details
-              : JSON.stringify(normalized.details, null, 2);
-        }
         setStatusMessage(`Error: ${normalized.message}`);
       } finally {
         // Server already persists history entries; refresh list only.

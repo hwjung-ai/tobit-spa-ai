@@ -321,7 +321,7 @@ class TestCICacheStatistics:
         cache = CICache()
 
         await cache.set("key_1", [{"ci_id": "1"}], keywords=["app", "server"])
-        await cache.set("key_2", [{"ci_id": "2", "ci_id": "3"}], keywords=["db"])
+        await cache.set("key_2", [{"ci_id": "2"}, {"ci_id": "3"}], keywords=["db"])
 
         # Access to update last_accessed
         await cache.get("key_1")
