@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 import { useQuery } from "@tanstack/react-query";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { Asset, fetchApi } from "../../../../lib/adminUtils";
 import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";

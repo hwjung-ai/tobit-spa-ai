@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     try {
       const apiUrl = new URL(API_BASE_URL);
       console.log(`[Next.js Rewrites] Proxying to: ${apiUrl.href}`);
-    } catch (error) {
+    } catch {
       console.error(`[Next.js Rewrites] Invalid API_BASE_URL: ${API_BASE_URL}`);
       throw new Error(`Invalid API_BASE_URL: ${API_BASE_URL}`);
     }

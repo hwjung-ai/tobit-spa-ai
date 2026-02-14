@@ -29,7 +29,6 @@ import type {
   ExecLogEntry,
   WorkflowExecuteResult,
   ApiDraft,
-  HttpLogic,
   DraftStatus,
 } from "../../lib/api-manager/types";
 import {
@@ -43,7 +42,6 @@ import {
   draftStatusLabels,
   normalizeBaseUrl,
   buildApiUrl,
-  formatTimestamp,
   buildStatusMessage,
   parseTags,
   getEditorLanguage,
@@ -325,24 +323,6 @@ export default function ApiManagerPage() {
   }, [buildDraftFromForm]);
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
-  const parseResponsePayload = useCallback(
-    async (response: Response): Promise<ParsedResponsePayload> => {
-      const rawText = await response.text();
-      if (!rawText) {
-        return {};
-      }
-      try {
-        const parsed = JSON.parse(rawText);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          return parsed as ParsedResponsePayload;
-        }
-        return { data: { value: parsed } };
-      } catch {
-        return { detail: rawText };
-      }
-    },
-    [],
-  );
 
   const saveApiToServer = useCallback(
     async (payload: Record<string, unknown>, forceCreate = false): Promise<SaveApiResult> => {

@@ -11,7 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import type { ColDef, RowClickedEvent } from "ag-grid-community";
-import { buildApiUrl, fetchApi } from "../../../lib/adminUtils";
+import { fetchApi } from "../../../lib/adminUtils";
 import { cn } from "@/lib/utils";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";

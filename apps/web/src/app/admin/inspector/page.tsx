@@ -490,7 +490,7 @@ function InspectorContent() {
   // availableAssets를 assetNames 형식으로 변환
   const assetNames = useMemo(() => {
     const names: Record<string, { name: string; version?: string }> = {};
-    Object.entries(availableAssets).forEach(([_, assetList]) => {
+    Object.entries(availableAssets).forEach(([, assetList]) => {
       assetList.forEach((asset) => {
         names[asset.asset_id] = {
           name: asset.name,
