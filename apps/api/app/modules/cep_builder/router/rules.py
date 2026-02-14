@@ -16,6 +16,8 @@ from sqlalchemy import desc, select
 from sqlmodel import Session
 
 from app.modules.auth.models import TbUser
+from app.modules.audit_log.crud import create_audit_log
+import uuid as _uuid
 
 from ..crud import (
     create_rule,
@@ -196,10 +198,24 @@ def get_rule_endpoint(
 
 @router.post("")
 def create_rule_endpoint(
-    payload: CepRuleCreate, session: Session = Depends(get_session)
+    payload: CepRuleCreate,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Create a new CEP rule."""
     rule = create_rule(session, payload)
+
+    create_audit_log(
+        session=session,
+        trace_id=str(_uuid.uuid4()),
+        resource_type="cep_rule",
+        resource_id=str(rule.rule_id),
+        action="create",
+        actor=str(current_user.id),
+        changes={"rule_name": rule.rule_name, "trigger_type": rule.trigger_type},
+    )
+
     return ResponseEnvelope.success(
         data={"rule": CepRuleRead.from_orm(rule).model_dump()}
     )
@@ -207,7 +223,10 @@ def create_rule_endpoint(
 
 @router.post("/form")
 def create_rule_from_form(
-    form_data: CepRuleFormData, session: Session = Depends(get_session)
+    form_data: CepRuleFormData,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """
     Create CEP rule from form-based data.
@@ -233,11 +252,21 @@ def create_rule_from_form(
         trigger_spec=trigger_spec,
         action_spec=action_spec,
         is_active=form_data.is_active,
-        created_by="cep-form-builder",
+        created_by=str(current_user.id),
     )
 
     # Create rule
     rule = create_rule(session, rule_create)
+
+    create_audit_log(
+        session=session,
+        trace_id=str(_uuid.uuid4()),
+        resource_type="cep_rule",
+        resource_id=str(rule.rule_id),
+        action="create",
+        actor=str(current_user.id),
+        changes={"rule_name": rule.rule_name, "trigger_type": rule.trigger_type},
+    )
 
     return ResponseEnvelope.success(
         data={"rule": CepRuleRead.from_orm(rule).model_dump()}
@@ -249,12 +278,25 @@ def update_rule_endpoint(
     rule_id: str,
     payload: CepRuleUpdate,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Update an existing CEP rule."""
     rule = get_rule(session, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
     updated = update_rule(session, rule, payload)
+
+    create_audit_log(
+        session=session,
+        trace_id=str(_uuid.uuid4()),
+        resource_type="cep_rule",
+        resource_id=str(rule.rule_id),
+        action="update",
+        actor=str(current_user.id),
+        changes={"rule_name": updated.rule_name},
+    )
+
     return ResponseEnvelope.success(
         data={"rule": CepRuleRead.from_orm(updated).model_dump()}
     )
@@ -265,6 +307,8 @@ def simulate_rule_endpoint(
     rule_id: str,
     payload: CepSimulateRequest,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Simulate a CEP rule with test payload (dry run)."""
     rule = get_rule(session, rule_id)
@@ -315,12 +359,14 @@ def trigger_rule_endpoint(
     rule_id: str,
     payload: CepTriggerRequest,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Manually trigger a CEP rule."""
     rule = get_rule(session, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
-    executed_by = payload.executed_by or "cep-builder"
+    executed_by = payload.executed_by or str(current_user.id)
     result = manual_trigger(rule, payload.payload, executed_by)
     if result["status"] == "fail":
         raise HTTPException(

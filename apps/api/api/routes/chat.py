@@ -308,10 +308,20 @@ async def stream_chat(
     # 2. Add builder context for stronger deterministic generation
     #    Sanitize to prevent prompt injection: only allow known safe keys
     _ALLOWED_CONTEXT_KEYS = {
+        # Screen editor
         "screen_id", "screen_schema", "components", "layout", "bindings",
+        "selected_component", "field_name",
+        # API Manager
         "api_id", "api_name", "method", "path", "logic", "mode",
-        "rule_id", "rule_name", "trigger_spec", "action_spec",
-        "current_draft", "selected_component", "field_name",
+        # CEP Builder
+        "rule_id", "rule_name", "trigger_type", "trigger_spec", "action_spec",
+        "condition_groups", "aggregation_config", "window_config",
+        "notification_channels", "webhook_url",
+        # SIM Workspace
+        "service", "scenario_type", "assumptions", "baseline_kpis",
+        "simulation_plan", "traffic_change", "cpu_change", "memory_change",
+        # Common
+        "current_draft",
     }
     if builder_context:
         try:

@@ -5,8 +5,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from core.auth import get_current_user
+from core.tenant import get_current_tenant
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from app.modules.auth.models import TbUser
 
 from .bytewax_engine import BytewaxCEPEngine, CEPRuleDefinition
 from .notification_channels import NotificationService
@@ -75,7 +77,9 @@ class PerformanceStatsResponse(BaseModel):
 
 @router.post("/rules", response_model=RuleResponse)
 async def create_rule(
-    request: CreateRuleRequest, current_user: dict = Depends(get_current_user)
+    request: CreateRuleRequest,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """
     Create a new CEP rule
@@ -148,7 +152,11 @@ async def create_rule(
 
 
 @router.get("/rules/{rule_id}", response_model=RuleResponse)
-async def get_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
+async def get_rule(
+    rule_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+):
     """Get CEP rule details"""
 
     try:
@@ -177,7 +185,8 @@ async def get_rule(rule_id: str, current_user: dict = Depends(get_current_user))
 async def execute_rule(
     rule_id: str,
     request: ExecuteRuleRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """
     Execute a CEP rule with an event
@@ -229,7 +238,10 @@ async def execute_rule(
 
 
 @router.get("/rules", response_model=dict)
-async def list_rules(current_user: dict = Depends(get_current_user)):
+async def list_rules(
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+):
     """List all CEP rules"""
 
     try:
@@ -249,7 +261,11 @@ async def list_rules(current_user: dict = Depends(get_current_user)):
 
 
 @router.delete("/rules/{rule_id}", response_model=dict)
-async def delete_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_rule(
+    rule_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+):
     """Delete a CEP rule"""
 
     try:
@@ -268,7 +284,7 @@ async def delete_rule(rule_id: str, current_user: dict = Depends(get_current_use
 
 
 @router.post("/rules/{rule_id}/disable", response_model=dict)
-async def disable_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
+async def disable_rule(rule_id: str, current_user: TbUser = Depends(get_current_user)):
     """Disable a CEP rule"""
 
     try:
@@ -287,7 +303,7 @@ async def disable_rule(rule_id: str, current_user: dict = Depends(get_current_us
 
 
 @router.post("/rules/{rule_id}/enable", response_model=dict)
-async def enable_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
+async def enable_rule(rule_id: str, current_user: TbUser = Depends(get_current_user)):
     """Enable a CEP rule"""
 
     try:
@@ -307,7 +323,7 @@ async def enable_rule(rule_id: str, current_user: dict = Depends(get_current_use
 
 @router.post("/notifications/channels", response_model=dict)
 async def register_notification_channel(
-    request: NotificationChannelRequest, current_user: dict = Depends(get_current_user)
+    request: NotificationChannelRequest, current_user: TbUser = Depends(get_current_user)
 ):
     """
     Register a notification channel
@@ -348,7 +364,7 @@ async def register_notification_channel(
 
 
 @router.get("/notifications/channels", response_model=dict)
-async def list_notification_channels(current_user: dict = Depends(get_current_user)):
+async def list_notification_channels(current_user: TbUser = Depends(get_current_user)):
     """List registered notification channels"""
 
     try:
@@ -369,7 +385,7 @@ async def list_notification_channels(current_user: dict = Depends(get_current_us
 async def get_rule_performance(
     rule_id: str,
     time_range_minutes: int = Query(60, ge=1, le=1440),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Get rule performance statistics
@@ -399,7 +415,7 @@ async def get_rule_performance(
 
 
 @router.get("/performance", response_model=dict)
-async def get_all_performance_stats(current_user: dict = Depends(get_current_user)):
+async def get_all_performance_stats(current_user: TbUser = Depends(get_current_user)):
     """Get performance statistics for all rules"""
 
     try:
@@ -419,7 +435,7 @@ async def get_all_performance_stats(current_user: dict = Depends(get_current_use
 
 
 @router.get("/health", response_model=dict)
-async def get_system_health(current_user: dict = Depends(get_current_user)):
+async def get_system_health(current_user: TbUser = Depends(get_current_user)):
     """Get overall CEP system health"""
 
     try:
@@ -441,7 +457,7 @@ async def get_system_health(current_user: dict = Depends(get_current_user)):
 async def get_rule_errors(
     rule_id: str,
     limit: int = Query(50, ge=1, le=500),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Get recent errors for a rule"""
 
