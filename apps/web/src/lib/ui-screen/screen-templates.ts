@@ -623,6 +623,549 @@ const observabilityDashboardTemplate: ScreenTemplate = {
 
 
 /**
+ * Template 5: Login Form
+ * Simple login form with username/password
+ */
+const loginFormTemplate: ScreenTemplate = {
+  id: "login_form",
+  name: "로그인 폼",
+  description: "아이디/비밀번호 로그인 폼",
+  preview: "🔐",
+  generate: ({ screen_id, name }) => ({
+    id: screen_id,
+    screen_id,
+    name,
+    version: "1.0",
+    components: [
+      {
+        id: "comp_title",
+        type: "text",
+        label: "타이틀",
+        props: {
+          text: "로그인",
+          size: "xl",
+          weight: "bold",
+        },
+      },
+      {
+        id: "comp_subtitle",
+        type: "text",
+        label: "부제목",
+        props: {
+          text: "계정에 로그인하세요",
+          color: "muted",
+        },
+      },
+      {
+        id: "comp_username",
+        type: "input",
+        label: "아이디",
+        props: {
+          placeholder: "아이디를 입력하세요",
+          value: "{{state.username}}",
+        },
+      },
+      {
+        id: "comp_password",
+        type: "input",
+        label: "비밀번호",
+        props: {
+          placeholder: "비밀번호를 입력하세요",
+          type: "password",
+          value: "{{state.password}}",
+        },
+      },
+      {
+        id: "comp_remember",
+        type: "input",
+        label: "로그인 유지",
+        props: {
+          type: "checkbox",
+          checked: "{{state.remember_me}}",
+        },
+      },
+      {
+        id: "comp_login_btn",
+        type: "button",
+        label: "로그인 버튼",
+        props: {
+          label: "로그인",
+          variant: "primary",
+          loading: "{{state.is_loading}}",
+        },
+        actions: [
+          {
+            id: "action_login",
+            handler: "auth.login",
+            payload_template: {
+              username: "{{state.username}}",
+              password: "{{state.password}}",
+              remember_me: "{{state.remember_me}}",
+            },
+            continue_on_error: false,
+            stop_on_error: true,
+            retry_count: 0,
+          },
+        ],
+      },
+      {
+        id: "comp_error_msg",
+        type: "text",
+        label: "에러 메시지",
+        props: {
+          text: "{{state.error_message}}",
+          color: "red",
+        },
+        visibility: { rule: "{{state.error_message}}" },
+      },
+    ],
+    state: {
+      schema: {
+        username: { type: "string" },
+        password: { type: "string" },
+        remember_me: { type: "boolean" },
+        is_loading: { type: "boolean" },
+        error_message: { type: "string" },
+      },
+      initial: {
+        username: "",
+        password: "",
+        remember_me: false,
+        is_loading: false,
+        error_message: "",
+      },
+    },
+    actions: [],
+    bindings: null,
+    layout: {
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
+      max_width: "400px",
+    },
+  }),
+};
+
+/**
+ * Template 6: Customer Detail
+ * Customer information display with edit capability
+ */
+const customerDetailTemplate: ScreenTemplate = {
+  id: "customer_detail",
+  name: "고객 상세",
+  description: "고객 정보 상세 화면 (조회/편집)",
+  preview: "👤",
+  generate: ({ screen_id, name }) => ({
+    id: screen_id,
+    screen_id,
+    name,
+    version: "1.0",
+    components: [
+      {
+        id: "comp_header",
+        type: "row",
+        label: "헤더",
+        props: {
+          gap: 4,
+        },
+        children: [
+          {
+            id: "comp_back_btn",
+            type: "button",
+            label: "뒤로",
+            props: {
+              label: "← 목록",
+              variant: "ghost",
+            },
+            actions: [
+              {
+                id: "action_go_back",
+                handler: "navigate.back",
+                payload_template: {},
+              },
+            ],
+          },
+          {
+            id: "comp_title",
+            type: "text",
+            label: "타이틀",
+            props: {
+              text: "고객 상세 정보",
+              size: "xl",
+              weight: "bold",
+            },
+          },
+        ],
+      },
+      {
+        id: "comp_status_badge",
+        type: "badge",
+        label: "상태",
+        props: {
+          text: "{{state.customer.status}}",
+          variant: "{{state.customer.status === 'active' ? 'success' : 'default'}}",
+        },
+      },
+      {
+        id: "comp_info_section",
+        type: "keyvalue",
+        label: "기본 정보",
+        props: {
+          items: [
+            { key: "고객명", value: "{{state.customer.name}}" },
+            { key: "이메일", value: "{{state.customer.email}}" },
+            { key: "전화번호", value: "{{state.customer.phone}}" },
+            { key: "가입일", value: "{{state.customer.created_at}}" },
+          ],
+          columns: 2,
+        },
+      },
+      {
+        id: "comp_address_section",
+        type: "keyvalue",
+        label: "주소 정보",
+        props: {
+          items: [
+            { key: "주소", value: "{{state.customer.address}}" },
+            { key: "상세주소", value: "{{state.customer.address_detail}}" },
+          ],
+        },
+      },
+      {
+        id: "comp_actions",
+        type: "row",
+        label: "액션 버튼",
+        props: {
+          gap: 2,
+        },
+        children: [
+          {
+            id: "comp_edit_btn",
+            type: "button",
+            label: "편집",
+            props: {
+              label: "편집",
+              variant: "outline",
+            },
+            actions: [
+              {
+                id: "action_open_edit",
+                handler: "state.patch",
+                payload_template: { edit_mode: true },
+              },
+            ],
+          },
+          {
+            id: "comp_delete_btn",
+            type: "button",
+            label: "삭제",
+            props: {
+              label: "삭제",
+              variant: "destructive",
+            },
+            actions: [
+              {
+                id: "action_delete",
+                handler: "api_manager.execute",
+                payload_template: {
+                  api_id: "delete_customer",
+                  customer_id: "{{state.customer.id}}",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    state: {
+      schema: {
+        customer: { type: "object" },
+        edit_mode: { type: "boolean" },
+      },
+      initial: {
+        customer: {
+          id: "",
+          name: "",
+          email: "",
+          phone: "",
+          status: "active",
+          address: "",
+          address_detail: "",
+          created_at: "",
+        },
+        edit_mode: false,
+      },
+    },
+    actions: [],
+    bindings: null,
+    layout: {
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
+    },
+  }),
+};
+
+/**
+ * Template 7: Settings Form
+ * Configuration/settings form with sections
+ */
+const settingsFormTemplate: ScreenTemplate = {
+  id: "settings_form",
+  name: "설정 폼",
+  description: "사용자 설정/환경설정 폼",
+  preview: "⚙️",
+  generate: ({ screen_id, name }) => ({
+    id: screen_id,
+    screen_id,
+    name,
+    version: "1.0",
+    components: [
+      {
+        id: "comp_title",
+        type: "text",
+        label: "타이틀",
+        props: {
+          text: "환경 설정",
+          size: "xl",
+          weight: "bold",
+        },
+      },
+      {
+        id: "comp_section_notifications",
+        type: "text",
+        label: "알림 섹션 타이틀",
+        props: {
+          text: "🔔 알림 설정",
+          size: "lg",
+          weight: "semibold",
+        },
+      },
+      {
+        id: "comp_email_notif",
+        type: "input",
+        label: "이메일 알림",
+        props: {
+          type: "checkbox",
+          checked: "{{state.settings.email_notifications}}",
+          label: "이메일 알림 받기",
+        },
+      },
+      {
+        id: "comp_push_notif",
+        type: "input",
+        label: "푸시 알림",
+        props: {
+          type: "checkbox",
+          checked: "{{state.settings.push_notifications}}",
+          label: "푸시 알림 받기",
+        },
+      },
+      {
+        id: "comp_section_display",
+        type: "text",
+        label: "화면 섹션 타이틀",
+        props: {
+          text: "🖥️ 화면 설정",
+          size: "lg",
+          weight: "semibold",
+        },
+      },
+      {
+        id: "comp_theme",
+        type: "input",
+        label: "테마",
+        props: {
+          type: "select",
+          value: "{{state.settings.theme}}",
+          options: [
+            { value: "light", label: "라이트" },
+            { value: "dark", label: "다크" },
+            { value: "system", label: "시스템" },
+          ],
+        },
+      },
+      {
+        id: "comp_language",
+        type: "input",
+        label: "언어",
+        props: {
+          type: "select",
+          value: "{{state.settings.language}}",
+          options: [
+            { value: "ko", label: "한국어" },
+            { value: "en", label: "English" },
+          ],
+        },
+      },
+      {
+        id: "comp_save_btn",
+        type: "button",
+        label: "저장 버튼",
+        props: {
+          label: "설정 저장",
+          variant: "primary",
+        },
+        actions: [
+          {
+            id: "action_save_settings",
+            handler: "api_manager.execute",
+            payload_template: {
+              api_id: "update_settings",
+              settings: "{{state.settings}}",
+            },
+            continue_on_error: false,
+            retry_count: 2,
+          },
+        ],
+      },
+    ],
+    state: {
+      schema: {
+        settings: { type: "object" },
+      },
+      initial: {
+        settings: {
+          email_notifications: true,
+          push_notifications: false,
+          theme: "system",
+          language: "ko",
+        },
+      },
+    },
+    actions: [],
+    bindings: null,
+    layout: {
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
+      max_width: "500px",
+    },
+  }),
+};
+
+/**
+ * Template 8: Notification List
+ * Notifications/announcements list with read/unread
+ */
+const notificationListTemplate: ScreenTemplate = {
+  id: "notification_list",
+  name: "알림 목록",
+  description: "공지사항/알림 목록 (읽음/안읽음)",
+  preview: "🔔",
+  generate: ({ screen_id, name }) => ({
+    id: screen_id,
+    screen_id,
+    name,
+    version: "1.0",
+    components: [
+      {
+        id: "comp_header",
+        type: "row",
+        label: "헤더",
+        props: {
+          gap: 4,
+          justify: "space-between",
+        },
+        children: [
+          {
+            id: "comp_title",
+            type: "text",
+            label: "타이틀",
+            props: {
+              text: "알림",
+              size: "xl",
+              weight: "bold",
+            },
+          },
+          {
+            id: "comp_mark_all",
+            type: "button",
+            label: "전체 읽음",
+            props: {
+              label: "전체 읽음 처리",
+              variant: "ghost",
+              size: "sm",
+            },
+            actions: [
+              {
+                id: "action_mark_all_read",
+                handler: "api_manager.execute",
+                payload_template: {
+                  api_id: "mark_all_notifications_read",
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "comp_filter_tabs",
+        type: "tabs",
+        label: "필터 탭",
+        props: {
+          value: "{{state.filter}}",
+          tabs: [
+            { value: "all", label: "전체" },
+            { value: "unread", label: "안읽음" },
+            { value: "important", label: "중요" },
+          ],
+        },
+        actions: [
+          {
+            id: "action_change_filter",
+            handler: "state.patch",
+            payload_template: { filter: "{{context.tab_value}}" },
+          },
+        ],
+      },
+      {
+        id: "comp_list",
+        type: "table",
+        label: "알림 목록",
+        props: {
+          rows: "{{state.notifications}}",
+          columns: [
+            { field: "title", header: "제목" },
+            { field: "message", header: "내용" },
+            { field: "created_at", header: "날짜" },
+            { field: "is_read", header: "읽음" },
+          ],
+          row_class: "{{context.row.is_read ? 'opacity-50' : 'font-bold'}}",
+        },
+        actions: [
+          {
+            id: "action_mark_read",
+            handler: "api_manager.execute",
+            payload_template: {
+              api_id: "mark_notification_read",
+              notification_id: "{{context.row.id}}",
+            },
+          },
+        ],
+      },
+    ],
+    state: {
+      schema: {
+        notifications: { type: "array" },
+        filter: { type: "string" },
+      },
+      initial: {
+        notifications: [],
+        filter: "all",
+      },
+    },
+    actions: [],
+    bindings: null,
+    layout: {
+      type: "list",
+      direction: "vertical",
+      spacing: 16,
+    },
+  }),
+};
+
+/**
  * All available templates
  */
 export const SCREEN_TEMPLATES: ScreenTemplate[] = [
@@ -630,6 +1173,10 @@ export const SCREEN_TEMPLATES: ScreenTemplate[] = [
   listFilterTemplate,
   listModalCrudTemplate,
   observabilityDashboardTemplate,
+  loginFormTemplate,
+  customerDetailTemplate,
+  settingsFormTemplate,
+  notificationListTemplate,
 ];
 
 /**

@@ -26,6 +26,15 @@ interface CopilotResponse {
   suggestions: string[];
 }
 
+const QUICK_ACTIONS = [
+  { label: "🔵 버튼 추가", prompt: "파란색 버튼 하나 추가해줘" },
+  { label: "📝 입력 필드", prompt: "입력 필드를 추가해줘" },
+  { label: "📊 테이블", prompt: "데이터 테이블을 추가해줘" },
+  { label: "🎨 색상 변경", prompt: "선택한 컴포넌트의 색상을 파란색으로 변경해줘" },
+  { label: "📐 레이아웃", prompt: "컴포넌트들을 2열 레이아웃으로 배치해줘" },
+  { label: "❌ 삭제", prompt: "선택한 컴포넌트를 삭제해줘" },
+];
+
 function parsePatchText(text: string): PatchParseResult {
   if (!text || !text.trim()) {
     return { patch: null, error: "No patch text provided" };
@@ -183,6 +192,23 @@ export default function ScreenEditorCopilotPanel({
             <p>Stage: {stage}</p>
             <p>Summary: {schemaSummary}</p>
             <p>Component: {selectedComponentId ?? "none"}</p>
+          </div>
+        </div>
+
+        {/* Quick Action Buttons */}
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">빠른 액션:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.prompt}
+                onClick={() => setInputValue(action.prompt)}
+                className="px-2 py-1 text-xs rounded-full border border-border hover:border-primary hover:bg-primary/10 transition-colors"
+                disabled={isGenerating}
+              >
+                {action.label}
+              </button>
+            ))}
           </div>
         </div>
 
