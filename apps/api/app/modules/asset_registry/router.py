@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Any, List
 
-from core.auth import get_current_user
+from core.auth import get_current_user, get_current_tenant
 from core.db import get_session, get_session_context
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
@@ -316,9 +316,17 @@ def create_query_asset_impl(
 
 
 @router.get("/assets", response_model=ResponseEnvelope)
-def list_assets(asset_type: str | None = None, status: str | None = None):
+def list_assets(
+    asset_type: str | None = None,
+    status: str | None = None,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+):
     with get_session_context() as session:
         q = select(TbAssetRegistry)
+        # Tenant isolation - filter by tenant_id
+        if tenant_id:
+            q = q.where(TbAssetRegistry.tenant_id == tenant_id)
         if asset_type:
             q = q.where(TbAssetRegistry.asset_type == asset_type)
         if status:
@@ -1037,13 +1045,14 @@ def list_sources(
     page: int = 1,
     page_size: int = 20,
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """List source assets"""
     with get_session_context() as session:
         if asset_type and asset_type != "source":
             raise HTTPException(status_code=400, detail="asset_type must be 'source'")
 
-        assets = list_registry_assets(session, asset_type="source", status=status)
+        assets = list_registry_assets(session, asset_type="source", status=status, tenant_id=tenant_id)
 
         # Convert to response format
         source_assets = []
@@ -1202,13 +1211,14 @@ def list_catalogs(
     page: int = 1,
     page_size: int = 20,
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """List catalog assets (database schema catalogs)"""
     with get_session_context() as session:
         if asset_type and asset_type != "catalog":
             raise HTTPException(status_code=400, detail="asset_type must be 'catalog'")
 
-        assets = list_registry_assets(session, asset_type="catalog", status=status)
+        assets = list_registry_assets(session, asset_type="catalog", status=status, tenant_id=tenant_id)
 
         # Convert to response format
         schema_assets = []

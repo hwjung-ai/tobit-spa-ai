@@ -1813,7 +1813,14 @@ async def ui_editor_collab_websocket(websocket: WebSocket) -> None:
                     return
                 user_id = str(current_user.id)
                 user_label = current_user.username or str(current_user.id)
+                logger.info(
+                    f"WebSocket authenticated: user={user_id}, screen={screen_id}, tenant={tenant_id}"
+                )
             else:
+                # Auth disabled - log warning for audit trail
+                logger.warning(
+                    f"WebSocket connection without auth enabled: screen={screen_id}, tenant={tenant_id}, session={session_id}"
+                )
                 debug_user = session.exec(
                     select(TbUser).where(TbUser.username == "admin@tobit.local")
                 ).first()
@@ -1839,6 +1846,9 @@ async def ui_editor_collab_websocket(websocket: WebSocket) -> None:
         session_id=session_id,
         user_id=user_id,
         user_label=user_label,
+    )
+    logger.info(
+        f"WebSocket connected: user={user_id} ({user_label}), screen={screen_id}, tenant={tenant_id}"
     )
 
     try:

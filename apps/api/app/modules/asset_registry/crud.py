@@ -39,6 +39,7 @@ def list_assets(
     session: Session,
     asset_type: str | None = None,
     status: str | None = None,
+    tenant_id: str | None = None,
 ) -> list[TbAssetRegistry]:
     """List assets with optional filters"""
     statement = select(TbAssetRegistry)
@@ -48,6 +49,9 @@ def list_assets(
 
     if status:
         statement = statement.where(TbAssetRegistry.status == status)
+
+    if tenant_id:
+        statement = statement.where(TbAssetRegistry.tenant_id == tenant_id)
 
     statement = statement.order_by(TbAssetRegistry.updated_at.desc())
     return session.exec(statement).all()

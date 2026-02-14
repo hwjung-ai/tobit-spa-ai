@@ -21,12 +21,14 @@ import time
 import uuid
 from typing import Any
 
+from core.auth import get_current_user, get_current_tenant
 from core.db import get_session
 from core.logging import get_logger
 from fastapi import APIRouter, Depends
 from schemas import ResponseEnvelope
 from sqlmodel import Session
 
+from app.modules.auth.models import TbUser
 from app.modules.inspector.span_tracker import clear_spans, get_all_spans
 from app.modules.ops.security import SecurityUtils
 from app.modules.ops.services import handle_ops_query
@@ -36,20 +38,26 @@ logger = get_logger(__name__)
 
 
 @router.get("/golden-queries")
-def list_golden_queries(session: Session = Depends(get_session)) -> ResponseEnvelope:
+def list_golden_queries(
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> ResponseEnvelope:
     """List all golden queries.
 
     Retrieves all registered golden queries for regression testing.
 
     Args:
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with list of golden queries
     """
     from app.modules.inspector.crud import list_golden_queries
 
-    queries = list_golden_queries(session)
+    queries = list_golden_queries(session, tenant_id=tenant_id)
     return ResponseEnvelope.success(
         data={
             "queries": [
@@ -71,6 +79,8 @@ def list_golden_queries(session: Session = Depends(get_session)) -> ResponseEnve
 def create_golden_query(
     payload: dict[str, Any],
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Create a new golden query.
 
@@ -80,6 +90,8 @@ def create_golden_query(
     Args:
         payload: Request payload with name, query_text, ops_type, options
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with created golden query details
@@ -94,6 +106,8 @@ def create_golden_query(
             extra={
                 "query_name": payload.get("name"),
                 "masked_payload": masked_payload,
+                "tenant_id": tenant_id,
+                "user_id": str(current_user.user_id),
             },
         )
 
@@ -103,6 +117,7 @@ def create_golden_query(
             query_text=payload.get("query_text"),
             ops_type=payload.get("ops_type"),
             options=payload.get("options"),
+            tenant_id=tenant_id,
         )
         return ResponseEnvelope.success(
             data={
@@ -123,6 +138,8 @@ def update_golden_query(
     query_id: str,
     payload: dict[str, Any],
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Update a golden query.
 
@@ -132,6 +149,8 @@ def update_golden_query(
         query_id: ID of the golden query to update
         payload: Request payload with fields to update
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with updated golden query details
@@ -146,6 +165,7 @@ def update_golden_query(
             query_text=payload.get("query_text"),
             enabled=payload.get("enabled"),
             options=payload.get("options"),
+            tenant_id=tenant_id,
         )
         if not query:
             return ResponseEnvelope.error(message="Golden query not found")
@@ -168,6 +188,8 @@ def update_golden_query(
 def delete_golden_query(
     query_id: str,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Delete a golden query.
 
@@ -176,6 +198,8 @@ def delete_golden_query(
     Args:
         query_id: ID of the golden query to delete
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with deletion confirmation
@@ -183,7 +207,7 @@ def delete_golden_query(
     from app.modules.inspector.crud import delete_golden_query as crud_delete
 
     try:
-        success = crud_delete(session, query_id)
+        success = crud_delete(session, query_id, tenant_id=tenant_id)
         if not success:
             return ResponseEnvelope.error(message="Golden query not found")
         return ResponseEnvelope.success(data={"deleted": True})
@@ -197,6 +221,8 @@ def set_baseline(
     query_id: str,
     payload: dict[str, Any],
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Set baseline trace for a golden query.
 
@@ -207,6 +233,8 @@ def set_baseline(
         query_id: ID of the golden query
         payload: Request payload with trace_id and optional metadata
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with baseline record details
@@ -219,7 +247,7 @@ def set_baseline(
 
     try:
         # Verify golden query exists
-        query = get_golden_query(session, query_id)
+        query = get_golden_query(session, query_id, tenant_id=tenant_id)
         if not query:
             return ResponseEnvelope.error(message="Golden query not found")
 
@@ -236,7 +264,8 @@ def set_baseline(
             baseline_trace_id=baseline_trace_id,
             baseline_status=baseline_trace.status,
             asset_versions=baseline_trace.asset_versions,
-            created_by=payload.get("created_by"),
+            created_by=str(current_user.user_id),
+            tenant_id=tenant_id,
         )
 
         return ResponseEnvelope.success(
@@ -257,6 +286,8 @@ def run_regression(
     query_id: str,
     payload: dict[str, Any],
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Run regression check for a golden query.
 
@@ -267,6 +298,8 @@ def run_regression(
         query_id: ID of the golden query to test
         payload: Request payload with trigger info and metadata
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with regression analysis results
@@ -284,12 +317,12 @@ def run_regression(
 
     try:
         # Verify golden query exists
-        query = get_golden_query(session, query_id)
+        query = get_golden_query(session, query_id, tenant_id=tenant_id)
         if not query:
             return ResponseEnvelope.error(message="Golden query not found")
 
         # Get baseline
-        baseline = get_latest_regression_baseline(session, query_id)
+        baseline = get_latest_regression_baseline(session, query_id, tenant_id=tenant_id)
         if not baseline:
             return ResponseEnvelope.error(
                 message="No baseline set for this golden query"
@@ -347,7 +380,7 @@ def run_regression(
                 candidate_trace_id=candidate_trace_id,
                 baseline_trace_id=baseline.baseline_trace_id,
                 judgment=judgment,
-                triggered_by=payload.get("triggered_by", "manual"),
+                triggered_by=str(current_user.user_id),
                 verdict_reason=verdict_reason,
                 diff_summary={
                     "assets_changed": diff.assets_changed,
@@ -363,6 +396,7 @@ def run_regression(
                 },
                 trigger_info=payload.get("trigger_info"),
                 execution_duration_ms=duration_ms,
+                tenant_id=tenant_id,
             )
 
             return ResponseEnvelope.success(
@@ -394,6 +428,8 @@ def list_regression_runs(
     golden_query_id: str | None = None,
     limit: int = 50,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """List regression runs.
 
@@ -403,6 +439,8 @@ def list_regression_runs(
         golden_query_id: Optional filter by golden query ID
         limit: Maximum number of runs to return
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with list of regression runs
@@ -411,7 +449,7 @@ def list_regression_runs(
 
     try:
         runs = list_regression_runs(
-            session, golden_query_id=golden_query_id, limit=limit
+            session, golden_query_id=golden_query_id, limit=limit, tenant_id=tenant_id
         )
         return ResponseEnvelope.success(
             data={
@@ -439,6 +477,8 @@ def list_regression_runs(
 def get_regression_run(
     run_id: str,
     session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Get regression run details.
 
@@ -447,6 +487,8 @@ def get_regression_run(
     Args:
         run_id: ID of the regression run
         session: Database session dependency
+        current_user: Authenticated user
+        tenant_id: Current tenant ID
 
     Returns:
         ResponseEnvelope with regression run details
@@ -454,7 +496,7 @@ def get_regression_run(
     from app.modules.inspector.crud import get_regression_run
 
     try:
-        run = get_regression_run(session, run_id)
+        run = get_regression_run(session, run_id, tenant_id=tenant_id)
         if not run:
             return ResponseEnvelope.error(message="Regression run not found")
 
