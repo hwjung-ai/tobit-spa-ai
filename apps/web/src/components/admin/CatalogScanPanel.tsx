@@ -58,11 +58,11 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
   };
 
   return (
-    <div className=" border  rounded-lg p-4">
+    <div className="rounded-lg border border-variant bg-surface-base p-4">
       <h3 className="font-semibold text-lg mb-4 ">Schema Discovery</h3>
 
       {/* Status */}
-      <div className="mb-4 p-3  rounded-lg border ">
+      <div className="mb-4 rounded-lg border border-variant bg-surface-elevated p-3">
         <div className="flex items-center justify-between">
           <div>
             <span className="font-semibold text-sm ">Status:</span>
@@ -97,7 +97,7 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
             type="text"
             value={schemaNames}
             onChange={(e) => setSchemaNames(e.target.value)}
-            className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+            className="w-full rounded-lg border border-variant bg-surface-base px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-sky-500/50 focus:outline-none transition-all disabled:opacity-50"
             placeholder="public, schema2, schema3"
             disabled={scanning}
           />

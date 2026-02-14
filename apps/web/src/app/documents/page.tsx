@@ -886,10 +886,10 @@ function DocumentsPageContent() {
                 <div
                   key={document.id}
                   className={cn(
-                    "group relative flex flex-col gap-1 rounded-2xl border px-3 py-2 transition cursor-pointer text-foreground",
+                    "group relative flex flex-col gap-1 rounded-2xl border-variant px-3 py-2 transition cursor-pointer text-foreground",
                     selectedDocumentId === document.id
                       ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
-                      : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-surface-elevated dark:hover:border-sky-500",
+                      : "bg-surface-elevated hover:border-sky-500 dark:hover:bg-surface-elevated dark:hover:border-sky-500",
                   )}
                   role="button"
                   tabIndex={0}
@@ -962,7 +962,7 @@ function DocumentsPageContent() {
                 </div>
               </form>
             </section>
-            <section className="group rounded-2xl border p-3 bg-surface-elevated dark:border-border">
+            <section className="group rounded-2xl border border-variant p-3 bg-surface-elevated">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="section-title">Document detail</h3>
@@ -1009,7 +1009,7 @@ function DocumentsPageContent() {
               ) : null}
             </section>
 
-            <section className="rounded-2xl border p-3 bg-surface-elevated dark:border-border">
+            <section className="rounded-2xl border border-variant p-3 bg-surface-elevated">
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -1085,9 +1085,9 @@ function DocumentsPageContent() {
                 {streamChunks.map((chunk, idx) => (
                   <div
                     key={`${chunk.type}-${idx}`}
-                    className="space-y-2 br-card border p-3 text-sm bg-surface-elevated dark:bg-surface-base"
+                    className="space-y-2 br-card border border-variant p-3 text-sm bg-surface-elevated dark:bg-surface-base"
                   >
-                    <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-variant dark:text-slate-50">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-variant px-3 py-1 text-xs bg-surface-base text-foreground dark:text-slate-50">
                       {chunkTypeLabel[chunk.type] ?? chunk.type}
                     </span>
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
@@ -1220,7 +1220,7 @@ function DocumentsPageContent() {
                           <div
                             key={entry.id}
                             className={cn(
-                              "group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer text-foreground dark:text-slate-50",
+                              "group relative flex w-full flex-col rounded-2xl border border-variant px-4 py-3 transition cursor-pointer text-foreground dark:text-slate-50",
                               isSelected
                                 ? "border-sky-500 bg-sky-500/10"
                                 : "border-variant bg-surface-elevated hover:border-sky-500 dark:border-variant dark:bg-surface-base dark:hover:border-sky-500",

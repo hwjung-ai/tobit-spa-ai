@@ -49,7 +49,7 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
   };
 
   return (
-    <div className=" border  rounded-lg p-4">
+    <div className="rounded-lg border border-variant bg-surface-base p-4">
       <h3 className="font-semibold text-lg mb-4 ">Schema Structure</h3>
 
       {tables.length === 0 ? (
@@ -93,7 +93,7 @@ function TableItem({
   const columns = table.columns || [];
 
   return (
-    <div className="border  rounded-lg overflow-hidden">
+    <div className="rounded-lg border border-variant overflow-hidden">
       {/* Table Header */}
       <div className="flex items-center justify-between p-3  hover:/70 transition-colors">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -133,7 +133,7 @@ function TableItem({
         <div className="p-3 /50">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b ">
+              <tr className="border-b border-variant">
                 <th className="text-left p-1 font-semibold ">Column</th>
                 <th className="text-left p-1 font-semibold ">Type</th>
                 <th className="text-left p-1 font-semibold ">Key</th>
@@ -144,7 +144,7 @@ function TableItem({
             <tbody>
               {columns.length > 0 ? (
                 columns.map((col, idx) => (
-                  <tr key={idx} className="border-b  hover:">
+                  <tr key={idx} className="border-b border-variant">
                     <td className="p-1  font-mono">{col.column_name}</td>
                     <td className="p-1 ">{col.data_type}</td>
                     <td className="p-1 text-center">

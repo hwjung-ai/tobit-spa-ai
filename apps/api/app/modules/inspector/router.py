@@ -65,6 +65,8 @@ def list_traces(
     )
     summaries: List[TraceSummary] = []
     for trace in traces:
+        # Calculate replan_count from replan_events
+        replan_count = len(trace.replan_events) if trace.replan_events else 0
         summaries.append(
             TraceSummary(
                 trace_id=trace.trace_id,
@@ -74,6 +76,8 @@ def list_traces(
                 duration_ms=trace.duration_ms,
                 question_snippet=_truncate_question(trace.question),
                 applied_asset_versions=trace.asset_versions or [],
+                route=trace.route,
+                replan_count=replan_count,
             )
         )
     return ResponseEnvelope.success(

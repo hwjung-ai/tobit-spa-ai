@@ -29,6 +29,8 @@ class TraceSummary(BaseModel):
     duration_ms: int
     question_snippet: str
     applied_asset_versions: List[str] = Field(default_factory=list)
+    route: str | None = None
+    replan_count: int = 0
 
 
 class ExecutionTraceCreate(BaseModel):

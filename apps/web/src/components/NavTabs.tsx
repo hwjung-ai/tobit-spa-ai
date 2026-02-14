@@ -34,10 +34,10 @@ export default function NavTabs() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "border-b-2 px-1 pb-1 font-semibold transition-colors",
+              "main-menu-tab",
               isActive
-                ? "border-primary-light text-foreground"
-                : "border-transparent text-muted-foreground hover:border-border-muted hover:text-foreground"
+                ? "main-menu-tab-active"
+                : "main-menu-tab-inactive"
             )}
           >
             {item.label}

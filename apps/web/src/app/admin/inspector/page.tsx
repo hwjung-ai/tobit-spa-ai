@@ -763,17 +763,25 @@ function InspectorContent() {
                       {formatDuration(trace.duration_ms)}
                     </td>
                     <td className="px-4 py-3">
-                      {trace.route && (
+                      {trace.route ? (
                         <span className="px-2 py-1 rounded-full text-xs font-mono bg-sky-500/10 text-sky-400">
                           {trace.route}
                         </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {trace.replan_count !== undefined && trace.replan_count > 0 && (
-                        <span className="px-2 py-1 rounded-full text-xs bg-amber-500/10 text-amber-400">
-                          {trace.replan_count}
-                        </span>
+                      {trace.replan_count !== undefined && trace.replan_count >= 0 ? (
+                        trace.replan_count > 0 ? (
+                          <span className="px-2 py-1 rounded-full text-xs bg-amber-500/10 text-amber-400">
+                            {trace.replan_count}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">0</span>
+                        )
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs  text-muted-standard">

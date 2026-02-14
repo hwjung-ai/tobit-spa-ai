@@ -1206,12 +1206,12 @@ html {
 }
 
 .builder-textarea::-webkit-scrollbar-thumb {
-  background: #64748b;
+  background: var(--border-muted);
   border-radius: 4px;
 }
 
 .builder-textarea::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--border);
 }
 
 .builder-textarea-large {
@@ -1231,12 +1231,12 @@ html {
 }
 
 .builder-textarea-large::-webkit-scrollbar-thumb {
-  background: #64748b;
+  background: var(--border-muted);
   border-radius: 4px;
 }
 
 .builder-textarea-large::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--border);
 }
 
 .builder-checkbox {
@@ -1281,12 +1281,12 @@ html {
 }
 
 .builder-code-block::-webkit-scrollbar-thumb {
-  background: #64748b;
+  background: var(--border-muted);
   border-radius: 4px;
 }
 
 .builder-code-block::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--border);
 }
 
 .builder-preview-container {
@@ -1335,12 +1335,12 @@ html {
 }
 
 .builder-json-preview::-webkit-scrollbar-thumb {
-  background: #64748b;
+  background: var(--border-muted);
   border-radius: 4px;
 }
 
 .builder-json-preview::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--border);
 }
 
 .builder-canvas-container {
@@ -1693,6 +1693,26 @@ html {
 .nav-tab-inactive:hover {
   border-color: var(--border-muted);
   background-color: var(--surface-overlay);
+}
+
+/* Header main menu tabs (top global navigation) */
+.main-menu-tab {
+  @apply border-b-2 px-1 pb-1 text-base font-semibold uppercase tracking-wider transition-colors;
+}
+
+.main-menu-tab-active {
+  border-color: var(--primary-light);
+  color: var(--foreground);
+}
+
+.main-menu-tab-inactive {
+  border-color: transparent;
+  color: var(--muted-foreground);
+}
+
+.main-menu-tab-inactive:hover {
+  border-color: var(--border-primary-hover);
+  color: var(--foreground);
 }
 
 /* In-panel tabs (definition/logic/test, cep center tabs, etc.) */
@@ -3563,9 +3583,7 @@ html {
 
 /* Status badge - Draft/Default state */
 .status-badge-draft {
-  @apply bg-slate-950/50;
-  color: var(--muted-foreground);
-  border-color: var(--border-muted);
+  @apply bg-amber-500/15 border-amber-500/50 text-amber-700 dark:text-amber-300;
 }
 
 /* Canvas drag-over state */

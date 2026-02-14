@@ -952,7 +952,7 @@ export default function CepBuilderPage() {
   );
 
   const formDefinitionContent = (
-    <div className="max-h-[600px] overflow-y-auto space-y-4">
+    <div className="max-h-[600px] overflow-y-auto custom-scrollbar space-y-4">
       <BasicInfoSection
         ruleName={ruleName}
         description={ruleDescription}
@@ -1348,7 +1348,7 @@ export default function CepBuilderPage() {
   );
 
   const rightPane = (
-    <div className="flex flex-col h-full space-y-4 overflow-y-auto pr-1">
+    <div className="flex flex-col h-full space-y-4 overflow-y-auto pr-1 custom-scrollbar">
       <BuilderCopilotPanel
         builderSlug="cep-builder"
         instructionPrompt={COPILOT_INSTRUCTION}
@@ -1453,7 +1453,7 @@ export default function CepBuilderPage() {
               Preview
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-50">{draftPreviewSummary}</p>
-            <pre className="max-h-48 overflow-auto rounded-xl bg-surface-base p-2 text-xs text-muted-foreground dark:bg-surface-base dark:text-muted-foreground">
+            <pre className="max-h-48 overflow-auto custom-scrollbar rounded-xl bg-surface-base p-2 text-xs text-muted-foreground dark:bg-surface-base dark:text-muted-foreground">
               {draftPreviewJson}
             </pre>
           </div>
@@ -1486,7 +1486,7 @@ export default function CepBuilderPage() {
           <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
             Example Prompts
           </p>
-          <div className="max-h-40 space-y-1 overflow-auto">
+          <div className="max-h-40 space-y-1 overflow-auto custom-scrollbar">
             {CEP_COPILOT_EXAMPLE_PROMPTS.map((prompt) => (
               <button
                 key={prompt}
@@ -1526,7 +1526,7 @@ export default function CepBuilderPage() {
             <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Last assistant raw
             </p>
-            <pre className="max-h-32 overflow-auto rounded-xl bg-surface-base p-2 text-tiny text-slate-900 dark:bg-surface-base dark:text-muted-foreground">
+            <pre className="max-h-32 overflow-auto custom-scrollbar rounded-xl bg-surface-base p-2 text-tiny text-slate-900 dark:bg-surface-base dark:text-muted-foreground">
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
@@ -1534,7 +1534,7 @@ export default function CepBuilderPage() {
                 <p className="text-tiny uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   Draft JSON
                 </p>
-                <pre className="max-h-32 overflow-auto rounded-xl bg-surface-base p-2 text-tiny text-slate-900 dark:bg-surface-base dark:text-muted-foreground">
+                <pre className="max-h-32 overflow-auto custom-scrollbar rounded-xl bg-surface-base p-2 text-tiny text-slate-900 dark:bg-surface-base dark:text-muted-foreground">
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
               </>

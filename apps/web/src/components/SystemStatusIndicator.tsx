@@ -100,7 +100,7 @@ export default function SystemStatusIndicator() {
         return (
           <div
             key={key}
-            className="group relative flex items-center gap-1 rounded-full border px-2 py-1"
+            className="group relative flex items-center gap-1 rounded-full border border-variant bg-surface-base px-2 py-1"
 
           >
             <Icon className={`h-3.5 w-3.5 ${color(entry.status)}`} />
