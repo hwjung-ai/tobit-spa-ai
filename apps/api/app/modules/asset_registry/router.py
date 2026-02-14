@@ -5,8 +5,9 @@ import uuid
 from datetime import datetime
 from typing import Any, List
 
-from core.auth import get_current_user, get_current_tenant
+from core.auth import get_current_user
 from core.db import get_session, get_session_context
+from core.tenant import get_current_tenant
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select

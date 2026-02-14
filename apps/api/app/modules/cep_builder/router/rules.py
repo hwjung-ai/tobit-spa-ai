@@ -204,7 +204,7 @@ def create_rule_endpoint(
     tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Create a new CEP rule."""
-    rule = create_rule(session, payload)
+    rule = create_rule(session, payload, tenant_id=tenant_id)
 
     create_audit_log(
         session=session,
@@ -256,7 +256,7 @@ def create_rule_from_form(
     )
 
     # Create rule
-    rule = create_rule(session, rule_create)
+    rule = create_rule(session, rule_create, tenant_id=tenant_id)
 
     create_audit_log(
         session=session,

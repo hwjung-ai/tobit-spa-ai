@@ -21,9 +21,10 @@ import time
 import uuid
 from typing import Any
 
-from core.auth import get_current_user, get_current_tenant
+from core.auth import get_current_user
 from core.db import get_session
 from core.logging import get_logger
+from core.tenant import get_current_tenant
 from fastapi import APIRouter, Depends
 from schemas import ResponseEnvelope
 from sqlmodel import Session
