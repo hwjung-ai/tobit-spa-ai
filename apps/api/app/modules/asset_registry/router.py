@@ -1606,6 +1606,14 @@ def list_tools(
     current_user: TbUser = Depends(get_current_user),
 ):
     """List tools with optional filtering by status or tool type"""
+    # BLOCKER-1: Tool 접근 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 목록 조회 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         query = select(TbAssetRegistry).where(TbAssetRegistry.asset_type == "tool")
 
@@ -1631,6 +1639,14 @@ def create_tool(
     current_user: TbUser = Depends(get_current_user),
 ):
     """Create new tool asset"""
+    # BLOCKER-1: Tool 생성 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 생성 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         asset = create_tool_asset(
             session,
@@ -1657,6 +1673,14 @@ def get_tool(
     current_user: TbUser = Depends(get_current_user),
 ):
     """Get tool asset by ID"""
+    # BLOCKER-1: Tool 조회 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 조회 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
         if not asset or asset.asset_type != "tool":
@@ -1672,6 +1696,14 @@ def update_tool(
     current_user: TbUser = Depends(get_current_user),
 ):
     """Update tool asset"""
+    # BLOCKER-1: Tool 수정 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 수정 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
         if not asset or asset.asset_type != "tool":
@@ -1715,6 +1747,14 @@ def delete_tool(
     current_user: TbUser = Depends(get_current_user),
 ):
     """Delete tool asset"""
+    # BLOCKER-1: Tool 삭제 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 삭제 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
         if not asset or asset.asset_type != "tool":
@@ -1732,6 +1772,14 @@ def publish_tool(
     current_user: TbUser = Depends(get_current_user),
 ):
     """Publish tool asset"""
+    # BLOCKER-1: Tool 발행 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 발행 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
         if not asset or asset.asset_type != "tool":
@@ -1758,6 +1806,14 @@ def test_tool(
     current_user: TbUser = Depends(get_current_user),
 ):
     """Test tool execution with given input"""
+    # BLOCKER-1: Tool 테스트 권한 체크
+    from app.modules.auth.models import UserRole
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 테스트 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
         if not asset or asset.asset_type != "tool":
