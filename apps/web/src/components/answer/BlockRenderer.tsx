@@ -215,10 +215,14 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
           body: JSON.stringify(payload),
         });
         if (!response.ok) {
-          console.warn("UI render telemetry failed", response.status, response.statusText);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("UI render telemetry failed", response.status, response.statusText);
+          }
         }
       } catch (fetchError) {
-        console.warn("UI render telemetry request failed", fetchError);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("UI render telemetry request failed", fetchError);
+        }
       }
     })();
   }, [traceId, blocks]);
@@ -297,10 +301,6 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       // Get PDF blob
                       const blob = await response.blob();
 
-                      // Debug: Log snippet value
-                      console.log('[OPS Reference] snippet:', reference.snippet);
-                      console.log('[OPS Reference] full reference:', reference);
-
                       // Open PDF in modal (same as docs page)
                       setPdfBlob(blob);
                       setPdfFilename(reference.title || "document.pdf");
@@ -308,7 +308,9 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       setPdfHighlightSnippet(reference.snippet || undefined);
                       setPdfViewerOpen(true);
                     } catch (error) {
-                      console.error("Error opening document:", error);
+                      if (process.env.NODE_ENV === 'development') {
+                        console.error("Error opening document:", error);
+                      }
                     }
                   };
 
@@ -725,7 +727,6 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                         : "hover:border-variant"
                     }`;
 
-                    console.log('[BlockRenderer] Rendering reference:', reference.title, 'URL:', reference.url);
                     const cardContent = (
                       <>
                         <div className="flex items-center justify-between">
@@ -756,8 +757,6 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
 
                     // Handle document URLs - use button with authenticated fetch
                     if (reference.url && reference.kind === "document") {
-                      console.log('[Reference] Document URL:', reference.url);
-
                       const handleDocumentClick = async () => {
                         try {
                           // Use fetchWithAuth to get the PDF with auth headers
@@ -774,7 +773,9 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                           setPdfHighlightSnippet(reference.snippet || undefined);
                           setPdfViewerOpen(true);
                         } catch (error) {
-                          console.error('Error opening document:', error);
+                          if (process.env.NODE_ENV === 'development') {
+                            console.error('Error opening document:', error);
+                          }
                         }
                       };
 

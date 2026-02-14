@@ -63,7 +63,6 @@ export default function PropertiesPanel() {
   // Update form data when component changes
   React.useEffect(() => {
     if (selectedComponent) {
-      console.log("[PROPERTIES] Selected component updated:", selectedComponent.id, selectedComponent);
       setFormData(selectedComponent.props || {});
     }
   }, [selectedComponent]);

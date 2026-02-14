@@ -284,7 +284,9 @@ function DocumentsPageContent() {
         }),
       });
     } catch (error) {
-      console.error("Failed to persist document history", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to persist document history", error);
+      }
     }
   }, []);
 
@@ -301,7 +303,9 @@ function DocumentsPageContent() {
         .filter((entry): entry is DocsHistoryEntry => Boolean(entry));
       setDocHistory(hydrated);
     } catch (error: unknown) {
-      console.error("Failed to load document history", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to load document history", error);
+      }
       setDocHistoryError(
         error instanceof Error ? error.message : "Failed to load document history",
       );
@@ -316,7 +320,9 @@ function DocumentsPageContent() {
         method: "DELETE",
       });
     } catch (error) {
-      console.error("Failed to delete document history entry", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to delete document history entry", error);
+      }
     }
   }, []);
 
@@ -347,11 +353,15 @@ function DocumentsPageContent() {
         try {
           await fetchDocumentDetail(selectedId);
         } catch (error: unknown) {
-          console.error("Failed to refresh selected document", error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Failed to refresh selected document", error);
+          }
         }
       }
     } catch (error: unknown) {
-      console.error("Failed to load documents:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to load documents:", error);
+      }
       // Don't show error for now, just show empty list
       setDocuments([]);
       // setDocumentsError(error instanceof Error ? error.message : "Failed to load documents");
@@ -396,7 +406,11 @@ function DocumentsPageContent() {
       }
       setSelectedDocumentId(documentId);
       setSelectedDocument(null);
-      fetchDocumentDetail(documentId).catch(console.error);
+      fetchDocumentDetail(documentId).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
+      });
       setReferences([]);
       setStreamChunks([]);
       setStreamStatus("idle");
@@ -563,7 +577,11 @@ function DocumentsPageContent() {
       selectDocument(stored.selectedDocumentId);
     } else if (!selectedDocument) {
       setSelectedDocumentId(documents[0].id);
-      fetchDocumentDetail(documents[0].id).catch(console.error);
+      fetchDocumentDetail(documents[0].id).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
+      });
     }
     if (stored?.references && stored.references.length > 0) {
       setReferences(stored.references);
@@ -1146,18 +1164,7 @@ function DocumentsPageContent() {
                                 const { fetchWithAuth } = await import("@/lib/apiClient");
                                 const response = await fetchWithAuth(href);
 
-                                console.log(
-                                  "PDF response status:",
-                                  response.status,
-                                  response.statusText,
-                                );
-                                console.log(
-                                  "PDF response headers:",
-                                  Object.fromEntries(response.headers.entries()),
-                                );
-
                                 const blob = await response.blob();
-                                console.log("PDF blob type:", blob.type, "size:", blob.size);
 
                                 // Open PDF in modal - pass blob directly
                                 setPdfBlob(blob);
@@ -1167,7 +1174,9 @@ function DocumentsPageContent() {
                                 setPdfViewerHref(viewerHref);
                                 setPdfModalOpen(true);
                               } catch (error) {
-                                console.error("Failed to open document:", error);
+                                if (process.env.NODE_ENV === 'development') {
+                                  console.error("Failed to open document:", error);
+                                }
                               }
                             }}
                             className="block rounded-2xl border px-4 py-3 transition cursor-pointer border-variant bg-surface-elevated text-foreground hover:border-sky-500 dark:border-variant dark:bg-surface-base dark:text-slate-50"

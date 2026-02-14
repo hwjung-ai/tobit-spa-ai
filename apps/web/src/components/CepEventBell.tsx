@@ -105,7 +105,6 @@ export default function CepEventBell() {
             // 자동 재연결 (3초 후)
             if (!isClosing && !reconnectTimeout) {
               reconnectTimeout = setTimeout(() => {
-                console.log("Reconnecting SSE stream (bell)...");
                 reconnectTimeout = null;
                 connectStream();
               }, 3000);

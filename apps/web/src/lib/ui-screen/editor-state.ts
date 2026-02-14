@@ -330,7 +330,9 @@ function validateScreen(screen: ScreenSchemaV1): ValidationError[] {
     return validateScreenSchema(screen);
   } catch (error) {
     // Fallback basic validation if comprehensive validation fails
-    console.warn("Comprehensive validation failed, using fallback:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("Comprehensive validation failed, using fallback:", error);
+    }
     const errors: ValidationError[] = [];
 
     if (!screen.screen_id) {
@@ -501,7 +503,6 @@ export const useEditorState = create<EditorState>((set, get) => ({
       currentAssetId = assetId;
 
       // Load from asset-registry endpoint (source of truth)
-      console.log("[EDITOR] Attempting to load screen from /asset-registry:", assetId);
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
       // fetchApi returns ResponseEnvelope, so access response.data.asset
       const asset = (response as {
@@ -558,7 +559,6 @@ export const useEditorState = create<EditorState>((set, get) => ({
       // IMPORTANT: Update currentAssetId to be canonical UUID from backend
       // This ensures subsequent PUT requests use UUID, not a slug/screen_id
       if (asset?.asset_id) {
-        console.log("[EDITOR] Updating currentAssetId to canonical UUID:", asset.asset_id);
         currentAssetId = asset.asset_id;
       }
 
@@ -577,9 +577,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
         selectedComponentId: null,
         selectedComponentIds: [],
       });
-      console.log("[EDITOR] Screen loaded successfully from /asset-registry");
     } catch (error) {
-      console.error("Failed to load screen:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to load screen:", error);
+      }
       throw error;
     }
   },
@@ -893,7 +894,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
         };
       });
     } catch (error) {
-      console.error("Invalid JSON:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Invalid JSON:", error);
+      }
       set(() => ({
         validationErrors: [
           { path: "json", message: `Invalid JSON: ${error instanceof Error ? error.message : "Unknown error"}`, severity: "error" },
@@ -1178,7 +1181,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
       return result;
     } catch (error) {
-      console.error("testAction error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("testAction error:", error);
+      }
       throw error;
     }
   },
@@ -1210,9 +1215,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   saveDraft: async (opts?: { force?: boolean }) => {
     try {
-      console.log("[EDITOR] saveDraft called");
       const state = get();
-      console.log("[EDITOR] Current state:", { isDirty: state.draftModified, isSaving: state.isSaving });
 
       if (!state.screen) throw new Error("No screen loaded");
 
@@ -1223,8 +1226,6 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
       set({ isSaving: true });
 
-      console.log("[EDITOR] Attempting to save screen:", currentAssetId);
-
       // Save to asset-registry using fetchApi (with correct base URL)
       try {
         // Try PUT (update existing)
@@ -1233,15 +1234,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
           expected_updated_at: state.serverUpdatedAt || undefined,
           force: !!opts?.force,
         };
-        console.log("[EDITOR] Attempting PUT to /asset-registry/assets");
-        console.log("[EDITOR] PUT payload:", putPayload);
-        console.log("[EDITOR] Screen data:", state.screen);
         const putResponse = await fetchApi(`/asset-registry/assets/${currentAssetId}`, {
           method: "PUT",
           body: JSON.stringify(putPayload),
         });
-        console.log("[EDITOR] PUT response:", putResponse);
-        console.log("[EDITOR] Saved to asset-registry successfully");
         const nextUpdatedAt =
           ((putResponse as { data?: { asset?: { updated_at?: string } } })?.data?.asset
             ?.updated_at as string | undefined) || state.serverUpdatedAt || null;
@@ -1255,10 +1251,6 @@ export const useEditorState = create<EditorState>((set, get) => ({
         const errStr = String(putError).toLowerCase();
         const errMsg = ((putError as Error)?.message || "").toLowerCase();
         const statusCode = (putError as { statusCode?: number })?.statusCode;
-
-        console.log("[EDITOR] PUT failed:", putError);
-        console.log("[EDITOR] Status code:", statusCode);
-        console.log("[EDITOR] Checking error for 404/not found matches...");
 
         if (statusCode === 409) {
           try {
@@ -1324,7 +1316,6 @@ export const useEditorState = create<EditorState>((set, get) => ({
           errMsg.includes("404") ||
           errMsg.includes("not found")
         ) {
-          console.log("[EDITOR] Asset not found, creating new asset with POST");
           try {
             const postBody = {
               asset_type: "screen",
@@ -1333,16 +1324,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
               description: "Visual Editor Screen",
               schema_json: state.screen,
             };
-            console.log("[EDITOR] POST body:", postBody);
-            console.log("[EDITOR] POST body size:", JSON.stringify(postBody).length);
 
             const postResponse = await fetchApi(`/asset-registry/assets`, {
               method: "POST",
               body: JSON.stringify(postBody),
             });
-            console.log("[EDITOR] POST response received");
-            console.log("[EDITOR] POST response data:", postResponse);
-            console.log("[EDITOR] Created new asset successfully");
             const postUpdatedAt =
               ((postResponse as { data?: { asset?: { updated_at?: string } } })?.data?.asset
                 ?.updated_at as string | undefined) || state.serverUpdatedAt || null;
@@ -1351,25 +1337,21 @@ export const useEditorState = create<EditorState>((set, get) => ({
               draftConflict: { ...EMPTY_DRAFT_CONFLICT },
             });
           } catch (postError: unknown) {
-            console.error("[EDITOR] POST error:", postError);
-            console.error("[EDITOR] POST error details:", {
-              message: (postError as Error)?.message,
-              statusCode: (postError as { statusCode?: number })?.statusCode,
-              errorType: typeof postError,
-            });
+            if (process.env.NODE_ENV === 'development') {
+              console.error("[EDITOR] POST error:", postError);
+            }
             throw new Error(`Failed to create screen: ${postError}`);
           }
         } else {
-          console.error("[EDITOR] PUT error:", putError);
-          console.error("[EDITOR] Could not determine if error was 404 or other error");
-          console.error("[EDITOR] Error string:", String(putError));
-          console.error("[EDITOR] Error details:", {
-            statusCode,
-            errorStr: errStr,
-            errorMsg: errMsg,
-            errorType: typeof putError,
-            errorKeys: Object.keys(putError || {}),
-          });
+          if (process.env.NODE_ENV === 'development') {
+            console.error("[EDITOR] PUT error:", putError);
+            console.error("[EDITOR] Error details:", {
+              statusCode,
+              errorStr: errStr,
+              errorMsg: errMsg,
+              errorType: typeof putError,
+            });
+          }
           throw new Error(`Failed to save draft: ${putError}`);
         }
       }
@@ -1381,9 +1363,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
         isSaving: false,
         lastSyncedScreen: state.screen,
       });
-      console.log("[EDITOR] saveDraft completed successfully");
     } catch (error) {
-      console.error("[EDITOR] saveDraft error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("[EDITOR] saveDraft error:", error);
+      }
       set({ isSaving: false });
       throw error;
     }

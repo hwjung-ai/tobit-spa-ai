@@ -160,8 +160,6 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
   const testPythonCode = async () => {
     // In production, this would execute the Python code in a sandbox
-    console.log("Testing Python code...");
-    console.log(pythonCode);
     alert("Python code test would execute here. (In production, integrate with Pyodide or backend Python executor)");
   };
 

@@ -145,7 +145,6 @@ function InspectorContent() {
   );
 
   const fetchTraceDetail = useCallback(async (traceId: string) => {
-    console.log("[Inspector] fetchTraceDetail called with traceId:", traceId);
     setDetailLoading(true);
     setDetailError(null);
     setStatusMessage(null);
@@ -174,16 +173,16 @@ function InspectorContent() {
       }
 
       const data = (await response.json()) as TraceDetailResponse;
-      console.log("[Inspector] fetch response received:", data);
 
       if (!data.data?.trace) {
-        console.warn("[Inspector] No trace in response data");
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("[Inspector] No trace in response data");
+        }
         setStatusMessage(`"${traceId}" trace_id를 찾을 수 없습니다.`);
         setDetailLoading(false);
         return;
       }
 
-      console.log("[Inspector] Setting trace detail:", data.data.trace.trace_id);
       setTraceDetail(data.data.trace);
       setTraceAuditLogs(data.data.audit_logs || []);
       setSelectedTraceId(data.data.trace.trace_id);

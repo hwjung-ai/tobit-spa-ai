@@ -25,7 +25,9 @@ export default function SettingsPage() {
                 // ResponseEnvelope.success(data={settings: {...}})
                 const settingsData = response.data?.settings;
                 if (!settingsData || typeof settingsData !== "object") {
-                    console.warn("[Settings] Invalid response data:", response);
+                    if (process.env.NODE_ENV === 'development') {
+                      console.warn("[Settings] Invalid response data:", response);
+                    }
                     return [];
                 }
                 return Object.entries(settingsData).map(([key, setting]) => ({

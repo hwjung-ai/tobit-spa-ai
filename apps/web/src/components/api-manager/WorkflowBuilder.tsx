@@ -428,7 +428,6 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <button
             onClick={() => {
               const json = generateWorkflowJSON();
-              console.log("Executing workflow:", json);
               alert("Workflow execution would start here. (In production, integrate with Workflow Executor)");
             }}
             disabled={readOnly}

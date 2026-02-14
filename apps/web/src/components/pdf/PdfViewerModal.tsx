@@ -279,7 +279,9 @@ export function PdfViewerModal({
 
   // Handle PDF load success
   const onDocumentLoadSuccess = useCallback(({ numPages: pages }: { numPages: number }) => {
-    console.log("PDF loaded successfully, pages:", pages);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("PDF loaded successfully, pages:", pages);
+    }
     setNumPages(pages);
     // Set loading to false immediately when document is loaded
     // The page will render asynchronously

@@ -28,7 +28,9 @@ export async function GET(request: NextRequest) {
       API_BASE_URL
     );
 
-    console.log(`[SSE Proxy] Forwarding to: ${targetUrl.toString()}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[SSE Proxy] Forwarding to: ${targetUrl.toString()}`);
+    }
 
     // Prepare headers to forward (exclude hop-by-hop headers)
     const headers = new Headers();
@@ -56,7 +58,9 @@ export async function GET(request: NextRequest) {
       cache: 'no-store', // Crucial for SSE to avoid buffering/caching
     });
 
-    console.log(`[SSE Proxy] Backend responded with status: ${response.status}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[SSE Proxy] Backend responded with status: ${response.status}`);
+    }
 
     // Create a readable stream from the backend response
     const reader = response.body?.getReader();

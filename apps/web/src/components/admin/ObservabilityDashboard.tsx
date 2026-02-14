@@ -63,7 +63,9 @@ export default function ObservabilityDashboard() {
 
         // If that fails, try alternative path
         if (res.status === 404) {
-          console.warn("Trying alternative API path...");
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("Trying alternative API path...");
+          }
           res = await fetch(`${apiBaseUrl}/api/ops/observability/kpis`);
         }
 

@@ -536,7 +536,6 @@ function CepEventBrowserContent() {
             // 자동 재연결 (3초 후)
             if (!isClosing && !reconnectTimeout) {
               reconnectTimeout = setTimeout(() => {
-                console.log("Reconnecting SSE stream...");
                 reconnectTimeout = null;
                 connectStream();
               }, 3000);

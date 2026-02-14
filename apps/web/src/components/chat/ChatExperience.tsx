@@ -190,12 +190,13 @@ export default function ChatExperience({
       streamUrl = url.toString();
     }
 
-    console.log("[Chat] Opening SSE stream:", streamUrl);
     const es = new EventSource(streamUrl);
     eventSourceRef.current = es;
 
     es.onopen = () => {
-      console.log("[Chat] SSE opened");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[Chat] SSE opened");
+      }
     };
 
     es.addEventListener("message", (event) => {
@@ -203,15 +204,12 @@ export default function ChatExperience({
         const payload = JSON.parse(event.data);
         const type = payload.type;
 
-        console.log("[Chat] SSE payload type:", type);
-
         if (type === "answer" || type === "text") {
           const chunk = payload.text || "";
           assistantBufferRef.current += chunk;
 
           setMessages((prev) => {
             if (!assistantMessageIdRef.current) {
-              console.log("[Chat] Creating new assistant message entry");
               const newId = generateMessageId("assistant");
               assistantMessageIdRef.current = newId;
               return [...prev, { id: newId, role: "assistant", text: chunk, timestamp: getTimestamp() }];
@@ -225,7 +223,6 @@ export default function ChatExperience({
             onAssistantMessage(assistantBufferRef.current);
           }
         } else if (type === "done") {
-          console.log("[Chat] SSE done");
           es.close();
           const finalText = assistantBufferRef.current;
           const validation = validateCopilotContract(expectedContract, finalText);
@@ -275,17 +272,23 @@ export default function ChatExperience({
           assistantMessageIdRef.current = null;
           assistantBufferRef.current = "";
         } else if (type === "error") {
-          console.error("[Chat] SSE payload error:", payload.text);
+          if (process.env.NODE_ENV === 'development') {
+            console.error("[Chat] SSE payload error:", payload.text);
+          }
           setStatus("error");
           es.close();
         }
       } catch (err) {
-        console.error("[Chat] SSE parse error:", err, event.data);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("[Chat] SSE parse error:", err, event.data);
+        }
       }
     });
 
     es.onerror = (err) => {
-      console.error("[Chat] SSE connection error:", err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("[Chat] SSE connection error:", err);
+      }
       if (!assistantBufferRef.current) {
         setStatus("error");
       } else {

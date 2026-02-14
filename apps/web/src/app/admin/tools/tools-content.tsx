@@ -89,10 +89,11 @@ export default function ToolsPageContent() {
             try {
                 // Tool API returns ResponseEnvelope with data = { assets, total, page, page_size }
                 const response = await fetchApi<{ assets: ToolAsset[]; total: number; page: number; page_size: number }>(endpoint, { cache: "no-store" });
-                console.log("[Tools] API Response:", response);
                 return response.data.assets || [];
             } catch (err) {
-                console.error("Failed to fetch tools:", err);
+                if (process.env.NODE_ENV === 'development') {
+                  console.error("Failed to fetch tools:", err);
+                }
                 throw err;
             }
         }

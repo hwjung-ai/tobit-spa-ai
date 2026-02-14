@@ -123,16 +123,20 @@ export async function fetchApi<T = any>(
   if (ENABLE_AUTH) {
     if (token) {
       (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-      console.log("[API] Adding Authorization header with token");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[API] Adding Authorization header with token");
+      }
     } else {
-      console.warn("[API] No token found in localStorage for endpoint:", endpoint);
-      console.warn("[API] User may not be logged in. Visit /login to authenticate.");
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("[API] No token found in localStorage for endpoint:", endpoint);
+        console.warn("[API] User may not be logged in. Visit /login to authenticate.");
+      }
     }
   } else {
-    console.log("[API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.");
+    }
   }
-
-  console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET", "URL:", url);
 
   // Create an AbortController for timeout
   const controller = new AbortController();
@@ -148,7 +152,6 @@ export async function fetchApi<T = any>(
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-    console.log("[API] Fetch successful, status:", response.status);
   } catch (fetchError) {
     clearTimeout(timeoutId);
 
@@ -164,14 +167,16 @@ export async function fetchApi<T = any>(
     const errorMsg = error.message;
     const errorName = error.name;
 
-    console.error("[API] Network error - fetch failed:", {
-      endpoint,
-      url,
-      error: fetchError,
-      errorMessage: errorMsg,
-      errorName: errorName,
-      errorStack: error.stack,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[API] Network error - fetch failed:", {
+        endpoint,
+        url,
+        error: fetchError,
+        errorMessage: errorMsg,
+        errorName: errorName,
+        errorStack: error.stack,
+      });
+    }
 
     const isTypeError = errorName === "TypeError";
     const isFetchError = errorMsg.includes("fetch") || errorMsg.includes("Failed to fetch");
@@ -193,7 +198,9 @@ export async function fetchApi<T = any>(
   }
 
   if (!response) {
-    console.error("[API] Response is null/undefined after successful fetch");
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[API] Response is null/undefined after successful fetch");
+    }
     throw new Error("No response received from server");
   }
 
@@ -202,14 +209,6 @@ export async function fetchApi<T = any>(
     let rawText = "";
     try {
       rawText = await response.text();
-      console.log("[API] Raw response text (first 1000 chars):", rawText.substring(0, 1000));
-      console.log("[API] Full raw response text:", rawText);
-      console.log("[API] Response status:", response.status);
-      console.log("[API] Response headers:", {
-        contentType: response.headers.get("content-type"),
-        contentLength: response.headers.get("content-length"),
-      });
-
       const contentType = response.headers.get("content-type") || "";
       const trimmedText = rawText.trim();
       const looksLikeJson = trimmedText.startsWith("{") || trimmedText.startsWith("[");
@@ -222,8 +221,9 @@ export async function fetchApi<T = any>(
             throw new Error(`Non-JSON response content-type: ${contentType || "unknown"}`);
           }
         } catch (parseErr) {
-          console.error("[API] JSON parse error:", parseErr);
-          console.error("[API] Tried to parse as JSON but failed. Raw text:", rawText.substring(0, 200));
+          if (process.env.NODE_ENV === 'development') {
+            console.error("[API] JSON parse error:", parseErr);
+          }
           // Check if it looks like HTML (error page)
           if (rawText.includes("<html") || rawText.includes("<HTML") || rawText.includes("<!DOCTYPE")) {
             errorData = { message: `Server returned HTML error page: ${response.status} ${response.statusText}` };
@@ -232,20 +232,22 @@ export async function fetchApi<T = any>(
           }
         }
       } else {
-        console.warn("[API] Response body is empty!");
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("[API] Response body is empty!");
+        }
         errorData = { message: "Empty response body" };
       }
     } catch (parseError) {
-      console.error("[API] Failed to parse error response:", parseError);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("[API] Failed to parse error response:", parseError);
+      }
       errorData = { message: String(parseError) };
     }
 
     if (response.status === 401 && ENABLE_AUTH) {
-      console.error("[API] Authentication failed (401 Unauthorized)");
-      console.error("[API] Possible causes:");
-      console.error("[API]   1. User not logged in - visit /login");
-      console.error("[API]   2. Token expired - log in again");
-      console.error("[API]   3. Invalid token in localStorage");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("[API] Authentication failed (401 Unauthorized)");
+      }
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       if (typeof window !== "undefined") {
@@ -253,16 +255,16 @@ export async function fetchApi<T = any>(
       }
     }
 
-    console.error("[API] Request failed:", {
-      endpoint,
-      method: options?.method || "GET",
-      status: response.status,
-      statusText: response.statusText,
-      error: errorData,
-      rawResponse: rawText.substring(0, 500),
-    });
-    console.error("[API] Full error data:", errorData);
-    console.error("[API] Full raw text:", rawText);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[API] Request failed:", {
+        endpoint,
+        method: options?.method || "GET",
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        rawResponse: rawText.substring(0, 500),
+      });
+    }
 
     const errorMessage = (errorData as Record<string, unknown>)?.detail || (errorData as Record<string, unknown>)?.message || `HTTP ${response.status}: ${response.statusText}`;
     const error = new Error(String(errorMessage));
@@ -273,12 +275,14 @@ export async function fetchApi<T = any>(
   const successContentType = response.headers.get("content-type") || "";
   if (!successContentType.includes("application/json")) {
     const rawText = await response.text();
-    console.error("[API] Expected JSON but received non-JSON response:", {
-      endpoint,
-      status: response.status,
-      contentType: successContentType || "unknown",
-      rawResponse: rawText.substring(0, 500),
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[API] Expected JSON but received non-JSON response:", {
+        endpoint,
+        status: response.status,
+        contentType: successContentType || "unknown",
+        rawResponse: rawText.substring(0, 500),
+      });
+    }
     throw new Error(
       `Expected JSON response but got ${successContentType || "unknown content type"}`
     );
@@ -288,7 +292,9 @@ export async function fetchApi<T = any>(
   try {
     payload = await response.json();
   } catch (parseErr) {
-    console.error("[API] Failed to parse successful response as JSON:", parseErr);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[API] Failed to parse successful response as JSON:", parseErr);
+    }
     throw new Error("Invalid JSON response from server");
   }
 

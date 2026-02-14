@@ -172,7 +172,9 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
     // If auth is enabled, require token
     if (!token) {
-      console.warn("[ScreenEditor] No access token found, redirecting to login");
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("[ScreenEditor] No access token found, redirecting to login");
+      }
       router.push("/login");
       return;
     }

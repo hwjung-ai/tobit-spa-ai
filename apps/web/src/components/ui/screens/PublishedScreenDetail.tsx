@@ -36,9 +36,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
       setLoading(true);
       setError(null);
       try {
-        console.log("[PublishedScreenDetail] Loading screen:", assetId);
         const envelope = await fetchApi<ScreenAssetResponse>(`/asset-registry/assets/${assetId}?stage=published`);
-        console.log("[PublishedScreenDetail] Response envelope:", envelope);
         if (!cancelled) {
           if (envelope.data?.asset) {
             setAsset(envelope.data.asset);
