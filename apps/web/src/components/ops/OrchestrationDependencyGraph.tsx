@@ -8,11 +8,9 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
-  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { SpanNode } from '@/components/admin/SpanNode';
-import type { OrchestrationTrace, ExecutionGroup, Tool } from './OrchestrationVisualization';
+import type { OrchestrationTrace } from './OrchestrationVisualization';
 
 interface OrchestrationDependencyGraphProps {
   trace: OrchestrationTrace;

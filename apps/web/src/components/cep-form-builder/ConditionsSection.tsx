@@ -63,7 +63,7 @@ export function ConditionsSection({
 
       {conditions.length > 0 && (
         <div className="space-y-3">
-          {conditions.map((condition, _index) => (
+          {conditions.map((condition) => (
             <div
               key={condition.id}
               className="cep-condition-group flex items-end gap-2"

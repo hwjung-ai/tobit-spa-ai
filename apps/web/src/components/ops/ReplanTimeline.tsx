@@ -84,13 +84,6 @@ const SEVERITY_COLORS = {
   low: "text-emerald-400",
 };
 
-const StageColors = {
-  route_plan: "bg-sky-500/10 border-sky-400/30",
-  validate: "bg-emerald-500/10 border-emerald-400/30",
-  execute: "bg-amber-500/10 border-amber-400/30",
-  compose: "bg-purple-500/10 border-purple-400/30",
-  present: "bg-rose-500/10 border-rose-400/30",
-};
 
 const PatchDiffViewer = ({ patch }: { patch: unknown }) => {
   const [expanded, setExpanded] = useState(false);

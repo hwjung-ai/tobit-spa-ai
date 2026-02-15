@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { OrchestrationVisualization, type OrchestrationTrace } from './OrchestrationVisualization';
+import { OrchestrationVisualization } from './OrchestrationVisualization';
 import { OrchestrationDependencyGraph } from './OrchestrationDependencyGraph';
 import { extractOrchestrationTrace, isValidOrchestrationTrace } from '@/lib/orchestrationTraceUtils';
 

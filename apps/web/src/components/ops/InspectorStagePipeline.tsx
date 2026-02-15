@@ -239,7 +239,6 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
 }
 
 export default function InspectorStagePipeline({
-  className,
   traceId,
   stages,
   onStageSelect,
