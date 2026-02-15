@@ -311,23 +311,39 @@ export default function DocsQueryPage() {
    */
   const updateCategory = async (docId: string, category: DocumentCategory) => {
     try {
-      const response = await fetch(`/api/documents/${docId}/category?category=${category}`, {
+      const url = `/api/documents/${docId}/category?category=${category}`;
+      console.log(`[updateCategory] Sending PATCH to: ${url}`, { docId, category });
+
+      const response = await fetch(url, {
         method: "PATCH",
         headers: getAuthHeaders(),
       });
-      
+
+      console.log(`[updateCategory] Response status: ${response.status}`);
+
       if (response.status === 401) {
         handleAuthError();
         return;
       }
-      
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorMsg = errorData?.detail || errorData?.message || `HTTP ${response.status}`;
+        console.error(`[updateCategory] API error:`, errorData);
+        throw new Error(errorMsg);
+      }
+
+      const data = await response.json();
+      console.log(`[updateCategory] Success response:`, data);
+
+      // Only update local state after successful API call
       setDocuments((prev) =>
         prev.map((doc) => (doc.id === docId ? { ...doc, category } : doc))
       );
       showToast("success", "카테고리가 변경되었습니다.");
     } catch (err) {
-      console.error("Failed to update category:", err);
-      showToast("error", "카테고리 변경에 실패했습니다.");
+      console.error("[updateCategory] Error:", err);
+      showToast("error", `카테고리 변경 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
     }
   };
 

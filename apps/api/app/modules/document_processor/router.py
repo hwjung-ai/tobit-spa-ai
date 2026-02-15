@@ -1606,15 +1606,20 @@ async def update_document_category(
     try:
         from models.document import DocumentCategory
 
+        logger.info(f"[update_document_category] Request: document_id={document_id}, category={category}, tags={tags}")
+
         # Validate category
         valid_categories = [c.value for c in DocumentCategory]
         if category not in valid_categories:
+            logger.error(f"[update_document_category] Invalid category: {category}")
             raise HTTPException(
-                400, 
+                400,
                 f"Invalid category: {category}. Valid options: {', '.join(valid_categories)}"
             )
 
         tenant_id = _tenant_id_from_user(current_user)
+        logger.info(f"[update_document_category] Looking for document: {document_id}, tenant: {tenant_id}")
+
         document = session.exec(
             select(Document)
             .where(Document.id == document_id)
@@ -1623,7 +1628,10 @@ async def update_document_category(
         ).first()
 
         if not document:
+            logger.error(f"[update_document_category] Document not found: {document_id}")
             raise HTTPException(status_code=404, detail="Document not found")
+
+        logger.info(f"[update_document_category] Found document: {document.filename}, updating category to {category}")
 
         document.category = category
         if tags:
@@ -1632,6 +1640,8 @@ async def update_document_category(
         session.add(document)
         session.commit()
         session.refresh(document)
+
+        logger.info(f"[update_document_category] Success: document.category={document.category}")
 
         return ResponseEnvelope.success(
             data={
@@ -1645,7 +1655,7 @@ async def update_document_category(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update category: {str(e)}")
+        logger.error(f"[update_document_category] Failed to update category: {str(e)}", exc_info=True)
         raise HTTPException(500, str(e))
 
 
