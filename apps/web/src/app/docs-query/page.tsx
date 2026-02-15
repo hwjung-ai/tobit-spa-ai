@@ -2,9 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
 
 /**
  * Document category type
@@ -123,11 +120,6 @@ export default function DocsQueryPage() {
   // Query history
   const [queryHistory, setQueryHistory] = useState<QueryHistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-
-  // Selected reference for PDF viewer
-  const [selectedReference, setSelectedReference] = useState<Reference | null>(null);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -542,31 +534,23 @@ export default function DocsQueryPage() {
   };
 
   /**
-   * Open reference in PDF viewer
+   * Open reference in PDF viewer (new window/tab)
    */
   const openReference = async (ref: Reference) => {
-    setSelectedReference(ref);
-    setPdfBlobUrl(null);
-    setPdfLoading(true);
-
     try {
-      const response = await fetch(`/api/documents/${ref.document_id}/viewer`, {
-        headers: getAuthHeaders(),
-      });
-      
-      if (response.status === 401) {
-        handleAuthError();
-        return;
+      // Open PDF viewer in new window with page and snippet parameters
+      const params = new URLSearchParams();
+      params.set("documentId", ref.document_id);
+      params.set("page", String(ref.page || 1));
+      if (ref.snippet) {
+        params.set("highlight", ref.snippet);
       }
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setPdfBlobUrl(url);
+
+      // Open in new window for better viewing experience
+      window.open(`/pdf-viewer?${params.toString()}`, '_blank', 'width=1200,height=800');
     } catch (err) {
-      console.error("Failed to load PDF:", err);
-      showToast("error", "PDF를 불러오지 못했습니다.");
-    } finally {
-      setPdfLoading(false);
+      console.error("Failed to open PDF:", err);
+      showToast("error", "PDF를 열 수 없습니다.");
     }
   };
 
@@ -942,77 +926,35 @@ export default function DocsQueryPage() {
             )}
           </div>
 
-          {/* References and PDF Viewer Panel */}
+          {/* References Panel */}
           {references.length > 0 && (
             <div className="w-96 border-l border-border flex flex-col">
-              {/* References Section */}
-              <div className={cn(
-                "border-b border-border flex flex-col",
-                selectedReference ? "h-[40%]" : "h-full"
-              )}>
-                <div className="border-b border-border p-3">
-                  <h3 className="font-medium text-foreground">📎 근거 문서</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {references.length}개 참조
-                  </p>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2">
-                  {references.map((ref, index) => (
-                    <button
-                      key={`${ref.document_id}-${ref.chunk_id}-${index}`}
-                      onClick={() => openReference(ref)}
-                      className={cn(
-                        "w-full mb-2 rounded-lg border p-3 text-left transition",
-                        selectedReference?.chunk_id === ref.chunk_id
-                          ? "border-sky-500 bg-sky-500/5"
-                          : "border-border bg-surface-elevated hover:border-sky-500/50"
-                      )}
-                    >
-                      <p className="text-sm font-medium text-foreground">
-                        {ref.document_title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {ref.page ? `${ref.page}페이지` : "페이지 미확인"} •
-                        점수: {ref.score.toFixed(2)}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                        {ref.snippet}
-                      </p>
-                    </button>
-                  ))}
-                </div>
+              <div className="border-b border-border p-3">
+                <h3 className="font-medium text-foreground">📎 근거 문서</h3>
+                <p className="text-xs text-muted-foreground">
+                  {references.length}개 참조 (클릭하면 새 탭에서 열기)
+                </p>
               </div>
-
-              {/* PDF Viewer Section */}
-              {selectedReference && (
-                <div className="h-[60%] border-t border-border flex flex-col">
-                  <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                    <span className="text-xs text-muted-foreground truncate">
-                      {selectedReference.document_title}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setSelectedReference(null);
-                        setPdfBlobUrl(null);
-                      }}
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      닫기
-                    </button>
-                  </div>
-
-                  <div className="flex-1">
-                    <PdfViewerModal
-                      isOpen={!!selectedReference}
-                      onClose={() => setSelectedReference(null)}
-                      pdfBlobUrl={pdfBlobUrl}
-                      filename={selectedReference?.document_title}
-                      initialPage={selectedReference?.page || 1}
-                      highlightSnippet={selectedReference?.snippet}
-                    />
-                  </div>
-                </div>
-              )}
+              <div className="flex-1 overflow-y-auto p-2">
+                {references.map((ref, index) => (
+                  <button
+                    key={`${ref.document_id}-${ref.chunk_id}-${index}`}
+                    onClick={() => openReference(ref)}
+                    className="w-full mb-2 rounded-lg border p-3 text-left transition border-border bg-surface-elevated hover:border-sky-500/50 hover:bg-sky-500/5"
+                  >
+                    <p className="text-sm font-medium text-foreground">
+                      {ref.document_title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {ref.page ? `${ref.page}페이지` : "페이지 미확인"} •
+                      점수: {ref.score.toFixed(2)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                      {ref.snippet}
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
