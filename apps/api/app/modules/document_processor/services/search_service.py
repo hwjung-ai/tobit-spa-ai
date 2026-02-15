@@ -24,7 +24,7 @@ class SearchFilters:
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
     document_types: List[str] = field(default_factory=list)
-    min_relevance: float = 0.5
+    min_relevance: float = 0.01  # BM25 scores are typically 0.01-0.1, not 0.0-1.0
 
 
 @dataclass
@@ -90,10 +90,16 @@ class DocumentSearchService:
             else:  # hybrid (default)
                 text_results = await self._text_search(query, filters, top_k * 2)
                 vector_results = await self._vector_search(query, filters, top_k * 2)
-                results = self._combine_results(text_results, vector_results, top_k * 2)
+                # If vector search fails, fall back to text-only results
+                if vector_results:
+                    results = self._combine_results(text_results, vector_results, top_k * 2)
+                else:
+                    results = text_results
 
-            # Apply min relevance threshold
-            results = [r for r in results if r.relevance_score >= filters.min_relevance]
+            # Apply min relevance threshold (BM25 scores are typically 0.0-0.1, not 0.0-1.0)
+            # Use a much lower threshold for BM25 text search results
+            min_threshold = 0.01 if search_type in ["text", "hybrid"] else filters.min_relevance
+            results = [r for r in results if r.relevance_score >= min_threshold]
 
             # Log search
             execution_time_ms = int((time.time() - start_time) * 1000)
