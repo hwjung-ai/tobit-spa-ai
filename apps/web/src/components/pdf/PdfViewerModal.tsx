@@ -43,6 +43,8 @@ interface ModalRect {
 const MIN_MODAL_WIDTH = 720;
 const MIN_MODAL_HEIGHT = 520;
 const VIEWPORT_MARGIN = 8;
+const DEFAULT_MODAL_WIDTH = 980;
+const DEFAULT_MODAL_HEIGHT = 760;
 
 /**
  * Reusable PDF viewer modal component.
@@ -70,7 +72,12 @@ export function PdfViewerModal({
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [modalRect, setModalRect] = useState<ModalRect>({ x: 0, y: 0, width: 0, height: 0 });
+  const [modalRect, setModalRect] = useState<ModalRect>({
+    x: VIEWPORT_MARGIN,
+    y: VIEWPORT_MARGIN,
+    width: DEFAULT_MODAL_WIDTH,
+    height: DEFAULT_MODAL_HEIGHT,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const previousRectRef = useRef<ModalRect | null>(null);
   const interactionRef = useRef<{
@@ -140,14 +147,14 @@ export function PdfViewerModal({
       return {
         x: VIEWPORT_MARGIN,
         y: VIEWPORT_MARGIN,
-        width: 1200,
-        height: 900,
+        width: DEFAULT_MODAL_WIDTH,
+        height: DEFAULT_MODAL_HEIGHT,
       };
     }
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const width = Math.min(viewportWidth * 0.95, 1400);
-    const height = Math.min(viewportHeight * 0.9, 1000);
+    const width = Math.min(viewportWidth * 0.86, 1200);
+    const height = Math.min(viewportHeight * 0.82, 880);
     return {
       x: Math.max(VIEWPORT_MARGIN, (viewportWidth - width) / 2),
       y: Math.max(VIEWPORT_MARGIN, (viewportHeight - height) / 2),
@@ -508,6 +515,12 @@ export function PdfViewerModal({
       <div
         ref={containerRef}
         className={`absolute overflow-hidden shadow-2xl bg-surface-base ${isFullscreen ? "rounded-lg" : "rounded-2xl"}`}
+        style={{
+          left: modalRect.x,
+          top: modalRect.y,
+          width: modalRect.width,
+          height: modalRect.height,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {!isFullscreen && (

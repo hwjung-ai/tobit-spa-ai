@@ -122,6 +122,9 @@ export default function DocsQueryPage() {
   const [queryHistory, setQueryHistory] = useState<QueryHistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Left panel tabs
+  const [leftPanelTab, setLeftPanelTab] = useState<"library" | "history">("library");
+
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -399,10 +402,16 @@ export default function DocsQueryPage() {
    */
   const streamQuery = async () => {
     const queryText = query.trim();
-    if (!queryText) return;
+    console.log("[streamQuery] Starting query:", { queryText, selectedCount });
+
+    if (!queryText) {
+      showToast("error", "질의를 입력해주세요.");
+      return;
+    }
 
     if (selectedCount === 0) {
       showToast("error", "최소 하나의 문서를 선택해주세요.");
+      console.log("[streamQuery] No documents selected:", { documents: documents.length, selected: documents.filter(d => d.selected).length });
       return;
     }
 
@@ -436,6 +445,7 @@ export default function DocsQueryPage() {
       min_relevance: 0.3,
     };
 
+    console.log("[streamQuery] Request body:", requestBody);
     let finalAnswer = "";
     let finalReferences: Reference[] = [];
     let finalProgress: ProgressEvent | null = null;
@@ -452,13 +462,17 @@ export default function DocsQueryPage() {
         signal: abortController.signal,
       });
 
+      console.log("[streamQuery] Response status:", response.status);
+
       if (response.status === 401) {
         handleAuthError();
         return;
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorText = await response.text();
+        console.error("[streamQuery] Error response:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const reader = response.body?.getReader();
@@ -466,10 +480,14 @@ export default function DocsQueryPage() {
 
       const decoder = new TextDecoder();
       let buffer = "";
+      let eventCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log("[streamQuery] Stream completed, total events:", eventCount);
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
@@ -484,28 +502,39 @@ export default function DocsQueryPage() {
           } else if (line.startsWith("data: ")) {
             data = line.slice(6);
           } else if (line === "" && eventType && data) {
-            const parsed = JSON.parse(data);
-            
-            switch (eventType) {
-              case "progress":
-                setProgress(parsed);
-                finalProgress = parsed;
-                break;
-              case "answer":
-                finalAnswer += parsed.text;
-                setAnswer(finalAnswer);
-                break;
-              case "done":
-                finalReferences = parsed.meta?.references || [];
-                setReferences(finalReferences);
-                setProgress(null);
-                break;
-              case "error":
-                setError(parsed.message);
-                setProgress(null);
-                break;
+            eventCount++;
+            console.log(`[streamQuery] Event ${eventCount}:`, { eventType, dataLength: data.length });
+
+            try {
+              const parsed = JSON.parse(data);
+
+              switch (eventType) {
+                case "progress":
+                  console.log("[streamQuery] Progress:", parsed);
+                  setProgress(parsed);
+                  finalProgress = parsed;
+                  break;
+                case "answer":
+                  console.log("[streamQuery] Answer chunk:", parsed);
+                  finalAnswer += parsed.text;
+                  setAnswer(finalAnswer);
+                  break;
+                case "done":
+                  console.log("[streamQuery] Done event:", parsed);
+                  finalReferences = parsed.meta?.references || [];
+                  setReferences(finalReferences);
+                  setProgress(null);
+                  break;
+                case "error":
+                  console.log("[streamQuery] Error event:", parsed);
+                  setError(parsed.message);
+                  setProgress(null);
+                  break;
+              }
+            } catch (e) {
+              console.error("[streamQuery] Failed to parse event:", { eventType, data, error: e });
             }
-            
+
             eventType = "";
             data = "";
           }
@@ -663,101 +692,119 @@ export default function DocsQueryPage() {
         {/* Left Panel: Document Management */}
         <div className="flex w-80 flex-col border-r border-border overflow-y-auto">
 
-        {/* Upload & History Row */}
-        <div className="border-b border-border p-3 flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx,.xlsx,.pptx,.txt"
-            onChange={handleUpload}
-            className="hidden"
-            disabled={!!uploadingFile}
-          />
-          
-          {uploadingFile ? (
-            <div className="flex-1 rounded-lg border border-sky-500/30 bg-sky-500/5 p-2">
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
-                <span className="text-xs text-foreground truncate">
-                  {uploadingFile.name}
-                </span>
-                <span className="text-xs text-muted-foreground">{uploadProgress}%</span>
-              </div>
-              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-                <div
-                  className="h-full bg-sky-500 transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 rounded-lg border border-dashed border-sky-500 p-2 text-sm text-sky-500 transition hover:bg-sky-500/10"
-            >
-              📄 업로드
-            </button>
-          )}
-          
+        {/* Left Panel Tabs */}
+        <div className="border-b border-border flex">
           <button
-            onClick={() => setShowHistory(!showHistory)}
+            onClick={() => setLeftPanelTab("library")}
             className={cn(
-              "rounded-lg px-3 py-2 text-sm transition",
-              showHistory
-                ? "bg-sky-500 text-white"
-                : "bg-surface-elevated text-muted-foreground hover:text-foreground"
+              "flex-1 px-4 py-2 text-sm font-medium transition border-b-2",
+              leftPanelTab === "library"
+                ? "border-b-sky-500 text-sky-500"
+                : "border-b-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            📚 라이브러리
+          </button>
+          <button
+            onClick={() => setLeftPanelTab("history")}
+            className={cn(
+              "flex-1 px-4 py-2 text-sm font-medium transition border-b-2",
+              leftPanelTab === "history"
+                ? "border-b-sky-500 text-sky-500"
+                : "border-b-transparent text-muted-foreground hover:text-foreground"
             )}
           >
             📜 이력 ({queryHistory.length})
           </button>
         </div>
 
-        {/* Search Documents */}
-        <div className="border-b border-border p-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔍 문서 검색..."
-            className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-sky-500 focus:outline-none"
-          />
-        </div>
+        {/* Input file hidden */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.docx,.xlsx,.pptx,.txt"
+          onChange={handleUpload}
+          className="hidden"
+          disabled={!!uploadingFile}
+        />
 
-        {/* Category Filter */}
-        <div className="border-b border-border p-3">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            카테고리 필터
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => {
-                  setSelectedCategories((prev) =>
-                    prev.includes(value as DocumentCategory)
-                      ? prev.filter((c) => c !== value)
-                      : [...prev, value as DocumentCategory]
-                  );
-                }}
-                className={cn(
-                  "rounded px-2 py-1 text-xs transition",
-                  selectedCategories.includes(value as DocumentCategory)
-                    ? "bg-sky-500 text-white"
-                    : "bg-surface-elevated text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Library Tab Content */}
+        {leftPanelTab === "library" && (
+          <>
+            {/* Upload Section */}
+            <div className="border-b border-border p-3">
+              {uploadingFile ? (
+                <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+                    <span className="text-xs text-foreground truncate">
+                      {uploadingFile.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{uploadProgress}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
+                    <div
+                      className="h-full bg-sky-500 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full rounded-lg border border-dashed border-sky-500 p-2 text-sm text-sky-500 transition hover:bg-sky-500/10"
+                >
+                  📄 업로드
+                </button>
+              )}
+            </div>
 
-        {/* Document Selection */}
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
-          <span className="text-xs text-muted-foreground">
-            {selectedCount}/{documents.length} 선택됨
-          </span>
-          <div className="flex gap-2">
+            {/* Search Documents */}
+            <div className="border-b border-border p-3">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="🔍 문서 검색..."
+                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-sky-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <div className="border-b border-border p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                카테고리 필터
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => {
+                      setSelectedCategories((prev) =>
+                        prev.includes(value as DocumentCategory)
+                          ? prev.filter((c) => c !== value)
+                          : [...prev, value as DocumentCategory]
+                      );
+                    }}
+                    className={cn(
+                      "rounded px-2 py-1 text-xs transition",
+                      selectedCategories.includes(value as DocumentCategory)
+                        ? "bg-sky-500 text-white"
+                        : "bg-surface-elevated text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Document Selection */}
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                {selectedCount}/{documents.length} 선택됨
+              </span>
+              <div className="flex gap-2">
             <button
               onClick={() => toggleAllDocuments(true)}
               className="text-xs text-sky-500 hover:underline"
@@ -773,8 +820,8 @@ export default function DocsQueryPage() {
           </div>
         </div>
 
-        {/* Document List */}
-        <div className="flex-1 overflow-y-auto p-2">
+            {/* Document List */}
+            <div className="flex-1 overflow-y-auto p-2">
           {loadingDocs ? (
             // Skeleton loading
             <div className="space-y-2">
@@ -846,9 +893,50 @@ export default function DocsQueryPage() {
                 </div>
               </div>
             ))
-          )}
-        </div>
+            )}
+            </div>
+          </>
+        )}
 
+        {/* History Tab Content */}
+        {leftPanelTab === "history" && (
+          <div className="flex-1 overflow-y-auto p-3">
+            {queryHistory.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-4xl mb-2">📭</p>
+                <p className="text-muted-foreground">이력이 없습니다.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  질의를 시작해보세요!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {queryHistory.map((entry) => (
+                  <button
+                    key={entry.id}
+                    onClick={() => {
+                      setQuery(entry.query);
+                      setAnswer(entry.answer);
+                      setReferences(entry.references);
+                      setLeftPanelTab("library");
+                    }}
+                    className="w-full text-left rounded-lg border border-border bg-surface-elevated p-2 transition hover:border-sky-500/50 hover:bg-sky-500/5"
+                  >
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {entry.query}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(entry.timestamp).toLocaleString('ko-KR')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {entry.answer}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right Panel: Query & Response */}
