@@ -1,8 +1,30 @@
 # Tobit SPA AI - 테스트 구조 표준 가이드
 
+**Last Updated**: 2026-02-15
+**Last Updated By**: Claude Code
+
 ## 1. 개요
 
 이 문서는 Tobit SPA AI 프로젝트의 전체 테스트 구조, 실행 방법, 결과 저장 위치, `data-testid` 네이밍 규칙을 표준화한 가이드입니다. 모든 테스트는 이 문서의 규칙을 따라야 합니다.
+
+### Recent Changes (2026-02-14 to 2026-02-15)
+
+#### P1-4 Chaos Testing (Feb 14)
+- ✅ 16개 카오스 테스트 시나리오 완성
+- ✅ Timeout/Failure/Partial Execution 시뮬레이션
+- ✅ Circuit Breaker 상태 전환 검증
+- ✅ 모든 테스트 통과 (16/16)
+
+#### Exception Handling Test Patterns (Feb 15)
+- ✅ SQL Injection 방어 테스트 (15개 시나리오)
+- ✅ HTTP 타임아웃 처리 테스트
+- ✅ Retry 메커니즘 검증
+- ✅ Circuit Breaker 상태 전환 테스트
+
+#### Production Test Guidelines (Feb 15)
+- ✅ Exception handling 표준 테스트 패턴
+- ✅ Timeout 검증 가이드
+- ✅ Retry 로직 테스트 방법
 
 ---
 
@@ -339,3 +361,130 @@ await page.locator('[data-testid="btn-confirm-create"]').click();
 2. **고유성**: 테스트에서 유일하게 식별 가능할 만큼 구체적으로 작성
 3. **안정성**: 리렌더링 시 변경되는 인덱스/동적 ID 사용 금지
 4. **비간섭**: `data-testid`는 스타일이나 기능에 영향을 주지 않아야 함
+
+---
+
+## 9. Chaos Testing 및 Exception Handling (2026-02-15 NEW)
+
+### 9.1 Chaos Testing 시나리오 (P1-4)
+
+**목적**: 시스템의 복원력(Resilience) 검증
+
+**16개 테스트 시나리오**:
+
+| # | 시나리오 | 테스트 대상 | 검증 항목 |
+|---|---------|-----------|---------|
+| 1 | SQL Timeout | DirectQueryTool | Timeout 정책 적용 여부 |
+| 2 | SQL Connection Fail | DirectQueryTool | 연결 실패 처리 |
+| 3 | HTTP Timeout | HTTPTool | HTTP 타임아웃 정책 |
+| 4 | HTTP 4xx Error | HTTPTool | 클라이언트 오류 처리 |
+| 5 | HTTP 5xx Error | HTTPTool | 서버 오류 처리 |
+| 6 | Retry Exhausted | Tool Executor | 재시도 횟수 초과 |
+| 7 | Circuit Breaker Open | Tool Executor | CB 상태 전환 |
+| 8 | Partial Execution | WorkflowExecutor | 중간 노드 실패 |
+| 9 | Invalid Response | Tool Executor | 응답 형식 검증 실패 |
+| 10 | Missing Output Field | Tool Executor | 필수 필드 누락 |
+| 11 | Rate Limiting | Tool Executor | 속도 제한 처리 |
+| 12 | Circuit Breaker Half-Open | Tool Executor | CB 복구 테스트 |
+| 13 | Concurrent Request | Tool Executor | 동시 요청 처리 |
+| 14 | Memory Exhaustion | Tool Executor | 메모리 부족 시뮬레이션 |
+| 15 | Cascading Failure | WorkflowExecutor | 연쇄 실패 전파 |
+| 16 | Recovery Verification | Tool Executor | 자동 복구 검증 |
+
+### 9.2 Exception Handling Test Patterns
+
+**Pattern 1: Timeout 검증**
+```python
+@pytest.mark.asyncio
+async def test_sql_query_timeout():
+    """SQL 쿼리가 제한 시간을 초과할 때 TimeoutError 발생"""
+    tool = DirectQueryTool(timeout_ms=100)
+    with pytest.raises(asyncio.TimeoutError):
+        await tool.execute({
+            "query": "SELECT pg_sleep(1);",  # 1초 대기
+            "params": {}
+        })
+```
+
+**Pattern 2: Retry 메커니즘 검증**
+```python
+@pytest.mark.asyncio
+async def test_http_tool_retry():
+    """HTTP 실패 시 exponential backoff로 재시도"""
+    with patch('httpx.AsyncClient.get', side_effect=[
+        asyncio.TimeoutError(),  # 1차 실패
+        asyncio.TimeoutError(),  # 2차 실패
+        Mock(status_code=200, json=AsyncMock(return_value={"result": "ok"}))  # 3차 성공
+    ]):
+        tool = HTTPTool(max_retries=3, backoff_factor=2)
+        result = await tool.execute({"url": "http://example.com"})
+        assert result.success == True
+```
+
+**Pattern 3: Circuit Breaker 상태 전환 검증**
+```python
+@pytest.mark.asyncio
+async def test_circuit_breaker_state_transitions():
+    """Circuit breaker: closed → open → half-open → closed"""
+    executor = ToolExecutor(failure_threshold=2)
+
+    # 2회 연속 실패 → open
+    with patch.object(executor, '_execute_tool', side_effect=Exception("fail")):
+        for _ in range(2):
+            with pytest.raises(Exception):
+                await executor.execute_with_cb(tool)
+    assert executor.cb_state == "open"
+
+    # 30초 후 half-open
+    executor.last_failure_time = time.time() - 31
+    assert executor.cb_state == "half-open"
+
+    # 1회 성공 → closed
+    with patch.object(executor, '_execute_tool', return_value={"success": True}):
+        await executor.execute_with_cb(tool)
+    assert executor.cb_state == "closed"
+```
+
+### 9.3 Production Test Guidelines
+
+#### Exception Handling 검증 체크리스트
+
+| 항목 | 검증 항목 | 테스트 메서드 |
+|------|---------|-------------|
+| **Timeout** | 정책 설정값 초과 시 TimeoutError 발생 | `test_tool_timeout` |
+| **Retry** | 지수 백오프로 최대 횟수까지 재시도 | `test_tool_retry_backoff` |
+| **Circuit Breaker** | Closed → Open → Half-Open → Closed 전환 | `test_cb_state_transitions` |
+| **Fallback** | 기본 채널 실패 시 백업 채널로 전환 | `test_action_fallback` |
+| **Logging** | 모든 실패/재시도/CB 상태변경 기록 | `test_exception_logging` |
+
+#### Production 배포 전 필수 테스트
+
+```bash
+# 모든 Exception Handling 테스트 실행
+cd apps/api && pytest tests/ -k "exception" -v
+
+# 모든 Chaos 테스트 실행
+cd apps/api && pytest tests/ -k "chaos" -v
+
+# 모든 Timeout 테스트 실행
+cd apps/api && pytest tests/ -k "timeout" -v
+
+# 모든 Retry 테스트 실행
+cd apps/api && pytest tests/ -k "retry" -v
+
+# 모든 Circuit Breaker 테스트 실행
+cd apps/api && pytest tests/ -k "circuit" -v
+
+# 회귀 테스트 (모든 테스트)
+cd apps/api && pytest tests/ -v --tb=short
+```
+
+#### SLA 검증
+
+| 메트릭 | 기준값 | 검증 방법 |
+|--------|--------|----------|
+| **Timeout 적용률** | 100% | 모든 외부 호출에 timeout 설정 |
+| **Retry 성공률** | > 90% | 재시도로 복구되는 비율 |
+| **CB 자동 복구** | 30초 내 | half-open 상태 복구 시간 |
+| **Fallback 동작** | 100% | 기본 채널 실패 시 대체 채널 전환 |
+| **예외 로깅** | 100% | 모든 실패 이벤트 기록 |

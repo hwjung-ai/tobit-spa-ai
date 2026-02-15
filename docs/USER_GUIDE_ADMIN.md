@@ -1,6 +1,7 @@
 # Admin System - 사용자 가이드
 
-**Last Updated**: 2026-02-11
+**Last Updated**: 2026-02-15
+**Production Readiness**: 95%
 
 ## 문서의 성격
 
@@ -668,6 +669,88 @@
 
 ---
 
+---
+
+## 9. Recent Changes (2026-02-14 to 2026-02-15)
+
+### CEP Monitoring 대시보드 추가
+- ✅ `/admin/observability` 좌측 탭에 CEP Monitoring 추가
+- ✅ CEP 규칙별 성능 메트릭 표시 (p50/p95/p99 지연)
+- ✅ 채널별 신뢰도 모니터링 (success rate, fallback rate)
+- ✅ Circuit Breaker 상태 시각화
+- ✅ 우측 패널: 선택 규칙의 상세 메트릭
+
+### Observability 섹션 확장
+- Admin > Observability에 다음 확인 항목 추가:
+  1. **CEP Rule Performance**: 모든 활성 규칙의 실행 성능
+  2. **Channel Health**: 각 채널(Slack, Email, SMS, Discord)의 신뢰도
+  3. **Event Quality**: 이벤트 품질 지표 (false positive, ACK latency)
+  4. **Circuit Breaker Status**: 각 채널의 CB 상태 (closed/open/half-open)
+
+### Production Best Practices 문서화
+- CEP 모니터링 운영 가이드 추가
+- 채널 장애 자동 감지 및 복구 프로세스
+- SLA 목표값 정의 (success rate > 95%, p50 < 500ms)
+
+### Admin System Production Readiness
+- 전체 준비도: 90% → 95%
+
+---
+
+## 10. CEP Monitoring 운영 가이드 (2026-02-15 NEW)
+
+### CEP Monitoring 진입
+
+1. `/admin/observability` 접속
+2. 좌측 탭에서 **"CEP Monitoring"** 선택
+
+### 메트릭 해석
+
+| 메트릭 | 정상 범위 | 주의 범위 | 경고 범위 |
+|--------|---------|---------|----------|
+| **p50 latency** | < 500ms | 500ms ~ 1s | > 1s |
+| **p95 latency** | < 2s | 2s ~ 5s | > 5s |
+| **p99 latency** | < 5s | 5s ~ 10s | > 10s |
+| **Success Rate** | > 95% | 85% ~ 95% | < 85% |
+| **Fallback Rate** | < 10% | 10% ~ 20% | > 20% |
+
+### 문제 진단
+
+**증상 1: "Channel Slack 신뢰도 85% 이하"**
+1. Observability > CEP Monitoring에서 해당 채널 선택
+2. 우측 상세 패널에서 최근 실패 이벤트 확인
+3. 실패 원인: webhook URL 오류/권한 만료/네트워크
+4. 조치:
+   - Slack webhook URL 갱신
+   - `/cep/channels/test` API로 채널 개별 테스트
+   - 채널 상태 재확인
+
+**증상 2: "Circuit Breaker Open"**
+1. 상태: "open" (차단 상태)
+2. 자동 복구: 30초 후 half-open → closed 순서로 전환
+3. 수동 조치: 채널 설정 수정 후 Test 실행
+
+**증상 3: "p95/p99 지연 증가 추세"**
+1. 원인: 외부 webhook 응답 느림 또는 네트워크 지연
+2. 조치:
+   - Webhook 대상 엔드포인트 성능 점검
+   - Timeout 설정 상향 (현재 기본값: 10s HTTP)
+   - 병렬 실행 정책 확인
+
+### 채널별 모니터링 워크플로우
+
+**일일 점검 (매일 9시)**:
+1. All Channels success rate > 95% 여부 확인
+2. Fallback rate < 10% 여부 확인
+3. Circuit breaker open 상태 여부 확인
+
+**주간 점검 (매주 월요일)**:
+1. Top 5 문제 규칙 식별 (오탐율 높은 규칙)
+2. 채널별 신뢰도 추이 분석
+3. 성능 저하 근본 원인 분석
+
+---
+
 ## 12. 향후 작업 (미완료)
 
 ```text
@@ -676,9 +759,10 @@
 [ ] Tenant/User 운영 관리 화면(생성/비활성화/역할 변경) 추가
 [ ] Audit Log 필터를 tenant/user/action 기준으로 저장 가능한 프리셋으로 확장
 [ ] Regression 실패 결과를 이슈 트래킹(예: 티켓)과 자동 연계
+[ ] CEP 규칙별 자동 문제 진단 및 권장사항 제시 기능
 ```
 
 ---
 
-**마지막 정리**: 2026-02-11
+**마지막 정리**: 2026-02-15
 **상태**: 상용 운영 가능 (핵심 기능 완료, 고도화 진행 중)

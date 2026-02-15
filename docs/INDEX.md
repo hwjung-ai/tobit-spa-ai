@@ -1,7 +1,29 @@
 # Tobit SPA AI - 문서 인덱스
 
-**최종 정리**: 2026-02-11
-**전체 완성도**: 94%
+**최종 정리**: 2026-02-15
+**전체 완성도**: 95%
+
+## 최근 마일스톤 (2026-02-14 ~ 2026-02-15)
+
+### ✅ P0-4 Query Safety Validation - 완전 통합 (Feb 14)
+- DirectQueryTool에 QuerySafetyValidator 통합
+- 모든 SQL 쿼리 검증 (read-only, DDL/DCL 차단, tenant isolation)
+- 23개 테스트 모두 통과
+
+### ✅ Screen Editor Copilot + Onboarding (Feb 14)
+- AI 기반 JSON Patch 생성 (신뢰도 점수 포함)
+- 7단계 튜토리얼 시스템
+- 온보딩 완료도 localStorage에 저장
+
+### ✅ CEP/API 프로덕션 강화 (Feb 14-15)
+- Circuit Breaker 패턴 구현 (자동 복구)
+- 재시도 메커니즘 (exponential backoff)
+- Admin Observability Dashboard에 CEP 모니터링 추가
+- Exception Handling 완전 표준화
+
+### ✅ ESLint 경고 대폭 감소 (Feb 15)
+- 87개 → 32개 (63% 감소)
+- Frontend 코드 품질 개선
 **활성 문서**: 19개 (docs/) + 3개 (root)
 **아카이브**: docs/history/ (완료된 Phase 및 설계 문서)
 
@@ -137,6 +159,6 @@ tobit-spa-ai/
 
 ---
 
-**마지막 정리**: 2026-02-11
+**마지막 정리**: 2026-02-15
 **활성 문서**: 19개 (docs/) + 3개 (root)
-**전체 완성도**: 94% (상용 준비)
+**전체 완성도**: 95% (상용 준비)

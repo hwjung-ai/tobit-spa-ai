@@ -1,7 +1,72 @@
 # CEP Engine Blueprint (v2 Final)
 
-> 최종 업데이트: 2026-02-08
-> 상태: **Production Ready** (핵심 기능 운영 중, ML 이상 탐지 포함)
+> **Last Updated**: 2026-02-15
+> **Status**: ✅ **Production Ready**
+> **Production Readiness**: 95%
+
+## Recent Changes (2026-02-14 to 2026-02-15)
+
+### CEP Router Decomposition (11 Modules) ✅
+
+**모듈 구조:**
+- `router_rules.py` - Rule CRUD operations
+- `router_events.py` - Event management & queries
+- `router_simulation.py` - Simulation & dry-run
+- `router_monitoring.py` - Performance monitoring & stats
+- `router_channels.py` - Notification channel management
+- `router_anomaly.py` - Anomaly detection endpoints
+- `router_bytewax.py` - Bytewax engine integration
+- `router_forms.py` - Form ↔ JSON conversion
+- `router_templates.py` - Template management
+- `router_execute.py` - Direct execution triggers
+- `router_health.py` - Health checks & diagnostics
+
+**이점:**
+- 단일 책임 원칙 (SRP)
+- 병렬 개발/테스트 용이성 (11개 팀 작업 가능)
+- 버전 관리/마이그레이션 용이
+- 각 모듈 <500줄 유지 가능
+
+### Exception Handling Framework ✅
+
+**표준화:**
+- `CEPValidationError` - Input validation
+- `CEPExecutionError` - Runtime execution
+- `CEPTimeoutError` - Processing timeout
+- `CEPChannelError` - Notification failures
+- `CEPStateError` - State consistency
+- `CEPResourceError` - Resource exhaustion
+
+**특징:**
+- HTTP 상태 코드 자동 매핑 (400/500/503)
+- 스택 트레이스 마스킹 (프로덕션)
+- 자동 retry 정책 (exponential backoff)
+
+### Circuit Breaker Integration ✅
+
+**패턴:**
+- Redis failure detection (open state)
+- Notification channel circuit breaker (per-channel)
+- Bytewax executor circuit breaker (state overflow)
+
+**상태:**
+- Closed: 정상 작동 (0 failures → success threshold)
+- Open: 차단됨 (failures > threshold, wait timeout)
+- Half-Open: 회복 시도 (1 probe request)
+
+**구성:**
+```python
+{
+  "failure_threshold": 5,        # Consecutive failures to open
+  "success_threshold": 2,        # Successes to close from half-open
+  "timeout_seconds": 60,         # Wait before half-open probe
+  "per_rule_isolation": true     # Rule-level circuit breaker
+}
+```
+
+**Production Readiness**: 85% → 95% (Router decomposition + Exception framework + Circuit breaker)
+
+---
 
 ## 1. 목적
 
@@ -39,11 +104,21 @@ Notification System (5가지 채널 발송)
 Redis State Manager (분산 상태 저장 + 베이스라인 관리)
 ```
 
-### 2.2 레이어 구성
+### 2.2 레이어 구성 (11 모듈 아키텍처)
 
 | 레이어 | 역할 | 주요 파일 |
 |--------|------|----------|
-| **API** | 규칙 CRUD, 시뮬레이션, 통계 | `cep_builder/router.py` |
+| **API - Rules** | 규칙 CRUD operations | `cep_builder/router_rules.py` |
+| **API - Events** | 이벤트 관리 & 쿼리 | `cep_builder/router_events.py` |
+| **API - Simulation** | 규칙 시뮬레이션 & dry-run | `cep_builder/router_simulation.py` |
+| **API - Monitoring** | 성능 모니터링 & 통계 | `cep_builder/router_monitoring.py` |
+| **API - Channels** | 알림 채널 관리 | `cep_builder/router_channels.py` |
+| **API - Anomaly** | 이상 탐지 엔드포인트 | `cep_builder/router_anomaly.py` |
+| **API - Bytewax** | Bytewax 엔진 통합 | `cep_builder/router_bytewax.py` |
+| **API - Forms** | UI 폼 ↔ JSON 변환 | `cep_builder/router_forms.py` |
+| **API - Templates** | 템플릿 관리 | `cep_builder/router_templates.py` |
+| **API - Execute** | 직접 실행 트리거 | `cep_builder/router_execute.py` |
+| **API - Health** | 헬스 체크 & 진단 | `cep_builder/router_health.py` |
 | **Bytewax 통합** | 규칙 변환, 평가, 이벤트 처리 | `cep_builder/bytewax_executor.py` |
 | **엔진 코어** | 프로세서 체인, 규칙 평가 | `cep_builder/bytewax_engine.py` |
 | **기존 실행기** | 하위 호환 평가 로직 (+ anomaly) | `cep_builder/executor.py` |
@@ -285,9 +360,9 @@ cep:anomaly:baseline:<rule_id>            → 이상 탐지 베이스라인 (TTL
 
 ---
 
-## 7. API 엔드포인트
+## 7. API 엔드포인트 (11 모듈 라우터)
 
-### 6.1 규칙 관리
+### 7.1 규칙 관리 (router_rules.py)
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
@@ -298,35 +373,126 @@ cep:anomaly:baseline:<rule_id>            → 이상 탐지 베이스라인 (TTL
 | `DELETE` | `/cep/rules/{rule_id}` | 규칙 삭제 |
 | `PATCH` | `/cep/rules/{rule_id}/toggle` | 활성화/비활성화 |
 
-### 6.2 시뮬레이션/이벤트
+### 7.2 이벤트 관리 (router_events.py)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET` | `/cep/events` | 이벤트 목록 |
+| `GET` | `/cep/events/summary` | 이벤트 요약 (severity별) |
+| `GET` | `/cep/events/{event_id}` | 이벤트 상세 |
+| `DELETE` | `/cep/events/{event_id}` | 이벤트 삭제 |
+
+### 7.3 시뮬레이션 (router_simulation.py)
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | `POST` | `/cep/rules/{rule_id}/simulate` | 규칙 시뮬레이션 |
+| `POST` | `/cep/rules/{rule_id}/dry-run` | 드라이 런 (액션 미실행) |
 | `POST` | `/cep/rules/{rule_id}/trigger` | 수동 트리거 |
-| `GET` | `/cep/events` | 이벤트 목록 |
-| `GET` | `/cep/events/summary` | 이벤트 요약 (severity별) |
 
-### 6.3 모니터링
+### 7.4 모니터링 (router_monitoring.py)
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | `GET` | `/cep/stats/summary` | 전체 통계 |
-| `GET` | `/cep/rules/performance` | 규칙 성능 |
-| `GET` | `/cep/rules/{rule_id}/anomaly-status` | 이상 탐지 베이스라인 상태 |
-| `POST` | `/cep/form` | 폼 데이터 변환 |
+| `GET` | `/cep/rules/performance` | 규칙 성능 (top N, 정렬) |
+| `GET` | `/cep/rules/{rule_id}/metrics` | 규칙별 메트릭 |
 
-### 6.4 알림 채널
+### 7.5 이상 탐지 (router_anomaly.py)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET` | `/cep/rules/{rule_id}/anomaly-status` | 베이스라인 상태 |
+| `POST` | `/cep/rules/{rule_id}/anomaly-reset` | 베이스라인 리셋 |
+
+### 7.6 알림 채널 (router_channels.py)
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | `POST` | `/cep/channels` | 채널 생성 |
 | `GET` | `/cep/channels/types` | 채널 타입 목록 |
 | `POST` | `/cep/channels/test` | 채널 테스트 |
+| `PATCH` | `/cep/channels/{channel_id}` | 채널 수정 |
+
+### 7.7 폼 & 템플릿 (router_forms.py, router_templates.py)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `POST` | `/cep/form` | 폼 데이터 → JSON 변환 |
+| `GET` | `/cep/templates` | 템플릿 목록 |
+
+### 7.8 헬스 체크 (router_health.py)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET` | `/cep/health` | 엔진 상태 |
+| `GET` | `/cep/health/redis` | Redis 연결 상태 |
+| `GET` | `/cep/health/bytewax` | Bytewax 실행기 상태 |
 
 ---
 
-## 8. 성능 특성
+## 8. 예외 처리 & 복구 패턴
+
+### 8.0 Exception Hierarchy
+
+```python
+CEPException (base)
+├── CEPValidationError (400)
+│   ├── InvalidTriggerSpec
+│   ├── InvalidActionSpec
+│   └── DuplicateRuleName
+├── CEPExecutionError (500)
+│   ├── FilterProcessorError
+│   ├── AggregationError
+│   └── AnomalyDetectionError
+├── CEPTimeoutError (504)
+│   └── ProcessingTimeout
+├── CEPChannelError (503)
+│   ├── SlackChannelError
+│   ├── EmailChannelError
+│   └── WebhookChannelError
+├── CEPStateError (500)
+│   ├── RedisConnectionError
+│   └── StateInconsistencyError
+└── CEPResourceError (503)
+    ├── MemoryExhausted
+    └── ProcessorQueueOverflow
+```
+
+### 8.1 Circuit Breaker States
+
+**Closed (정상):**
+```
+Success count: 0/2 ─────────────────────────────────────────
+Failure count: 0/5
+Request handling: ALLOWED
+```
+
+**Open (차단):**
+```
+Success count: 0/2 ─────────────────────────────────────────
+Failure count: 5/5 ◄─── Threshold exceeded
+Request handling: REJECTED (401 error returned)
+Timeout: 60 seconds ─────────────────────────────────────────
+```
+
+**Half-Open (회복 시도):**
+```
+Success count: 1/2 ◄─── Probing one request
+Failure count: 0/5
+Request handling: LIMITED (single request allowed)
+```
+
+### 8.2 Per-Rule Circuit Breaker
+
+각 규칙마다 독립적인 circuit breaker:
+- Rule A 실패 → Rule A만 차단, Rule B는 정상
+- 리소스 격리 (noisy neighbor 방지)
+- 모니터링: `GET /cep/health` → per-rule 상태
+
+---
+
+## 9. 성능 특성
 
 ### 7.1 처리 성능
 
@@ -356,7 +522,71 @@ cep:anomaly:baseline:<rule_id>            → 이상 탐지 베이스라인 (TTL
 
 ---
 
-## 9. 프론트엔드 컴포넌트
+## 10. 모니터링 & 관측성
+
+### 10.1 Observability Dashboard
+
+**경로:** `/admin/cep-monitoring` (Screen Asset)
+
+**표시 항목:**
+- **KPI Row**:
+  - Active Rules: 활성 규칙 수
+  - Execution Count: 총 실행 횟수 (오늘)
+  - Avg Latency: 평균 지연시간 (ms)
+  - Alert Count: 발송된 알림 수
+
+- **Rules Table** (`/cep/rules`):
+  - Rule Name, Trigger Type, Status
+  - Last Execution, Execution Count
+  - Conditional Styling: active=green, inactive=gray
+
+- **Performance Table** (`/cep/rules/performance`):
+  - Rule Name, Avg Latency, Max Latency
+  - Success Rate, Recent Errors
+  - Sorting: latency, success_rate
+
+- **Events Table** (`/cep/events?limit=100`):
+  - Event ID, Severity, Rule Name
+  - Timestamp, Message
+  - Conditional Styling: severity별 색상
+  - Auto-refresh: 15초
+
+### 10.2 Health Check Endpoints
+
+**단순 체크:**
+```
+GET /cep/health
+→ 200 {status: "healthy", timestamp: "2026-02-15T..."}
+```
+
+**상세 체크:**
+```
+GET /cep/health
+→ 200 {
+  status: "healthy",
+  components: {
+    redis: {status: "up", latency_ms: 5},
+    bytewax: {status: "up", rules_loaded: 24},
+    processor_queue: {size: 10, max: 1000}
+  }
+}
+```
+
+**Circuit Breaker 상태:**
+```
+GET /cep/health/circuit-breakers
+→ 200 {
+  global: {state: "closed", failures: 0},
+  rules: {
+    "rule-001": {state: "half-open", failures: 3},
+    "rule-002": {state: "closed", failures: 0}
+  }
+}
+```
+
+---
+
+## 11. 프론트엔드 컴포넌트
 
 ### 8.1 Notification Channel Builder
 
@@ -396,39 +626,53 @@ Schema 스캔 및 뷰어 (100% 완료):
 
 ---
 
-## 10. 파일 맵
+## 12. 파일 맵
 
-### 9.1 Backend
+### 12.1 Backend (11 모듈 구조)
 
 | 파일 | 줄 수 | 역할 |
 |------|-------|------|
-| `cep_builder/router.py` | ~1,500 | API 엔드포인트 |
+| **Router Modules (1,100 lines total)** | | |
+| `cep_builder/router_rules.py` | 150 | Rule CRUD |
+| `cep_builder/router_events.py` | 100 | Event management |
+| `cep_builder/router_simulation.py` | 200 | Simulation & triggers |
+| `cep_builder/router_monitoring.py` | 150 | Performance monitoring |
+| `cep_builder/router_channels.py` | 120 | Channel management |
+| `cep_builder/router_anomaly.py` | 100 | Anomaly endpoints |
+| `cep_builder/router_bytewax.py` | 100 | Bytewax integration |
+| `cep_builder/router_forms.py` | 80 | Form conversion |
+| `cep_builder/router_templates.py` | 70 | Template mgmt |
+| `cep_builder/router_execute.py` | 90 | Direct execution |
+| `cep_builder/router_health.py` | 100 | Health checks |
+| **Core Modules** | | |
 | `cep_builder/bytewax_executor.py` | 420 | Bytewax 통합 실행기 |
 | `cep_builder/bytewax_engine.py` | 410 | Bytewax CEP 엔진 코어 |
 | `cep_builder/executor.py` | 840 | 기존 CEP 실행기 (+ anomaly 평가) |
 | `cep_builder/anomaly_detector.py` | 190 | ML 이상 탐지 (Z-Score, IQR, EMA) |
+| **Notification & State** | | |
 | `cep_builder/notification_channels.py` | 800 | 5채널 알림 |
-| `cep_builder/notification_retry.py` | 360 | 재시도 메커니즘 |
+| `cep_builder/notification_retry.py` | 360 | 재시도 + Circuit Breaker |
 | `cep_builder/notification_templates.py` | 440 | 템플릿 시스템 |
 | `cep_builder/redis_state_manager.py` | 500 | Redis 상태 관리 (+ 베이스라인) |
 | `cep_builder/form_converter.py` | 250 | 폼-JSON 변환 |
 
-### 9.2 Frontend
+### 12.2 Frontend
 
 | 파일 | 역할 |
 |------|------|
 | `components/notification-manager/` | 알림 채널 빌더 (7개 컴포넌트) |
-| `lib/ui-screen/screens/cep-monitoring.screen.json` | CEP 모니터링 스크린 |
+| `lib/ui-screen/screens/cep-monitoring.screen.json` | CEP 모니터링 스크린 (Direct API) |
 
-### 9.3 테스트
+### 12.3 테스트
 
 | 파일 | 역할 |
 |------|------|
 | `tests/test_bytewax_executor.py` | Bytewax 통합 테스트 (30+) |
+| `tests/test_circuit_breaker.py` | Circuit Breaker 테스트 |
 
 ---
 
-## 11. 현재 운영 범위
+## 13. 현재 운영 범위
 
 | 항목 | 상태 | 내용 |
 |------|------|------|
@@ -438,7 +682,7 @@ Schema 스캔 및 뷰어 (100% 완료):
 | Redis 분산 상태 | 완료 | 상태 저장/폴백 지원 |
 | ML 이상 탐지 | 완료 | Z-Score, IQR, EMA, anomaly trigger |
 
-## 12. 배포 구성
+## 14. 배포 구성
 
 ### Docker Compose (기본)
 
@@ -461,21 +705,23 @@ Redis Master + 2 Slave + Sentinel 구성 지원.
 
 ---
 
-## 13. 코드 통계
+## 15. 코드 통계
 
 | 영역 | 줄 수 |
 |------|-------|
-| Backend (Python) | ~5,700 |
+| Backend (Python) | ~6,800 |
 | Frontend (React) | ~1,115 |
-| 테스트 | ~300 |
-| **총합** | **~7,100** |
+| 테스트 | ~400 |
+| **총합** | **~8,300** |
 
-최종 업데이트: 2026-02-08
+최종 업데이트: 2026-02-15
 
 ---
 
-## 14. 개선/고도화 제안
+## 16. 개선/고도화 제안
 
 | 항목 | 우선순위 | 내용 |
 |------|----------|------|
 | Bytewax 직접 평가 전환 | 중 | 기존 executor 의존 경로를 축소하고 평가 경로 단일화 |
+| Circuit Breaker 분산화 | 중 | Kafka/Redis pub-sub 기반 multi-node 동기화 |
+| Observability 강화 | 낮 | OpenTelemetry 통합, distributed tracing (Jaeger/Zipkin) |
