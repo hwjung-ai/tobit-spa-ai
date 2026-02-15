@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 import {
@@ -26,7 +25,6 @@ import type {
   NetworkNode,
   TableBlock,
   TimeSeriesSeries,
-  TimeSeriesBlock,
   UIScreenBlock,
 } from "./block-types";
 export type {

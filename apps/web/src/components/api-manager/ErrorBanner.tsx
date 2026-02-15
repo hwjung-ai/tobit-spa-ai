@@ -36,7 +36,6 @@ export default function ErrorBanner({
   }
 
   const hasErrors = errors.length > 0;
-  const hasWarnings = warnings.length > 0;
 
   return (
     <div

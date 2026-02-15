@@ -40,7 +40,7 @@ const OPERATORS = [
   { name: "IS NOT NULL", label: "IS NOT NULL" },
 ];
 
-const formatRuleToSQL = (rule: QueryRule, tableName: string): string => {
+const formatRuleToSQL = (rule: QueryRule): string => {
   const { field, operator, value } = rule;
   
   if (operator === "IS NULL") {
@@ -65,7 +65,7 @@ const formatRuleToSQL = (rule: QueryRule, tableName: string): string => {
 const formatGroupToSQL = (group: QueryGroup): string => {
   const rules = group.rules
     .filter((rule) => rule.field && rule.operator)
-    .map((rule) => formatRuleToSQL(rule, ""));
+    .map((rule) => formatRuleToSQL(rule));
   return rules.join(` ${group.combinator} `);
 };
 

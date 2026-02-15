@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -96,11 +96,6 @@ interface OnboardingTourProps {
 }
 
 export function OnboardingTour({ onComplete, forceShow = false }: OnboardingTourProps) {
-  const completed = useMemo(() => {
-    const savedCompleted = localStorage.getItem(STORAGE_KEY);
-    return !!savedCompleted;
-  }, []);
-
   const [isOpen, setIsOpen] = useState(() => {
     const savedCompleted = localStorage.getItem(STORAGE_KEY);
     return !savedCompleted || forceShow;

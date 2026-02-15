@@ -47,7 +47,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
     scan_status: "pending" as const,
     table_count: 0,
     column_count: 0,
-  }, [asset.catalog, asset.name]);
+  }, [asset.catalog, asset.name, asset.description, asset.version]);
 
   const sourcesQuery = useQuery({
     queryKey: ["asset-registry", "sources"],

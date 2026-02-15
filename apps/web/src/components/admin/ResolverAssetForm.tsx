@@ -26,7 +26,7 @@ interface ResolverAssetFormProps {
   asset: ResolverAssetResponse;
 }
 
-export default function ResolverAssetForm({ asset, onSave }: ResolverAssetFormProps) {
+export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
   const [isSimulateDialogOpen, setIsSimulateDialogOpen] = useState(false);
   const [simulationResults, setSimulationResults] = useState<ResolverSimulationResult[]>([]);
   const [testEntityInput, setTestEntityInput] = useState("");
