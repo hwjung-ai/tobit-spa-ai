@@ -4,31 +4,6 @@
 > **Status**: ✅ **Production Ready**
 > **Production Readiness**: 94%
 
-## Recent Changes (2026-02-14 to 2026-02-15)
-
-### ⭐ AI Copilot Feature (NEW - MAJOR FEATURE!)
-- **What**: Natural language screen design assistance powered by LLM
-- **Endpoint**: POST `/ai/screen-copilot`
-- **Capabilities**:
-  - Convert natural language commands to UI modifications
-  - Confidence scoring (0.0-1.0) for each suggestion
-  - 6 quick action buttons (Create, Move, Delete, Rename, Style, Layout)
-  - One-click apply with undo support
-- **Usage**: See new "3. AI Copilot Assistant" section below for complete guide
-
-### 🎓 Onboarding System (NEW)
-- **What**: 7-step interactive tutorial for first-time users
-- **Features**: localStorage completion tracking, skip/complete buttons, contextual help
-- **Steps**: Welcome → Components → Properties → Canvas → Quick Actions → Advanced → Complete
-- **Auto-trigger**: Shown on first login or when clicking "?" help button
-
-### 🏗️ Architecture Improvements
-- **Production Readiness**: 85% → 94%
-- **Copilot UI/UX**: Stabilized JSON parsing, error recovery, multi-candidate parsing
-- **Onboarding System**: Full tutorial coverage with empty state guidance
-
----
-
 ## 문서의 성격
 
 이 문서는 Screen Editor를 처음 사용하는 사용자가

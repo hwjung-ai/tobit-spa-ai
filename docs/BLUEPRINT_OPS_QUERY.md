@@ -4,34 +4,6 @@
 > **Status**: ✅ **Production Ready**
 > **Production Readiness**: 95%
 
-## Recent Changes (2026-02-14 to 2026-02-15)
-
-### 🔒 Security Enhancements (P0-4)
-- **Query Safety Validation** - ALL SQL queries validated via `QuerySafetyValidator` before execution
-- **Read-Only Enforcement** - INSERT/UPDATE/DELETE blocked automatically
-- **DDL/DCL Blocking** - CREATE/ALTER/DROP/GRANT/REVOKE forbidden in DirectQueryTool
-- **Tenant Isolation** - All queries automatically scoped to `tenant_id` with SQL validation
-- **Row Limiting** - Hard cap of 10,000 rows per query prevents resource exhaustion
-
-### 🏗️ Architecture Improvements
-- **Runner Modularization** - 6,326-line monolithic runner.py decomposed into 15+ focused modules
-- **Tool Capability Registry** - 8 APIs for tool discovery, validation, and orchestration
-- **Modular Tool System** - Direct access to specialized executors (ci_resolver, metric_resolver, etc.)
-- **Block Builder Pattern** - Dedicated `BlockBuilder` for composing Answer Blocks
-- **Exception Standardization** - Circuit breaker, timeout, and validation exceptions unified
-
-### 📊 Production Readiness
-- **Previous**: 75%
-- **Current**: 95%
-- **Key Improvements**:
-  - ✅ P0-4 Query Safety: COMPLETE
-  - ✅ P1-3 Partial Success Responses: COMPLETE
-  - ✅ P1-2 Tool Capability Registry: COMPLETE
-  - ✅ P1-4 Chaos Tests: COMPLETE (16/16 passing)
-  - ✅ Test Coverage: 74/74 tests passing
-
----
-
 ## 1. 목적
 
 OPS Query System은 운영 환경의 구성/수치/이력/연결/문서 데이터를 자연어 질의로 조회하는

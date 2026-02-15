@@ -4,29 +4,6 @@
 > **Status**: ✅ **Production Ready**
 > **Security Level**: HIGH (P0-4 Query Safety Enforced)
 
-## 📋 Recent Changes (2026-02-14 to 2026-02-15)
-
-### 🔒 Security Enhancements
-- **Query Safety Validation (P0-4)** - ALL SQL queries validated with strict safety checks
-  - INSERT/UPDATE/DELETE are blocked (read-only enforced)
-  - DDL statements (CREATE/ALTER/DROP) are blocked
-  - DCL statements (GRANT/REVOKE) are blocked
-  - Tenant isolation is enforced at SQL level
-  - See [Data Security](#new-data-security-section) section for details
-
-### 🔄 Error Handling & Recovery
-- **LLM Circuit Breaker** - Automatic fallback when LLM service fails
-- **3-Attempt Retry Mechanism** - Transient failures are automatically retried
-- **Fallback Data Sources** - Priority-based fallback (metric_timeseries → tool → topology_fallback)
-- **Detailed Error Messages** - User-friendly error messages with actionable suggestions
-
-### 🏗️ Architecture
-- **Runner Modularization** - Monolithic runner decomposed into 15+ focused modules
-- **Tool Capability Registry** - Dynamic tool discovery and validation
-- **Production Readiness** - Increased from 75% to 95%
-
----
-
 ## 문서의 성격
 
 이 가이드는 OPS Orchestration 시스템을 **학습하고 운영하기 위한 완전한 실행 가이드**입니다.

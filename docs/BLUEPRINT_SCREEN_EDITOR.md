@@ -4,28 +4,6 @@
 > **Status**: ✅ **Production Ready**
 > **Production Readiness**: 94%
 
-## Recent Changes (2026-02-14 to 2026-02-15)
-
-### 2.14-15: AI Copilot & Onboarding System Launch
-
-**AI Copilot Integration** ✅
-- Natural language → JSON Patch conversion endpoint: `POST /ai/screen-copilot`
-- Confidence scoring system (0.0-1.0 scale)
-- 6 quick action buttons (Add Text, Add Button, Add Table, Add Form, Add Chart, Add Modal)
-- JSON Patch response format for safe, composable updates
-- Real-time validation and preview support
-
-**Onboarding System** ✅
-- 7-step interactive tutorial for first-time users
-- localStorage-based step tracking (key: `screen-editor-tutorial-step`)
-- Empty state guidance with CTA buttons
-- Progressive disclosure of advanced features
-- Accessibility compliance (keyboard navigation, ARIA labels)
-
-**Production Readiness**: 85% → 94% (Copilot + Onboarding + Edge case handling)
-
----
-
 ## 1. 목적
 
 이 문서는 Tobit SPA AI의 `admin > screens`를 상용 수준의 UI 편집기/런타임으로 고도화하기 위한 기준 설계서다.
