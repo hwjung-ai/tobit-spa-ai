@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { fetchApi } from "../../../lib/adminUtils";
 import ToolTable from "../../../components/admin/ToolTable";
 import CreateToolModal from "../../../components/admin/CreateToolModal";
@@ -37,8 +37,6 @@ export default function ToolsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();
-    const [statusFilter, setStatusFilter] = useState<ToolStatus>("all");
-    const [toolTypeFilter, setToolTypeFilter] = useState<ToolType>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedTool, setSelectedTool] = useState<ToolAsset | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);

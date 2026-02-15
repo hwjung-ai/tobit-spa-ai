@@ -59,12 +59,47 @@ import {
   validateTemplateBindingsInTexts,
 } from "../../lib/api-manager/utils";
 import { recordCopilotMetric } from "../../lib/copilot/metrics";
+import type { ResponseEnvelope } from "../../lib/apiClientTypes";
 
 /* Types and utilities imported from lib/api-manager */
 
 type SaveApiResult =
   | { ok: true; data: Record<string, unknown> | null }
   | { ok: false; error: string; details: unknown };
+
+async function parseResponsePayload(
+  response: Response,
+): Promise<ResponseEnvelope<Record<string, unknown>>> {
+  const contentType = response.headers.get("content-type") ?? "";
+  const raw = await response.text();
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return {
+      code: response.ok ? 0 : response.status,
+      message: response.ok ? "OK" : response.statusText || "Empty response body",
+      data: {},
+    };
+  }
+
+  const looksLikeJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+  if (contentType.includes("application/json") || looksLikeJson) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (parsed && typeof parsed === "object") {
+        return parsed as ResponseEnvelope<Record<string, unknown>>;
+      }
+    } catch {
+      // Fall through to raw-text envelope.
+    }
+  }
+
+  return {
+    code: response.ok ? 0 : response.status,
+    message: trimmed,
+    data: {},
+  };
+}
 
 export default function ApiManagerPage() {
   const normalizeHttpMethod = (method: unknown): HttpSpec["method"] => {

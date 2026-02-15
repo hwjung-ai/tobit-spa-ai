@@ -16,6 +16,7 @@ Routes:
 from fastapi import APIRouter
 
 from .actions import router as actions_router
+from .ask_stream import router as ask_stream_router
 from .ci_ask import router as ask_router
 from .query import router as query_router
 from .rca import router as rca_router
@@ -33,6 +34,7 @@ def get_combined_router() -> APIRouter:
     combined = APIRouter(prefix="/ops", tags=["ops"])
     combined.include_router(query_router)
     combined.include_router(ask_router)
+    combined.include_router(ask_stream_router)
     combined.include_router(ui_actions_router)
     combined.include_router(rca_router)
     combined.include_router(regression_router)

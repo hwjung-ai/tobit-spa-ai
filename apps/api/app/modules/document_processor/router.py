@@ -12,6 +12,7 @@ from core.db import get_session
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from models.document import Document, DocumentChunk, DocumentStatus
+from models.history import QueryHistory
 from pydantic import BaseModel
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
@@ -21,6 +22,7 @@ from app.modules.auth.models import TbUser
 from .crud import (
     count_chunks_by_document,
     create_document,
+    get_document,
     get_document_version_chain,
     get_document_with_lock,
     increment_document_version,
@@ -70,6 +72,18 @@ class SearchRequest(BaseModel):
     date_to: Optional[str] = None
     document_types: Optional[List[str]] = None
     min_relevance: float = 0.5
+
+
+class MultiDocumentQueryRequest(BaseModel):
+    """Request for querying multiple documents"""
+
+    query: str
+    document_ids: Optional[List[str]] = None  # Specific documents to search (None = all)
+    categories: Optional[List[str]] = None    # Filter by category (manual, policy, technical, etc.)
+    exclude_document_ids: Optional[List[str]] = None  # Documents to exclude
+    tags: Optional[List[str]] = None          # Filter by tags
+    top_k: int = 10
+    min_relevance: float = 0.3
 
 
 class SearchResultResponse(BaseModel):
@@ -1373,4 +1387,502 @@ async def delete_document(
         raise
     except Exception as e:
         logger.error(f"Delete failed: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.post("/query-all/stream")
+async def query_all_documents_stream(
+    request: MultiDocumentQueryRequest,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Stream RAG-style responses across multiple documents.
+
+    This endpoint provides Server-Sent Events (SSE) streaming for
+    multi-document Q&A with LLM-generated answers and references.
+
+    Request body:
+    - query: The question to ask
+    - document_ids: Specific documents to search (None = all documents)
+    - categories: Filter by category (manual, policy, technical, guide, report, other)
+    - exclude_document_ids: Documents to exclude from search
+    - tags: Filter by tags
+    - top_k: Number of chunks to retrieve per document (default: 10)
+    - min_relevance: Minimum relevance score (default: 0.3)
+
+    Returns SSE stream with chunks of type:
+    - progress: Processing status updates
+    - summary: Document summary
+    - detail: Detailed content
+    - answer: LLM-generated answer
+    - done: Final message with references
+    - error: Error message
+    """
+    import json
+
+    from fastapi.responses import StreamingResponse
+
+    from .search_crud import search_chunks_by_text
+
+    async def event_generator():
+        try:
+            tenant_id = _tenant_id_from_user(current_user)
+            query = request.query.strip()
+            top_k = min(request.top_k, 20)
+            min_relevance = request.min_relevance
+
+            if not query:
+                yield f"event: error\ndata: {json.dumps({'message': 'Query is required', 'stage': 'init', 'elapsed_ms': 0})}\n\n"
+                return
+
+            start_time = time.time()
+            elapsed_ms = lambda: int((time.time() - start_time) * 1000)
+
+            # Send progress: init
+            yield f"event: progress\ndata: {json.dumps({'stage': 'init', 'message': '질의 분석 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
+
+            # Build document filter
+            doc_statement = (
+                select(Document)
+                .where(Document.tenant_id == tenant_id)
+                .where(Document.deleted_at.is_(None))
+                .where(Document.status == DocumentStatus.done)
+            )
+
+            # Apply document ID filter
+            if request.document_ids:
+                doc_statement = doc_statement.where(Document.id.in_(request.document_ids))
+
+            # Apply exclude filter
+            if request.exclude_document_ids:
+                doc_statement = doc_statement.where(Document.id.not_in(request.exclude_document_ids))
+
+            # Apply category filter
+            if request.categories:
+                doc_statement = doc_statement.where(Document.category.in_(request.categories))
+
+            # Apply tag filter (if tags column has any matching tag)
+            if request.tags:
+                # Note: This is a simple check; for arrays, you might need a more sophisticated query
+                doc_statement = doc_statement.where(Document.tags.op('&&')(request.tags))
+
+            documents = session.exec(doc_statement.limit(100)).all()
+
+            if not documents:
+                yield f"event: error\ndata: {json.dumps({'message': '검색 가능한 문서가 없습니다.', 'stage': 'init', 'elapsed_ms': elapsed_ms()})}\n\n"
+                return
+
+            # Send progress: searching
+            yield f"event: progress\ndata: {json.dumps({'stage': 'searching', 'message': f'{len(documents)}개 문서에서 검색 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
+
+            # Search for relevant chunks across all documents
+            doc_ids = [doc.id for doc in documents]
+            results = search_chunks_by_text(
+                session=session,
+                query=query,
+                tenant_id=tenant_id,
+                top_k=top_k * 3,  # Get more, then filter
+            )
+
+            # Filter to only chunks from selected documents
+            filtered_results = [
+                r for r in results 
+                if r["document_id"] in doc_ids and r.get("score", 0) >= min_relevance
+            ][:top_k]
+
+            if not filtered_results:
+                yield f"event: summary\ndata: {json.dumps({'text': '검색 결과가 없습니다.'})}\n\n"
+                yield f"event: detail\ndata: {json.dumps({'text': '검색어를 바꾸거나 필터 조건을 조정해보세요.'})}\n\n"
+                yield f"event: done\ndata: {json.dumps({'meta': {'references': [], 'chunks': []}})}\n\n"
+                return
+
+            # Send progress: composing
+            yield f"event: progress\ndata: {json.dumps({'stage': 'composing', 'message': f'{len(filtered_results)}개 관련 내용 발견, 응답 생성 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
+
+            # Build document ID to name mapping
+            doc_name_map = {doc.id: doc.filename for doc in documents}
+
+            # Build references
+            references = []
+            chunk_infos = []
+
+            for row in filtered_results:
+                chunk_text = row["text"]
+                chunk_id = row["id"]
+                page_number = row.get("page_number")
+                doc_id = row["document_id"]
+                doc_name = doc_name_map.get(doc_id, "Unknown Document")
+
+                chunk_infos.append({
+                    "chunk_id": chunk_id,
+                    "document_id": doc_id,
+                    "page": page_number,
+                })
+
+                references.append({
+                    "document_id": doc_id,
+                    "document_title": doc_name,
+                    "chunk_id": chunk_id,
+                    "page": page_number,
+                    "snippet": chunk_text[:200] + "..." if len(chunk_text) > 200 else chunk_text,
+                    "score": row.get("score", 0),
+                })
+
+            # Send summary
+            yield f"event: summary\ndata: {json.dumps({'text': f'{len(documents)}개 문서에서 {len(filtered_results)}개의 관련 내용을 찾았습니다.'})}\n\n"
+
+            # Send detail
+            score_val = filtered_results[0].get("score", 0.0)
+            detail_text = f'검색어: "{query}"\n검색된 문서: {len(documents)}개\n관련성: {score_val:.2f}'
+            yield f"event: detail\ndata: {json.dumps({'text': detail_text})}\n\n"
+
+            # Generate answer
+            answer_parts = [f"총 {len(documents)}개 문서에서 검색 결과입니다.\n\n"]
+
+            # Group by document
+            from collections import defaultdict
+            doc_refs = defaultdict(list)
+            for ref in references:
+                doc_refs[ref["document_id"]].append(ref)
+
+            for i, (doc_id, refs) in enumerate(doc_refs.items(), 1):
+                doc_name = refs[0]["document_title"]
+                answer_parts.append(f"## {i}. {doc_name}\n")
+                for ref in refs[:3]:  # Max 3 refs per document
+                    page_info = f"{ref['page']}페이지" if ref["page"] else "페이지 미확인"
+                    answer_parts.append(f"- ({page_info}) {ref['snippet'][:100]}...\n")
+                answer_parts.append("\n")
+
+            answer = "".join(answer_parts)
+
+            # Send progress: presenting
+            yield f"event: progress\ndata: {json.dumps({'stage': 'presenting', 'message': '응답 생성 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
+
+            # Stream answer character by character
+            for char in answer:
+                yield f"event: answer\ndata: {json.dumps({'text': char})}\n\n"
+
+            # Send done with references
+            yield f"event: done\ndata: {json.dumps({'meta': {'references': references, 'chunks': chunk_infos, 'documents_searched': len(documents), 'total_time_ms': elapsed_ms()}})}\n\n"
+
+        except GeneratorExit:
+            logger.info("Client disconnected from stream")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Multi-document query stream failed: {str(e)}", exc_info=True)
+            yield f"event: error\ndata: {json.dumps({'message': f'Error: {str(e)}', 'stage': 'unknown', 'elapsed_ms': 0})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@router.patch("/{document_id}/category", response_model=ResponseEnvelope)
+async def update_document_category(
+    document_id: str,
+    category: str = Query(..., description="Category: manual, policy, technical, guide, report, other"),
+    tags: Optional[str] = Query(None, description="Comma-separated tags"),
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Update document category and tags
+
+    Categories:
+    - manual: 매뉴얼
+    - policy: 정책
+    - technical: 기술문서
+    - guide: 가이드
+    - report: 보고서
+    - other: 기타
+    """
+    try:
+        from models.document import DocumentCategory
+
+        # Validate category
+        valid_categories = [c.value for c in DocumentCategory]
+        if category not in valid_categories:
+            raise HTTPException(
+                400, 
+                f"Invalid category: {category}. Valid options: {', '.join(valid_categories)}"
+            )
+
+        tenant_id = _tenant_id_from_user(current_user)
+        document = session.exec(
+            select(Document)
+            .where(Document.id == document_id)
+            .where(Document.tenant_id == tenant_id)
+            .where(Document.deleted_at.is_(None))
+        ).first()
+
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        document.category = category
+        if tags:
+            document.tags = [t.strip() for t in tags.split(",") if t.strip()]
+        document.updated_at = datetime.now(timezone.utc)
+        session.add(document)
+        session.commit()
+        session.refresh(document)
+
+        return ResponseEnvelope.success(
+            data={
+                "document_id": document_id,
+                "category": document.category,
+                "tags": document.tags,
+            },
+            message=f"Document category updated to {category}",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update category: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/categories/list", response_model=ResponseEnvelope)
+async def list_categories(
+    current_user: TbUser = Depends(get_current_user),
+):
+    """
+    List available document categories
+
+    Returns category list with Korean labels
+    """
+    from models.document import DocumentCategory
+
+    categories = [
+        {"value": c.value, "label": {
+            "manual": "매뉴얼",
+            "policy": "정책",
+            "technical": "기술문서",
+            "guide": "가이드",
+            "report": "보고서",
+            "other": "기타",
+        }.get(c.value, c.value)}
+        for c in DocumentCategory
+    ]
+
+    return ResponseEnvelope.success(data={"categories": categories})
+
+
+# ==================== Query History APIs (using existing QueryHistory model) ====================
+
+
+class SaveDocQueryHistoryRequest(BaseModel):
+    """Request for saving document query history"""
+    query: str
+    answer: str
+    references: Optional[List[dict]] = None
+    document_count: int = 0
+    elapsed_ms: int = 0
+
+
+@router.post("/query-history", response_model=ResponseEnvelope)
+async def save_doc_query_history(
+    request: SaveDocQueryHistoryRequest,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Save document query history entry
+
+    Uses the existing QueryHistory model with feature='docs'
+    """
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+
+        history = QueryHistory(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            feature="docs",  # Document query feature
+            question=request.query,
+            summary=request.answer[:200] + "..." if len(request.answer) > 200 else request.answer,
+            status="ok",
+            response={
+                "answer": request.answer,
+                "references": request.references or [],
+            },
+            metadata_info={
+                "document_count": request.document_count,
+                "reference_count": len(request.references) if request.references else 0,
+                "elapsed_ms": request.elapsed_ms,
+            },
+        )
+        session.add(history)
+        session.commit()
+        session.refresh(history)
+
+        return ResponseEnvelope.success(
+            data={
+                "id": str(history.id),
+                "query": history.question,
+                "created_at": history.created_at.isoformat(),
+            },
+            message="Query history saved",
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to save query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/query-history", response_model=ResponseEnvelope)
+async def list_doc_query_history(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    List document query history for current user
+
+    Returns paginated list of past document queries
+    """
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+        offset = (page - 1) * per_page
+
+        # Get total count
+        total_statement = (
+            select(QueryHistory)
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+        )
+        total = len(session.exec(total_statement).all())
+
+        # Get paginated results
+        statement = (
+            select(QueryHistory)
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+            .order_by(QueryHistory.created_at.desc())
+            .offset(offset)
+            .limit(per_page)
+        )
+        histories = session.exec(statement).all()
+
+        return ResponseEnvelope.success(
+            data={
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "history": [
+                    {
+                        "id": str(h.id),
+                        "query": h.question,
+                        "answer": h.response.get("answer", "") if h.response else "",
+                        "references": h.response.get("references", []) if h.response else [],
+                        "document_count": h.metadata_info.get("document_count", 0) if h.metadata_info else 0,
+                        "reference_count": h.metadata_info.get("reference_count", 0) if h.metadata_info else 0,
+                        "elapsed_ms": h.metadata_info.get("elapsed_ms", 0) if h.metadata_info else 0,
+                        "created_at": h.created_at.isoformat(),
+                    }
+                    for h in histories
+                ],
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to list query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/query-history/{history_id}", response_model=ResponseEnvelope)
+async def get_doc_query_history(
+    history_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Get a specific document query history entry
+    """
+    import uuid
+
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+
+        history = session.exec(
+            select(QueryHistory)
+            .where(QueryHistory.id == uuid.UUID(history_id))
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+        ).first()
+
+        if not history:
+            raise HTTPException(status_code=404, detail="Query history not found")
+
+        return ResponseEnvelope.success(
+            data={
+                "id": str(history.id),
+                "query": history.question,
+                "answer": history.response.get("answer", "") if history.response else "",
+                "references": history.response.get("references", []) if history.response else [],
+                "document_count": history.metadata_info.get("document_count", 0) if history.metadata_info else 0,
+                "reference_count": history.metadata_info.get("reference_count", 0) if history.metadata_info else 0,
+                "elapsed_ms": history.metadata_info.get("elapsed_ms", 0) if history.metadata_info else 0,
+                "created_at": history.created_at.isoformat(),
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.delete("/query-history/{history_id}", response_model=ResponseEnvelope)
+async def delete_doc_query_history(
+    history_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Delete a document query history entry
+    """
+    import uuid
+
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+
+        history = session.exec(
+            select(QueryHistory)
+            .where(QueryHistory.id == uuid.UUID(history_id))
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+        ).first()
+
+        if not history:
+            raise HTTPException(status_code=404, detail="Query history not found")
+
+        session.delete(history)
+        session.commit()
+
+        return ResponseEnvelope.success(
+            data={"id": history_id},
+            message="Query history deleted",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete query history: {str(e)}")
         raise HTTPException(500, str(e))

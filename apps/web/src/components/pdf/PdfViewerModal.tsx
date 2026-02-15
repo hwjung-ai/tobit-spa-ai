@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 const ReactPdfDocument = dynamic(
   () => import("react-pdf").then((mod) => {
@@ -136,6 +136,14 @@ export function PdfViewerModal({
   }, [highlightSnippet, pdfLoading, pdfError, currentPage, removeHighlightClasses]);
 
   const getInitialRect = useCallback((): ModalRect => {
+    if (typeof window === "undefined") {
+      return {
+        x: VIEWPORT_MARGIN,
+        y: VIEWPORT_MARGIN,
+        width: 1200,
+        height: 900,
+      };
+    }
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const width = Math.min(viewportWidth * 0.95, 1400);
@@ -149,6 +157,9 @@ export function PdfViewerModal({
   }, []);
 
   const clampRect = useCallback((rect: ModalRect): ModalRect => {
+    if (typeof window === "undefined") {
+      return rect;
+    }
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const maxWidth = Math.max(320, viewportWidth - VIEWPORT_MARGIN * 2);
@@ -183,17 +194,12 @@ export function PdfViewerModal({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const initialModalRect = useMemo(() => {
-    const initial = getInitialRect();
-    return clampRect(initial);
-  }, [getInitialRect, clampRect]);
-
   useEffect(() => {
     if (isOpen) {
-      setModalRect(initialModalRect);
+      setModalRect(clampRect(getInitialRect()));
       setIsFullscreen(false);
     }
-  }, [isOpen, initialModalRect]);
+  }, [isOpen, getInitialRect, clampRect]);
 
   useEffect(() => {
     if (!isOpen) {

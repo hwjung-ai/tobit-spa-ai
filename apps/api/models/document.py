@@ -16,6 +16,16 @@ class DocumentStatus(str, Enum):
     failed = "failed"
 
 
+class DocumentCategory(str, Enum):
+    """문서 카테고리 분류"""
+    manual = "manual"       # 매뉴얼
+    policy = "policy"       # 정책
+    technical = "technical" # 기술문서
+    guide = "guide"         # 가이드
+    report = "report"       # 보고서
+    other = "other"         # 기타
+
+
 class DocumentBase(SQLModel):
     tenant_id: str
     user_id: str
@@ -49,6 +59,10 @@ class Document(DocumentBase, table=True):
         default=None, sa_column=Column(JSON)
     )  # JSON metadata (pages, word_count, extraction_method, language)
     created_by: str | None = None  # User ID who created the document
+    
+    # Document categorization
+    category: str | None = Field(default="other", max_length=50)  # manual, policy, technical, guide, report, other
+    tags: list[str] | None = Field(default=None, sa_column=Column(JSON))  # Custom tags for filtering
 
 
 class DocumentChunkBase(SQLModel):

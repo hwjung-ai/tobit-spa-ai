@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Asset, fetchApi } from "../../../lib/adminUtils";
 import AssetTable from "../../../components/admin/AssetTable";
 import CreateAssetModal from "../../../components/admin/CreateAssetModal";
@@ -16,8 +16,6 @@ export default function AssetsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();
-    const [typeFilter, setTypeFilter] = useState<AssetType>("all");
-    const [statusFilter, setStatusFilter] = useState<AssetStatus>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
     const [refreshNonce, setRefreshNonce] = useState(0);
