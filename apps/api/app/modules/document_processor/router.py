@@ -365,6 +365,219 @@ async def list_documents_legacy(
     return await list_documents(page, per_page, sort_by, current_user, session)
 
 
+# ==================== Query History APIs (specific routes before generic /{document_id}) ====================
+
+
+class SaveDocQueryHistoryRequest(BaseModel):
+    """Request for saving document query history"""
+    query: str
+    answer: str
+    references: Optional[List[dict]] = None
+    document_count: int = 0
+    elapsed_ms: int = 0
+
+
+@router.post("/query-history", response_model=ResponseEnvelope)
+async def save_doc_query_history(
+    request: SaveDocQueryHistoryRequest,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Save document query history entry
+
+    Uses the existing QueryHistory model with feature='docs'
+    """
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+
+        history = QueryHistory(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            feature="docs",  # Document query feature
+            question=request.query,
+            summary=request.answer[:200] + "..." if len(request.answer) > 200 else request.answer,
+            status="ok",
+            response={
+                "answer": request.answer,
+                "references": request.references or [],
+            },
+            metadata_info={
+                "document_count": request.document_count,
+                "reference_count": len(request.references) if request.references else 0,
+                "elapsed_ms": request.elapsed_ms,
+            },
+        )
+        session.add(history)
+        session.commit()
+        session.refresh(history)
+
+        return ResponseEnvelope.success(
+            data={
+                "id": str(history.id),
+                "query": history.question,
+                "created_at": history.created_at.isoformat(),
+            },
+            message="Query history saved",
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to save query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/query-history", response_model=ResponseEnvelope)
+async def list_doc_query_history(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    List document query history for current user
+
+    Returns paginated list of past document queries
+    """
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+        offset = (page - 1) * per_page
+
+        # Get total count
+        total_statement = (
+            select(QueryHistory)
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+        )
+        total = len(session.exec(total_statement).all())
+
+        # Get paginated results
+        statement = (
+            select(QueryHistory)
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+            .order_by(QueryHistory.created_at.desc())
+            .offset(offset)
+            .limit(per_page)
+        )
+        histories = session.exec(statement).all()
+
+        return ResponseEnvelope.success(
+            data={
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "history": [
+                    {
+                        "id": str(h.id),
+                        "query": h.question,
+                        "answer": h.response.get("answer", "") if h.response else "",
+                        "references": h.response.get("references", []) if h.response else [],
+                        "document_count": h.metadata_info.get("document_count", 0) if h.metadata_info else 0,
+                        "reference_count": h.metadata_info.get("reference_count", 0) if h.metadata_info else 0,
+                        "elapsed_ms": h.metadata_info.get("elapsed_ms", 0) if h.metadata_info else 0,
+                        "created_at": h.created_at.isoformat(),
+                    }
+                    for h in histories
+                ],
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to list query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/query-history/{history_id}", response_model=ResponseEnvelope)
+async def get_doc_query_history(
+    history_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Get a specific document query history entry
+    """
+    import uuid
+
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+
+        history = session.exec(
+            select(QueryHistory)
+            .where(QueryHistory.id == uuid.UUID(history_id))
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+        ).first()
+
+        if not history:
+            raise HTTPException(status_code=404, detail="Query history not found")
+
+        return ResponseEnvelope.success(
+            data={
+                "id": str(history.id),
+                "query": history.question,
+                "answer": history.response.get("answer", "") if history.response else "",
+                "references": history.response.get("references", []) if history.response else [],
+                "document_count": history.metadata_info.get("document_count", 0) if history.metadata_info else 0,
+                "reference_count": history.metadata_info.get("reference_count", 0) if history.metadata_info else 0,
+                "elapsed_ms": history.metadata_info.get("elapsed_ms", 0) if history.metadata_info else 0,
+                "created_at": history.created_at.isoformat(),
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.delete("/query-history/{history_id}", response_model=ResponseEnvelope)
+async def delete_doc_query_history(
+    history_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Delete a document query history entry
+    """
+    import uuid
+
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+        user_id = _user_id_from_user(current_user)
+
+        history = session.exec(
+            select(QueryHistory)
+            .where(QueryHistory.id == uuid.UUID(history_id))
+            .where(QueryHistory.tenant_id == tenant_id)
+            .where(QueryHistory.user_id == user_id)
+            .where(QueryHistory.feature == "docs")
+        ).first()
+
+        if not history:
+            raise HTTPException(status_code=404, detail="Query history not found")
+
+        session.delete(history)
+        session.commit()
+
+        return ResponseEnvelope.success(
+            data={"id": history_id},
+            message="Query history deleted",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete query history: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
 @router.get("/{document_id}", response_model=ResponseEnvelope)
 async def get_document(
     document_id: str,
@@ -1685,214 +1898,3 @@ async def list_categories(
     return ResponseEnvelope.success(data={"categories": categories})
 
 
-# ==================== Query History APIs (using existing QueryHistory model) ====================
-
-
-class SaveDocQueryHistoryRequest(BaseModel):
-    """Request for saving document query history"""
-    query: str
-    answer: str
-    references: Optional[List[dict]] = None
-    document_count: int = 0
-    elapsed_ms: int = 0
-
-
-@router.post("/query-history", response_model=ResponseEnvelope)
-async def save_doc_query_history(
-    request: SaveDocQueryHistoryRequest,
-    current_user: TbUser = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    """
-    Save document query history entry
-
-    Uses the existing QueryHistory model with feature='docs'
-    """
-    try:
-        tenant_id = _tenant_id_from_user(current_user)
-        user_id = _user_id_from_user(current_user)
-
-        history = QueryHistory(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            feature="docs",  # Document query feature
-            question=request.query,
-            summary=request.answer[:200] + "..." if len(request.answer) > 200 else request.answer,
-            status="ok",
-            response={
-                "answer": request.answer,
-                "references": request.references or [],
-            },
-            metadata_info={
-                "document_count": request.document_count,
-                "reference_count": len(request.references) if request.references else 0,
-                "elapsed_ms": request.elapsed_ms,
-            },
-        )
-        session.add(history)
-        session.commit()
-        session.refresh(history)
-
-        return ResponseEnvelope.success(
-            data={
-                "id": str(history.id),
-                "query": history.question,
-                "created_at": history.created_at.isoformat(),
-            },
-            message="Query history saved",
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to save query history: {str(e)}")
-        raise HTTPException(500, str(e))
-
-
-@router.get("/query-history", response_model=ResponseEnvelope)
-async def list_doc_query_history(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
-    current_user: TbUser = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    """
-    List document query history for current user
-
-    Returns paginated list of past document queries
-    """
-    try:
-        tenant_id = _tenant_id_from_user(current_user)
-        user_id = _user_id_from_user(current_user)
-        offset = (page - 1) * per_page
-
-        # Get total count
-        total_statement = (
-            select(QueryHistory)
-            .where(QueryHistory.tenant_id == tenant_id)
-            .where(QueryHistory.user_id == user_id)
-            .where(QueryHistory.feature == "docs")
-        )
-        total = len(session.exec(total_statement).all())
-
-        # Get paginated results
-        statement = (
-            select(QueryHistory)
-            .where(QueryHistory.tenant_id == tenant_id)
-            .where(QueryHistory.user_id == user_id)
-            .where(QueryHistory.feature == "docs")
-            .order_by(QueryHistory.created_at.desc())
-            .offset(offset)
-            .limit(per_page)
-        )
-        histories = session.exec(statement).all()
-
-        return ResponseEnvelope.success(
-            data={
-                "page": page,
-                "per_page": per_page,
-                "total": total,
-                "history": [
-                    {
-                        "id": str(h.id),
-                        "query": h.question,
-                        "answer": h.response.get("answer", "") if h.response else "",
-                        "references": h.response.get("references", []) if h.response else [],
-                        "document_count": h.metadata_info.get("document_count", 0) if h.metadata_info else 0,
-                        "reference_count": h.metadata_info.get("reference_count", 0) if h.metadata_info else 0,
-                        "elapsed_ms": h.metadata_info.get("elapsed_ms", 0) if h.metadata_info else 0,
-                        "created_at": h.created_at.isoformat(),
-                    }
-                    for h in histories
-                ],
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to list query history: {str(e)}")
-        raise HTTPException(500, str(e))
-
-
-@router.get("/query-history/{history_id}", response_model=ResponseEnvelope)
-async def get_doc_query_history(
-    history_id: str,
-    current_user: TbUser = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    """
-    Get a specific document query history entry
-    """
-    import uuid
-
-    try:
-        tenant_id = _tenant_id_from_user(current_user)
-        user_id = _user_id_from_user(current_user)
-
-        history = session.exec(
-            select(QueryHistory)
-            .where(QueryHistory.id == uuid.UUID(history_id))
-            .where(QueryHistory.tenant_id == tenant_id)
-            .where(QueryHistory.user_id == user_id)
-            .where(QueryHistory.feature == "docs")
-        ).first()
-
-        if not history:
-            raise HTTPException(status_code=404, detail="Query history not found")
-
-        return ResponseEnvelope.success(
-            data={
-                "id": str(history.id),
-                "query": history.question,
-                "answer": history.response.get("answer", "") if history.response else "",
-                "references": history.response.get("references", []) if history.response else [],
-                "document_count": history.metadata_info.get("document_count", 0) if history.metadata_info else 0,
-                "reference_count": history.metadata_info.get("reference_count", 0) if history.metadata_info else 0,
-                "elapsed_ms": history.metadata_info.get("elapsed_ms", 0) if history.metadata_info else 0,
-                "created_at": history.created_at.isoformat(),
-            }
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get query history: {str(e)}")
-        raise HTTPException(500, str(e))
-
-
-@router.delete("/query-history/{history_id}", response_model=ResponseEnvelope)
-async def delete_doc_query_history(
-    history_id: str,
-    current_user: TbUser = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    """
-    Delete a document query history entry
-    """
-    import uuid
-
-    try:
-        tenant_id = _tenant_id_from_user(current_user)
-        user_id = _user_id_from_user(current_user)
-
-        history = session.exec(
-            select(QueryHistory)
-            .where(QueryHistory.id == uuid.UUID(history_id))
-            .where(QueryHistory.tenant_id == tenant_id)
-            .where(QueryHistory.user_id == user_id)
-            .where(QueryHistory.feature == "docs")
-        ).first()
-
-        if not history:
-            raise HTTPException(status_code=404, detail="Query history not found")
-
-        session.delete(history)
-        session.commit()
-
-        return ResponseEnvelope.success(
-            data={"id": history_id},
-            message="Query history deleted",
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to delete query history: {str(e)}")
-        raise HTTPException(500, str(e))
