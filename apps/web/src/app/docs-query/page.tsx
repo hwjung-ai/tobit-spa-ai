@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/shared";
 
 /**
  * Document category type
@@ -630,7 +631,13 @@ export default function DocsQueryPage() {
   const selectedCount = documents.filter((doc) => doc.selected).length;
 
   return (
-    <div className="flex h-screen bg-surface-base">
+    <div className="flex flex-col h-screen bg-surface-base">
+      {/* Page Header */}
+      <PageHeader
+        title="문서 질의"
+        description="전체 문서에서 질의하고 응답받기"
+      />
+
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-40 flex flex-col gap-2">
         {toasts.map((toast) => (
@@ -651,15 +658,10 @@ export default function DocsQueryPage() {
         ))}
       </div>
 
-      {/* Left Panel: Document Management */}
-      <div className="flex w-80 flex-col border-r border-border">
-        {/* Header */}
-        <div className="border-b border-border p-4">
-          <h1 className="text-lg font-semibold text-foreground">📚 문서 질의</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            전체 문서에서 질의하고 응답받기
-          </p>
-        </div>
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Panel: Document Management */}
+        <div className="flex w-80 flex-col border-r border-border overflow-y-auto">
 
         {/* Upload & History Row */}
         <div className="border-b border-border p-3 flex gap-2">
@@ -974,6 +976,7 @@ export default function DocsQueryPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* History Drawer */}
