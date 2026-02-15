@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 
 /**
  * Document category type
@@ -939,44 +940,50 @@ export default function DocsQueryPage() {
             )}
           </div>
 
-          {/* References Panel */}
+          {/* References and PDF Viewer Panel */}
           {references.length > 0 && (
-            <div className="w-96 border-l border-border">
-              <div className="border-b border-border p-3">
-                <h3 className="font-medium text-foreground">📎 근거 문서</h3>
-                <p className="text-xs text-muted-foreground">
-                  {references.length}개 참조
-                </p>
-              </div>
-              <div className="h-1/2 overflow-y-auto p-2">
-                {references.map((ref, index) => (
-                  <button
-                    key={`${ref.document_id}-${ref.chunk_id}-${index}`}
-                    onClick={() => openReference(ref)}
-                    className={cn(
-                      "w-full mb-2 rounded-lg border p-3 text-left transition",
-                      selectedReference?.chunk_id === ref.chunk_id
-                        ? "border-sky-500 bg-sky-500/5"
-                        : "border-border bg-surface-elevated hover:border-sky-500/50"
-                    )}
-                  >
-                    <p className="text-sm font-medium text-foreground">
-                      {ref.document_title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {ref.page ? `${ref.page}페이지` : "페이지 미확인"} •
-                      점수: {ref.score.toFixed(2)}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                      {ref.snippet}
-                    </p>
-                  </button>
-                ))}
+            <div className="w-96 border-l border-border flex flex-col">
+              {/* References Section */}
+              <div className={cn(
+                "border-b border-border flex flex-col",
+                selectedReference ? "h-[40%]" : "h-full"
+              )}>
+                <div className="border-b border-border p-3">
+                  <h3 className="font-medium text-foreground">📎 근거 문서</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {references.length}개 참조
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2">
+                  {references.map((ref, index) => (
+                    <button
+                      key={`${ref.document_id}-${ref.chunk_id}-${index}`}
+                      onClick={() => openReference(ref)}
+                      className={cn(
+                        "w-full mb-2 rounded-lg border p-3 text-left transition",
+                        selectedReference?.chunk_id === ref.chunk_id
+                          ? "border-sky-500 bg-sky-500/5"
+                          : "border-border bg-surface-elevated hover:border-sky-500/50"
+                      )}
+                    >
+                      <p className="text-sm font-medium text-foreground">
+                        {ref.document_title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {ref.page ? `${ref.page}페이지` : "페이지 미확인"} •
+                        점수: {ref.score.toFixed(2)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                        {ref.snippet}
+                      </p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* PDF Viewer */}
+              {/* PDF Viewer Section */}
               {selectedReference && (
-                <div className="h-1/2 border-t border-border">
+                <div className="h-[60%] border-t border-border flex flex-col">
                   <div className="flex items-center justify-between border-b border-border px-3 py-2">
                     <span className="text-xs text-muted-foreground truncate">
                       {selectedReference.document_title}
@@ -991,23 +998,17 @@ export default function DocsQueryPage() {
                       닫기
                     </button>
                   </div>
-                  
-                  {pdfLoading ? (
-                    <div className="flex h-[calc(100%-40px)] items-center justify-center">
-                      <div className="text-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent mx-auto" />
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          PDF 로딩 중...
-                        </p>
-                      </div>
-                    </div>
-                  ) : pdfBlobUrl ? (
-                    <iframe
-                      src={`${pdfBlobUrl}#page=${selectedReference.page || 1}`}
-                      className="h-[calc(100%-40px)] w-full"
-                      title="PDF Viewer"
+
+                  <div className="flex-1">
+                    <PdfViewerModal
+                      isOpen={!!selectedReference}
+                      onClose={() => setSelectedReference(null)}
+                      pdfBlobUrl={pdfBlobUrl}
+                      filename={selectedReference?.document_title}
+                      initialPage={selectedReference?.page || 1}
+                      highlightSnippet={selectedReference?.snippet}
                     />
-                  ) : null}
+                  </div>
                 </div>
               )}
             </div>

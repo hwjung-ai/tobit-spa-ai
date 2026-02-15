@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "Chat", href: "/" },
-  { label: "Docs", href: "/documents" },
+  { label: "Docs", href: "/docs-query" },
   { label: "SIM", href: "/sim" },
   { label: "Ops", href: "/ops" },
   { label: "API", href: "/api-manager" },

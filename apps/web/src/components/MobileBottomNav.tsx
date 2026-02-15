@@ -14,7 +14,7 @@ import {
 
 const NAV_ITEMS = [
   { label: "Chat", href: "/", icon: MessageSquare },
-  { label: "Docs", href: "/documents", icon: FileText },
+  { label: "Docs", href: "/docs-query", icon: FileText },
   { label: "SIM", href: "/sim", icon: FlaskConical },
   { label: "Ops", href: "/ops", icon: Activity },
   { label: "API", href: "/api-manager", icon: Code2 },
