@@ -1,116 +1,116 @@
-# Production TODO Tracker
+# 프로덕션 작업 추적표
 
-> **Last Updated**: 2026-02-15
-> **Status**: Active Tracking
-> **Purpose**: Central tracker for production, infrastructure, and operational tasks across all project areas
+> **마지막 업데이트**: 2026-02-15
+> **상태**: 활성 추적 중
+> **목적**: 프로젝트 전체 분야의 프로덕션, 인프라, 운영 작업 중앙 추적
 
-This document tracks outstanding production tasks, infrastructure improvements, and operational work needed to maintain project quality and readiness. Use this to prioritize work and monitor progress across all project domains.
-
----
-
-## ⚙️ Infrastructure & DevOps
-
-- [ ] Database Migration Review
-  - [ ] Validate all Alembic migrations execute cleanly
-  - [ ] Test rollback procedures
-  - [ ] Document migration dependencies
-
-- [ ] API Performance Monitoring
-  - [ ] Implement SLO dashboards (p50, p95, p99)
-  - [ ] Set up alert thresholds
-  - [ ] Establish baseline metrics
+이 문서는 미처리된 프로덕션 작업, 인프라 개선사항, 프로젝트 품질 및 준비도 유지를 위한 운영 업무를 추적합니다. 모든 프로덕션 분야의 작업을 우선순위화하고 진행 상황을 모니터링하는 데 사용합니다.
 
 ---
 
-## 🔒 Security & Quality Assurance
+## ⚙️ 인프라 & DevOps
 
-- [ ] Security Audit Follow-ups
-  - [ ] Verify P0-4 Query Safety in production
-  - [ ] Test tenant isolation enforcement
-  - [ ] Validate DDL/DCL blocking rules
+- [ ] 데이터베이스 마이그레이션 검토
+  - [ ] 모든 Alembic 마이그레이션 정상 실행 확인
+  - [ ] 롤백 절차 테스트
+  - [ ] 마이그레이션 의존성 문서화
 
-- [ ] Code Quality Gates
-  - [ ] Establish linting standards
-  - [ ] Set coverage thresholds
-  - [ ] Configure pre-commit hooks
-
----
-
-## 📊 Monitoring & Observability
-
-- [ ] Distributed Tracing Setup
-  - [ ] Configure OpenTelemetry endpoints
-  - [ ] Integrate with APM solution
-  - [ ] Document trace sampling strategy
-
-- [ ] Log Aggregation
-  - [ ] Centralize application logs
-  - [ ] Set up log level management
-  - [ ] Create log search indices
+- [ ] API 성능 모니터링
+  - [ ] SLO 대시보드 구현 (p50, p95, p99)
+  - [ ] 알림 임계값 설정
+  - [ ] 기준 메트릭 수립
 
 ---
 
-## 🚀 Feature Readiness
+## 🔒 보안 & 품질 보증
+
+- [ ] 보안 감시 후속 조치
+  - [ ] 프로덕션의 P0-4 Query Safety 검증
+  - [ ] 테넌트 격리 강제 테스트
+  - [ ] DDL/DCL 차단 규칙 검증
+
+- [ ] 코드 품질 게이트
+  - [ ] Linting 표준 수립
+  - [ ] 커버리지 임계값 설정
+  - [ ] Pre-commit 훅 구성
+
+---
+
+## 📊 모니터링 & 관찰성
+
+- [ ] 분산 추적 설정
+  - [ ] OpenTelemetry 엔드포인트 구성
+  - [ ] APM 솔루션 통합
+  - [ ] 추적 샘플링 전략 문서화
+
+- [ ] 로그 수집
+  - [ ] 애플리케이션 로그 중앙 집중화
+  - [ ] 로그 레벨 관리 설정
+  - [ ] 로그 검색 인덱스 생성
+
+---
+
+## 🚀 기능 준비도
 
 - [ ] Screen Editor AI Copilot
-  - [ ] Validate LLM response quality
-  - [ ] Test confidence scoring accuracy
-  - [ ] Gather user feedback on suggestions
+  - [ ] LLM 응답 품질 검증
+  - [ ] 신뢰도 점수 정확도 테스트
+  - [ ] 사용자 피드백 수집
 
-- [ ] Runner Modularization (P1-1)
-  - [ ] Integrate parallel executor into production runner
-  - [ ] Test parallel execution performance
-  - [ ] Validate circuit breaker behavior
-
----
-
-## 📋 Regular Reviews
-
-### Monthly Documentation Audit
-- [ ] Check FEATURES.md for new implementations
-- [ ] Review implementation reports in docs/history/
-- [ ] Update completion scores in INDEX.md
-- [ ] Identify new documentation gaps
-
-### Quarterly Production Review
-- [ ] Audit all monitoring and alerting
-- [ ] Review security policies and access controls
-- [ ] Assess infrastructure capacity and scaling
-- [ ] Plan architectural improvements
+- [ ] Runner 모듈화 (P1-1)
+  - [ ] 병렬 실행기를 프로덕션 runner에 통합
+  - [ ] 병렬 실행 성능 테스트
+  - [ ] Circuit breaker 동작 검증
 
 ---
 
-## 📞 Usage Guidelines
+## 📋 정기 검토
 
-**For Documentation Tasks**:
-1. Check source documents in `/docs/history/`
-2. Reference completed docs (BLUEPRINT_OPS_QUERY.md, USER_GUIDE_OPS.md) as templates
-3. Use the update template from IMPLEMENTATION_CHANGELOG.md
-4. Keep "Recent Changes" sections minimal in final docs (final state only)
+### 월간 문서 감시
+- [ ] FEATURES.md에서 새 구현사항 확인
+- [ ] docs/history/의 구현 보고서 검토
+- [ ] INDEX.md의 완성도 점수 업데이트
+- [ ] 새로운 문서화 공백 식별
 
-**For Infrastructure Tasks**:
-1. Update this tracker when starting work
-2. Move items to completed when verified in production
-3. Create supporting documentation in appropriate locations
-
-**For Security Tasks**:
-1. Document all security changes in security audit logs
-2. Keep sensitive information in separate secure locations
-3. Notify security team of all changes
+### 분기별 프로덕션 검토
+- [ ] 모든 모니터링 및 알림 감시
+- [ ] 보안 정책 및 접근 제어 검토
+- [ ] 인프라 용량 및 확장성 평가
+- [ ] 아키텍처 개선사항 계획
 
 ---
 
-## 📊 Metrics
+## 📞 사용 가이드
 
-| Category | Count | Status |
-|----------|-------|--------|
-| **Infrastructure/DevOps Tasks** | 5 | ⏳ Pending |
-| **Security & QA Tasks** | 4 | ⏳ Pending |
-| **Monitoring & Observability** | 4 | ⏳ Pending |
-| **Feature Readiness** | 2 | ⏳ Pending |
-| **Total Outstanding** | 15 | ⏳ In backlog |
+**문서화 작업**:
+1. `/docs/history/`의 소스 문서 확인
+2. 완료된 문서 참조 (BLUEPRINT_OPS_QUERY.md, USER_GUIDE_OPS.md)를 템플릿으로 사용
+3. IMPLEMENTATION_CHANGELOG.md의 업데이트 템플릿 활용
+4. 최종 문서의 "Recent Changes" 섹션은 최소화 (최종 상태만 유지)
+
+**인프라 작업**:
+1. 작업 시작 시 이 추적표 업데이트
+2. 프로덕션에서 검증 후 완료 항목으로 이동
+3. 해당 위치에 지원 문서 작성
+
+**보안 작업**:
+1. 모든 보안 변경사항을 보안 감시 로그에 기록
+2. 민감한 정보는 별도의 안전한 위치에 보관
+3. 보안팀에 모든 변경사항 통지
 
 ---
 
-**Last Updated**: 2026-02-15
-**Next Review**: 2026-03-01
+## 📊 지표
+
+| 항목 | 개수 | 상태 |
+|------|------|------|
+| **인프라/DevOps 작업** | 5 | ⏳ 대기 중 |
+| **보안 & QA 작업** | 4 | ⏳ 대기 중 |
+| **모니터링 & 관찰성** | 4 | ⏳ 대기 중 |
+| **기능 준비도** | 2 | ⏳ 대기 중 |
+| **총 미처리 작업** | 15 | ⏳ 백로그 |
+
+---
+
+**마지막 업데이트**: 2026-02-15
+**다음 검토**: 2026-03-01
