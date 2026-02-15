@@ -151,7 +151,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                 }
             );
 
-            const tools = (response.data as any)?.tools || [];
+            const tools = (response.data as Record<string, unknown>)?.tools as McpDiscoveredTool[] || [];
             setMcpDiscoveredTools(tools);
 
             if (tools.length === 0) {
@@ -230,8 +230,8 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                 }),
             });
 
-            const data = response.data as any;
-            const importErrors = (data?.errors || []).map((e: any) => `${e.name || "?"}: ${e.error}`);
+            const data = response.data as Record<string, unknown>;
+            const importErrors = ((data?.errors as Array<{ name?: string; error?: string }>) || []).map((e) => `${e.name || "?"}: ${e.error}`);
 
             setMcpImportResult({
                 imported: data?.total_imported || 0,
@@ -286,12 +286,12 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
         setErrors([]);
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 name,
                 description,
                 tool_type: toolType,
-                tool_config: parsedConfig!,
-                tool_input_schema: parsedInputSchema!,
+                tool_config: parsedConfig,
+                tool_input_schema: parsedInputSchema,
                 tool_output_schema: null,
                 created_by: "admin",
             };
@@ -307,7 +307,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             });
 
             // API returns { data: { asset: { asset_id, ... } } }
-            const assetId = (response.data as any)?.asset?.asset_id;
+            const assetId = ((response.data as Record<string, unknown>)?.asset as Record<string, unknown> | undefined)?.asset_id;
             if (!assetId) {
                 throw new Error("No asset_id in response");
             }
@@ -399,7 +399,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                     className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                 >
                                     <option value="">-- Select API Manager API --</option>
-                                    {apiManagerApis.map((api) => (
+                                    {apiManagerApis.map((api: ApiManagerItem) => (
                                         <option key={api.id} value={api.id}>
                                             {api.name} ({api.method} {api.path})
                                         </option>
@@ -556,7 +556,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 )}
 
                                 <p className="text-xs">
-                                    MCP 서버에 접속하여 제공하는 tool 목록을 자동으로 가져옵니다. 선택한 tool을 일괄 import하거나, "Fill Form" 버튼으로 개별 등록할 수 있습니다.
+                                    MCP 서버에 접속하여 제공하는 tool 목록을 자동으로 가져옵니다. 선택한 tool을 일괄 import하거나, &quot;Fill Form&quot; 버튼으로 개별 등록할 수 있습니다.
                                 </p>
                             </div>
                         )}
@@ -608,11 +608,14 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                     >
                                         <option value="">-- No Catalog Selected --</option>
-                                        {catalogsData?.map((catalog: any) => (
-                                            <option key={catalog.asset_id} value={catalog.name}>
-                                                {catalog.name} (Tables: {catalog.content?.catalog?.tables?.length || 0})
-                                            </option>
-                                        ))}
+                                        {catalogsData?.map((catalog: Record<string, unknown>) => {
+                                            const tableCount = ((catalog.content as Record<string, unknown>)?.catalog as Record<string, unknown>)?.tables as unknown[] | undefined;
+                                            return (
+                                                <option key={catalog.asset_id as string} value={catalog.name as string}>
+                                                    {catalog.name as string} (Tables: {tableCount?.length || 0})
+                                                </option>
+                                            );
+                                        })}
                                     </select>
                                     <p className="text-xs mt-1 ml-1 text-muted-foreground">
                                         Select a catalog to provide database schema information to LLM for accurate SQL generation

@@ -3,10 +3,8 @@
 import type React from "react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { cn } from "../../lib/utils";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
@@ -32,13 +30,6 @@ const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   // API
   rest_api: "REST API",
   graphql_api: "GraphQL API",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Draft",
-  active: "Active",
-  inactive: "Inactive",
-  deprecated: "Deprecated",
 };
 
 interface SourceAssetFormProps {

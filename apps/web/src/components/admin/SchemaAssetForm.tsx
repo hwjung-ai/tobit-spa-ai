@@ -4,7 +4,6 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
@@ -22,25 +21,6 @@ interface ScanResult {
   }>;
 }
 
-interface SchemaTable {
-  name: string;
-  schema_name: string;
-  description?: string;
-  columns: Array<{
-    name: string;
-    data_type: string;
-    is_nullable: boolean;
-    is_primary_key: boolean;
-    is_foreign_key: boolean;
-    foreign_key_table?: string;
-    foreign_key_column?: string;
-    default_value?: string;
-    description?: string;
-  }>;
-  indexes?: Record<string, unknown>;
-  constraints?: Record<string, unknown>;
-  tags?: Record<string, unknown>;
-}
 
 interface SchemaAssetFormProps {
   asset: SchemaAssetResponse;
@@ -67,7 +47,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
     scan_status: "pending" as const,
     table_count: 0,
     column_count: 0,
-  }, [asset.catalog]);
+  }, [asset.catalog, asset.name]);
 
   const sourcesQuery = useQuery({
     queryKey: ["asset-registry", "sources"],

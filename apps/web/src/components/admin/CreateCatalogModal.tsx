@@ -123,9 +123,9 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
               className="w-full px-4 py-3  border  rounded-lg  focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
             >
               <option value="" className="">Select a source...</option>
-              {sourcesData?.map((source: any) => (
-                <option key={source.asset_id} value={source.name} className="">
-                  {source.name}
+              {sourcesData?.map((source: Record<string, unknown>) => (
+                <option key={source.asset_id as string} value={source.name as string} className="">
+                  {source.name as string}
                 </option>
               ))}
             </select>

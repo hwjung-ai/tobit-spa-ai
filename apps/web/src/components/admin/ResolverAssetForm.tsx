@@ -4,22 +4,16 @@ import type React from "react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { fetchApi } from "../../lib/adminUtils";
 import type {
-  AliasMapping,
-  PatternRule,
   ResolverAssetResponse,
-  ResolverRule,
   ResolverSimulationRequest,
   ResolverSimulationResult,
-  TransformationRule,
 } from "../../types/asset-registry";
 
 const RULE_TYPE_LABELS: Record<string, string> = {
@@ -30,7 +24,6 @@ const RULE_TYPE_LABELS: Record<string, string> = {
 
 interface ResolverAssetFormProps {
   asset: ResolverAssetResponse;
-  onSave: () => void;
 }
 
 export default function ResolverAssetForm({ asset, onSave }: ResolverAssetFormProps) {

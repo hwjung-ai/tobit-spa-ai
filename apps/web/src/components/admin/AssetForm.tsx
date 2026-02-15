@@ -294,7 +294,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 )}
 
                 {asset.asset_type === "resolver" && isResolverAsset(asset) && (
-                    <ResolverAssetForm asset={asset as ResolverAssetResponse} onSave={onSave} />
+                    <ResolverAssetForm asset={asset as ResolverAssetResponse} />
                 )}
 
                 {asset.asset_type === "prompt" && (
