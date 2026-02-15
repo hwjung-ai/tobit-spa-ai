@@ -48,10 +48,10 @@ interface CepRuleFormData {
   description: string;
   isActive: boolean;
   triggerType: "metric" | "event" | "schedule" | "anomaly";
-  triggerSpec: Record<string, any>;
+  triggerSpec: Record<string, unknown>;
   conditions: Condition[];
   conditionLogic: "AND" | "OR" | "NOT";
-  windowConfig: Record<string, any>;
+  windowConfig: Record<string, unknown>;
   aggregations: Aggregation[];
   enrichments: Enrichment[];
   actions: Action[];
@@ -168,7 +168,7 @@ export function CepRuleFormPage({
   }, [formData]);
 
   const handleSimulate = useCallback(
-    async (testPayload: Record<string, any>) => {
+    async (testPayload: Record<string, unknown>) => {
       const response = await authenticatedFetch("/api/cep/rules/preview", {
         method: "POST",
         body: JSON.stringify({

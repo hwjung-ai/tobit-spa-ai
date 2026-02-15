@@ -86,6 +86,7 @@ export default function RealTimeSimulation({
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
   const stoppedRef = useRef(false);
+  const assumptionsJson = JSON.stringify(assumptions);
 
   useEffect(() => {
     stoppedRef.current = false;
@@ -112,7 +113,7 @@ export default function RealTimeSimulation({
         strategy,
         horizon,
         service,
-        assumptions: JSON.stringify(assumptions),
+        assumptions: assumptionsJson,
       });
 
       const eventSource = new EventSource(`/api/sim/stream/run?${params.toString()}`);
@@ -209,7 +210,7 @@ export default function RealTimeSimulation({
       clearReconnectTimer();
       closeCurrentSource();
     };
-  }, [question, scenarioType, strategy, horizon, service, JSON.stringify(assumptions)]);
+  }, [question, scenarioType, strategy, horizon, service, assumptionsJson]);
 
   const handleStop = () => {
     stoppedRef.current = true;

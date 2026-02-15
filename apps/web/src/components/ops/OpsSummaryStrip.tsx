@@ -59,8 +59,8 @@ export default function OpsSummaryStrip({
         recentActivity: AggregatedMetrics["recentActivity"];
       }>("/ops/summary/stats");
 
-      // ResponseEnvelope logic: the actual data is in (response as any).data
-      const data = (response as any).data;
+      // ResponseEnvelope logic: the actual data is in (response as Record<string, unknown>).data
+      const data = (response as Record<string, unknown>).data;
 
       if (!data) {
         throw new Error("No data received from stats endpoint");

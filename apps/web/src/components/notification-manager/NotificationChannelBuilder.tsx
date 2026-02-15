@@ -29,7 +29,7 @@ export interface NotificationChannel {
   id: string;
   type: "slack" | "email" | "sms" | "webhook" | "pagerduty";
   enabled: boolean;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   name: string;
   lastTest?: Date;
 }
@@ -89,7 +89,7 @@ export default function NotificationChannelBuilder({
 
   const handleChannelUpdate = (
     type: NotificationChannel["type"],
-    config: Record<string, any>,
+    config: Record<string, unknown>,
     name: string
   ) => {
     const channelId = `${type}-${Date.now()}`;

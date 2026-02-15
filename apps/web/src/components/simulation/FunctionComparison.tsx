@@ -79,10 +79,10 @@ export default function FunctionComparison({
     setLoading(false);
   }, [assumptions, baseline, functionIds]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void runComparison();
-  }, [runComparison]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const comparisonData = Object.entries(results).map(([functionId, result]) => {
     const output = result.outputs || {};

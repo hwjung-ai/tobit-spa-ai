@@ -9,7 +9,7 @@ import type { OrchestrationTrace, ExecutionGroup, Tool } from '@/components/ops/
 /**
  * Extract orchestration_trace from stage output
  */
-export function extractOrchestrationTrace(stageOutput: any): OrchestrationTrace | null {
+export function extractOrchestrationTrace(stageOutput: Record<string, unknown>): OrchestrationTrace | null {
   if (!stageOutput) return null;
 
   // Check for orchestration_trace field
@@ -34,7 +34,7 @@ export function extractOrchestrationTrace(stageOutput: any): OrchestrationTrace 
 /**
  * Construct orchestration trace from step-level metadata
  */
-function constructTraceFromStepMetadata(results: any[]): OrchestrationTrace {
+function constructTraceFromStepMetadata(results: Record<string, unknown>[]): OrchestrationTrace {
   const groups: Map<number, Tool[]> = new Map();
   let strategy: OrchestrationTrace["strategy"] = "serial";
   const tools = new Set<string>();
@@ -123,7 +123,7 @@ function calculateDependencyGroups(
 /**
  * Validate orchestration trace structure
  */
-export function isValidOrchestrationTrace(obj: any): obj is OrchestrationTrace {
+export function isValidOrchestrationTrace(obj: unknown): obj is OrchestrationTrace {
   if (!obj) return false;
 
   return (

@@ -26,7 +26,7 @@ export interface ApiResponse<T = unknown> {
  * ResponseEnvelope - alternative API response format
  * Used by some admin endpoints
  */
-export interface ResponseEnvelope<T = any> {
+export interface ResponseEnvelope<T = Record<string, unknown>> {
   time?: string;
   code?: number;
   ok?: boolean;
@@ -546,7 +546,7 @@ export interface LocalOpsHistoryEntry {
   };
   summary?: string;
   errorDetails?: string;
-  trace?: Record<string, any>;
+  trace?: Record<string, unknown>;
   nextActions?: NextAction[];
   next_actions?: NextAction[];
 }

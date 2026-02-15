@@ -241,8 +241,6 @@ export function PdfViewerModal({
 
     setCurrentPage(initialPage || 1);
     setPdfLoading(true);
-    setPdfError(null);
-    setNumPages(0);
   }, [isOpen, pdfBlob, pdfBlobUrl, filename, initialPage]);
 
   useEffect(() => {

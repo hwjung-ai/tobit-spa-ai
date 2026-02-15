@@ -130,7 +130,7 @@ export class JsonSchemaValidator {
             code: "PATTERN_MISMATCH",
           });
         }
-      } catch (e) {
+      } catch {
         warnings.push({
           path,
           message: `Invalid regex pattern: ${schema.pattern}`,

@@ -125,7 +125,7 @@ interface AppliedAssetsListProps {
 function AppliedAssetsList({ appliedAssets, assetNames, onAssetClick }: AppliedAssetsListProps) {
   if (!appliedAssets) return null;
 
-  const assets = Object.entries(appliedAssets).filter(([_, value]) => value != null);
+  const assets = Object.entries(appliedAssets).filter(([, value]) => value != null);
 
   if (assets.length === 0) return null;
 

@@ -132,7 +132,46 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
     setWorkflowName("");
   };
 
-  const generateWorkflowJSON = () => {
+  const parseWorkflowJSON = useCallback((jsonString: string) => {
+    try {
+      const config = JSON.parse(jsonString);
+      if (config.name) {
+        setWorkflowName(config.name);
+      }
+      if (config.nodes) {
+        setNodes(
+          config.nodes.map((node: Record<string, unknown>) => ({
+            id: node.id as string,
+            type: node.type as string,
+            position: { x: Math.random() * 500, y: Math.random() * 500 },
+            data: {
+              label: node.label as string,
+              type: node.type as string,
+              config: (node.config as Record<string, unknown>) || {},
+              nodeId: node.id as string,
+            },
+          }))
+        );
+      }
+      if (config.edges) {
+        setEdges(
+          config.edges.map((edge: Record<string, unknown>) => ({
+            id: `${edge.source as string}-${edge.target as string}`,
+            source: edge.source as string,
+            target: edge.target as string,
+            sourceHandle: edge.sourceHandle as string | undefined,
+            targetHandle: edge.targetHandle as string | undefined,
+            markerEnd: { type: MarkerType.ArrowClosed },
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to parse workflow JSON:", error);
+      alert("Invalid workflow JSON format");
+    }
+  }, [setNodes, setEdges]);
+
+  const generateWorkflowJSON = useCallback(() => {
     const workflowConfig = {
       name: workflowName || "Untitled Workflow",
       version: "1.0",
@@ -154,58 +193,19 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
       onChange(jsonString);
     }
     return jsonString;
-  };
-
-  const parseWorkflowJSON = (jsonString: string) => {
-    try {
-      const config = JSON.parse(jsonString);
-      if (config.name) {
-        setWorkflowName(config.name);
-      }
-      if (config.nodes) {
-        setNodes(
-          config.nodes.map((node: any) => ({
-            id: node.id,
-            type: node.type,
-            position: { x: Math.random() * 500, y: Math.random() * 500 },
-            data: {
-              label: node.label,
-              type: node.type,
-              config: node.config || {},
-              nodeId: node.id,
-            },
-          }))
-        );
-      }
-      if (config.edges) {
-        setEdges(
-          config.edges.map((edge: any) => ({
-            id: `${edge.source}-${edge.target}`,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle,
-            targetHandle: edge.targetHandle,
-            markerEnd: { type: MarkerType.ArrowClosed },
-          }))
-        );
-      }
-    } catch (error) {
-      console.error("Failed to parse workflow JSON:", error);
-      alert("Invalid workflow JSON format");
-    }
-  };
+  }, [workflowName, nodes, edges, onChange]);
 
   React.useEffect(() => {
     if (workflow) {
       parseWorkflowJSON(workflow);
     }
-  }, [workflow]);
+  }, [workflow, parseWorkflowJSON]);
 
   React.useEffect(() => {
     if (nodes.length > 0) {
       generateWorkflowJSON();
     }
-  }, [nodes, edges, workflowName]);
+  }, [nodes, edges, workflowName, generateWorkflowJSON]);
 
   return (
     <div className="builder-container space-y-4 rounded-2xl p-4">
@@ -452,7 +452,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
         <h4 className="builder-help-title text-xs uppercase tracking-wider">Quick Help</h4>
         <div className="builder-help-text space-y-1 text-xs">
           <p>• Drag nodes to position them on the canvas</p>
-          <p>• Connect nodes by dragging from one node's handle to another</p>
+          <p>• Connect nodes by dragging from one node&apos;s handle to another</p>
           <p>• Click on a node to configure its properties</p>
           <p>• Press <span className="font-mono text-sky-400">Delete</span> key to remove selected node</p>
           <p>• Use <span className="font-mono text-sky-400">{"{{steps.node_id.rows}}"}</span> for parameter mapping</p>

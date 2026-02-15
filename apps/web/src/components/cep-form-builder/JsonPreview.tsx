@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface JsonPreviewProps {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   title?: string;
   copyable?: boolean;
 }

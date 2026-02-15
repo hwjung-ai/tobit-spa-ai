@@ -163,7 +163,7 @@ export default function HttpFormBuilder({
             <FormFieldGroup label="HTTP Method" required>
               <select
                 value={value.method}
-                onChange={(e) => onChange({ ...value, method: e.target.value as any })}
+                onChange={(e) => onChange({ ...value, method: e.target.value as "GET" | "POST" | "PUT" | "DELETE" })}
                 disabled={isReadOnly}
                 className="api-select"
               >

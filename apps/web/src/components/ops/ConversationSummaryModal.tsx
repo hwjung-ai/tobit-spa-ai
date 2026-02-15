@@ -56,13 +56,7 @@ export default function ConversationSummaryModal({
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [pdfFilename, setPdfFilename] = useState<string>("conversation_report.pdf");
 
-  useEffect(() => {
-    if (isOpen && (threadId || historyId)) {
-      fetchSummary();
-    }
-  }, [isOpen, threadId, historyId]);
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -90,7 +84,13 @@ export default function ConversationSummaryModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [historyId]);
+
+  useEffect(() => {
+    if (isOpen && (threadId || historyId)) {
+      fetchSummary();
+    }
+  }, [isOpen, threadId, historyId, fetchSummary]);
 
   const exportToPDF = async () => {
     setExporting(true);

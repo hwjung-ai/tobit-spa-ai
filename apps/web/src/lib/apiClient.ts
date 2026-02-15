@@ -113,7 +113,7 @@ export async function fetchWithAuth(
  * - Automatically refreshes token on 401 response
  * - Redirects to login on refresh failure
  */
-export async function authenticatedFetch<T = any>(
+export async function authenticatedFetch<T = Record<string, unknown>>(
   endpoint: string,
   options?: FetchOptions
 ): Promise<T> {
@@ -210,7 +210,7 @@ export async function authenticatedFetch<T = any>(
  * Make a simple API request without authentication.
  * Use for login, signup, and other public endpoints.
  */
-export async function fetchApi<T = any>(
+export async function fetchApi<T = Record<string, unknown>>(
   endpoint: string,
   options?: FetchOptions
 ): Promise<T> {

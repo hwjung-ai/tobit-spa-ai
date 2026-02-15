@@ -232,7 +232,7 @@ export function textForeground(muted = false): string {
 /**
  * Get border color class with dark mode
  */
-export function borderSurface(variant: keyof typeof colors.surfaceBorder = "light"): string {
+export function borderSurface(): string {
   return withDarkMode(colors.surfaceBorder.light, colors.surfaceBorder.dark);
 }
 

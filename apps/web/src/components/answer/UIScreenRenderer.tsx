@@ -1872,7 +1872,7 @@ export default function UIScreenRenderer({
     );
   };
 
-  const hideDebugPanels = screenSchema.metadata?.tags?.hide_debug_panels === "true" || (screenSchema.metadata as any)?.hide_debug_panels === true;
+  const hideDebugPanels = screenSchema.metadata?.tags?.hide_debug_panels === "true" || (screenSchema.metadata as Record<string, unknown>)?.hide_debug_panels === true;
 
   return (
     <UIScreenErrorBoundary>

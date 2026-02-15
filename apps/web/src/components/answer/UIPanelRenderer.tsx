@@ -40,7 +40,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
       });
 
       const endpoint = action.endpoint || "/ops/ui-actions";
-      const response = await fetchApi<any>(endpoint, {
+      const response = await fetchApi<Record<string, unknown>>(endpoint, {
         method: action.method || "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

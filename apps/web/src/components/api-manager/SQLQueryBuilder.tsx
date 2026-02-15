@@ -228,7 +228,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
 
             {whereConditions.rules.length === 0 ? (
               <p className="builder-label-small text-xs">
-                No conditions. Click "+ Rule" to add.
+                No conditions. Click &quot;+ Rule&quot; to add.
               </p>
             ) : (
               <div className="space-y-2">

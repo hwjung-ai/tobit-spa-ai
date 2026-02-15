@@ -16,11 +16,11 @@ import {
   type CiAnswerPayload,
   type LocalOpsHistoryEntry,
   type AnswerEnvelope,
-  type AnswerBlock as ApiAnswerBlock,
   type ResponseEnvelope,
   type StageInput,
   type StageOutput,
 } from "@/lib/apiClientTypes";
+
 import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
 import Toast from "@/components/admin/Toast";
 import ConversationSummaryModal from "@/components/ops/ConversationSummaryModal";
@@ -303,7 +303,6 @@ export default function OpsPage() {
     setStatusMessage(null);
     const requestedMode = currentModeDefinition;
     const payload = { mode: requestedMode.backend, question: question.trim() };
-    let envelope: AnswerEnvelope = buildErrorEnvelope(requestedMode.backend, "No response");
     try {
       if (requestedMode.id === "all") {
         // "all" mode uses /ops/ask endpoint for orchestration
@@ -315,12 +314,6 @@ export default function OpsPage() {
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid all mode response format");
         }
-        const meta = normalizeAnswerMeta(ciPayload.meta, ciPayload.answer);
-        envelope = {
-          meta: meta as unknown as AnswerEnvelope["meta"],
-          blocks: ciPayload.blocks,
-        };
-        trace = ciPayload.trace;
       } else {
         // All other modes (ci/config, metric, history, relation, document) use /ops/query
         const data = await authenticatedFetch<
@@ -343,7 +336,7 @@ export default function OpsPage() {
           data: { answer: answerCandidate },
         } as ServerHistoryEntry["response"]);
         if (normalizedAnswer && Array.isArray((normalizedAnswer as AnswerEnvelope).blocks)) {
-          envelope = normalizedAnswer as AnswerEnvelope;
+          // normalized answer is ready
         } else {
           const rawAnswerText =
             typeof (answerCandidate as AnswerEnvelope | undefined)?.answer === "string"
@@ -352,19 +345,10 @@ export default function OpsPage() {
                 ? answerCandidate
                 : undefined;
           if (rawAnswerText) {
-            const meta = normalizeAnswerMeta(
+            normalizeAnswerMeta(
               (answerCandidate as AnswerEnvelope | undefined)?.meta,
               rawAnswerText,
             );
-            envelope = {
-              meta: meta as unknown as AnswerEnvelope["meta"],
-              blocks: [
-                {
-                  type: "markdown",
-                  content: rawAnswerText,
-                } as ApiAnswerBlock,
-              ],
-            };
           } else {
             throw new Error("Invalid OPS response format");
           }
@@ -372,7 +356,6 @@ export default function OpsPage() {
       }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
-      envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
       setStatusMessage(`Error: ${normalized.message}`);
     } finally {
       // Refresh history from server (server writes final history entry)
@@ -563,7 +546,7 @@ export default function OpsPage() {
           throw new Error("Invalid CI response format");
         }
         const meta = normalizeAnswerMeta(ciPayload.meta, ciPayload.answer);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+         
         envelope = {
           meta: meta as unknown as AnswerEnvelope["meta"],
           blocks: ciPayload.blocks,
@@ -707,7 +690,7 @@ export default function OpsPage() {
                       <h3 className="text-sm font-semibold text-muted-standard">질의-응답 요약</h3>
                       {summaryData.questions_and_answers
                         ?.slice(0, 5)
-                        .map((qa: any, idx: number) => (
+                        .map((qa: { question?: string; summary?: string; mode?: string }, idx: number) => (
                           <div key={idx} className="br-card border p-3 bg-surface-elevated">
                             <div className="mb-2 flex items-center gap-2">
                               <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-sky-300">

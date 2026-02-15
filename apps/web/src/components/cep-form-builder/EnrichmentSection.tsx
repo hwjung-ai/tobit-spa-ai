@@ -86,7 +86,7 @@ export function EnrichmentSection({
                     value={enrichment.type}
                     onChange={(e) =>
                       updateEnrichment(enrichment.id, {
-                        type: e.target.value as any,
+                        type: e.target.value as "lookup" | "aggregate" | "ml_model",
                       })
                     }
                     className="cep-select w-full mt-1"

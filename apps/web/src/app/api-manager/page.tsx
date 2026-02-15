@@ -687,6 +687,7 @@ export default function ApiManagerPage() {
     } catch {
       window.localStorage.removeItem(key);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finalStorageId]);
    
 
@@ -1196,6 +1197,7 @@ export default function ApiManagerPage() {
     setDraftApi(null);
     setDraftStatus("idle");
     setDraftNotes(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
    
 

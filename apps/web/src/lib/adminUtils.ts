@@ -1,6 +1,6 @@
 // Admin UI shared types and utilities
 
-export interface ResponseEnvelope<T = any> {
+export interface ResponseEnvelope<T = Record<string, unknown>> {
   time: string;
   code: number;
   message: string;
@@ -125,7 +125,7 @@ function stringifyErrorValue(value: unknown): string {
   return "";
 }
 
-export async function fetchApi<T = any>(
+export async function fetchApi<T = Record<string, unknown>>(
   endpoint: string,
   options?: FetchApiOptions
 ): Promise<ResponseEnvelope<T>> {

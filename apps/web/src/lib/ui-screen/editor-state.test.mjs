@@ -234,7 +234,7 @@ test("should handle component type change", () => {
 test("should prevent duplicate component ids", () => {
   const state = createMockEditorState();
   const comp1 = createMockComponent("comp_1");
-  const comp2 = createMockComponent("comp_1");
+  createMockComponent("comp_1");
 
   state.screen.components.push(comp1);
   const hasDuplicate = state.screen.components.some(c => c.id === "comp_1");
@@ -519,7 +519,6 @@ test("should limit undo/redo history size", () => {
 });
 
 test("should disable undo when no history", () => {
-  const history = [];
   let historyIndex = 0;
   const canUndo = historyIndex > 0;
 

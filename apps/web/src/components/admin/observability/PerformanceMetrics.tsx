@@ -124,7 +124,7 @@ export default function PerformanceMetrics() {
           <h4 className="text-sm font-semibold text-foreground dark:text-slate-50 mb-3">Execution Stats</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Today's Executions</span>
+              <span className="text-muted-foreground">Today&apos;s Executions</span>
               <span className="text-foreground dark:text-slate-50 font-semibold">
                 {stats.today_execution_count.toLocaleString()}
               </span>
@@ -149,7 +149,7 @@ export default function PerformanceMetrics() {
           <h4 className="text-sm font-semibold text-foreground dark:text-slate-50 mb-3">Error Stats</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Today's Errors</span>
+              <span className="text-muted-foreground">Today&apos;s Errors</span>
               <span
                 className={`font-semibold ${
                   stats.today_error_count > 0 ? "text-rose-400" : "text-emerald-400"

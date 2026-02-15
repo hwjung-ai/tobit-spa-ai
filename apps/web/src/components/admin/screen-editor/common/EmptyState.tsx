@@ -134,6 +134,7 @@ export function WelcomeState({
         </button>
       </div>
       <div className="mt-8 p-4 bg-muted/50 rounded-lg max-w-md">
+        { }
         <p className="text-sm text-muted-foreground">
           💡 <strong>팁:</strong> AI Copilot에게 "고객 목록 화면을 만들어줘"라고 요청하면 자동으로 생성해 드립니다.
         </p>

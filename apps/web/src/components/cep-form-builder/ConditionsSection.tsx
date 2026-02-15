@@ -51,7 +51,7 @@ export function ConditionsSection({
         <div className="flex items-center gap-2">
           <select
             value={logic}
-            onChange={(e) => onLogicChange(e.target.value as any)}
+            onChange={(e) => onLogicChange(e.target.value as "AND" | "OR" | "NOT")}
             className="cep-select"
           >
             <option value="AND">AND</option>

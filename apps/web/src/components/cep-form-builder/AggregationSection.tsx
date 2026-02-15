@@ -81,7 +81,7 @@ export function AggregationSection({
                     value={agg.type}
                     onChange={(e) =>
                       updateAggregation(agg.id, {
-                        type: e.target.value as any,
+                        type: e.target.value as "count" | "sum" | "avg" | "min" | "max" | "std" | "percentile",
                       })
                     }
                     className="cep-select cep-input-full mt-1"

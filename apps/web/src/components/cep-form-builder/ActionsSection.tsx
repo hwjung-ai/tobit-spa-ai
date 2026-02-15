@@ -70,7 +70,7 @@ export function ActionsSection({
                   value={action.type}
                   onChange={(e) =>
                     updateAction(action.id, {
-                      type: e.target.value as any,
+                      type: e.target.value as "webhook" | "notify" | "trigger" | "store",
                     })
                   }
                   className="cep-select"
@@ -104,7 +104,7 @@ export function ActionsSection({
                     value={action.method || "POST"}
                     onChange={(e) =>
                       updateAction(action.id, {
-                        method: e.target.value as any,
+                        method: e.target.value as "GET" | "POST" | "PUT" | "DELETE",
                       })
                     }
                     className="cep-select-primary"

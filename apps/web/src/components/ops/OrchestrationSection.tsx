@@ -6,7 +6,7 @@ import { OrchestrationDependencyGraph } from './OrchestrationDependencyGraph';
 import { extractOrchestrationTrace, isValidOrchestrationTrace } from '@/lib/orchestrationTraceUtils';
 
 interface OrchestrationSectionProps {
-  stageOutput: any;
+  stageOutput: Record<string, unknown>;
 }
 
 /**

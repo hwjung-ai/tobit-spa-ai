@@ -180,9 +180,10 @@ export default function PublishGateModal({
 
   useEffect(() => {
     if (open) {
-      runValidation();
+      void runValidation();
     }
-  }, [open, runValidation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {

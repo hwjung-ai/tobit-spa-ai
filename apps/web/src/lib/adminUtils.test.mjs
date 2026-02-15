@@ -310,7 +310,7 @@ test("should handle expired token gracefully", () => {
   const mockStorage = new Map();
   mockStorage.set("access_token", "expired_token");
 
-  const token = mockStorage.get("access_token");
+  mockStorage.get("access_token");
   const isExpired = false;
 
   assert.equal(isExpired, false);
@@ -637,7 +637,7 @@ test("should recover from JSON parse errors", () => {
 
   try {
     parsed = JSON.parse(invalidJson);
-  } catch (e) {
+  } catch {
     parsed = { error: "Parse error" };
   }
 
@@ -702,7 +702,6 @@ test("should normalize non-string error payload values", () => {
 });
 
 test("should safely clear sensitive data", () => {
-  const token = "sensitive_token_12345";
   const cleared = "";
 
   assert.equal(cleared.length, 0);

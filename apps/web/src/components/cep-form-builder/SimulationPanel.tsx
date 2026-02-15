@@ -13,7 +13,7 @@ interface SimulationResult {
 
 interface SimulationPanelProps {
   isLoading?: boolean;
-  onSimulate: (testPayload: Record<string, any>) => Promise<SimulationResult>;
+  onSimulate: (testPayload: Record<string, unknown>) => Promise<SimulationResult>;
 }
 
 export function SimulationPanel({

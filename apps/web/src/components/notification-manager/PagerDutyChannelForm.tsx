@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import FormFieldGroup from "../api-manager/FormFieldGroup";
 
 interface PagerDutyChannelFormProps {
-  onSubmit: (config: Record<string, any>, name: string) => void;
+  onSubmit: (config: Record<string, unknown>, name: string) => void;
 }
 
 export default function PagerDutyChannelForm({ onSubmit }: PagerDutyChannelFormProps) {
@@ -62,9 +62,9 @@ export default function PagerDutyChannelForm({ onSubmit }: PagerDutyChannelFormP
           📌 <strong>PagerDuty Setup:</strong>
           <ol className="list-decimal list-inside mt-2 text-sm space-y-1">
             <li>Go to your PagerDuty dashboard</li>
-            <li>Navigate to "Services" and select or create a service</li>
-            <li>Go to "Integrations" tab</li>
-            <li>Add a new "Events API v2" integration</li>
+            <li>Navigate to &quot;Services&quot; and select or create a service</li>
+            <li>Go to &quot;Integrations&quot; tab</li>
+            <li>Add a new &quot;Events API v2&quot; integration</li>
             <li>Copy the Integration Key below</li>
           </ol>
         </AlertDescription>

@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import FormFieldGroup from "../api-manager/FormFieldGroup";
 
 interface SmsChannelFormProps {
-  onSubmit: (config: Record<string, any>, name: string) => void;
+  onSubmit: (config: Record<string, unknown>, name: string) => void;
 }
 
 export default function SmsChannelForm({ onSubmit }: SmsChannelFormProps) {

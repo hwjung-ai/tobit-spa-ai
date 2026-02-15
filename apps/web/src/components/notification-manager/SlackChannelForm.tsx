@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import FormFieldGroup from "../api-manager/FormFieldGroup";
 
 interface SlackChannelFormProps {
-  onSubmit: (config: Record<string, any>, name: string) => void;
+  onSubmit: (config: Record<string, unknown>, name: string) => void;
 }
 
 export default function SlackChannelForm({ onSubmit }: SlackChannelFormProps) {
@@ -59,8 +59,8 @@ export default function SlackChannelForm({ onSubmit }: SlackChannelFormProps) {
           📌 <strong>Setup Instructions:</strong>
           <ol className="list-decimal list-inside mt-2 text-sm space-y-1">
             <li>Go to your Slack workspace settings</li>
-            <li>Navigate to "Integrations" → "Apps"</li>
-            <li>Search for "Incoming Webhooks" and install</li>
+            <li>Navigate to &quot;Integrations&quot; → &quot;Apps&quot;</li>
+            <li>Search for &quot;Incoming Webhooks&quot; and install</li>
             <li>Create a new webhook and copy the URL below</li>
           </ol>
         </AlertDescription>
