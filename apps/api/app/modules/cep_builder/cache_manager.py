@@ -12,15 +12,14 @@ from typing import Any, Dict, Optional
 
 try:
     # type: ignore[attr-defined]
-    from redis.asyncio import Redis
-    import redis.asyncio as redis  # noqa: F401
+    from redis.asyncio import Redis as RedisType  # noqa: F401
 
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    Redis = None
+    RedisType = None
 
-_redis_client: Redis | None = None
+    _redis_client: RedisType | None = None
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,9 @@ CACHE_TTL = {
 class CacheManager:
     """Manages caching for CEP operations"""
 
-    def __init__(self, redis_client: Optional[Redis] = None, prefix: str = "cep:cache"):
+    def __init__(
+        self, redis_client: Optional[Redis | None] = None, prefix: str = "cep:cache"
+    ):
         """
         Initialize cache manager.
 
@@ -56,7 +57,7 @@ class CacheManager:
         if not self.redis_client:
             return False
         try:
-            await self.redis_client.ping()
+            await self.redis_client.ping()  # type: ignore[attr-defined]
             return True
         except Exception as e:
             logger.warning(f"Redis cache unavailable: {e}")
@@ -73,7 +74,7 @@ class CacheManager:
 
         try:
             full_key = f"{self.prefix}:{key}"
-            data = await self.redis_client.get(full_key)
+            data = await self.redis_client.get(full_key)  # type: ignore[attr-defined]
             if data:
                 return json.loads(data)
         except Exception as e:
@@ -93,7 +94,7 @@ class CacheManager:
 
         try:
             full_key = f"{self.prefix}:{key}"
-            await self.redis_client.setex(
+            await self.redis_client.setex(  # type: ignore[attr-defined]
                 full_key,
                 ttl,
                 json.dumps(value, default=str),
@@ -110,7 +111,7 @@ class CacheManager:
 
         try:
             full_key = f"{self.prefix}:{key}"
-            await self.redis_client.delete(full_key)
+            await self.redis_client.delete(full_key)  # type: ignore[attr-defined]
             return True
         except Exception as e:
             logger.warning(f"Cache delete failed for {key}: {e}")
@@ -123,13 +124,34 @@ class CacheManager:
 
         try:
             full_pattern = f"{self.prefix}:{pattern}"
-            cursor = 0
             deleted = 0
 
             while True:
+                # type: ignore[attr-defined]
+                scan_result = await self.redis_client.scan(cursor, match=full_pattern)
+                if scan_result:
+                    cursor = scan_result[0]  # type: ignore[attr-defined]
+                    keys = scan_result[1] if len(scan_result) > 1 else []
+                    if keys:
+                        deleted += await self.redis_client.delete(*keys)  # type: ignore[attr-defined]
+                if cursor == 0:
+                    break
+
+            return deleted
+        except Exception as e:
+            logger.warning(f"Cache pattern delete failed for {pattern}: {e}")
+            return 0
+
+        try:
+            full_pattern = f"{self.prefix}:{pattern}"
+            cursor: 0
+            deleted = 0
+
+            while True:
+                # type: ignore[attr-defined]
                 cursor, keys = await self.redis_client.scan(cursor, match=full_pattern)
                 if keys:
-                    deleted += await self.redis_client.delete(*keys)
+                    deleted += await self.redis_client.delete(*keys)  # type: ignore[attr-defined]
                 if cursor == 0:
                     break
 

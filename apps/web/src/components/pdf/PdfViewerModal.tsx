@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 const ReactPdfDocument = dynamic(
   () => import("react-pdf").then((mod) => {
@@ -186,14 +186,13 @@ export function PdfViewerModal({
   const initialModalRect = useMemo(() => {
     const initial = getInitialRect();
     return clampRect(initial);
-  }, [getInitialRect]);
+  }, [getInitialRect, clampRect]);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
+    if (isOpen) {
+      setModalRect(initialModalRect);
+      setIsFullscreen(false);
     }
-    setModalRect(initialModalRect);
-    setIsFullscreen(false);
   }, [isOpen, initialModalRect]);
 
   useEffect(() => {
@@ -218,14 +217,13 @@ export function PdfViewerModal({
     return () => window.removeEventListener("resize", handleViewportResize);
   }, [isOpen, isFullscreen, clampRect]);
 
-  const shouldResetPdf = useMemo(() => !isOpen, [isOpen]);
-
   useEffect(() => {
-    if (shouldResetPdf) {
+    if (!isOpen) {
       setPdfLoading(true);
       setPdfError(null);
       setNumPages(0);
       setPdfFile(null);
+      return;
     }
 
     if (!pdfBlob && !pdfBlobUrl) {

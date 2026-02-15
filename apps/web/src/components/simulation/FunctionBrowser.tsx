@@ -10,7 +10,7 @@ type FunctionComplexity = "basic" | "intermediate" | "advanced";
 interface FunctionParameter {
   name: string;
   type: string;
-  default: number | string | boolean | any[];
+  default: number | string | boolean | (number | string | boolean)[];
   min?: number;
   max?: number;
   step?: number;
@@ -63,7 +63,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
   // Filters
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [complexityFilter, setComplexityFilter] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery] = useState<string>("");
 
   // Available filter options
   const categories: { value: string; label: string }[] = [
@@ -81,12 +81,59 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
     { value: "advanced", label: "Advanced" },
   ];
 
+  const loadFunctions = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (categoryFilter) params.set("category", categoryFilter);
+      if (complexityFilter) params.set("complexity", complexityFilter);
+      if (searchQuery) params.set("search", searchQuery);
+
+      const response = await authenticatedFetch<Envelope<{ functions: FunctionMetadata[] }>>(
+        `/api/sim/functions${params.toString() ? `?${params.toString()}` : ""}`
+      );
+
+      if (response.data?.functions) {
+        setFunctions(response.data.functions);
+      }
+    } catch (err) {
+      console.error("Failed to load functions", err);
+      setStatusMessage("Failed to load function library");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let result = [...functions];
+
+    if (categoryFilter) {
+      result = result.filter(f => f.category === categoryFilter);
+    }
+    if (complexityFilter) {
+      result = result.filter(f => f.complexity === complexityFilter);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(f =>
+        f.name.toLowerCase().includes(query) ||
+        f.description.toLowerCase().includes(query) ||
+        f.id.toLowerCase().includes(query) ||
+        f.tags.some(t => t.toLowerCase().includes(query))
+      );
+    }
+
+    setFiltered(result);
+  };
+
   useEffect(() => {
-    loadFunctions();
+    void loadFunctions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [functions, categoryFilter, complexityFilter, searchQuery]);
 
   useEffect(() => {

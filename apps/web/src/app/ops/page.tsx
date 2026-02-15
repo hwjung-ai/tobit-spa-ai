@@ -372,7 +372,6 @@ export default function OpsPage() {
       }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
       setStatusMessage(`Error: ${normalized.message}`);
     } finally {

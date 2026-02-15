@@ -1,8 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import { fetchApi } from "@/lib/adminUtils";
-
+/from "@/lib/adminUtils";
 interface SchemaScanPanelProps {
   schema: Record<string, unknown>;
   onScanComplete: () => void;

@@ -321,7 +321,7 @@ class TestCICacheStatistics:
         cache = CICache()
 
         await cache.set("key_1", [{"ci_id": "1"}], keywords=["app", "server"])
-        await cache.set("key_2", [{"ci_id": "2"}, {"ci_id": "3"}], keywords=["db"])
+        await cache.set("key_2", [{"ci_id": "2_1"}, {"ci_id": "2_2"}], keywords=["db"])
 
         # Access to update last_accessed
         await cache.get("key_1")
@@ -360,10 +360,7 @@ class TestCICachePerformance:
         cache = CICache(max_size=1000)
 
         # Concurrent writes
-        tasks = [
-            cache.set(f"key_{i}", [{"ci_id": str(i)}])
-            for i in range(100)
-        ]
+        tasks = [cache.set(f"key_{i}", [{"ci_id": str(i)}]) for i in range(100)]
         await asyncio.gather(*tasks)
 
         stats = cache.get_stats()
@@ -383,7 +380,7 @@ class TestCICachePerformance:
             tasks = []
             for i in range(25):
                 tasks.append(cache.get(f"key_{i}"))
-                tasks.append(cache.set(f"key_{i+50}", [{"ci_id": str(i+50)}]))
+                tasks.append(cache.set(f"key_{i + 50}", [{"ci_id": str(i + 50)}]))
             await asyncio.gather(*tasks)
 
         await mixed_ops()
@@ -435,9 +432,17 @@ class TestCICacheIntegration:
         cache = CICache()
 
         ci_details = {
-            "app_001": {"ci_id": "app_001", "ci_code": "APP_001", "ci_type": "Application"},
+            "app_001": {
+                "ci_id": "app_001",
+                "ci_code": "APP_001",
+                "ci_type": "Application",
+            },
             "db_001": {"ci_id": "db_001", "ci_code": "DB_001", "ci_type": "Database"},
-            "cache_001": {"ci_id": "cache_001", "ci_code": "CACHE_001", "ci_type": "Cache"},
+            "cache_001": {
+                "ci_id": "cache_001",
+                "ci_code": "CACHE_001",
+                "ci_type": "Cache",
+            },
         }
 
         # Simulate graph traversal - looking up related CIs
