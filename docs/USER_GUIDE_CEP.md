@@ -1552,40 +1552,148 @@ Draft 적용 후 Form Builder에서 값이 자동으로 채워진 것을 확인�
 
 ## 24. Error Handling & Recovery
 
-### Circuit Breaker 상태 관리
+### 24.1 Exception 타입 및 처리 전략
+
+CEP 시스템은 다음과 같은 예외 타입을 정의하고 각각 표준화된 방식으로 처리합니다:
+
+#### Exception 타입 정의
+
+| 예외 | 코드 | 상태 | 처리 전략 | 사용 사례 |
+|------|------|------|---------|----------|
+| **CEPValidationError** | VALIDATION_ERROR | 400 | 즉시 실패, 재시도 불가 | 조건식 문법 오류, invalid trigger spec |
+| **CEPExecutionError** | CEP_EXECUTION_ERROR | 500 | 재시도 가능 | 규칙 실행 중 예외 발생 |
+| **CEPTimeoutError** | TIMEOUT | 504 | 재시도 가능, circuit breaker 감시 | 규칙 실행 5초 초과, webhook 10초 초과 |
+| **ChannelExecutionError** | CHANNEL_ERROR | 503 | 재시도 (지수 백오프) | Slack/Email/SMS 전송 실패 |
+| **ExternalServiceError** | EXTERNAL_SERVICE_ERROR | 503 | 재시도 가능, circuit breaker 활성화 | HTTP webhook timeout, 네트워크 불가 |
+| **CircuitOpenError** | CIRCUIT_OPEN | 503 | 즉시 실패, 자동 복구 대기 | Circuit breaker open 상태 |
+
+#### Exception 원인과 복구 절차
+
+**CEPValidationError** (자동 복구 불가):
+```python
+# 원인: 규칙 정의가 잘못됨
+try:
+    rule = cep_engine.validate_rule(trigger_spec)
+except CEPValidationError as e:
+    # 수동 복구: 규칙 편집 → trigger_spec 수정 → 재배포
+    logger.error(f"Rule validation failed: {e.message}")
+```
+
+**CEPExecutionError** (재시도 가능):
+```python
+# 원인: 규칙 실행 중 예외 (필드명 오타, 데이터 타입 불일치 등)
+try:
+    result = cep_engine.execute_rule(rule, event)
+except CEPExecutionError as e:
+    # 자동 복구: retry 3회, 지수 백오프
+    retry_count = 0
+    while retry_count < 3:
+        retry_count += 1
+        await asyncio.sleep(2 ** retry_count)  # 2s, 4s, 8s
+        try:
+            result = cep_engine.execute_rule(rule, event)
+            break
+        except CEPExecutionError:
+            continue
+```
+
+**CEPTimeoutError** (재시도 + circuit breaker 감시):
+```python
+# 원인: 규칙 실행이 5초 초과, 또는 webhook 호출이 10초 초과
+try:
+    with timeout(5):  # CEP execution timeout
+        result = cep_engine.execute_rule(rule, event)
+except CEPTimeoutError as e:
+    # 자동 복구: retry 2회, circuit breaker 감시
+    breaker = CircuitBreakerManager.get_or_create(f"cep_{rule_id}")
+    breaker.record_failure()
+    if breaker.is_open():
+        logger.warning(f"CEP circuit breaker open for rule {rule_id}")
+        # 30초 후 자동 복구 시도 (HALF_OPEN)
+```
+
+**ChannelExecutionError** (지수 백오프 + 폴백 채널):
+```python
+# 원인: Slack webhook 실패 (401/403/network timeout 등)
+channels_to_send = ["Slack", "Email"]
+for channel in channels_to_send:
+    try:
+        # 지수 백오프: 1s → 2s → 4s → 8s
+        await retry_with_backoff(
+            lambda: send_to_channel(channel, message),
+            max_retries=4,
+            initial_delay=1
+        )
+    except ChannelExecutionError:
+        # 폴백 채널로 자동 전환
+        await send_to_channel("Email", f"[Slack 실패] {message}")
+```
+
+### 24.2 Circuit Breaker 사용 및 동작
+
+### 24.2 Circuit Breaker 사용 및 동작
+
+#### Circuit Breaker 상태 머신
 
 ```
-[Closed]                 # 정상 상태 (요청 통과)
-  │ (3회 연속 실패)
+[Closed]                 # 정상 상태 (모든 요청 통과)
+  │ (5회 연속 실패)
   ↓
 [Open]                   # 차단 상태 (즉시 실패 응답)
-  │ (30초 경과)
+  │ (60초 경과)
   ↓
-[Half-Open]              # 복구 테스트 상태 (1회 요청만 시도)
-  │ (성공 또는 실패)
+[Half-Open]              # 복구 테스트 상태 (제한된 요청만 시도)
+  │ (2회 연속 성공 또는 1회 실패)
   ↓
 [Closed] 또는 [Open]     # 상태 전환
 ```
 
+#### 적용 대상 및 설정
+
 **적용 대상**:
-- 채널별 webhook 호출 (Slack, Email, Discord 등)
-- 외부 API 호출 (HTTP 액션)
-- DB 연결 (메트릭 폴링)
+- 채널별 webhook 호출 (Slack, Email, Discord 등): failure_threshold=5, timeout=60s
+- 외부 API 호출 (HTTP 액션): failure_threshold=5, timeout=60s
+- DB 연결 (메트릭 폴링): failure_threshold=3, timeout=30s
 
-**설정 방법**:
-1. CEP Rule에 `action_config` 추가:
-   ```json
-   {
-     "action": "webhook",
-     "circuit_breaker": {
-       "failure_threshold": 3,
-       "timeout_seconds": 30,
-       "half_open_max_requests": 1
-     }
-   }
-   ```
+**설정 방법 - CEP Rule JSON**:
+```json
+{
+  "rule_name": "api_alert_with_resilience",
+  "actions": [
+    {
+      "type": "webhook",
+      "endpoint": "https://api.slack.com/hooks/...",
+      "method": "POST",
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_seconds": 60,
+        "success_threshold": 2,
+        "expected_exception": "ExternalServiceError"
+      }
+    }
+  ]
+}
+```
 
-### Retry 정책 (지수 백오프)
+**동작 예시**:
+```
+Time 00:00 → Webhook call #1 fails (failure_count=1)
+Time 00:01 → Webhook call #2 fails (failure_count=2)
+Time 00:02 → Webhook call #3 fails (failure_count=3)
+Time 00:03 → Webhook call #4 fails (failure_count=4)
+Time 00:04 → Webhook call #5 fails (failure_count=5) → Circuit OPEN
+Time 00:05 → Next webhook attempt → CircuitOpenError (503) [no call made]
+Time 00:06 → Next webhook attempt → CircuitOpenError (503) [no call made]
+Time 01:04 → 60초 경과, state → HALF_OPEN (recovery test enabled)
+Time 01:05 → Webhook call (test) → SUCCESS (success_count=1)
+Time 01:06 → Webhook call → SUCCESS (success_count=2) → Circuit CLOSED
+```
+
+### 24.3 Retry 메커니즘 (지수 백오프)
+
+### 24.3 Retry 메커니즘 (지수 백오프)
+
+#### Retry 정책 상세
 
 ```
 1차 시도 실패 → 1초 대기 → 2차 시도
@@ -1595,26 +1703,101 @@ Draft 적용 후 Form Builder에서 값이 자동으로 채워진 것을 확인�
 5차 시도 실패 → 최종 실패 기록 + 폴백 액션 실행
 ```
 
-**설정**:
-- 최대 재시도: 4회 (총 5회 시도)
+**설정 파라미터**:
+- 최대 재시도 횟수: 4회 (총 5회 시도)
 - 초기 간격: 1초
 - 최대 간격: 8초
-- 백오프 배수: 2배
+- 백오프 배수: 2배 (exponential)
+- Jitter: ±10% (thundering herd 방지)
 
-### 실패 유형별 복구 체크리스트
+#### Retry 대상 및 비대상
 
-| 실패 유형 | 원인 | 자동 복구 | 수동 조치 |
-|---------|------|---------|---------|
-| **Webhook Timeout** | 네트워크 지연/엔드포인트 느림 | Retry 3회 후 포기 | 엔드포인트 성능 점검 |
-| **Authentication Failure** | API 키/토큰 만료 | ❌ (즉시 실패) | 인증 정보 갱신 |
-| **Rate Limit** (429) | 요청 폭주 | Retry 3회 후 포기 | 송신 빈도 조절 |
-| **Network Unreachable** | 방화벽/DNS 문제 | Retry 3회 후 포기 | 네트워크 설정 확인 |
-| **Database Connection Loss** | DB 다운/네트워크 끊김 | Circuit Breaker open | DB 상태 복구 대기 |
-| **Template Rendering Error** | 메시지 템플릿 변수 미정의 | ❌ (즉시 실패) | 템플릿 변수 확인 |
+**자동 Retry 가능**:
+- Network timeout: 통신 재시도로 복구 가능
+- HTTP 5xx (서버 오류): 일시적 오류일 가능성
+- Rate limit (429): 대기 후 재시도 가능
+- Database connection loss: 연결 복구 대기
+
+**자동 Retry 불가 (즉시 실패)**:
+- HTTP 4xx (클라이언트 오류): API 수정 필요
+- Authentication failure (401/403): 인증 정보 갱신 필요
+- Validation error: 규칙 정의 오류
+- Template rendering error: 메시지 템플릿 수정 필요
+
+### 24.4 실패 유형별 복구 체크리스트
+
+| 실패 유형 | 원인 | HTTP 상태 | 자동 복구 | 수동 조치 |
+|---------|------|---------|---------|---------|
+| **Webhook Timeout** | 네트워크 지연/엔드포인트 느림 | 504 | Retry 4회 (1s→2s→4s→8s) | 엔드포인트 성능 점검 |
+| **Connection Refused** | 엔드포인트 다운 | 503 | Retry 4회 + Circuit Open | 엔드포인트 상태 확인 |
+| **DNS Resolution Failure** | DNS 오류 | 503 | Retry 4회 + Circuit Open | DNS 설정 확인 |
+| **Authentication Failure** | API 키/토큰 만료 | 401/403 | ❌ (즉시 실패) | 인증 정보 갱신 후 rule 재실행 |
+| **Rate Limit** | 요청 폭주 | 429 | Retry 4회 (백오프 적용) | 송신 빈도 조절, throttle 설정 |
+| **Invalid Request** | 요청 형식 오류 | 400 | ❌ (즉시 실패) | 요청 스키마 확인 |
+| **Database Connection Loss** | DB 다운/네트워크 끊김 | 503 | Retry 4회 + Circuit Open | DB 상태 복구 대기 |
+| **Template Rendering Error** | 메시지 템플릿 변수 미정의 | 400 | ❌ (즉시 실패) | 템플릿 `{{변수}}` 이름 확인 |
+
+### 24.5 Common Error Scenarios 및 해결법
+
+**Scenario A: "Webhook timeout after 4 retries" 에러**
+
+```
+증상: 채널 전송이 5초마다 재시도되지만 계속 실패
+원인: 엔드포인트가 응답 느림 (> 10s)
+
+진단:
+1. curl -v -m 5 https://webhook.endpoint/...  # 직접 엔드포인트 테스트
+2. Admin > Observability > CEP Monitoring > 채널별 latency 확인
+3. 네트워크 latency 확인: ping, traceroute
+
+해결:
+1. 단기: 엔드포인트 타임아웃 값 증가 (기본 10s → 20s)
+   → Rule 편집 > action_config.timeout_seconds = 20
+2. 장기: 엔드포인트 최적화 (응답 시간 단축)
+```
+
+**Scenario B: "Circuit breaker open for webhook" 경고**
+
+```
+증상: 처음에는 알림 전송 성공하다가 어느 순간부터 "503 Service Unavailable"
+
+원인: 5회 연속 실패 → Circuit breaker open → 60초간 모든 요청 차단
+
+진단:
+1. Admin > Observability > CEP Monitoring > Circuit Breaker Status
+2. 최근 5회 webhook 호출 로그 확인
+3. 첫 번째 실패 원인 파악
+
+해결:
+1. 즉시: 원인 제거 (예: API 키 갱신) 후 60초 대기
+   → Circuit breaker가 HALF_OPEN으로 자동 전환
+   → 다음 요청 성공 시 CLOSED로 복구
+2. 강제 복구: Admin > Tools > Circuit Breaker Reset
+```
+
+**Scenario C: "Rate limit exceeded (429)" 반복**
+
+```
+증상: Slack/Email로 알림을 자주 보내려고 하는데 429 오류 발생
+
+원인: 채널의 rate limit 정책 초과 (예: Slack = 초당 1개)
+
+진단:
+1. 규칙 실행 빈도 확인: 몇 초마다 trigger되는가?
+2. Slack API rate limit 정책 확인
+3. Admin > Logs > 최근 429 오류 로그 확인
+
+해결:
+1. 규칙 threshold 상향: CPU > 80 → CPU > 90 (trigger 빈도 감소)
+2. Window/Aggregation 적용: tumbling 5m (5분 단위로 1회만 집계)
+3. Suppress 정책 추가: 같은 rule 1시간에 1회만 알림
+```
 
 ---
 
 ## 25. Production Best Practices
+
+### 25.1 Exception Handling 패턴
 
 ### 1. Exception Handling 패턴
 

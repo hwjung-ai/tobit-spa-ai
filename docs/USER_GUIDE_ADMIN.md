@@ -414,6 +414,72 @@
 - 지연 시간이 허용 범위 내인지 확인한다.
 - 처리량이 안정적인지 확인한다.
 
+### Step 6. CEP 모니터링 (CEP Monitoring Tab)
+
+Observability Dashboard의 **CEP Monitoring** 탭을 통해 모든 CEP 규칙의 성능과 신뢰성을 모니터링할 수 있습니다.
+
+#### 6.1 CEP Rule Performance 확인
+
+1. **CEP Monitoring** 탭 클릭
+2. **Rule Performance** 섹션에서 메트릭 확인
+
+**메트릭 상세**:
+
+| 메트릭 | 정상 범위 | 설명 |
+|--------|---------|------|
+| **Average Duration** | <500ms | 규칙 평균 실행 시간 |
+| **p95 Latency** | <2s | 95% 규칙이 완료되는 시간 |
+| **p99 Latency** | <5s | 99% 규칙이 완료되는 시간 |
+| **Success Rate** | >95% | 규칙 성공 비율 |
+
+검증 포인트:
+- Average Duration이 500ms 이하면 정상
+- Success Rate가 95% 이상이면 건전
+
+#### 6.2 채널 신뢰도 확인
+
+1. **Channel Reliability** 섹션 확인
+2. 각 채널별 success_rate, latency_ms 확인
+
+**채널별 주요 메트릭**:
+
+- **Slack**: Success Rate, Latency, 최근 실패 건수
+- **Email**: Success Rate, Latency, 최근 실패 건수
+- **SMS**: Success Rate, Latency, 최근 실패 건수
+- **Discord**: Success Rate, Latency, 최근 실패 건수
+
+대응:
+- Success Rate < 90%: 채널 설정 재확인 필요
+- Latency > 1s: 네트워크/엔드포인트 상태 확인 필요
+
+#### 6.3 Circuit Breaker 상태 확인
+
+1. **Circuit Breaker Status** 섹션 확인
+2. 채널별 상태 (Closed/Open/Half-Open) 확인
+
+**상태별 의미**:
+
+- **Closed**: 정상 상태, 모든 요청 통과
+- **Open**: 차단 상태, 모든 요청 즉시 실패
+- **Half-Open**: 복구 테스트 중 (60초 후 자동 전환)
+
+대응:
+- Open 상태가 5분 이상 지속되면 강제 리셋 검토
+- 강제 리셋 버튼 클릭 시 즉시 Closed로 전환
+
+#### 6.4 이벤트 품질 확인
+
+1. **Event Quality** 섹션 확인
+2. False Positive Rate, Unacked Events 확인
+
+**메트릭 해석**:
+
+| 메트릭 | 정상 범위 | 초과 시 조치 |
+|--------|---------|-----------|
+| **False Positive Rate** | <5% | Threshold 상향 검토 |
+| **Unacked Events** | <100 | ACK 처리 가속화 |
+| **Average ACK Time** | <1시간 | 운영 프로세스 개선 |
+
 ---
 
 ## 6. Lab 6 - Regression 테스트 설정
@@ -748,6 +814,121 @@
 1. Top 5 문제 규칙 식별 (오탐율 높은 규칙)
 2. 채널별 신뢰도 추이 분석
 3. 성능 저하 근본 원인 분석
+
+---
+
+## 11. Production Debugging Workflows
+
+### 11.1 문제: "규칙이 자주 timeout된다"
+
+**현상**: CEP Monitoring > Rule Performance에서 p95/p99 latency가 2s/5s를 초과
+
+**진단 절차**:
+1. 해당 규칙 선택 (우측 패널에서 상세 메트릭 확인)
+2. 규칙의 trigger_spec 확인
+   - trigger_type: metric/event/schedule/anomaly 확인
+   - 데이터 소스 (DB query, HTTP endpoint) 응답 시간 측정
+3. 조건 복잡도 확인
+   - AND/OR/NOT 중첩 깊이 확인
+   - 불필요한 조건 제거 가능성 검토
+4. 창 설정 확인
+   - Tumbling/Sliding/Session window 최적화 여부 검토
+
+**해결 조치**:
+```json
+// 기존: timeout 5s
+{
+  "timeout_ms": 5000
+}
+
+// 수정: timeout 10s로 상향
+{
+  "timeout_ms": 10000
+}
+```
+
+**최종 확인**:
+- 규칙 재배포 후 1시간 모니터링
+- p95 latency가 2s 이하로 개선되었는지 확인
+
+### 11.2 문제: "채널로 알림이 안 온다"
+
+**현상**: 규칙은 trigger되었으나 Slack/Email로 메시지 미수신
+
+**진단 절차**:
+1. CEP Monitoring > Channel Reliability에서 해당 채널 success_rate 확인
+2. Success Rate < 90%이면:
+   - 채널 테스트: `/cep/channels/test` API 호출
+   - 테스트 메시지 수신 여부 확인
+3. Circuit Breaker 상태 확인
+   - Open 상태면 자동 복구 대기 또는 강제 리셋
+4. 메시지 템플릿 검증
+   - 규칙의 message 필드에 `{{변수}}` 사용 확인
+   - 변수가 이벤트 payload에 존재하는지 확인
+
+**해결 조치**:
+```bash
+# 채널 테스트
+curl -X POST http://localhost:8000/cep/channels/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "Slack",
+    "config": {"webhook_url": "https://hooks.slack.com/..."},
+    "test_message": "Test alert from CEP"
+  }'
+
+# 실패하면 설정 갱신 필요
+# 성공하면 Circuit Breaker 강제 리셋 실행
+```
+
+**최종 확인**:
+- 채널 테스트 통과 후 수동으로 규칙 trigger
+- Slack/Email 메시지 수신 확인
+
+### 11.3 문제: "False Positive 폭증"
+
+**현상**: CEP Monitoring > Event Quality에서 False Positive Rate > 5%
+
+**진단 절차**:
+1. CEP Events 필터: `severity=warning` (또는 낮은 심각도) 이벤트 조회
+2. 폭주하는 규칙 식별
+3. 규칙 상세 확인:
+   - Threshold 설정값이 너무 낮은지 검토
+   - Trigger 조건이 정상 범위를 포함하는지 검토
+4. 최근 1일 이벤트 추이 분석
+   - Trigger 빈도가 갑자기 증가했는지 확인
+
+**해결 조치**:
+```json
+// 기존: CPU threshold 50%
+{
+  "threshold": 50
+}
+
+// 수정: CPU threshold 80%로 상향
+{
+  "threshold": 80
+}
+```
+
+또는 aggregation 추가:
+```json
+{
+  "window_config": {
+    "type": "tumbling",
+    "size": "5m"
+  },
+  "aggregation": {
+    "type": "avg",
+    "field": "cpu_usage"
+  }
+}
+```
+
+**최종 확인**:
+- 규칙 재배포 후 1시간 모니터링
+- Event 발생 빈도가 감소했는지 확인
+- False Positive Rate < 5% 달성
 
 ---
 

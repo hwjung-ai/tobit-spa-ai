@@ -349,11 +349,141 @@ class RegressionResult(SQLModel, table=True):
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.4 데이터 수집
+### 8.4 CEP 모니터링 대시보드
 
-- **자동 수집**: 모든 OPS 실행이 자동으로 메트릭 기록
+CEP 규칙 실행 성능과 신뢰성을 모니터링하는 전용 대시보드입니다.
+
+#### CEP 모니터링 메트릭
+
+```
+CEP Monitoring Dashboard
+├─ Rule Performance
+│  ├─ Average Duration: <500ms (정상)
+│  ├─ p95 Latency: <2s
+│  ├─ p99 Latency: <5s
+│  └─ Success Rate: >95% (목표)
+│
+├─ Channel Reliability
+│  ├─ Slack: success_rate (%), latency_ms
+│  ├─ Email: success_rate (%), latency_ms
+│  ├─ SMS: success_rate (%), latency_ms
+│  └─ Discord: success_rate (%), latency_ms
+│
+├─ Circuit Breaker Status
+│  ├─ Channel별 상태 (Closed/Open/Half-Open)
+│  ├─ 실패 횟수, 복구 시간
+│  └─ 강제 리셋 버튼
+│
+├─ Event Quality
+│  ├─ False Positive Rate: <5%
+│  ├─ Total Events: (시간별)
+│  ├─ Unacked Events: (SLA 확인용)
+│  └─ Average ACK Time: <1시간 (목표)
+│
+└─ Recent Failures
+   ├─ 채널 전송 실패 (timeout/auth/rate-limit)
+   ├─ 규칙 실행 실패 (validation/execution error)
+   └─ Circuit Breaker 열림 이력
+```
+
+#### CEP 모니터링 워크플로우
+
+**일일 모니터링 루틴** (매일 아침):
+
+1. **System Health 확인**
+   - Overall CEP Status: Healthy/Degraded/Down
+   - Uptime: 99.5% 이상 (목표)
+
+2. **Channel 신뢰도 확인**
+   - 각 채널별 success_rate > 95%
+   - Latency < 500ms
+   - Circuit Breaker 열림 여부
+
+3. **Event Quality 확인**
+   - False Positive Rate < 5%
+   - ACK 대기 이벤트: SLA 내 처리 여부
+   - 미응답 이벤트: 0
+
+**주간 모니터링 루틴** (매주 월요일):
+
+1. **규칙별 성능 분석**
+   - Top 5 가장 느린 규칙 (duration 기준)
+   - Top 5 가장 많이 실패하는 규칙 (failure_rate 기준)
+   - 조정 필요 규칙 식별
+
+2. **채널 신뢰도 분석**
+   - 채널별 실패율 추이 (전주 대비)
+   - 인증 오류 빈도
+   - Rate limit 초과 여부
+
+3. **이벤트 품질 분석**
+   - 오탐 율 추이
+   - 규칙별 false positive 분포
+   - Threshold 조정 제안
+
+### 8.5 Production Debugging Workflows
+
+#### Debugging Scenario A: "규칙이 자주 timeout된다"
+
+1. **현상 확인**
+   - CEP Monitoring > Rule Performance > p95 Latency 확인
+   - 해당 규칙 선택
+
+2. **원인 파악**
+   - 규칙의 trigger_spec 확인 (metric polling 간격)
+   - 조건 복잡도 (AND/OR/NOT 중첩 깊이)
+   - 데이터 소스 응답 시간 (DB query, HTTP call)
+
+3. **해결**
+   - 타임아웃 정책 상향 (5s → 10s)
+   - Trigger polling 간격 증가
+   - 조건 단순화 (예: 복합 조건 → 다중 규칙)
+
+#### Debugging Scenario B: "채널로 알림이 안 온다"
+
+1. **현상 확인**
+   - CEP Events > 이벤트 생성 여부 확인
+   - 채널 전송 로그 확인
+
+2. **원인 파악**
+   - **Circuit Breaker 상태 확인**
+     - Observability > CEP > Circuit Breaker Status
+     - Open 상태면 30초 대기 후 자동 복구
+
+   - **채널 인증 확인**
+     - CEP > Channels > Test: 각 채널별 test message 전송
+     - 결과에서 error 메시지 확인
+
+   - **메시지 템플릿 오류 확인**
+     - Rule의 message 필드에서 `{{변수}}`가 이벤트에 존재하는지 확인
+
+3. **해결**
+   - 채널 설정 갱신 (API key, webhook URL)
+   - 메시지 템플릿 수정
+   - Circuit Breaker 강제 리셋
+
+#### Debugging Scenario C: "False positive 폭증"
+
+1. **현상 확인**
+   - CEP Monitoring > Event Quality > False Positive Rate 추이
+   - 어느 규칙에서 오탐이 많은지 식별
+
+2. **원인 파악**
+   - Threshold 너무 낮음 (예: CPU > 50%)
+   - 정상 범위 변동을 이상으로 감지 (anomaly 규칙의 경우)
+   - 필터 조건 누락
+
+3. **해결**
+   - Threshold 상향 (CPU > 50% → CPU > 80%)
+   - Anomaly 규칙의 baseline 데이터 재수집
+   - 조건 추가 (예: `cpu > 80 AND memory > 70`)
+
+### 8.6 데이터 수집
+
+- **자동 수집**: 모든 CEP 규칙 실행이 자동으로 메트릭 기록
 - **집계**: 1분, 5분, 15분, 1시간 단위 집계
 - **보관**: 30일 (raw), 90일 (aggregated)
+- **메트릭 저장소**: tb_cep_rule_metrics (PostgreSQL)
 
 ---
 

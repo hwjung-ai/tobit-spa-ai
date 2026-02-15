@@ -1897,6 +1897,302 @@ notify (not executed)  ← 자동으로 실행 안 됨
 
 ---
 
+## 26. Workflow Template Mapping
+
+### 26.1 파라미터 전달 문법
+
+Workflow의 각 노드 간 데이터 전달은 다음 세 가지 방식으로 수행됩니다:
+
+#### 1. `{{params.X}}` - 사용자 입력 파라미터
+
+사용자가 API 호출 시 전달한 파라미터에 접근합니다.
+
+```json
+{
+  "nodes": [
+    {
+      "node_id": "fetch_by_filter",
+      "type": "sql",
+      "query": "SELECT * FROM devices WHERE region = :region LIMIT :limit",
+      "input": {
+        "region": "{{params.region}}",
+        "limit": "{{params.limit}}"
+      }
+    }
+  ]
+}
+```
+
+**사용자 호출 예시**:
+```bash
+POST /api/execute/device_workflow
+Content-Type: application/json
+
+{
+  "region": "us-east",
+  "limit": 100
+}
+```
+
+#### 2. `{{steps.node_id.rows}}` - 이전 노드 출력 (행 데이터)
+
+이전 노드가 반환한 행 데이터(배열)에 접근합니다.
+
+```json
+{
+  "nodes": [
+    {
+      "node_id": "fetch_devices",
+      "type": "sql",
+      "query": "SELECT device_id, metrics FROM devices LIMIT 10"
+    },
+    {
+      "node_id": "summarize_metrics",
+      "type": "script",
+      "language": "python",
+      "code": "import json\ndevices = {{steps.fetch_devices.rows}}\ntotal = len(devices)\nreturn {\"count\": total, \"devices\": devices}"
+    }
+  ]
+}
+```
+
+**데이터 구조 예시**:
+```json
+// fetch_devices의 output
+{
+  "rows": [
+    {"device_id": "d1", "metrics": {"cpu": 45}},
+    {"device_id": "d2", "metrics": {"cpu": 78}}
+  ]
+}
+
+// summarize_metrics의 script 내부
+devices = [
+  {"device_id": "d1", "metrics": {"cpu": 45}},
+  {"device_id": "d2", "metrics": {"cpu": 78}}
+]
+```
+
+#### 3. `{{context.X}}` - 실행 컨텍스트 변수
+
+실행 시점의 시스템 정보 (사용자, 테넌트, 시간 등)에 접근합니다.
+
+```json
+{
+  "nodes": [
+    {
+      "node_id": "audit_log",
+      "type": "sql",
+      "query": "INSERT INTO audit_log (executed_by, tenant_id, executed_at, action) VALUES (:user, :tenant, :time, :action)",
+      "input": {
+        "user": "{{context.user_id}}",
+        "tenant": "{{context.tenant_id}}",
+        "time": "{{context.execution_time}}",
+        "action": "device_fetch"
+      }
+    }
+  ]
+}
+```
+
+**context 변수 목록**:
+- `context.user_id`: 실행 사용자 ID
+- `context.tenant_id`: 테넌트 ID
+- `context.execution_time`: ISO 8601 형식 실행 시간
+- `context.request_id`: 요청 추적 ID
+
+### 26.2 Template 변수 Best Practices
+
+#### Best Practice 1: 명시적 타입 선언
+
+```json
+// ❌ 나쁜 예: 문자열과 숫자 혼재
+{
+  "query": "SELECT * FROM devices WHERE id = {{params.device_id}} AND active = {{params.active}}"
+}
+
+// ✅ 좋은 예: 파라미터 스키마 명시
+{
+  "definition": {
+    "param_schema": {
+      "device_id": {"type": "string", "description": "Device ID"},
+      "active": {"type": "boolean", "description": "Active filter"}
+    }
+  },
+  "nodes": [
+    {
+      "query": "SELECT * FROM devices WHERE id = :device_id AND active = :active",
+      "input": {
+        "device_id": "{{params.device_id}}",
+        "active": "{{params.active}}"
+      }
+    }
+  ]
+}
+```
+
+#### Best Practice 2: 단계별 검증
+
+```json
+{
+  "nodes": [
+    {
+      "node_id": "validate_input",
+      "type": "script",
+      "code": "import json\nif not {{params.region}}:\n  raise ValueError('region is required')\nreturn {'status': 'valid'}"
+    },
+    {
+      "node_id": "fetch_data",
+      "type": "sql",
+      "depends_on": ["validate_input"],
+      "query": "SELECT * FROM data WHERE region = :region",
+      "input": {"region": "{{params.region}}"}
+    }
+  ]
+}
+```
+
+#### Best Practice 3: 출력 구조 문서화
+
+```python
+# script 노드에서 출력 구조 명시
+def execute():
+    """
+    Return structure:
+    {
+        "total_devices": int,
+        "summary": {
+            "online": int,
+            "offline": int
+        },
+        "devices": [
+            {"id": str, "status": str, "metrics": dict}
+        ]
+    }
+    """
+    return {
+        "total_devices": 42,
+        "summary": {"online": 38, "offline": 4},
+        "devices": [...]
+    }
+```
+
+---
+
+## 27. Production Policies
+
+### 27.1 타임아웃 설정 (Timeout Configuration)
+
+Workflow 내 각 노드별 타임아웃 정책을 설정합니다. 타임아웃 초과 시 해당 노드는 즉시 실패하고, 재시도 정책이 있으면 재시도됩니다.
+
+**노드 타입별 권장 타임아웃**:
+
+| 노드 타입 | 기본값 | 권장 범위 | 조정 기준 |
+|----------|-------|---------|----------|
+| **SQL 쿼리** | 5초 | 2s ~ 30s | Query 복잡도: Index 없음/JOIN 많음 → 상향 |
+| **HTTP 호출** | 10초 | 5s ~ 60s | 외부 API 응답 시간 + 네트워크 지연 |
+| **Python Script** | 5초 | 1s ~ 10s | 계산 복잡도: 대규모 배열 처리 → 상향 |
+| **Workflow 전체** | 30초 | 10s ~ 120s | 모든 노드 합산 + 30% 여유 |
+
+**타임아웃 설정 방법**:
+
+```json
+{
+  "definition": {
+    "runtime_policy": {
+      "timeout_ms": 30000,
+      "nodes": [
+        {
+          "node_id": "fetch_metrics",
+          "timeout_ms": 5000
+        },
+        {
+          "node_id": "http_call",
+          "timeout_ms": 10000
+        }
+      ]
+    }
+  }
+}
+```
+
+### 27.2 Retry 정책 (재시도)
+
+실패한 노드를 자동으로 재시도합니다. 연결 오류, 일시적 서비스 오류 등에 효과적입니다.
+
+**재시도 규칙**:
+
+| 오류 타입 | Retry 가능 | 최대 재시도 | 백오프 간격 |
+|----------|-----------|-----------|----------|
+| **SQL: Connection timeout** | ✅ Yes | 3회 | 100ms → 200ms → 400ms |
+| **SQL: Deadlock (40P01)** | ✅ Yes | 2회 | 500ms → 1s |
+| **HTTP: 5xx (서버 오류)** | ✅ Yes | 3회 | 100ms → 200ms → 400ms |
+| **HTTP: 429 (Rate Limit)** | ✅ Yes | 2회 | 1s → 2s |
+| **HTTP: 4xx (클라이언트 오류)** | ❌ No | - | - |
+| **Script: Runtime exception** | ✅ Yes | 1회 | 200ms |
+
+**재시도 설정**:
+
+```json
+{
+  "nodes": [
+    {
+      "node_id": "fetch_metrics",
+      "type": "sql",
+      "retry": {
+        "max_attempts": 3,
+        "backoff_strategy": "exponential",
+        "initial_delay_ms": 100,
+        "max_delay_ms": 2000,
+        "multiplier": 2
+      }
+    }
+  ]
+}
+```
+
+### 27.3 Circuit Breaker 정책
+
+외부 API 호출 시 연속 실패를 감지하면 자동으로 차단했다가 시간 경과 후 복구를 시도합니다.
+
+**설정 파라미터**:
+- **failure_threshold**: 차단하기까지의 연속 실패 횟수 (기본: 5회)
+- **recovery_timeout_seconds**: Open 상태에서 복구 시도까지의 대기 시간 (기본: 60s)
+- **success_threshold**: Half-Open에서 Closed로 전환하기 위한 연속 성공 횟수 (기본: 2회)
+
+**Circuit Breaker 상태 전환**:
+
+```
+[Closed]          # 정상 (모든 요청 통과)
+  ↓ (5회 연속 실패)
+[Open]            # 차단 (모든 요청 즉시 실패)
+  ↓ (60초 경과)
+[Half-Open]       # 복구 테스트 (1회만 시도)
+  ↓ (성공/실패)
+[Closed] 또는 [Open]
+```
+
+**설정 예시**:
+
+```json
+{
+  "nodes": [
+    {
+      "node_id": "external_api_call",
+      "type": "http",
+      "endpoint": "https://api.external.com/data",
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_seconds": 60,
+        "success_threshold": 2
+      }
+    }
+  ]
+}
+```
+
+---
+
 ## 28. Troubleshooting Workflows
 
 ### 문제 1: "Expected array but got null"
