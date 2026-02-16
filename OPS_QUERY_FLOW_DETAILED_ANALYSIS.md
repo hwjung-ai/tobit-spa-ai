@@ -82,61 +82,89 @@ Claude LLM이 Tool Description 분석하여 도구 선택
 Plan 생성 (어떤 도구를 어떤 순서로 실행할 것인가?)
 ```
 
-#### **🎯 Tool 오케스트레이션 원칙: Description 기반**
+#### **🎯 Tool 오케스트레이션 원칙: Keyword 기반 (소스 코드 확인)**
 
-OPS는 **키워드 매칭이 아니라 Tool의 Description을 읽고 판단**합니다:
+⚠️ **중요**: OPS는 **Tool의 Description을 읽지 않고, 하드코딩된 키워드로 모드를 선택**합니다.
 
-```
-LLM의 의사결정 프로세스:
+**실제 소스 코드** (라인 참조):
 
-1️⃣ 사용자 질의 수신
-   질의: "MES-06의 최근 30일 이력 조회"
+```python
+# 라인 760-777: 키워드 정의 (하드코딩)
+METRIC_KEYWORDS = {"온도", "temp", "temperature", "cpu", "사용률", "추이", "memory", ...}
+HIST_KEYWORDS = {"정비", "유지보수", "작업", "변경", "이력", "최근 변경", "최근"}
+GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구성요소", "관계"}
+DOCUMENT_KEYWORDS = {"가이드", "문서", "매뉴얼", "설명", "참조", "guide", "documentation", ...}
 
-2️⃣ 활용 가능한 Tools 로드 (Tool Registry)
-   ├─ work_history_query
-   │  └─ Description: "Query work history records for a CI with optional time range filtering"
-   ├─ maintenance_history_list
-   │  └─ Description: "List maintenance records with optional filtering and pagination"
-   ├─ history_combined_union
-   │  └─ Description: "Fetch combined work and maintenance history"
-   └─ ... (다른 도구들)
+# 라인 1323-1336: 키워드 매칭으로 모드 선택
+def _determine_all_executors(question: str) -> list[str]:
+    text = question.lower()
+    selected: list[str] = []
 
-3️⃣ Tool Description 분석
-   "work_history_query"의 description:
-   ✅ "Query work history records" → "이력 조회" 의미
-   ✅ "for a CI" → MES-06 (CI) 매칭
-   ✅ "optional time range filtering" → 30일 시간 범위 가능
-   → 이 도구가 최적!
+    if any(keyword in text for keyword in METRIC_KEYWORDS):
+        selected.append("metric")
+    if any(keyword in text for keyword in HIST_KEYWORDS):
+        selected.append("hist")
+    if any(keyword in text for keyword in GRAPH_KEYWORDS):
+        selected.append("graph")
+    if any(keyword in text for keyword in DOCUMENT_KEYWORDS):
+        selected.append("document")
 
-4️⃣ 최선의 Tool 선택
-   선택된 도구: work_history_query
+    if not selected:
+        selected = ["hist", "metric", "config"]  # 기본값
 
-5️⃣ 파라미터 결정 (Description과 질의 기반)
-   {
-     "ci_code": "MES-06",
-     "start_time": "2026-01-17",
-     "end_time": "2026-02-16"
-   }
+    return selected
 ```
 
-**키워드 매칭과의 차이점**:
+**실제 동작**:
 
-| 접근법 | 방식 | 문제점 | OPS 방식 |
-|--------|------|--------|---------|
-| **키워드 기반** | "이력" "history" 찾기 | 모호함, 우선순위 불명확 | ❌ 사용 안 함 |
-| **Description 기반** | Tool의 설명 읽고 판단 | 정확함, 의미론적 이해 | ✅ OPS 사용 |
+```
+1️⃣ 사용자 질의
+   "MES-06의 최근 30일 이력"
 
-**실제 Tool Registry (25개 Tools)**:
+2️⃣ 키워드 매칭 (라인 1323-1336)
+   question_lower = "mes-06의 최근 30일 이력"
 
-| Tool 이름 | Description | 사용 경우 |
-|-----------|-------------|----------|
-| work_history_query | Query work history records for a CI | "이력 조회" |
-| maintenance_history_list | List maintenance records | "유지보수 점검" |
-| ci_detail_lookup | Fetch CI configuration details | "구성 정보" |
-| metric_series | Fetch time series metric data | "성능 추이" |
-| ci_graph_query | Query CI relationships for graph | "관계도" |
-| production_status | 생산 현황 조회 | "생산 상태" |
-| worker_schedule | 근무자 일정 조회 | "일정 확인" |
+   Tool Registry는 조회하지 않음! ❌
+   Tool의 description은 읽지 않음! ❌
+
+   하드코딩된 키워드만 확인:
+   if "최근" in question_lower:  ✅ HIST_KEYWORDS에 "최근" 있음
+       selected.append("hist")
+
+3️⃣ 모드 선택 완료
+   선택된 모드: ["hist"]
+   → _run_history() 호출
+   → execute_universal(question, "history", tenant_id)
+```
+
+**2가지 실행 경로**:
+
+| 경로 | 위치 | 방식 | 사용 조건 |
+|------|------|------|----------|
+| **Orchestration** | `_create_all_plan()` 라인 1200-1280 | 키워드 기반 조건부 활성화 | 기본 |
+| **Rule-based Fallback** | `_determine_all_executors()` 라인 1323-1336 | 키워드 매칭 + 순차 실행 | 실패 시 |
+
+**Orchestration Path 예시** (라인 1200-1280):
+```python
+def _create_all_plan(question: str) -> Any:
+    question_lower = question.lower()
+
+    # 키워드 기반 조건부 활성화
+    if any(kw in question_lower for kw in ["최근", "이력", "정보", "변경", "작업"]):
+        history = HistorySpec(enabled=True, ...)  # history 모드 활성화
+
+    if any(kw in question_lower for kw in ["성능", "cpu", "memory", "사용률"]):
+        metric = MetricSpec(...)  # metric 모드 활성화
+
+    if any(kw in question_lower for kw in ["연결", "의존", "영향", "관계"]):
+        graph = GraphSpec(...)  # graph 모드 활성화
+```
+
+**결론**:
+- ✅ **Tool Registry의 description은 사용되지 않음**
+- ✅ **모드 선택은 하드코딩된 KEYWORDS 기반**
+- ⚠️ **Tool 추가 시 코드에 키워드 정의 필요**
+- ⚠️ **유지보수: 키워드 업데이트 = 코드 수정**
 
 ---
 
