@@ -774,8 +774,9 @@ METRIC_KEYWORDS = {
 }
 HIST_KEYWORDS = {"정비", "유지보수", "작업", "변경", "이력", "최근 변경", "최근"}
 GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구성요소", "관계"}
+DOCUMENT_KEYWORDS = {"가이드", "문서", "매뉴얼", "설명", "참조", "guide", "documentation", "manual", "howto"}
 
-ALL_EXECUTOR_ORDER = ("metric", "hist", "graph", "config")
+ALL_EXECUTOR_ORDER = ("metric", "hist", "graph", "document", "config")
 
 _FALLBACK_ERRORS: dict[str, str] = {
     "query_load_failed": "Query asset missing",
@@ -1062,6 +1063,14 @@ def _run_metric(
     return result.blocks, result.used_tools
 
 
+def _run_document(
+    question: str, settings: Any
+) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
+    tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "document", tenant_id)
+    return result.blocks, result.used_tools
+
+
 def _run_all(
     question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str], str | None]:
@@ -1320,6 +1329,8 @@ def _determine_all_executors(question: str) -> list[str]:
         selected.append("hist")
     if any(keyword in text for keyword in GRAPH_KEYWORDS):
         selected.append("graph")
+    if any(keyword in text for keyword in DOCUMENT_KEYWORDS):
+        selected.append("document")
     if not selected:
         selected = ["hist", "metric", "config"]
     return selected
@@ -1333,6 +1344,7 @@ def _resolve_executor(
         "hist": _run_history,
         "graph": _run_graph,
         "config": _run_config,
+        "document": _run_document,
     }
     return executors[name]
 
