@@ -82,89 +82,120 @@ Claude LLM이 Tool Description 분석하여 도구 선택
 Plan 생성 (어떤 도구를 어떤 순서로 실행할 것인가?)
 ```
 
-#### **🎯 Tool 오케스트레이션 원칙: Keyword 기반 (소스 코드 확인)**
+#### **🎯 Tool 오케스트레이션 원칙: LLM 기반 Dynamic Tool Selection**
 
-⚠️ **중요**: OPS는 **Tool의 Description을 읽지 않고, 하드코딩된 키워드로 모드를 선택**합니다.
+✅ **핵심**: OPS는 **Tool Registry의 description을 읽고 LLM이 Tools을 동적으로 선택**합니다.
 
-**실제 소스 코드** (라인 참조):
+**실제 소스 코드 (3단계 증명)**:
 
+**Step 1: Tool Registry 동적 로드** (`tool_schema_converter.py:17-65`)
 ```python
-# 라인 760-777: 키워드 정의 (하드코딩)
-METRIC_KEYWORDS = {"온도", "temp", "temperature", "cpu", "사용률", "추이", "memory", ...}
-HIST_KEYWORDS = {"정비", "유지보수", "작업", "변경", "이력", "최근 변경", "최근"}
-GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구성요소", "관계"}
-DOCUMENT_KEYWORDS = {"가이드", "문서", "매뉴얼", "설명", "참조", "guide", "documentation", ...}
+def convert_tools_to_function_calling() -> List[Dict[str, Any]]:
+    """Convert all available tools from ToolRegistry to function calling format."""
+    tools = []
+    registry = get_tool_registry()
 
-# 라인 1323-1336: 키워드 매칭으로 모드 선택
-def _determine_all_executors(question: str) -> list[str]:
-    text = question.lower()
-    selected: list[str] = []
-
-    if any(keyword in text for keyword in METRIC_KEYWORDS):
-        selected.append("metric")
-    if any(keyword in text for keyword in HIST_KEYWORDS):
-        selected.append("hist")
-    if any(keyword in text for keyword in GRAPH_KEYWORDS):
-        selected.append("graph")
-    if any(keyword in text for keyword in DOCUMENT_KEYWORDS):
-        selected.append("document")
-
-    if not selected:
-        selected = ["hist", "metric", "config"]  # 기본값
-
-    return selected
+    for name, tool in registry.get_available_tools().items():  # ✅ 동적 로드
+        tool_function_spec = {
+            "type": "function",
+            "function": {
+                "name": name,
+                "description": tool.description or f"Execute {name} tool",  # ✅ description 사용
+                "parameters": tool.input_schema or {...},  # ✅ input_schema 사용
+            },
+        }
+        tools.append(tool_function_spec)
 ```
 
-**실제 동작**:
+**Step 2: LLM에 Tools 전달** (`tool_schema_converter.py:160-194`)
+```python
+def build_tools_for_llm_prompt(include_planner: bool = True):
+    """Build complete tools list and a descriptive text for LLM prompt."""
+    available_tools = convert_tools_to_function_calling()  # ✅ Tool Registry 기반
+    all_tools.extend(available_tools)
+
+    # Tool 목록 (25개 Tools 모두):
+    # - work_history_query: "Query work history records for a CI..."
+    # - maintenance_history_list: "List maintenance records..."
+    # - ci_detail_lookup: "Fetch CI configuration..."
+    # - metric_series: "Fetch time series metric..."
+    # - ci_graph_query: "Query CI relationships..."
+    # ... (모두 description 포함)
+```
+
+**Step 3: LLM Function Calling** (`planner_llm.py:280-340`)
+```python
+def _call_output_parser_llm(...):
+    """Call LLM for query planning with native function calling support."""
+
+    # ✅ Tools 빌드 (Tool Registry 기반, 동적)
+    tools, _ = build_tools_for_llm_prompt(include_planner=True)  # 라인 311
+
+    # ✅ LLM에 ALL Tools 전달 (Function Calling)
+    response = llm.create_response(
+        model=OUTPUT_PARSER_MODEL,
+        input=messages,
+        tools=tools if tools else None,  # ✅ Function calling tools 전달
+        temperature=0,
+    )  # 라인 318-323
+
+    # ✅ LLM의 tool_use 응답 추출
+    tool_call = extract_tool_call_from_response(response)  # 라인 326
+    if tool_call and tool_call.get("name") == "create_execution_plan":
+        payload = tool_call.get("input", {})  # ✅ LLM이 선택한 plan
+```
+
+**실제 동작 흐름**:
 
 ```
 1️⃣ 사용자 질의
    "MES-06의 최근 30일 이력"
 
-2️⃣ 키워드 매칭 (라인 1323-1336)
-   question_lower = "mes-06의 최근 30일 이력"
+2️⃣ Tool Registry 동적 로드 (convert_tools_to_function_calling)
+   registry.get_available_tools()에서:
+   ├─ work_history_query: "Query work history records for a CI with time range..."
+   ├─ maintenance_history_list: "List maintenance records..."
+   ├─ ci_detail_lookup: "Fetch CI configuration..."
+   ├─ metric_series: "Fetch time series metric..."
+   ├─ ci_graph_query: "Query CI relationships..."
+   └─ ... (25개 모두)
 
-   Tool Registry는 조회하지 않음! ❌
-   Tool의 description은 읽지 않음! ❌
+3️⃣ LLM에 ALL Tools 전달 (Function Calling)
+   llm.create_response(
+       tools=[
+           {name: "work_history_query", description: "Query work history records..."},
+           {name: "maintenance_history_list", description: "List maintenance..."},
+           ...
+       ]
+   )
 
-   하드코딩된 키워드만 확인:
-   if "최근" in question_lower:  ✅ HIST_KEYWORDS에 "최근" 있음
-       selected.append("hist")
+4️⃣ Claude LLM이 Tools 분석 (description 기반)
+   - "Query work history records for a CI" + "time range filtering"
+   - → "MES-06의 이력" + "30일" 의미와 일치 ✅
+   - → work_history_query 선택
 
-3️⃣ 모드 선택 완료
-   선택된 모드: ["hist"]
-   → _run_history() 호출
-   → execute_universal(question, "history", tenant_id)
-```
+5️⃣ LLM 응답: tool_use("create_execution_plan")
+   {
+     "tools": ["work_history_query"],
+     "params": {
+       "ci_code": "MES-06",
+       "start_time": "2026-01-17",
+       "end_time": "2026-02-16"
+     }
+   }
 
-**2가지 실행 경로**:
+6️⃣ Orchestrator가 plan 실행
+   execute_tool("work_history_query", params)
 
-| 경로 | 위치 | 방식 | 사용 조건 |
-|------|------|------|----------|
-| **Orchestration** | `_create_all_plan()` 라인 1200-1280 | 키워드 기반 조건부 활성화 | 기본 |
-| **Rule-based Fallback** | `_determine_all_executors()` 라인 1323-1336 | 키워드 매칭 + 순차 실행 | 실패 시 |
-
-**Orchestration Path 예시** (라인 1200-1280):
-```python
-def _create_all_plan(question: str) -> Any:
-    question_lower = question.lower()
-
-    # 키워드 기반 조건부 활성화
-    if any(kw in question_lower for kw in ["최근", "이력", "정보", "변경", "작업"]):
-        history = HistorySpec(enabled=True, ...)  # history 모드 활성화
-
-    if any(kw in question_lower for kw in ["성능", "cpu", "memory", "사용률"]):
-        metric = MetricSpec(...)  # metric 모드 활성화
-
-    if any(kw in question_lower for kw in ["연결", "의존", "영향", "관계"]):
-        graph = GraphSpec(...)  # graph 모드 활성화
+7️⃣ 결과 반환
 ```
 
 **결론**:
-- ✅ **Tool Registry의 description은 사용되지 않음**
-- ✅ **모드 선택은 하드코딩된 KEYWORDS 기반**
-- ⚠️ **Tool 추가 시 코드에 키워드 정의 필요**
-- ⚠️ **유지보수: 키워드 업데이트 = 코드 수정**
+- ✅ **Tool Registry에서 동적으로 모든 Tools 로드**
+- ✅ **Tool의 description을 LLM에 전달**
+- ✅ **LLM이 description 기반으로 Tools 선택**
+- ✅ **Tool 추가 = Asset Registry 추가 (코드 변경 불필요)**
+- ✅ **완벽한 범용 오케스트레이션 (Generic Tool-based Orchestration)**
 
 ---
 
