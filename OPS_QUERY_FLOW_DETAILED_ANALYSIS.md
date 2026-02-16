@@ -77,10 +77,68 @@ RESOLVER Assets 로드
     ↓
 [PROMPT 호출 #1] ops_all_router 또는 특정 모드 라우터
     ↓
-Claude LLM이 실행할 도구 선택
+Claude LLM이 Tool Description 분석하여 도구 선택
     ↓
 Plan 생성 (어떤 도구를 어떤 순서로 실행할 것인가?)
 ```
+
+#### **🎯 Tool 오케스트레이션 원칙: Description 기반**
+
+OPS는 **키워드 매칭이 아니라 Tool의 Description을 읽고 판단**합니다:
+
+```
+LLM의 의사결정 프로세스:
+
+1️⃣ 사용자 질의 수신
+   질의: "MES-06의 최근 30일 이력 조회"
+
+2️⃣ 활용 가능한 Tools 로드 (Tool Registry)
+   ├─ work_history_query
+   │  └─ Description: "Query work history records for a CI with optional time range filtering"
+   ├─ maintenance_history_list
+   │  └─ Description: "List maintenance records with optional filtering and pagination"
+   ├─ history_combined_union
+   │  └─ Description: "Fetch combined work and maintenance history"
+   └─ ... (다른 도구들)
+
+3️⃣ Tool Description 분석
+   "work_history_query"의 description:
+   ✅ "Query work history records" → "이력 조회" 의미
+   ✅ "for a CI" → MES-06 (CI) 매칭
+   ✅ "optional time range filtering" → 30일 시간 범위 가능
+   → 이 도구가 최적!
+
+4️⃣ 최선의 Tool 선택
+   선택된 도구: work_history_query
+
+5️⃣ 파라미터 결정 (Description과 질의 기반)
+   {
+     "ci_code": "MES-06",
+     "start_time": "2026-01-17",
+     "end_time": "2026-02-16"
+   }
+```
+
+**키워드 매칭과의 차이점**:
+
+| 접근법 | 방식 | 문제점 | OPS 방식 |
+|--------|------|--------|---------|
+| **키워드 기반** | "이력" "history" 찾기 | 모호함, 우선순위 불명확 | ❌ 사용 안 함 |
+| **Description 기반** | Tool의 설명 읽고 판단 | 정확함, 의미론적 이해 | ✅ OPS 사용 |
+
+**실제 Tool Registry (25개 Tools)**:
+
+| Tool 이름 | Description | 사용 경우 |
+|-----------|-------------|----------|
+| work_history_query | Query work history records for a CI | "이력 조회" |
+| maintenance_history_list | List maintenance records | "유지보수 점검" |
+| ci_detail_lookup | Fetch CI configuration details | "구성 정보" |
+| metric_series | Fetch time series metric data | "성능 추이" |
+| ci_graph_query | Query CI relationships for graph | "관계도" |
+| production_status | 생산 현황 조회 | "생산 상태" |
+| worker_schedule | 근무자 일정 조회 | "일정 확인" |
+
+---
 
 **단계별 상세 분석**:
 
@@ -216,22 +274,39 @@ plan = Plan(
 
 #### **2-2. LLM 프롬프트 상세**
 
-**Prompt Asset: ops_history_router**
-- **ID**: 47991817...
-- **Status**: Published ✅
-- **역할**: 이력 모드 분석
+**Prompt Asset: ops_history_router** 또는 **ci_universal_planner**
 
-```
-[System Prompt Content - 가상]
-당신은 IT 운영 전문가입니다.
-사용자 질의를 분석하여 다음을 결정하세요:
-1. 쿼리 유형: work_history? event_log? maintenance_history?
-2. 필터링 조건: CI, 시간 범위
-3. 출력 형식: table? timeline?
+| 속성 | 값 |
+|------|-----|
+| **이름** | ops_history_router (이력 모드) 또는 ci_universal_planner (범용) |
+| **Status** | Published ✅ |
+| **역할** | 사용자 질의 분석 + 도구 선택 |
+| **설명** | "Universal planner for 100 test questions covering CI, Graph, Metric, and History tools" |
 
-사용자 질의: "{question}"
-답변: JSON 형식의 plan
-```
+**Prompt의 역할**:
+프롬프트는 다음 정보를 기반으로 **어떤 Tool을 선택**할지 결정합니다:
+
+1. **Tool의 Description 분석** (Prompt는 Tool의 description 읽음)
+   - `work_history_query`: "Query work history records for a CI with optional time range filtering"
+   - `maintenance_history_list`: "List maintenance records with optional filtering and pagination"
+   - `history_combined_union`: "Fetch combined work and maintenance history"
+
+2. **사용자 질의 분석**
+   - 질의: "MES-06의 최근 30일 이력"
+   - Tool Description과 매칭 → `work_history_query` 선택
+
+3. **실행 계획 수립**
+   ```json
+   {
+     "tool": "work_history_query",
+     "params": {
+       "ci_code": "MES-06",
+       "start_time": "2026-01-17",
+       "end_time": "2026-02-16"
+     },
+     "reasoning": "Description '업무 이력 조회'가 사용자 질의와 일치"
+   }
+   ```
 
 ---
 
