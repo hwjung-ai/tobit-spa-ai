@@ -15,6 +15,10 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const isViewerPage =
+    pathname === "/pdf-viewer" ||
+    Boolean(pathname?.startsWith("/documents/") && pathname?.endsWith("/viewer"));
+  const hideChrome = isLoginPage || isViewerPage;
 
   return (
     <div className="min-h-screen">
@@ -25,7 +29,7 @@ export default function AppShell({ children }: AppShellProps) {
         Skip to main content
       </a>
 
-      {!isLoginPage && (
+      {!hideChrome && (
         <header className="flex items-center justify-between border-b border-variant bg-surface-base px-6 py-4 dark:border-variant dark:bg-surface-base">
           <div className="flex items-end gap-5">
             <div>
@@ -50,7 +54,7 @@ export default function AppShell({ children }: AppShellProps) {
       <main
         id="main-content"
         className={
-          isLoginPage
+          hideChrome
             ? "min-h-screen w-full bg-surface-base text-foreground dark:bg-surface-base dark:text-slate-50"
             : "min-h-[calc(100vh-96px)] w-full bg-surface-base px-4 pb-16 pt-4 text-foreground md:px-6 md:pb-4 dark:bg-surface-base dark:text-slate-50"
         }
@@ -58,7 +62,7 @@ export default function AppShell({ children }: AppShellProps) {
         {children}
       </main>
 
-      {!isLoginPage && <MobileBottomNav />}
+      {!hideChrome && <MobileBottomNav />}
     </div>
   );
 }

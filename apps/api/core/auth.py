@@ -19,6 +19,30 @@ from core.security import decode_token
 security = HTTPBearer(auto_error=False)
 
 
+def _pick_debug_user(candidates: list[TbUser], default_tenant_id: str) -> TbUser | None:
+    """Pick the best debug user candidate in non-auth mode."""
+    if not candidates:
+        return None
+
+    for username in ("admin@tobit.local", "admin"):
+        for user in candidates:
+            if user.username == username and user.is_active:
+                user.tenant_id = user.tenant_id or default_tenant_id
+                return user
+
+    for user in candidates:
+        if user.role == UserRole.ADMIN and user.is_active:
+            user.tenant_id = user.tenant_id or default_tenant_id
+            return user
+
+    for user in candidates:
+        if user.is_active:
+            user.tenant_id = user.tenant_id or default_tenant_id
+            return user
+
+    return None
+
+
 def _unwrap_api_definition(result) -> ApiDefinition | None:
     if isinstance(result, ApiDefinition):
         return result
@@ -192,11 +216,11 @@ def get_current_user(
 
     # If authentication is disabled, return a default debug user
     if not settings.enable_auth:
-        debug_user = session.exec(
-            select(TbUser).where(TbUser.username == "admin@tobit.local")
-        ).first()
+        debug_candidates = session.exec(
+            select(TbUser).where(TbUser.is_active == True)  # noqa: E712
+        ).all()
+        debug_user = _pick_debug_user(debug_candidates, settings.default_tenant_id)
         if debug_user:
-            debug_user.tenant_id = settings.default_tenant_id
             return debug_user
         # If no admin user exists, create a minimal user object for dev mode
         # This is a fallback for development without authentication setup

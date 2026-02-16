@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shared";
+import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 
 /**
  * Document category type
@@ -114,6 +115,12 @@ export default function DocsQueryPage() {
   const [references, setReferences] = useState<Reference[]>([]);
   const [progress, setProgress] = useState<ProgressEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfFilename, setPdfFilename] = useState("document.pdf");
+  const [pdfInitialPage, setPdfInitialPage] = useState(1);
+  const [pdfHighlightSnippet, setPdfHighlightSnippet] = useState<string | undefined>(undefined);
+  const [pdfViewerHref, setPdfViewerHref] = useState<string | undefined>(undefined);
 
   // Toast notifications
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -442,7 +449,7 @@ export default function DocsQueryPage() {
       document_ids: selectedDocIds.length > 0 ? selectedDocIds : undefined,
       categories,
       top_k: 10,
-      min_relevance: 0.3,
+      min_relevance: 0.05,
     };
 
     console.log("[streamQuery] Request body:", requestBody);
@@ -594,16 +601,38 @@ export default function DocsQueryPage() {
    */
   const openReference = async (ref: Reference) => {
     try {
-      // Open PDF viewer in new window with page and snippet parameters
-      const params = new URLSearchParams();
-      params.set("documentId", ref.document_id);
-      params.set("page", String(ref.page || 1));
-      if (ref.snippet) {
-        params.set("highlight", ref.snippet);
+      let targetPage = ref.page ?? 1;
+
+      if (!ref.page && ref.chunk_id) {
+        const chunkResp = await fetch(
+          `/api/documents/${ref.document_id}/chunks/${ref.chunk_id}`,
+          { headers: getAuthHeaders() },
+        );
+        if (chunkResp.ok) {
+          const chunkPayload = await chunkResp.json();
+          const chunk = chunkPayload?.data?.chunk as
+            | { page?: number | null; page_number?: number | null }
+            | undefined;
+          targetPage = chunk?.page ?? chunk?.page_number ?? targetPage;
+        }
       }
 
-      // Open in new window for better viewing experience
-      window.open(`/pdf-viewer?${params.toString()}`, '_blank', 'width=1200,height=800');
+      const response = await fetch(`/api/documents/${ref.document_id}/viewer`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`PDF 로드 실패 (${response.status})`);
+      }
+      const blob = await response.blob();
+      const params = new URLSearchParams();
+      params.set("chunkId", ref.chunk_id);
+      params.set("page", String(targetPage || 1));
+      setPdfBlob(blob);
+      setPdfFilename(ref.document_title || "document.pdf");
+      setPdfInitialPage(targetPage || 1);
+      setPdfHighlightSnippet(ref.snippet || undefined);
+      setPdfViewerHref(`/documents/${ref.document_id}/viewer?${params.toString()}`);
+      setPdfViewerOpen(true);
     } catch (err) {
       console.error("Failed to open PDF:", err);
       showToast("error", "PDF를 열 수 없습니다.");
@@ -619,6 +648,27 @@ export default function DocsQueryPage() {
     setReferences(entry.references);
     setShowHistory(false);
     showToast("info", "이전 질의가 로드되었습니다.");
+  };
+
+  const deleteHistoryEntry = async (historyId: string) => {
+    try {
+      const response = await fetch(`/api/documents/query-history/${historyId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (response.status === 401) {
+        handleAuthError();
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      setQueryHistory((prev) => prev.filter((entry) => entry.id !== historyId));
+      showToast("success", "이력이 삭제되었습니다.");
+    } catch (err) {
+      console.error("Failed to delete history:", err);
+      showToast("error", "이력 삭제에 실패했습니다.");
+    }
   };
 
   /**
@@ -922,7 +972,7 @@ export default function DocsQueryPage() {
             ) : (
               <div className="space-y-2">
                 {queryHistory.map((entry) => (
-                  <button
+                  <div
                     key={entry.id}
                     onClick={() => {
                       setQuery(entry.query);
@@ -930,7 +980,7 @@ export default function DocsQueryPage() {
                       setReferences(entry.references);
                       setLeftPanelTab("library");
                     }}
-                    className="w-full text-left rounded-lg border border-border bg-surface-elevated p-2 transition hover:border-sky-500/50 hover:bg-sky-500/5"
+                    className="group relative w-full cursor-pointer rounded-lg border border-border bg-surface-elevated p-2 text-left transition hover:border-sky-500/50 hover:bg-sky-500/5"
                   >
                     <p className="truncate text-sm font-medium text-foreground">
                       {entry.query}
@@ -941,7 +991,17 @@ export default function DocsQueryPage() {
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {entry.answer}
                     </p>
-                  </button>
+                    <button
+                      className="absolute right-2 bottom-2 flex h-5 w-5 items-center justify-center rounded-full border border-rose-400 text-tiny text-rose-600 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-rose-50 dark:border-rose-500 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void deleteHistoryEntry(entry.id);
+                      }}
+                      aria-label="Delete history"
+                    >
+                      X
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -1048,7 +1108,7 @@ export default function DocsQueryPage() {
               <div className="border-b border-border p-3">
                 <h3 className="font-medium text-foreground">📎 근거 문서</h3>
                 <p className="text-xs text-muted-foreground">
-                  {references.length}개 참조 (클릭하면 새 탭에서 열기)
+                  {references.length}개 참조 (클릭하면 팝업으로 열기)
                 </p>
               </div>
               <div className="flex-1 overflow-y-auto p-2">
@@ -1062,7 +1122,7 @@ export default function DocsQueryPage() {
                       {ref.document_title}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {ref.page ? `${ref.page}페이지` : "페이지 미확인"} •
+                      {`${ref.page ?? 1}페이지`} •
                       점수: {ref.score.toFixed(2)}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
@@ -1076,6 +1136,21 @@ export default function DocsQueryPage() {
         </div>
       </div>
       </div>
+
+      <PdfViewerModal
+        isOpen={pdfViewerOpen}
+        onClose={() => {
+          setPdfViewerOpen(false);
+          setPdfBlob(null);
+          setPdfHighlightSnippet(undefined);
+          setPdfViewerHref(undefined);
+        }}
+        pdfBlob={pdfBlob}
+        filename={pdfFilename}
+        initialPage={pdfInitialPage}
+        highlightSnippet={pdfHighlightSnippet}
+        viewerHref={pdfViewerHref}
+      />
 
       {/* History Drawer */}
       {showHistory && (

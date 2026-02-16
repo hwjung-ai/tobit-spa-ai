@@ -82,8 +82,13 @@ function DocumentViewerContent() {
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [references, setReferences] = useState<Reference[]>([]);
 
-  // Derive currentPage from searchParams and chunkInfo
-  const derivedCurrentPage = Number(searchParams?.get("page") ?? chunkInfo?.page ?? 1) || 1;
+  // Derive currentPage from chunk first, then URL.
+  const derivedCurrentPage = Number(
+    chunkInfo?.page ??
+      chunkInfo?.page_number ??
+      searchParams?.get("page") ??
+      1,
+  ) || 1;
 
   // Parse references from URL parameter
   useEffect(() => {
@@ -384,6 +389,13 @@ function DocumentViewerContent() {
     }
   };
 
+  const onRenderTextLayerError = useCallback((error: Error) => {
+    if (error?.name === "AbortException") {
+      return;
+    }
+    console.warn("PDF text layer render error:", error);
+  }, []);
+
   const highlightInfo = useMemo(() => {
     if (!chunkInfo) {
       return null;
@@ -497,7 +509,11 @@ function DocumentViewerContent() {
             )}
             {pdfBlobUrl && (
               <ReactPdfDocument file={pdfBlobUrl} onLoadSuccess={handleDocumentLoadSuccess}>
-                <ReactPdfPage pageNumber={currentPage} width={pageWidth} />
+                <ReactPdfPage
+                  pageNumber={currentPage}
+                  width={pageWidth}
+                  onRenderTextLayerError={onRenderTextLayerError}
+                />
               </ReactPdfDocument>
             )}
           </div>

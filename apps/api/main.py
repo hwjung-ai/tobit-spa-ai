@@ -9,7 +9,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from api.routes.chat import router as chat_router
-from api.routes.documents import router as document_router
 from api.routes.health import router as health_router
 from api.routes.hello import router as hello_router
 from api.routes.history import router as history_router
@@ -95,7 +94,6 @@ app.include_router(simulation_router, dependencies=auth_required)
 app.include_router(workers_router, dependencies=auth_required, prefix="/api")
 app.include_router(chat_router, dependencies=auth_required)
 app.include_router(thread_router, dependencies=auth_required)
-app.include_router(document_router, dependencies=auth_required)
 app.include_router(document_processor_router, dependencies=auth_required)
 app.include_router(ops_router, dependencies=auth_required)
 app.include_router(asset_registry_router, dependencies=auth_required)

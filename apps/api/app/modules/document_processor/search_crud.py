@@ -67,7 +67,7 @@ def search_chunks_by_text(
     # Try tsvector search first
     ts_sql = f"""
     SELECT dc.id, dc.document_id, d.filename, dc.text,
-           dc.page_number, dc.chunk_type,
+           COALESCE(dc.page_number, dc.page) as page_number, dc.chunk_type,
            ts_rank(to_tsvector('simple', dc.text),
                    plainto_tsquery('simple', :query)) as score
     FROM document_chunks dc
@@ -90,7 +90,7 @@ def search_chunks_by_text(
                 ilike_where = base_where + [f"({ilike_conditions})"]
                 ilike_sql = f"""
                 SELECT dc.id, dc.document_id, d.filename, dc.text,
-                       dc.page_number, dc.chunk_type,
+                       COALESCE(dc.page_number, dc.page) as page_number, dc.chunk_type,
                        0.5 as score
                 FROM document_chunks dc
                 JOIN documents d ON d.id = dc.document_id

@@ -309,6 +309,13 @@ export function PdfViewerModal({
     setPdfLoading(false);
   }, []);
 
+  const onRenderTextLayerError = useCallback((error: Error) => {
+    if (error?.name === "AbortException") {
+      return;
+    }
+    console.warn("PDF text layer render error:", error);
+  }, []);
+
   const toggleFullscreen = useCallback(() => {
     if (isFullscreen) {
       setIsFullscreen(false);
@@ -665,6 +672,7 @@ export function PdfViewerModal({
                 <ReactPdfPage
                   pageNumber={currentPage}
                   width={pageWidth}
+                  onRenderTextLayerError={onRenderTextLayerError}
                   error={<div className="text-rose-400">페이지 로드 실패</div>}
                 />
               </ReactPdfDocument>

@@ -1,7 +1,7 @@
 """Add document category and tags fields
 
 Revision ID: 0061_add_document_category_and_tags
-Revises: 0060_add_regression_schedule_tables
+Revises: 0060_add_regression_schedule
 Create Date: 2026-02-15 20:35:00.000000
 
 """

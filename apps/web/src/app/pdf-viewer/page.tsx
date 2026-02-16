@@ -133,13 +133,20 @@ export default function PdfViewerPage() {
     }
   };
 
+  const onRenderTextLayerError = useCallback((error: Error) => {
+    if (error?.name === "AbortException") {
+      return;
+    }
+    console.warn("PDF text layer render error:", error);
+  }, []);
+
   return (
     <div className="min-h-screen bg-surface-base flex flex-col">
       {/* Header */}
-      <div className="border-b border-border bg-surface-elevated p-4 flex items-center justify-between">
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold text-foreground">문서 보기</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 border-b border-border bg-surface-elevated p-3 md:p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-semibold text-foreground whitespace-nowrap">문서 보기</h1>
+          <p className="truncate text-xs text-muted-foreground md:text-sm">
             {loading && "로딩 중..."}
             {error && `오류: ${error}`}
             {!loading && !error && `${currentPage} / ${numPages} 페이지`}
@@ -147,18 +154,18 @@ export default function PdfViewerPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
           {highlightText && (
-            <div className="px-3 py-1 bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded text-sm">
+            <div className="max-w-full truncate rounded bg-yellow-500/20 px-3 py-1 text-xs text-yellow-700 dark:text-yellow-400 md:max-w-[36rem] md:text-sm">
               하이라이트: "{highlightText}"
             </div>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage <= 1 || loading}
-              className="px-3 py-1 rounded bg-surface-base hover:bg-surface-elevated disabled:opacity-50 text-foreground"
+              className="whitespace-nowrap rounded bg-surface-base px-3 py-1 text-foreground hover:bg-surface-elevated disabled:opacity-50"
             >
               ← 이전
             </button>
@@ -172,14 +179,14 @@ export default function PdfViewerPage() {
                 const page = parseInt(e.target.value) || 1;
                 setCurrentPage(Math.max(1, Math.min(page, numPages)));
               }}
-              className="w-16 px-2 py-1 rounded border border-border bg-surface-base text-foreground text-center"
+              className="w-16 rounded border border-border bg-surface-base px-2 py-1 text-center text-foreground"
               disabled={loading}
             />
 
             <button
               onClick={() => setCurrentPage(Math.min(numPages, currentPage + 1))}
               disabled={currentPage >= numPages || loading}
-              className="px-3 py-1 rounded bg-surface-base hover:bg-surface-elevated disabled:opacity-50 text-foreground"
+              className="whitespace-nowrap rounded bg-surface-base px-3 py-1 text-foreground hover:bg-surface-elevated disabled:opacity-50"
             >
               다음 →
             </button>
@@ -187,7 +194,7 @@ export default function PdfViewerPage() {
 
           <button
             onClick={() => window.close()}
-            className="px-3 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 dark:text-rose-400"
+            className="shrink-0 whitespace-nowrap rounded bg-rose-500/20 px-3 py-1 text-rose-600 hover:bg-rose-500/30 dark:text-rose-400"
           >
             닫기
           </button>
@@ -227,6 +234,7 @@ export default function PdfViewerPage() {
               width={pageWidth}
               renderTextLayer
               renderAnnotationLayer
+              onRenderTextLayerError={onRenderTextLayerError}
             />
           </ReactPdfDocument>
         )}

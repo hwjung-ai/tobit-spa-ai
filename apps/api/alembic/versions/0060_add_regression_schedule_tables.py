@@ -1,7 +1,7 @@
 """Add regression schedule tables for persistence
 
-Revision ID: 0060
-Revises:
+Revision ID: 0060_add_regression_schedule
+Revises: 635fe7906be3
 Create Date: 2026-02-14
 
 Ensures regression schedules survive server restarts.
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0060_add_regression_schedule"
-down_revision = None  # Will be set by merge
+down_revision = "635fe7906be3"
 branch_labels = None
 depends_on = None
 

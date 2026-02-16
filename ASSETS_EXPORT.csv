@@ -1,0 +1,43 @@
+Name,Tool Type,Status,Source,Version,Has Input Schema,Has Timeout,Has Retry,Description
+[UNNAMED],database_query,draft,default_postgres,1,✓,✗,✗,Query work history (maintenance/change records) fo
+[UNNAMED],database_query,published,default_postgres,1,✓,✗,✗,Query work history (maintenance/change records) fo
+bom_lookup,database_query,published,factory_postgres,2,✓,✓,✓,"제품 BOM(부품 구성) 조회. 키워드: BOM, 부품, 구성, component, bil"
+bom_lookup,database_query,published,factory_postgres,2,✓,✓,✓,"제품 BOM(부품 구성) 조회. 키워드: BOM, 부품, 구성, component, bil"
+ci_aggregate,database_query,published,default_postgres,1,✓,✗,✗,"Aggregate CI data with COUNT, GROUP BY operations"
+ci_aggregation,database_query,published,default_postgres,1,✓,✗,✗,Aggregate CI statistics including counts by status
+ci_detail_lookup,database_query,published,default_postgres,1,✓,✗,✗,Fetch CI configuration details including extended 
+ci_graph,graph_query,published,default_neo4j,1,✓,✗,✗,"Query CI relationship graphs (dependency, composit"
+ci_graph_query,database_query,published,default_postgres,1,✓,✗,✗,Query CI relationships and dependencies for graph 
+ci_list_paginated,database_query,published,default_postgres,1,✓,✗,✗,List all CIs with pagination support
+ci_lookup,database_query,published,default_postgres,1,✓,✗,✗,Search and lookup Configuration Items (CIs) using 
+ci_search,database_query,published,default_postgres,1,✓,✗,✗,"Search CIs by keyword in name, code, type, or desc"
+ci_summary_aggregate,database_query,published,default_postgres,1,✓,✗,✗,"Aggregate CI distribution by type, subtype, and st"
+document_search,http_api,published,N/A,1,✓,✗,✗,Search documents using hybrid vector + BM25 search
+document_search,http_api,draft,N/A,1,✓,✗,✗,Search documents using vector and text search
+document_search,http_api,draft,N/A,1,✓,✗,✗,Search documents using vector and text search
+energy_consumption,database_query,published,factory_postgres,2,✓,✓,✓,"에너지 소비량 조회. 키워드: 에너지, 전력, 소비, 사용, energy, power"
+energy_consumption,database_query,published,factory_postgres,2,✓,✓,✓,"에너지 소비량 조회. 키워드: 에너지, 전력, 소비, 사용, energy, power"
+equipment_search,database_query,published,factory_postgres,2,✓,✓,✓,"공장 장비 검색 도구. 키워드: 장비, 설비, equipment, machine"
+equipment_search,database_query,published,factory_postgres,2,✓,✓,✓,"공장 장비 검색 도구. 키워드: 장비, 설비, equipment, machine"
+event_aggregate,database_query,published,default_postgres,1,✓,✗,✗,"Aggregate events by event_type, severity, or time "
+event_log,database_query,published,default_postgres,1,✓,✗,✗,Query event logs for a specific CI and time range
+history,database_query,published,default_postgres,1,✓,✗,✗,Query event logs and maintenance history
+history_combined_union,database_query,published,default_postgres,1,✓,✗,✗,Fetch combined work and maintenance history
+maintenance_history,database_query,published,factory_postgres,2,✓,✓,✓,"장비 유지보수 이력 조회. 키워드: 유지보수, 점검, 정비, maintenance, his"
+maintenance_history,database_query,published,factory_postgres,2,✓,✓,✓,"장비 유지보수 이력 조회. 키워드: 유지보수, 점검, 정비, maintenance, his"
+maintenance_history_list,database_query,published,default_postgres,1,✓,✗,✗,List maintenance records with optional filtering a
+maintenance_ticket_create,database_query,published,default_postgres,1,✓,✗,✗,Create a new maintenance ticket
+mcp_add,mcp,draft,N/A,1,✓,✓,✗,Add two numbers
+mcp_echo,mcp,draft,N/A,1,✓,✓,✗,Echo back a message
+mcp_get_time,mcp,draft,N/A,1,✓,✓,✗,Get current server time
+metric,database_query,published,default_postgres,1,✓,✗,✗,"Query metric values grouped by CI, ordered by valu"
+metric_aggregate_by_ci,database_query,published,default_postgres,1,✓,✗,✗,Aggregate metrics by CI with flexible aggregation 
+metric_list,database_query,published,default_postgres,1,✓,✗,✗,List all available metrics in the system
+metric_query,database_query,published,default_postgres,1,✓,✗,✗,"Query metrics for a specific CI (CPU, memory, late"
+metric_series,database_query,published,default_postgres,1,✓,✗,✗,Fetch time series metric data for visualization
+production_status,database_query,published,factory_postgres,2,✓,✓,✓,"생산 현황 조회. 키워드: 생산, 제조, 현황, 상태, production, status"
+production_status,database_query,published,factory_postgres,2,✓,✓,✓,"생산 현황 조회. 키워드: 생산, 제조, 현황, 상태, production, status"
+work_history,database_query,published,default_postgres,1,✗,✗,✗,Query work history for CIs
+work_history_query,database_query,published,default_postgres,1,✓,✗,✗,Query work history records for a CI with optional 
+worker_schedule,database_query,published,factory_postgres,2,✓,✓,✓,"근무자 일정 조회. 키워드: 근무, 일정, 스케줄, 작업자, worker, schedule"
+worker_schedule,database_query,published,factory_postgres,2,✓,✓,✓,"근무자 일정 조회. 키워드: 근무, 일정, 스케줄, 작업자, worker, schedule"

@@ -83,7 +83,32 @@ class MultiDocumentQueryRequest(BaseModel):
     exclude_document_ids: Optional[List[str]] = None  # Documents to exclude
     tags: Optional[List[str]] = None          # Filter by tags
     top_k: int = 10
-    min_relevance: float = 0.3
+    min_relevance: float = 0.05
+
+
+def _select_relevant_chunks(
+    results: list[dict],
+    allowed_document_ids: set[str],
+    min_relevance: float,
+    top_k: int,
+) -> tuple[list[dict], bool]:
+    """Select chunks by relevance with adaptive fallback for low-scoring text queries."""
+    candidates = [r for r in results if r.get("document_id") in allowed_document_ids]
+    if not candidates:
+        return [], False
+
+    strict = [r for r in candidates if float(r.get("score", 0.0)) >= min_relevance]
+    if strict:
+        return strict[:top_k], False
+
+    # PostgreSQL ts_rank scores are often much lower than 0.3 for valid matches.
+    relaxed_threshold = min(min_relevance, 0.05)
+    relaxed = [r for r in candidates if float(r.get("score", 0.0)) >= relaxed_threshold]
+    if relaxed:
+        return relaxed[:top_k], True
+
+    # Last fallback: return top-ranked candidates from selected documents.
+    return candidates[:top_k], True
 
 
 class SearchResultResponse(BaseModel):
@@ -156,6 +181,8 @@ def _build_document_payload(document: Document, chunk_count: int = 0) -> dict:
         "deleted_at": document.deleted_at.isoformat() if document.deleted_at else None,
         "chunk_count": chunk_count,
         "format": document.format,
+        "category": document.category,
+        "tags": document.tags or [],
         "processing_progress": document.processing_progress or 0,
         "total_chunks": document.total_chunks or 0,
     }
@@ -1698,11 +1725,13 @@ async def query_all_documents_stream(
                 top_k=top_k * 3,  # Get more, then filter
             )
 
-            # Filter to only chunks from selected documents
-            filtered_results = [
-                r for r in results 
-                if r["document_id"] in doc_ids and r.get("score", 0) >= min_relevance
-            ][:top_k]
+            # Filter to selected documents with adaptive relevance fallback.
+            filtered_results, relaxed_filtering = _select_relevant_chunks(
+                results=results,
+                allowed_document_ids=set(doc_ids),
+                min_relevance=min_relevance,
+                top_k=top_k,
+            )
 
             if not filtered_results:
                 yield f"event: summary\ndata: {json.dumps({'text': '검색 결과가 없습니다.'})}\n\n"
@@ -1748,6 +1777,8 @@ async def query_all_documents_stream(
             # Send detail
             score_val = filtered_results[0].get("score", 0.0)
             detail_text = f'검색어: "{query}"\n검색된 문서: {len(documents)}개\n관련성: {score_val:.2f}'
+            if relaxed_filtering:
+                detail_text += "\n참고: 낮은 점수 구간까지 확장 검색하여 결과를 포함했습니다."
             yield f"event: detail\ndata: {json.dumps({'text': detail_text})}\n\n"
 
             # Generate answer
@@ -1896,5 +1927,3 @@ async def list_categories(
     ]
 
     return ResponseEnvelope.success(data={"categories": categories})
-
-
