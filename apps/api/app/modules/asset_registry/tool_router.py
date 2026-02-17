@@ -731,6 +731,67 @@ async def test_tool(
             )
 
 
+@router.post("/{asset_id}/unpublish", response_model=ResponseEnvelope)
+def unpublish_tool(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Unpublish a tool asset (change status from published to draft)."""
+    with get_session_context() as session:
+        asset = None
+
+        # Try UUID first
+        try:
+            asset_uuid = uuid.UUID(asset_id)
+            asset = session.get(TbAssetRegistry, asset_uuid)
+            if asset and asset.asset_type != "tool":
+                asset = None
+        except ValueError:
+            logger.debug(
+                "Invalid UUID format for asset_id, falling back to name lookup"
+            )
+            asset = None
+
+        # Try by name
+        if not asset:
+            asset = session.exec(
+                select(TbAssetRegistry)
+                .where(TbAssetRegistry.asset_type == "tool")
+                .where(TbAssetRegistry.name == asset_id)
+            ).first()
+
+        if not asset:
+            raise HTTPException(status_code=404, detail="Tool asset not found")
+
+        if asset.status != "published":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Tool is not published (current status: {asset.status})"
+            )
+
+        # Change status to draft
+        asset.status = "draft"
+        asset.updated_at = datetime.now()
+        session.add(asset)
+        session.commit()
+        session.refresh(asset)
+
+        create_audit_log(
+            session=session,
+            trace_id=str(uuid.uuid4()),
+            resource_type="tool_asset",
+            resource_id=str(asset.asset_id),
+            action="unpublish",
+            actor=str(current_user.id),
+            changes={"name": asset.name, "version": asset.version},
+        )
+
+        return ResponseEnvelope.success(
+            data={"asset": _serialize_tool_asset(asset)},
+            message="Tool unpublished successfully",
+        )
+
+
 @router.post("/reload", response_model=ResponseEnvelope)
 def reload_tools(
     current_user: TbUser = Depends(get_current_user),

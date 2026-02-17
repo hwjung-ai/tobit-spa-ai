@@ -143,6 +143,13 @@ class DependencyAnalyzer:
                     depends_on=[],
                 ))
 
+        # Document search (independent, no dependencies)
+        if plan.document and (plan.document.get("enabled") or plan.document.get("tool_type")):
+            deps.append(ToolDependency(
+                tool_id="document",
+                depends_on=[],
+            ))
+
         return deps
 
     def build_dependency_graph(self, dependencies: List[ToolDependency]) -> Dict[str, Set[str]]:
@@ -587,6 +594,7 @@ class ToolOrchestrator:
             "graph": self.plan.graph,
             "metric": self.plan.metric,
             "history": self.plan.history,
+            "document": self.plan.document,
         }
 
         spec_obj = spec_map.get(tool_id)
@@ -710,6 +718,20 @@ class ToolOrchestrator:
                     "limit": spec_obj.limit,
                     "tenant_id": self.context.tenant_id,
                     "ci_id": None,  # Will be populated from dependencies
+                }
+            }
+        elif tool_id == "document":
+            return {
+                "tool_type": tool_type,
+                "params": {
+                    "query": spec_obj.get("query", ""),
+                    "search_type": spec_obj.get("search_type", "hybrid"),
+                    "top_k": spec_obj.get("top_k", 10),
+                    "min_relevance": spec_obj.get("min_relevance", 0.01),
+                    "date_from": spec_obj.get("date_from"),
+                    "date_to": spec_obj.get("date_to"),
+                    "document_types": spec_obj.get("document_types"),
+                    "tenant_id": self.context.tenant_id,
                 }
             }
 

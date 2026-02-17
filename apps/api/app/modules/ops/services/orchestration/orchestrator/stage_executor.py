@@ -328,6 +328,9 @@ class StageExecutor:
                 plan.graph.depth = plan.graph.depth or 2
                 if plan.cep:
                     plan.cep.enabled = True
+                # Also enable document if it has a tool_type (was planned by LLM)
+                if plan.document and plan.document.get("tool_type"):
+                    plan.document["enabled"] = True
 
             if plan.history and plan.history.enabled:
                 normalized_question = question_text.lower()
@@ -1547,6 +1550,35 @@ class StageExecutor:
                                 "최근 작업 이력", history_headers, table_rows
                             )
                         )
+
+                # Handle document results
+                document_result = composed_result.get("document_result") or {}
+                if document_result and isinstance(document_result, dict):
+                    document_rows = document_result.get("rows") or []
+                    if not document_rows and isinstance(document_result.get("data"), dict):
+                        document_rows = document_result["data"].get("rows") or []
+                    # Also check for 'documents' or 'results' field
+                    if not document_rows:
+                        document_rows = document_result.get("documents") or document_result.get("results") or []
+
+                    if isinstance(document_rows, list) and document_rows:
+                        document_headers = [
+                            "title",
+                            "relevance_score",
+                            "category",
+                            "document_type",
+                            "created_at",
+                        ]
+                        table_rows = []
+                        for row in document_rows[:20]:
+                            if isinstance(row, dict):
+                                table_rows.append([row.get(h) for h in document_headers])
+                        if table_rows:
+                            blocks.append(
+                                _build_table_block(
+                                    "문서 검색 결과", document_headers, table_rows
+                                )
+                            )
 
             # Disable old block creation - using runner's blocks instead
             # if False:  # Disable duplicate block creation

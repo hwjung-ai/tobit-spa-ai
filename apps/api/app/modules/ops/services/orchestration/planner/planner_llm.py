@@ -1458,10 +1458,41 @@ def create_plan_output(
             metadata={"elapsed_ms": elapsed_ms, "llm_route": route},
         )
 
-    # Otherwise, create a normal plan
-    plan = create_plan(
-        normalized, schema_context=schema_context, source_context=source_context, mode=mode
-    )
+    # Otherwise, use LLM-driven planning with dynamic tool selection
+    # This replaces the old keyword-based create_plan()
+    import asyncio
+    try:
+        # Call LLM-driven planning which includes tool selection
+        plan_output = asyncio.run(plan_llm_query(normalized, source_ref=None))
+
+        # Extract plan from PlanOutput
+        if plan_output.kind == PlanOutputKind.PLAN and plan_output.plan:
+            plan = plan_output.plan
+            # Override mode if explicitly provided
+            if mode:
+                try:
+                    plan.mode = PlanMode(mode)
+                except (ValueError, KeyError):
+                    pass  # Keep plan's mode
+        else:
+            # Fallback if LLM returns non-PLAN kind
+            logger.warning(
+                "planner.llm_plan_fallback",
+                extra={"kind": plan_output.kind.value if plan_output.kind else "unknown"}
+            )
+            plan = create_plan(
+                normalized, schema_context=schema_context, source_context=source_context, mode=mode
+            )
+    except Exception as e:
+        logger.warning(
+            "planner.llm_planning_error",
+            extra={"error": str(e), "using_fallback": True}
+        )
+        # Fallback to keyword-based planning
+        plan = create_plan(
+            normalized, schema_context=schema_context, source_context=source_context, mode=mode
+        )
+
     end = perf_counter()
     elapsed_ms = int((end - start) * 1000)
     logger.info("ci.planner.plan_created", extra={"elapsed_ms": elapsed_ms})
@@ -1470,7 +1501,7 @@ def create_plan_output(
         kind=PlanOutputKind.PLAN,
         plan=plan,
         confidence=1.0,
-        reasoning="Orchestration plan created",
+        reasoning="Orchestration plan created with LLM-driven tool selection",
         metadata={"elapsed_ms": elapsed_ms, "llm_route": route},
     )
 
