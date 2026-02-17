@@ -9,6 +9,12 @@ interface CreateSchemaModalProps {
   onSave: () => void;
 }
 
+interface SourceItem {
+  asset_id: string;
+  name: string;
+  status: string;
+}
+
 export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -17,13 +23,18 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
   const [error, setError] = useState("");
 
   // Fetch available sources
-  const { data: sourcesData } = useQuery({
+  const {
+    data: sourcesData = [],
+    isLoading: sourcesLoading,
+    error: sourcesError,
+  } = useQuery<SourceItem[]>({
     queryKey: ["admin-sources"],
     queryFn: async () => {
-      const response = await fetchApi("/asset-registry/sources?status=published");
+      const response = await fetchApi<{ assets: SourceItem[] }>("/asset-registry/sources");
       return response.data?.assets || [];
     },
   });
+  const publishedSources = sourcesData.filter((source) => source.status === "published");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +57,7 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
       const payload = {
         name: name.trim(),
         description: description.trim() || null,
-        content: {
-          source_ref: sourceRef,
-          catalog: {
-            scan_status: "pending",
-          },
-        },
+        source_ref: sourceRef,
       };
 
       const response = await fetchApi("/asset-registry/catalogs", {
@@ -73,17 +79,17 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className=" border  rounded-2xl shadow-2xl max-w-md w-full mx-4">
-        <div className="p-6 border-b ">
-          <h2 className="text-xl font-bold  mb-1">Create Catalog Asset</h2>
-          <p className="text-xs ">Scan database schema and store metadata</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-md overflow-hidden rounded-2xl border border-variant bg-surface-base shadow-2xl">
+        <div className="border-b border-variant p-6">
+          <h2 className="mb-1 text-xl font-bold text-foreground">Create Catalog Asset</h2>
+          <p className="text-xs text-muted-foreground">Scan database schema and store metadata</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-xs font-bold  uppercase tracking-wider mb-2">
+            <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Catalog Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -91,21 +97,21 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
-              className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              className="w-full rounded-xl border border-variant bg-surface-base px-4 py-3 text-foreground placeholder:text-muted-foreground transition-all focus:border-sky-500/50 focus:outline-none disabled:opacity-50"
               placeholder="e.g., factory_postgres"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold  uppercase tracking-wider mb-2">
+            <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
-              className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              className="w-full resize-none rounded-xl border border-variant bg-surface-base px-4 py-3 text-foreground placeholder:text-muted-foreground transition-all focus:border-sky-500/50 focus:outline-none disabled:opacity-50"
               placeholder="Describe this catalog..."
               rows={3}
             />
@@ -113,23 +119,35 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
 
           {/* Source */}
           <div>
-            <label className="block text-xs font-bold  uppercase tracking-wider mb-2">
+            <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Database Source <span className="text-red-500">*</span>
             </label>
             <select
               value={sourceRef}
               onChange={(e) => setSourceRef(e.target.value)}
-              disabled={loading}
-              className="w-full px-4 py-3  border  rounded-lg  focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              disabled={loading || sourcesLoading}
+              className="w-full rounded-xl border border-variant bg-surface-base px-4 py-3 text-foreground transition-all focus:border-sky-500/50 focus:outline-none disabled:opacity-50"
             >
-              <option value="" className="">Select a source...</option>
-              {sourcesData?.map((source: Record<string, unknown>) => (
-                <option key={source.asset_id as string} value={source.name as string} className="">
-                  {source.name as string}
+              <option value="" className="bg-surface-elevated text-foreground">
+                {sourcesLoading ? "Loading sources..." : "Select a source..."}
+              </option>
+              {publishedSources.map((source) => (
+                <option key={source.asset_id} value={source.name} className="bg-surface-elevated text-foreground">
+                  {source.name}
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-xs ">
+            {sourcesError && (
+              <p className="mt-2 text-xs text-red-400">
+                Failed to load sources: {sourcesError instanceof Error ? sourcesError.message : "Unknown error"}
+              </p>
+            )}
+            {!sourcesLoading && !sourcesError && publishedSources.length === 0 && (
+              <p className="mt-2 text-xs text-yellow-300">
+                No published sources found. Publish a source first in Admin assets.
+              </p>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">
               💡 Source must be published before creating catalog
             </p>
           </div>
@@ -142,19 +160,19 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t ">
+          <div className="flex gap-3 border-t border-variant pt-4">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-3  hover: rounded-lg transition-colors font-medium text-sm disabled:opacity-50 uppercase tracking-wide"
+              className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-sky-600 hover:bg-sky-500 disabled: text-white rounded-lg shadow-lg font-medium text-sm disabled:opacity-50 uppercase tracking-wide transition-all dark:bg-sky-700 dark:hover:bg-sky-600"
+              className="flex-1 rounded-xl bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-sky-900/20 transition-all hover:bg-sky-500 disabled:opacity-50 dark:bg-sky-700 dark:hover:bg-sky-600"
             >
               {loading ? "Creating..." : "Create"}
             </button>

@@ -683,11 +683,11 @@ function InspectorContent() {
                 onChange={(event) =>
                   setFilters((prev) => ({ ...prev, status: event.target.value }))
                 }
-                className="input-container"
+                className="input-container bg-surface-base text-foreground"
               >
-                <option value="">응답 상태 (전체)</option>
-                <option value="success">success</option>
-                <option value="error">error</option>
+                <option value="" className="bg-surface-elevated text-foreground">응답 상태 (전체)</option>
+                <option value="success" className="bg-surface-elevated text-foreground">success</option>
+                <option value="error" className="bg-surface-elevated text-foreground">error</option>
               </select>
               <input
                 type="date"

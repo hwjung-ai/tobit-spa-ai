@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 /**
  * OPS Stream Request
@@ -157,7 +158,7 @@ export function useOpsStream(handlers: OpsSSEHandlers): UseOpsStreamReturn {
       abortControllerRef.current = abortController;
 
       try {
-        const response = await fetch("/api/ops/ask/stream", {
+        const response = await authenticatedFetch("/api/ops/ask/stream", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

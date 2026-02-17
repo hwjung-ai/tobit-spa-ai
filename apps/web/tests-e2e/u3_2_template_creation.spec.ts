@@ -18,11 +18,11 @@ const openCreateModal = async (page: Page) => {
   await modal.waitFor({ state: "visible", timeout: 10000 });
 };
 
-const ACTIVE_TEMPLATE_CLASS = /bg-sky-(600|900)/;
+const ACTIVE_TEMPLATE_CLASS = /bg-sky-500\/10/;
 
 const createScreenFromModal = async (
   page: Page,
-  options: { screenId: string; screenName: string; templateId?: string | null }
+  options: { screenId?: string; screenName: string; templateId?: string | null }
 ) => {
   await openCreateModal(page);
   if (options.templateId) {
@@ -30,7 +30,9 @@ const createScreenFromModal = async (
   } else {
     await page.click('[data-testid="template-blank"]');
   }
-  await page.fill('[data-testid="input-screen-id"]', options.screenId);
+  if (options.screenId !== undefined) {
+    await page.fill('[data-testid="input-screen-id"]', options.screenId);
+  }
   await page.fill('[data-testid="input-screen-name"]', options.screenName);
 
   const createResponsePromise = page.waitForResponse(
@@ -43,13 +45,22 @@ const createScreenFromModal = async (
   const createResponse = await createResponsePromise;
 
   let body: any = null;
+  let payload: any = null;
   try {
     body = await createResponse.json();
   } catch {
     body = null;
   }
+  try {
+    payload = JSON.parse(createResponse.request().postData() || "{}");
+  } catch {
+    payload = null;
+  }
   expect(createResponse.ok(), JSON.stringify(body ?? {})).toBeTruthy();
-  return body?.data?.asset?.asset_id as string | undefined;
+  return {
+    assetId: body?.data?.asset?.asset_id as string | undefined,
+    payload,
+  };
 };
 
 const waitForScreenCreated = async (page: Page, screenName: string) => {
@@ -112,7 +123,7 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     const templateButton = page.locator('[data-testid="template-readonly_detail"]');
     await expect(templateButton).toHaveClass(ACTIVE_TEMPLATE_CLASS);
 
-    const assetId = await createScreenFromModal(page, {
+    const { assetId } = await createScreenFromModal(page, {
       screenId,
       screenName,
       templateId: "readonly_detail",
@@ -151,7 +162,7 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     const templateButton = page.locator('[data-testid="template-list_filter"]');
     await expect(templateButton).toHaveClass(ACTIVE_TEMPLATE_CLASS);
 
-    const assetId = await createScreenFromModal(page, {
+    const { assetId } = await createScreenFromModal(page, {
       screenId,
       screenName,
       templateId: "list_filter",
@@ -191,7 +202,7 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     const templateButton = page.locator('[data-testid="template-list_modal_crud"]');
     await expect(templateButton).toHaveClass(ACTIVE_TEMPLATE_CLASS);
 
-    const assetId = await createScreenFromModal(page, {
+    const { assetId } = await createScreenFromModal(page, {
       screenId,
       screenName,
       templateId: "list_modal_crud",
@@ -243,5 +254,19 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     // Switch back to Blank
     await page.click('[data-testid="template-blank"]');
     await expect(blankButton).toHaveClass(ACTIVE_TEMPLATE_CLASS);
+  });
+
+  test("should create from template without explicit screen id", async ({ page }) => {
+    const suffix = Date.now();
+    const screenName = `Auto ID Screen ${suffix}`;
+
+    const { payload } = await createScreenFromModal(page, {
+      screenName,
+      templateId: "readonly_detail",
+    });
+
+    expect(typeof payload?.screen_id).toBe("string");
+    expect(payload?.screen_id?.length).toBeGreaterThan(0);
+    await waitForScreenCreated(page, screenName);
   });
 });

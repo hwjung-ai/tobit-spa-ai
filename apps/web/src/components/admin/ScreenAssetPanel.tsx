@@ -42,6 +42,27 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [confirm, ConfirmDialogComponent] = useConfirm();
 
+  const normalizeScreenId = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+  const resolveScreenId = () => {
+    const inputId = newScreenData.screen_id.trim();
+    if (inputId) return inputId;
+
+    const nameId = normalizeScreenId(newScreenData.name);
+    if (nameId) return nameId;
+
+    const templateId = normalizeScreenId(selectedTemplate ?? "");
+    if (templateId) return `screen_${templateId}`;
+
+    return "";
+  };
+
   // Fetch screens when URL params change
   useEffect(() => {
     fetchScreens();
@@ -108,14 +129,15 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   const handleCreateScreen = async () => {
     setErrors([]);
 
-    // Validation
-    if (!newScreenData.screen_id.trim()) {
-      setErrors(["Screen ID is required"]);
+    const screenName = newScreenData.name.trim();
+    if (!screenName) {
+      setErrors(["Screen name is required"]);
       return;
     }
 
-    if (!newScreenData.name.trim()) {
-      setErrors(["Screen name is required"]);
+    const finalScreenId = resolveScreenId();
+    if (!finalScreenId) {
+      setErrors(["Screen ID is required"]);
       return;
     }
 
@@ -126,14 +148,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
         const template = getTemplateById(selectedTemplate);
         if (template) {
           schema = template.generate({
-            screen_id: newScreenData.screen_id,
-            name: newScreenData.name,
+            screen_id: finalScreenId,
+            name: screenName,
           });
         } else {
-          schema = createMinimalScreen(newScreenData.screen_id, newScreenData.name);
+          schema = createMinimalScreen(finalScreenId, screenName);
         }
       } else {
-        schema = createMinimalScreen(newScreenData.screen_id, newScreenData.name);
+        schema = createMinimalScreen(finalScreenId, screenName);
       }
 
       let parsedTags = null;
@@ -151,8 +173,8 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
         method: "POST",
         body: JSON.stringify({
           asset_type: "screen",
-          screen_id: newScreenData.screen_id,
-          name: newScreenData.name,
+          screen_id: finalScreenId,
+          name: screenName,
           description: newScreenData.description || null,
           tags: parsedTags,
           schema_json: schema,
@@ -298,19 +320,19 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className=" border  rounded-lg p-6 w-full max-w-md"
+            className="w-full max-w-md rounded-2xl border border-variant bg-surface-base p-6 shadow-2xl"
 
             onClick={(e) => e.stopPropagation()}
             data-testid="modal-create-screen"
           >
-            <h3 className="text-lg font-semibold  mb-4">
+            <h3 className="mb-4 text-lg font-semibold text-foreground">
               Create New Screen
             </h3>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-4 max-h-96 overflow-y-auto px-1">
               <div>
                 <label
-                  className="block text-sm  mb-2"
+                  className="mb-2 block text-sm font-medium text-foreground"
 
                 >
                   Choose Template (Optional)
@@ -319,16 +341,16 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   {/* Blank Option */}
                   <button
                     onClick={() => setSelectedTemplate(null)}
-                    className={`p-3 rounded border transition-all text-sm font-medium bg-surface-overlay text-foreground-secondary border-variant ${
+                    className={`p-3 rounded border transition-all text-sm font-medium ${
                       selectedTemplate === null
-                        ? "ring-2 ring-sky-500"
-                        : "hover:opacity-75"
+                        ? "border-sky-500 bg-sky-500/10 text-foreground"
+                        : "bg-surface-overlay text-foreground-secondary border-variant hover:border-sky-500/40"
                     }`}
                     data-testid="template-blank"
                   >
                     <div className="font-semibold">Blank</div>
                     <div
-                      className={`text-xs mt-1 ${selectedTemplate === null ? "text-sky-100" : ""}`}
+                      className={`mt-1 text-xs ${selectedTemplate === null ? "text-sky-100" : "text-muted-foreground"}`}
 
                     >
                       Start from scratch
@@ -340,16 +362,16 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     <button
                       key={template.id}
                       onClick={() => setSelectedTemplate(template.id)}
-                      className={`p-3 rounded border transition-all text-sm font-medium bg-surface-overlay text-foreground-secondary border-variant ${
+                      className={`p-3 rounded border transition-all text-sm font-medium ${
                         selectedTemplate === template.id
-                          ? "ring-2 ring-sky-500"
-                          : "hover:opacity-75"
+                          ? "border-sky-500 bg-sky-500/10 text-foreground"
+                          : "bg-surface-overlay text-foreground-secondary border-variant hover:border-sky-500/40"
                       }`}
                       data-testid={`template-${template.id}`}
                     >
                       <div className="font-semibold">{template.name}</div>
                       <div
-                        className={`text-xs mt-1 line-clamp-2 ${selectedTemplate === template.id ? "text-sky-100" : ""}`}
+                        className={`mt-1 line-clamp-2 text-xs ${selectedTemplate === template.id ? "text-sky-100" : "text-muted-foreground"}`}
 
                       >
                         {template.description}
@@ -361,7 +383,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
 
               <div>
                 <label
-                  className="block text-sm  mb-2"
+                  className="mb-2 block text-sm font-medium text-foreground"
 
                 >
                   Screen ID *
@@ -373,14 +395,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     setNewScreenData({ ...newScreenData, screen_id: e.target.value })
                   }
                   placeholder="e.g., dashboard_main"
-                  className="w-full px-3 py-2 border rounded text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500"
+                  className="w-full rounded-xl border border-variant bg-surface-base px-3 py-2 text-sm text-foreground focus:border-sky-500/50 focus:outline-none"
                   data-testid="input-screen-id"
                 />
               </div>
 
               <div>
                 <label
-                  className="block text-sm  mb-2"
+                  className="mb-2 block text-sm font-medium text-foreground"
 
                 >
                   Screen Name *
@@ -390,14 +412,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   value={newScreenData.name}
                   onChange={(e) => setNewScreenData({ ...newScreenData, name: e.target.value })}
                   placeholder="e.g., Main Dashboard"
-                  className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:border-sky-500 border-variant text-foreground bg-surface-elevated"
+                  className="w-full rounded-xl border border-variant bg-surface-base px-3 py-2 text-sm text-foreground focus:border-sky-500/50 focus:outline-none"
                   data-testid="input-screen-name"
                 />
               </div>
 
               <div>
                 <label
-                  className="block text-sm  mb-2"
+                  className="mb-2 block text-sm font-medium text-foreground"
 
                 >
                   Description (Optional)
@@ -408,14 +430,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     setNewScreenData({ ...newScreenData, description: e.target.value })
                   }
                   placeholder="e.g., Main dashboard for user overview"
-                  className="w-full px-3 py-2 border rounded text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500 resize-none"
+                  className="w-full resize-none rounded-xl border border-variant bg-surface-base px-3 py-2 text-sm text-foreground focus:border-sky-500/50 focus:outline-none"
                   rows={3}
                   data-testid="input-screen-description"
                 />
               </div>
               <div>
                 <label
-                  className="block text-sm  mb-2"
+                  className="mb-2 block text-sm font-medium text-foreground"
 
                 >
                   Tags (Optional JSON)
@@ -424,7 +446,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   value={newScreenData.tags}
                   onChange={(e) => setNewScreenData({ ...newScreenData, tags: e.target.value })}
                   placeholder='e.g., {"team":"ops","audience":"mobile"}'
-                  className="w-full px-3 py-2 border rounded text-sm text-foreground bg-surface-elevated border-variant focus:outline-none focus:border-sky-500 resize-none"
+                  className="w-full resize-none rounded-xl border border-variant bg-surface-base px-3 py-2 text-sm text-foreground focus:border-sky-500/50 focus:outline-none"
                   rows={2}
                   data-testid="input-screen-tags"
                 />
@@ -434,7 +456,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2  hover:  rounded-lg transition-colors text-sm font-medium"
+                className="flex-1 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
 
                 data-testid="btn-cancel-create"
               >
@@ -442,7 +464,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               </button>
               <button
                 onClick={handleCreateScreen}
-                className="flex-1 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors text-sm font-medium"
+                className="flex-1 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
                 data-testid="btn-confirm-create"
               >
                 Create

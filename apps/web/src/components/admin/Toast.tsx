@@ -69,9 +69,7 @@ export default function Toast({ message, type = "success", onDismiss, duration =
     };
 
     const toastContent = (
-        <div
-
-        >
+        <div className="fixed right-4 top-4 z-40 w-[min(420px,calc(100vw-2rem))]">
             <div role="alert" aria-live="assertive" className={`rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
                 <div className="flex items-start gap-3">
                     <div className={`${textColor} mt-1`}>{icon}</div>

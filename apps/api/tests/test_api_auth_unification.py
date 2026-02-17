@@ -5,6 +5,7 @@ from main import app
 PUBLIC_PATHS = {
     "/auth/login",
     "/auth/refresh",
+    "/health",
 }
 
 

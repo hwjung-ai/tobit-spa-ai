@@ -1,8 +1,23 @@
 """Test configuration and fixtures."""
 
 import importlib
+import os
 import sys
 from pathlib import Path
+
+# Set test environment variables before any imports
+os.environ.setdefault("PG_HOST", "localhost")
+os.environ.setdefault("PG_DB", "test_db")
+os.environ.setdefault("PG_USER", "test_user")
+os.environ.setdefault("PG_PASSWORD", "test_password")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("ENABLE_AUTH", "false")
+
+# Monkey patch JSONB to JSON for SQLite BEFORE any imports
+import sqlalchemy.dialects.postgresql
+from sqlalchemy import JSON
+
+sqlalchemy.dialects.postgresql.JSONB = JSON
 
 import pytest
 
@@ -55,6 +70,7 @@ def test_engine():
     import app.modules.asset_registry.models as asset_models  # noqa: F401
     import app.modules.audit_log.models as audit_models  # noqa: F401
     import app.modules.auth.models as auth_models  # noqa: F401
+    import app.modules.cep_builder.models as cep_models  # noqa: F401
     import app.modules.ci_management.models as ci_models  # noqa: F401
     import app.modules.inspector.models as inspector_models  # noqa: F401
     import app.modules.operation_settings.models as settings_models  # noqa: F401
@@ -68,6 +84,7 @@ def test_engine():
     importlib.reload(audit_models)
     importlib.reload(settings_models)
     importlib.reload(inspector_models)
+    importlib.reload(cep_models)
 
     # Drop all existing tables
     with engine.connect() as conn:
@@ -136,3 +153,38 @@ def session(test_engine):
         app.dependency_overrides.clear()
 
         yield session
+
+
+@pytest.fixture
+def client(session):
+    """Create a test client with database session."""
+    import core.db
+    from fastapi.testclient import TestClient
+    from main import app
+
+    def get_session_override():
+        yield session
+
+    app.dependency_overrides[core.db.get_session] = get_session_override
+    
+    # Also override get_current_user for auth bypass
+    from app.modules.auth.models import TbUser, UserRole
+    from core.auth import get_current_user
+    
+    def get_test_user():
+        return TbUser(
+            id="test-user",
+            username="test@example.com",
+            password_hash="",
+            role=UserRole.ADMIN,
+            tenant_id="default",
+            is_active=True,
+        )
+    
+    app.dependency_overrides[get_current_user] = get_test_user
+
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()

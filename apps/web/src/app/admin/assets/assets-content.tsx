@@ -100,13 +100,13 @@ export default function AssetsPageContent() {
                             }}
                             className="input-container text-xs"
                         >
-                            <option value="all">All Categories</option>
-                            <option value="prompt">Prompts</option>
-                            <option value="mapping">Mappings</option>
-                            <option value="policy">Policies</option>
-                            <option value="query">Queries</option>
-                            <option value="source">Sources</option>
-                            <option value="resolver">Resolvers</option>
+                            <option value="all" className="bg-surface-elevated text-foreground">All Categories</option>
+                            <option value="prompt" className="bg-surface-elevated text-foreground">Prompts</option>
+                            <option value="mapping" className="bg-surface-elevated text-foreground">Mappings</option>
+                            <option value="policy" className="bg-surface-elevated text-foreground">Policies</option>
+                            <option value="query" className="bg-surface-elevated text-foreground">Queries</option>
+                            <option value="source" className="bg-surface-elevated text-foreground">Sources</option>
+                            <option value="resolver" className="bg-surface-elevated text-foreground">Resolvers</option>
                         </select>
                     </div>
                     <StatusFilterButtons value={statusFilter} onChange={handleStatusFilterChange} />

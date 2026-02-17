@@ -92,6 +92,8 @@
   - 서비스 자동 초기값: `/api/sim/services` 조회 후 데이터 존재 서비스 우선 선택
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
+  - Catalog Scan API (`POST /asset-registry/catalogs/{asset_id}/scan`)는 JSON body `{ "schema_names": string[] | null, "include_row_counts": boolean }` 계약을 사용
+  - Catalog Schema Discovery 실패는 브라우저 `alert()` 대신 Admin 표준 에러 UI(ValidationAlert + Toast)로 노출
   - Settings: 운영 설정 편집 (restart_required 표시)
   - LLM Settings 탭: provider(`openai|internal`), base URL, default/fallback model, timeout/retry, routing policy를 런타임 운영값으로 관리
   - LLM Runtime: `app/llm/client.py`가 operation settings의 published value를 우선 사용하고, 미설정 시 `.env` 값을 fallback으로 사용

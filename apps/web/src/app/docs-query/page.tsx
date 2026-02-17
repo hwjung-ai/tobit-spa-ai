@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shared";
 import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 /**
  * Document category type
@@ -101,7 +102,7 @@ export default function DocsQueryPage() {
 
   // Filter state
   const [selectedCategories, setSelectedCategories] = useState<DocumentCategory[]>([]);
-  const [showOnlySelected, setShowOnlySelected] = useState(false);
+  const [showOnlySelected] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Upload state
@@ -139,8 +140,9 @@ export default function DocsQueryPage() {
 
   // Fetch documents on mount
   useEffect(() => {
-    fetchDocuments();
-    fetchQueryHistory();
+    void fetchDocuments();
+    void fetchQueryHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Scroll to answer end when streaming
@@ -171,9 +173,7 @@ export default function DocsQueryPage() {
   const fetchDocuments = async () => {
     setLoadingDocs(true);
     try {
-      const response = await fetch("/api/documents/", {
-        headers: getAuthHeaders(),
-      });
+      const response = await authenticatedFetch("/api/documents/");
       
       if (response.status === 401) {
         handleAuthError();
@@ -196,9 +196,7 @@ export default function DocsQueryPage() {
    */
   const fetchQueryHistory = async () => {
     try {
-      const response = await fetch("/api/documents/query-history?per_page=50", {
-        headers: getAuthHeaders(),
-      });
+      const response = await authenticatedFetch("/api/documents/query-history?per_page=50");
       
       if (response.status === 401) {
         handleAuthError();
@@ -233,11 +231,10 @@ export default function DocsQueryPage() {
     elapsedMs: number
   ) => {
     try {
-      await fetch("/api/documents/query-history", {
+      await authenticatedFetch("/api/documents/query-history", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: queryText,
@@ -279,9 +276,8 @@ export default function DocsQueryPage() {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const response = await fetch("/api/documents/upload", {
+      const response = await authenticatedFetch("/api/documents/upload", {
         method: "POST",
-        headers: getAuthHeaders(),
         body: formData,
       });
       
@@ -325,9 +321,8 @@ export default function DocsQueryPage() {
       const url = `/api/documents/${docId}/category?category=${category}`;
       console.log(`[updateCategory] Sending PATCH to: ${url}`, { docId, category });
 
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: "PATCH",
-        headers: getAuthHeaders(),
       });
 
       console.log(`[updateCategory] Response status: ${response.status}`);
@@ -386,9 +381,8 @@ export default function DocsQueryPage() {
     if (!confirm(`"${doc.filename}" 문서를 삭제하시겠습니까?`)) return;
 
     try {
-      const response = await fetch(`/api/documents/${docId}`, {
+      const response = await authenticatedFetch(`/api/documents/${docId}`, {
         method: "DELETE",
-        headers: getAuthHeaders(),
       });
       
       if (response.status === 401) {
@@ -458,12 +452,11 @@ export default function DocsQueryPage() {
     let finalProgress: ProgressEvent | null = null;
 
     try {
-      const response = await fetch("/api/documents/query-all/stream", {
+      const response = await authenticatedFetch("/api/documents/query-all/stream", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "text/event-stream",
-          ...getAuthHeaders(),
         },
         body: JSON.stringify(requestBody),
         signal: abortController.signal,
@@ -604,9 +597,8 @@ export default function DocsQueryPage() {
       let targetPage = ref.page ?? 1;
 
       if (!ref.page && ref.chunk_id) {
-        const chunkResp = await fetch(
+        const chunkResp = await authenticatedFetch(
           `/api/documents/${ref.document_id}/chunks/${ref.chunk_id}`,
-          { headers: getAuthHeaders() },
         );
         if (chunkResp.ok) {
           const chunkPayload = await chunkResp.json();
@@ -617,9 +609,7 @@ export default function DocsQueryPage() {
         }
       }
 
-      const response = await fetch(`/api/documents/${ref.document_id}/viewer`, {
-        headers: getAuthHeaders(),
-      });
+      const response = await authenticatedFetch(`/api/documents/${ref.document_id}/viewer`);
       if (!response.ok) {
         throw new Error(`PDF 로드 실패 (${response.status})`);
       }
@@ -652,9 +642,8 @@ export default function DocsQueryPage() {
 
   const deleteHistoryEntry = async (historyId: string) => {
     try {
-      const response = await fetch(`/api/documents/query-history/${historyId}`, {
+      const response = await authenticatedFetch(`/api/documents/query-history/${historyId}`, {
         method: "DELETE",
-        headers: getAuthHeaders(),
       });
       if (response.status === 401) {
         handleAuthError();
@@ -684,14 +673,6 @@ export default function DocsQueryPage() {
       console.error("Copy failed:", err);
       showToast("error", "복사에 실패했습니다.");
     }
-  };
-
-  /**
-   * Get auth headers
-   */
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
   /**

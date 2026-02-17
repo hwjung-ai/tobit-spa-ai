@@ -15,6 +15,12 @@ interface CatalogAsset {
   description?: string;
   status: string;
   version: number;
+  catalog?: {
+    source_ref?: string;
+    tables?: Record<string, unknown>[];
+    scan_status?: string;
+    last_scanned_at?: string;
+  };
   content?: {
     source_ref?: string;
     catalog?: {
@@ -38,11 +44,23 @@ export default function CatalogsContent() {
     data: catalogsData,
     isLoading,
     isFetching,
+    error,
   } = useQuery({
     queryKey: ["admin-catalogs", refreshNonce],
     queryFn: async () => {
       const response = await fetchApi<{ assets: CatalogAsset[] }>("/asset-registry/catalogs", { cache: "no-store" });
-      return response.data?.assets || [];
+      const assets = response.data?.assets || [];
+      return assets.map((asset) => ({
+        ...asset,
+        content: {
+          source_ref: asset.catalog?.source_ref,
+          catalog: {
+            tables: asset.catalog?.tables,
+            scan_status: asset.catalog?.scan_status,
+            last_scanned_at: asset.catalog?.last_scanned_at,
+          },
+        },
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -53,55 +71,7 @@ export default function CatalogsContent() {
   };
 
   const catalogs = catalogsData || [];
-
-  // Demo data - 실제 환경에서는 제거
-  const demoMode = catalogs.length === 0;
-  const demoCatalogs: CatalogAsset[] = demoMode
-    ? [
-        {
-          asset_id: "demo-postgres-schema",
-          name: "PostgreSQL DB Schema",
-          description: "Main PostgreSQL database table definitions and relationships",
-          status: "published",
-          version: 1,
-          content: {
-            source_ref: "primary_postgres",
-            catalog: {
-              tables: [
-                { name: "users", columns: 8 },
-                { name: "orders", columns: 6 },
-                { name: "products", columns: 10 },
-              ],
-              scan_status: "completed",
-              last_scanned_at: new Date().toISOString(),
-            },
-          },
-          created_at: new Date().toISOString(),
-        },
-        {
-          asset_id: "demo-neo4j-schema",
-          name: "Neo4j Graph Schema",
-          description: "Graph database nodes and relationships for knowledge graph",
-          status: "published",
-          version: 1,
-          content: {
-            source_ref: "primary_neo4j",
-            catalog: {
-              tables: [
-                { name: "Equipment", columns: 5 },
-                { name: "Maintenance", columns: 4 },
-                { name: "Technician", columns: 6 },
-              ],
-              scan_status: "completed",
-              last_scanned_at: new Date().toISOString(),
-            },
-          },
-          created_at: new Date().toISOString(),
-        },
-      ]
-    : [];
-
-  const displayCatalogs = demoMode ? demoCatalogs : catalogs;
+  const displayCatalogs = catalogs;
   const filteredCatalogs =
     statusFilter === "all"
       ? displayCatalogs
@@ -136,6 +106,10 @@ export default function CatalogsContent() {
         <div className="lg:col-span-1">
           {isLoading ? (
             <div className="py-4 text-center text-muted-standard">Loading...</div>
+          ) : error ? (
+            <div className="rounded-lg border border-red-800/50 bg-red-900/20 p-4 text-sm text-red-300">
+              Failed to load catalogs: {error instanceof Error ? error.message : "Unknown error"}
+            </div>
           ) : (
               <CatalogTable
                 catalogs={filteredCatalogs}

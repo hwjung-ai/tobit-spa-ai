@@ -2,19 +2,51 @@
 
 import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
+import Toast from "./Toast";
+import ValidationAlert from "./ValidationAlert";
+
+interface CatalogAssetForScan {
+  asset_id: string;
+  content?: {
+    source_ref?: string;
+    catalog?: {
+      scan_status?: string;
+      last_scanned_at?: string;
+      scan_error?: string;
+    };
+  };
+}
 
 interface SchemaScanPanelProps {
-  schema: Record<string, unknown>;
+  schema: CatalogAssetForScan;
   onScanComplete: () => void;
+}
+
+function normalizeScanErrorMessage(rawMessage: string): string {
+  const normalized = rawMessage.trim();
+  if (!normalized || normalized === "INTERNAL_SERVER_ERROR") {
+    return "Schema scan failed due to a server error. Please verify this is a real catalog asset and try again.";
+  }
+  if (normalized === "Invalid catalog asset_id format") {
+    return "This catalog is not a persisted asset. Demo catalogs cannot be scanned.";
+  }
+  return normalized;
 }
 
 export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanPanelProps) {
   const [scanning, setScanning] = useState(false);
   const [schemaNames, setSchemaNames] = useState("public");
   const [includeRowCounts, setIncludeRowCounts] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const canScan = !scanning && Boolean(schema.content?.source_ref);
 
   const handleScan = async () => {
     setScanning(true);
+    setErrors([]);
     try {
       const schemas = schemaNames
         .split(",")
@@ -33,19 +65,22 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
       );
 
       if (response.code === 0) {
-        alert("Schema scan completed successfully!");
+        setToast({ message: "Schema scan completed successfully.", type: "success" });
         onScanComplete();
       } else {
         throw new Error(response.message || "Scan failed");
       }
     } catch (error) {
-      alert(`Scan failed: ${error instanceof Error ? error.message : String(error)}`);
+      const rawMessage = error instanceof Error ? error.message : String(error);
+      const message = normalizeScanErrorMessage(rawMessage);
+      setErrors([message]);
+      setToast({ message: "Schema scan failed.", type: "error" });
     } finally {
       setScanning(false);
     }
   };
 
-  const catalog = schema.content?.catalog || {};
+  const catalog = schema.content?.catalog ?? {};
   const scanStatus = catalog.scan_status || "pending";
   const lastScanned = catalog.last_scanned_at;
   const scanError = catalog.scan_error;
@@ -59,6 +94,12 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
 
   return (
     <div className="rounded-lg border border-variant bg-surface-base p-4">
+      {errors.length > 0 && (
+        <div className="mb-4">
+          <ValidationAlert errors={errors} onClose={() => setErrors([])} />
+        </div>
+      )}
+
       <h3 className="font-semibold text-lg mb-4 ">Schema Discovery</h3>
 
       {/* Status */}
@@ -125,9 +166,9 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
       {/* Scan Button */}
       <button
         onClick={handleScan}
-        disabled={scanning || !schema.content?.source_ref}
+        disabled={!canScan}
         className={`w-full px-4 py-3 rounded-lg font-medium text-foreground transition-all ${
-          scanning || !schema.content?.source_ref
+          !canScan
             ? "  cursor-not-allowed"
             : "bg-sky-600 hover:bg-sky-500"
         }`}
@@ -139,6 +180,14 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
         <p className="mt-2 text-sm text-red-400">
           ⚠️ Schema asset must have a source_ref configured before scanning
         </p>
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
       )}
     </div>
   );

@@ -16,11 +16,11 @@ export default function AdminLayout({
         { label: "Assets", href: "/admin/assets" },
         { label: "Tools", href: "/admin/tools" },
         { label: "Catalogs", href: "/admin/catalogs" },
+        { label: "Inspector", href: "/admin/inspector" },
+        { label: "Regression", href: "/admin/regression" },
         { label: "Screens", href: "/admin/screens" },
         { label: "Explorer", href: "/admin/explorer" },
         { label: "Settings", href: "/admin/settings" },
-        { label: "Inspector", href: "/admin/inspector" },
-        { label: "Regression", href: "/admin/regression" },
         { label: "Observability", href: "/admin/observability" },
         { label: "Logs", href: "/admin/logs" },
     ];

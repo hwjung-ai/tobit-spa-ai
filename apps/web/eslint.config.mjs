@@ -62,6 +62,8 @@ const eslintConfig = defineConfig([
       "react-hooks/preserve-manual-memoization": "warn",
       "react/no-unescaped-entities": "off",
       "react-hooks/exhaustive-deps": "warn",
+      // Disable rule that causes false positives on TypeScript union type definitions
+      "@typescript-eslint/no-unused-expressions": "off",
     },
   },
   {

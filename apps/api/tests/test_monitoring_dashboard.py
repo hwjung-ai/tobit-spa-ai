@@ -2,9 +2,8 @@
 Tests for monitoring dashboard API endpoints
 """
 
-
 import pytest
-from modules.cep_builder.models import (
+from app.modules.cep_builder.models import (
     TbCepExecLog,
     TbCepNotification,
     TbCepNotificationLog,

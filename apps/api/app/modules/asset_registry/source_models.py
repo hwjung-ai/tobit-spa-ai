@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import re
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -24,6 +25,78 @@ class SourceType(str, enum.Enum):
     # API
     REST_API = "rest_api"
     GRAPHQL_API = "graphql_api"
+
+
+def coerce_source_type(value: Any) -> SourceType:
+    """Convert legacy/raw source_type values into SourceType safely."""
+    if isinstance(value, SourceType):
+        return value
+
+    raw = str(value or "").strip().lower()
+    aliases = {
+        "postgres": SourceType.POSTGRESQL,
+        "postgresql": SourceType.POSTGRESQL,
+        "pg": SourceType.POSTGRESQL,
+        "neo4j": SourceType.NEO4J,
+        "mysql": SourceType.MYSQL,
+        "mongodb": SourceType.MONGODB,
+        "redis": SourceType.REDIS,
+        "kafka": SourceType.KAFKA,
+        "bigquery": SourceType.BIGQUERY,
+        "snowflake": SourceType.SNOWFLAKE,
+        "s3": SourceType.S3,
+        "rest_api": SourceType.REST_API,
+        "graphql_api": SourceType.GRAPHQL_API,
+    }
+    return aliases.get(raw, SourceType.POSTGRESQL)
+
+
+def _coerce_int(value: Any, default: int | None) -> int | None:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        if text.isdigit() or (text.startswith("-") and text[1:].isdigit()):
+            return int(text)
+        # Supports env placeholder format like ${DB_PORT:5432}
+        match = re.match(r"^\$\{[^:}]+:([+-]?\d+)\}$", text)
+        if match:
+            return int(match.group(1))
+    return default
+
+
+def coerce_source_connection(value: Any) -> "SourceConnection":
+    """Convert legacy/raw connection payloads into SourceConnection safely."""
+    if isinstance(value, SourceConnection):
+        return value
+    if not isinstance(value, dict):
+        return SourceConnection()
+
+    data = dict(value)
+    data["port"] = _coerce_int(data.get("port"), 5432)
+    data["timeout"] = _coerce_int(data.get("timeout"), 30)
+    data["max_connections"] = _coerce_int(data.get("max_connections"), None)
+
+    try:
+        return SourceConnection(**data)
+    except Exception:
+        return SourceConnection(
+            host=data.get("host"),
+            port=_coerce_int(data.get("port"), 5432) or 5432,
+            username=data.get("username"),
+            database=data.get("database"),
+            uri=data.get("uri"),
+            timeout=_coerce_int(data.get("timeout"), 30) or 30,
+            max_connections=_coerce_int(data.get("max_connections"), None),
+            ssl_mode=data.get("ssl_mode"),
+            connection_params=data.get("connection_params") if isinstance(data.get("connection_params"), dict) else {},
+            description=data.get("description"),
+            test_query=data.get("test_query"),
+        )
 
 
 class SourceConnection(SQLModel):

@@ -288,6 +288,19 @@ class ScanRequest(SQLModel):
     scan_options: Dict[str, Any] | None = Field(default_factory=dict)
 
 
+class CatalogScanRequest(SQLModel):
+    """Request payload for catalog schema discovery scan."""
+
+    schema_names: List[str] | None = Field(
+        default=None,
+        description="Schema names to scan. Null means source-specific default schema.",
+    )
+    include_row_counts: bool = Field(
+        default=False,
+        description="Whether to include per-table row counts during scanning.",
+    )
+
+
 class ScanResult(SQLModel):
     """Result of a schema scan"""
 

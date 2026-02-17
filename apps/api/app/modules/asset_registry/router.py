@@ -10,6 +10,7 @@ from core.db import get_session, get_session_context
 from core.tenant import get_current_tenant
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
+from sqlalchemy.exc import StatementError
 from sqlmodel import Session, select
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ from app.modules.asset_registry.resolver_models import (
     ResolverConfig,
 )
 from app.modules.asset_registry.schema_models import (
+    CatalogScanRequest,
     SchemaAssetCreate,
     SchemaAssetResponse,
     SchemaAssetUpdate,
@@ -68,7 +70,8 @@ from app.modules.asset_registry.source_models import (
     SourceAssetResponse,
     SourceAssetUpdate,
     SourceListResponse,
-    SourceType,
+    coerce_source_connection,
+    coerce_source_type,
 )
 from app.modules.auth.models import TbUser
 from app.modules.inspector import crud as inspector_crud
@@ -88,20 +91,21 @@ from typing import Union
 def create_asset(
     payload: Union[PromptAssetCreate, ScreenAssetCreate, QueryAssetCreate],
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
     session: Session = Depends(get_session),
 ):
     if isinstance(payload, ScreenAssetCreate):
-        return create_screen_asset_impl(payload, session, current_user)
+        return create_screen_asset_impl(payload, session, current_user, tenant_id)
     elif isinstance(payload, PromptAssetCreate):
-        return create_prompt_asset_impl(payload, session, current_user)
+        return create_prompt_asset_impl(payload, session, current_user, tenant_id)
     elif isinstance(payload, QueryAssetCreate):
-        return create_query_asset_impl(payload, session, current_user)
+        return create_query_asset_impl(payload, session, current_user, tenant_id)
     else:
         raise HTTPException(status_code=400, detail="Invalid asset type")
 
 
 def create_screen_asset_impl(
-    payload: ScreenAssetCreate, session: Session, current_user: TbUser
+    payload: ScreenAssetCreate, session: Session, current_user: TbUser, tenant_id: str
 ):
     if payload.asset_type != "screen":
         raise HTTPException(status_code=400, detail="asset_type must be 'screen'")
@@ -141,6 +145,7 @@ def create_screen_asset_impl(
             schema_json=payload.screen_schema,
             tags=payload.tags,
             created_by=payload.created_by,
+            tenant_id=tenant_id,
             status="draft",
         )
         session.add(asset)
@@ -186,7 +191,7 @@ def create_screen_asset_impl(
 
 
 def create_prompt_asset_impl(
-    payload: PromptAssetCreate, session: Session, current_user: TbUser
+    payload: PromptAssetCreate, session: Session, current_user: TbUser, tenant_id: str
 ):
     """Create a prompt asset"""
     if payload.asset_type != "prompt":
@@ -220,6 +225,7 @@ def create_prompt_asset_impl(
             output_contract=payload.output_contract,
             tags=payload.tags,
             created_by=payload.created_by,
+            tenant_id=tenant_id,
             status="draft",
         )
         session.add(asset)
@@ -268,7 +274,7 @@ def create_prompt_asset_impl(
 
 
 def create_query_asset_impl(
-    payload: QueryAssetCreate, session: Session, current_user: TbUser
+    payload: QueryAssetCreate, session: Session, current_user: TbUser, tenant_id: str
 ):
     """Create a query asset"""
     if payload.asset_type != "query":
@@ -285,6 +291,7 @@ def create_query_asset_impl(
             query_metadata=payload.query_metadata,
             tags=payload.tags,
             created_by=payload.created_by,
+            tenant_id=tenant_id,
             status="draft",
         )
         session.add(asset)
@@ -1067,8 +1074,8 @@ def list_sources(
                     description=asset.description,
                     version=asset.version,
                     status=asset.status,
-                    source_type=SourceType(content.get("source_type", "postgresql")),
-                    connection=content.get("connection", {}),
+                    source_type=coerce_source_type(content.get("source_type", "postgresql")),
+                    connection=coerce_source_connection(content.get("connection", {})),
                     scope=asset.scope,
                     tags=asset.tags,
                     created_by=asset.created_by,
@@ -1093,10 +1100,13 @@ def list_sources(
 def create_source(
     payload: SourceAssetCreate,
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """Create a new source asset"""
     with get_session_context() as session:
-        asset = create_source_asset(session, payload, created_by=current_user.id)
+        asset = create_source_asset(
+            session, payload, tenant_id=tenant_id, created_by=current_user.id
+        )
         return ResponseEnvelope.success(
             data=SourceAssetResponse(
                 asset_id=str(asset.asset_id),
@@ -1257,10 +1267,13 @@ def list_catalogs(
 def create_catalog(
     payload: SchemaAssetCreate,
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """Create a new catalog asset (database schema catalog)"""
     with get_session_context() as session:
-        asset = create_schema_asset(session, payload, created_by=current_user.id)
+        asset = create_schema_asset(
+            session, payload, tenant_id=tenant_id, created_by=current_user.id
+        )
         return ResponseEnvelope.success(
             data=SchemaAssetResponse(
                 asset_id=str(asset.asset_id),
@@ -1357,8 +1370,7 @@ def delete_catalog(
 @router.post("/catalogs/{asset_id}/scan", response_model=ResponseEnvelope)
 async def scan_catalog_endpoint(
     asset_id: str,
-    schema_names: list[str] | None = None,
-    include_row_counts: bool = False,
+    payload: CatalogScanRequest = Body(default_factory=CatalogScanRequest),
     current_user: TbUser = Depends(get_current_user),
 ):
     """
@@ -1366,8 +1378,7 @@ async def scan_catalog_endpoint(
 
     Args:
         asset_id: Catalog asset ID
-        schema_names: List of schema names to scan (e.g., ["public"] for PostgreSQL)
-        include_row_counts: Whether to count table rows (can be slow for large tables)
+        payload: Scan options for schema discovery
     """
     import logging
 
@@ -1376,7 +1387,10 @@ async def scan_catalog_endpoint(
     logger = logging.getLogger(__name__)
 
     with get_session_context() as session:
-        asset = session.get(TbAssetRegistry, asset_id)
+        try:
+            asset = session.get(TbAssetRegistry, asset_id)
+        except (ValueError, TypeError, StatementError):
+            raise HTTPException(status_code=400, detail="Invalid catalog asset_id format")
 
         if not asset:
             raise HTTPException(status_code=404, detail="Catalog asset not found")
@@ -1388,8 +1402,8 @@ async def scan_catalog_endpoint(
             updated_asset = await scan_schema_asset(
                 session,
                 asset,
-                schema_names=schema_names,
-                include_row_counts=include_row_counts,
+                schema_names=payload.schema_names or None,
+                include_row_counts=payload.include_row_counts,
             )
 
             # Return updated asset
@@ -1516,10 +1530,13 @@ def list_resolvers(
 def create_resolver(
     payload: ResolverAssetCreate,
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """Create a new resolver asset"""
     with get_session_context() as session:
-        asset = create_resolver_asset(session, payload, created_by=current_user.id)
+        asset = create_resolver_asset(
+            session, payload, tenant_id=tenant_id, created_by=current_user.id
+        )
         return ResponseEnvelope.success(
             data=ResolverAssetResponse(
                 asset_id=str(asset.asset_id),
@@ -1665,6 +1682,7 @@ def list_tools(
 def create_tool(
     payload: dict[str, Any] = Body(...),
     current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ):
     """Create new tool asset"""
     # BLOCKER-1: Tool 생성 권한 체크
@@ -1698,6 +1716,7 @@ def create_tool(
             tool_output_schema=payload.get("tool_output_schema"),
             tool_catalog_ref=payload.get("tool_catalog_ref"),
             tags=payload.get("tags"),
+            tenant_id=tenant_id,
             created_by=current_user.id if current_user else "admin",
         )
 

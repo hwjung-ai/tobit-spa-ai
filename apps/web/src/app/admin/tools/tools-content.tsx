@@ -131,12 +131,12 @@ export default function ToolsPageContent() {
                             onChange={(e) => handleToolTypeFilterChange(e.target.value as ToolType)}
                             className="input-container w-full text-xs"
                         >
-                            <option value="all">All Types</option>
-                            <option value="database_query">Database Query</option>
-                            <option value="http_api">HTTP API</option>
-                            <option value="graph_query">Graph Query</option>
-                            <option value="mcp">MCP Server</option>
-                            <option value="python_script">Python Script</option>
+                            <option value="all" className="bg-surface-elevated text-foreground">All Types</option>
+                            <option value="database_query" className="bg-surface-elevated text-foreground">Database Query</option>
+                            <option value="http_api" className="bg-surface-elevated text-foreground">HTTP API</option>
+                            <option value="graph_query" className="bg-surface-elevated text-foreground">Graph Query</option>
+                            <option value="mcp" className="bg-surface-elevated text-foreground">MCP Server</option>
+                            <option value="python_script" className="bg-surface-elevated text-foreground">Python Script</option>
                         </select>
                     </div>
                     <StatusFilterButtons value={statusFilter} onChange={handleStatusFilterChange} />

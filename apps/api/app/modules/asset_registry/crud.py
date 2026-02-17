@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from core.logging import get_request_context
+from core.tenant import DEFAULT_TENANT_ID, normalize_tenant_id
 from sqlmodel import Session, select
 
 from app.modules.audit_log.crud import create_audit_log
@@ -32,6 +33,8 @@ from .source_models import (
     SourceAssetCreate,
     SourceAssetUpdate,
     SourceType,
+    coerce_source_connection,
+    coerce_source_type,
 )
 from .validators import validate_asset
 
@@ -90,9 +93,11 @@ def create_asset(
     tool_input_schema: dict[str, Any] | None = None,
     tool_output_schema: dict[str, Any] | None = None,
     tags: dict[str, Any] | None = None,
+    tenant_id: str | None = None,
     created_by: str | None = None,
 ) -> TbAssetRegistry:
     """Create new asset in draft status"""
+    resolved_tenant_id = normalize_tenant_id(tenant_id or DEFAULT_TENANT_ID)
     asset = TbAssetRegistry(
         asset_type=asset_type,
         name=name,
@@ -125,6 +130,7 @@ def create_asset(
         tool_output_schema=tool_output_schema,
         # Common fields
         tags=tags,
+        tenant_id=resolved_tenant_id,
         # Metadata
         created_by=created_by,
         created_at=datetime.now(),
@@ -280,9 +286,11 @@ def create_tool_asset(
     tool_output_schema: dict[str, Any] | None = None,
     tool_catalog_ref: str | None = None,
     tags: dict[str, Any] | None = None,
+    tenant_id: str | None = None,
     created_by: str | None = None,
 ) -> TbAssetRegistry:
     """Create new tool asset in draft status"""
+    resolved_tenant_id = normalize_tenant_id(tenant_id or DEFAULT_TENANT_ID)
     asset = TbAssetRegistry(
         asset_type="tool",
         name=name,
@@ -295,6 +303,7 @@ def create_tool_asset(
         tool_input_schema=tool_input_schema,
         tool_output_schema=tool_output_schema,
         tags=tags,
+        tenant_id=resolved_tenant_id,
         created_by=created_by,
         created_at=datetime.now(),
         updated_at=datetime.now(),
@@ -481,6 +490,7 @@ def unpublish_asset(
 def create_source_asset(
     session: Session,
     source_data: SourceAssetCreate,
+    tenant_id: str | None = None,
     created_by: str | None = None,
 ) -> SourceAsset:
     """Create a new source asset"""
@@ -492,6 +502,7 @@ def create_source_asset(
         description=source_data.description,
         scope=source_data.scope,
         tags=source_data.tags,
+        tenant_id=tenant_id,
         created_by=created_by,
     )
 
@@ -546,8 +557,8 @@ def get_source_asset(session: Session, asset_id: str) -> SourceAsset | None:
         description=asset.description,
         version=asset.version,
         status=asset.status,
-        source_type=SourceType(content.get("source_type", "postgresql")),
-        connection=content.get("connection", {}),
+        source_type=coerce_source_type(content.get("source_type", "postgresql")),
+        connection=coerce_source_connection(content.get("connection", {})),
         scope=asset.scope,
         tags=asset.tags,
         created_by=asset.created_by,
@@ -763,6 +774,7 @@ def build_schema_catalog(asset: TbAssetRegistry) -> SchemaCatalog:
 def create_schema_asset(
     session: Session,
     schema_data: SchemaAssetCreate,
+    tenant_id: str | None = None,
     created_by: str | None = None,
 ) -> SchemaAsset:
     """Create a new schema asset"""
@@ -782,6 +794,7 @@ def create_schema_asset(
         description=schema_data.description,
         scope=schema_data.scope,
         tags=schema_data.tags,
+        tenant_id=tenant_id,
         created_by=created_by,
     )
 
@@ -1052,6 +1065,7 @@ async def scan_schema_asset(
 def create_resolver_asset(
     session: Session,
     resolver_data: ResolverAssetCreate,
+    tenant_id: str | None = None,
     created_by: str | None = None,
 ) -> ResolverAsset:
     """Create a new resolver asset"""
@@ -1063,6 +1077,7 @@ def create_resolver_asset(
         description=resolver_data.description,
         scope=resolver_data.scope,
         tags=resolver_data.tags,
+        tenant_id=tenant_id,
         created_by=created_by,
     )
 
@@ -1271,6 +1286,7 @@ def simulate_resolver_configuration(
 def create_query_asset(
     session: Session,
     query_data: Any,  # QueryAssetCreate from query_models
+    tenant_id: str | None = None,
     created_by: str | None = None,
 ) -> Any:  # QueryAssetResponse
     """Create a new query asset"""
@@ -1285,6 +1301,7 @@ def create_query_asset(
         query_params=query_data.query_params,
         query_metadata=query_data.query_metadata,
         tags=query_data.tags,
+        tenant_id=tenant_id,
         created_by=created_by,
     )
 
