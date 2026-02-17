@@ -297,7 +297,7 @@ function InspectorContent() {
     }
     const copyValue = traceDetail.trace_id;
     if (!navigator?.clipboard) {
-      window.prompt("Copy trace_id", copyValue);
+      setStatusMessage("클립보드 접근이 불가능합니다. 수동으로 복사해주세요.");
       return;
     }
     navigator.clipboard
@@ -312,7 +312,7 @@ function InspectorContent() {
     }
     const link = `${window.location.origin}/admin/inspector?trace_id=${encodeURIComponent(traceDetail.trace_id)}`;
     if (!navigator?.clipboard) {
-      window.prompt("Copy trace link", link);
+      setStatusMessage("클립보드 접근이 불가능합니다. 수동으로 복사해주세요.");
       return;
     }
     navigator.clipboard

@@ -10,9 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict
 
-from core.config import get_settings
-
 from app.modules.asset_registry.loader import load_source_asset
+from app.modules.inspector.asset_context import get_stage_assets, get_tracked_assets
 from app.modules.ops.services.connections import ConnectionFactory
 from app.modules.ops.services.orchestration.tools.query_safety import (
     validate_direct_query,
@@ -21,6 +20,24 @@ from app.modules.ops.services.orchestration.tools.query_safety import (
 from .base import BaseTool, ToolContext, ToolResult
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_source_ref(params: Dict[str, Any], context: ToolContext) -> str | None:
+    explicit = params.get("source_ref")
+    if explicit:
+        return str(explicit)
+    metadata_source = context.get_metadata("source_ref")
+    if metadata_source:
+        return str(metadata_source)
+    stage_assets = get_stage_assets()
+    stage_source = stage_assets.get("source") if isinstance(stage_assets, dict) else None
+    if isinstance(stage_source, dict) and stage_source.get("name"):
+        return str(stage_source["name"])
+    tracked_assets = get_tracked_assets()
+    tracked_source = tracked_assets.get("source") if isinstance(tracked_assets, dict) else None
+    if isinstance(tracked_source, dict) and tracked_source.get("name"):
+        return str(tracked_source["name"])
+    return None
 
 
 class DirectQueryTool(BaseTool):
@@ -103,13 +120,11 @@ class DirectQueryTool(BaseTool):
                 }
             )
 
-        source_ref = params.get("source_ref")
-        if not source_ref:
-            source_ref = get_settings().ops_default_source_asset
+        source_ref = _resolve_source_ref(params, context)
         if not source_ref:
             return ToolResult(
                 success=False,
-                error="source_ref is required or ops_default_source_asset must be configured",
+                error="source_ref is required",
                 error_details={"param": "source_ref"},
             )
 

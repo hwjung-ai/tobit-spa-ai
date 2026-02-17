@@ -43,7 +43,11 @@ def _build_dsn_from_source(source_payload: dict[str, Any]) -> str | None:
     return f"postgresql://{user}@{host}:{port}/{database}"
 
 
-def get_pg_connection(settings: AppSettings | None = None, use_source_asset: bool = False) -> psycopg.Connection:
+def get_pg_connection(
+    settings: AppSettings | None = None,
+    use_source_asset: bool = False,
+    source_ref: str | None = None,
+) -> psycopg.Connection:
     """
     Get PostgreSQL connection.
 
@@ -53,12 +57,18 @@ def get_pg_connection(settings: AppSettings | None = None, use_source_asset: boo
                          If False (default), use direct env vars (for system operations).
     """
     settings = settings or AppSettings.cached_settings()
-    if use_source_asset and settings.ops_default_source_asset:
-        source_payload = load_source_asset(settings.ops_default_source_asset)
-        if source_payload:
-            dsn = _build_dsn_from_source(source_payload)
-            if dsn:
-                return psycopg.connect(dsn, options="-c timezone=UTC")
+    if use_source_asset:
+        if not source_ref:
+            raise ValueError("source_ref is required when use_source_asset=True")
+        source_payload = load_source_asset(source_ref)
+        if not source_payload:
+            raise ValueError(f"Source asset not found: {source_ref}")
+        dsn = _build_dsn_from_source(source_payload)
+        if not dsn:
+            raise ValueError(
+                f"Invalid source asset connection configuration: {source_ref}"
+            )
+        return psycopg.connect(dsn, options="-c timezone=UTC")
     return psycopg.connect(settings.psycopg_dsn)
 
 

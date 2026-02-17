@@ -10,7 +10,6 @@ import re
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from core.config import get_settings
 from core.logging import get_logger
 
 from app.modules.asset_registry.loader import load_source_asset
@@ -494,26 +493,6 @@ class DynamicTool(BaseTool):
         source_asset = load_source_asset(name=source_ref)
         source_ref_effective = source_ref
         if not source_asset:
-            settings = get_settings()
-            fallback_candidates = [
-                "default_postgres",
-                settings.ops_default_source_asset,
-            ]
-            for candidate in fallback_candidates:
-                if not candidate or candidate == source_ref:
-                    continue
-                candidate_asset = load_source_asset(name=candidate)
-                if candidate_asset:
-                    logger.warning(
-                        "Source asset '%s' not found for tool '%s'; fallback to '%s'",
-                        source_ref,
-                        self.name,
-                        candidate,
-                    )
-                    source_asset = candidate_asset
-                    source_ref_effective = str(candidate)
-                    break
-        if not source_asset:
             return ToolResult(
                 success=False,
                 error=f"Source asset not found: {source_ref}",
@@ -871,10 +850,7 @@ class DynamicTool(BaseTool):
             ci_ids = []
 
         neo4j_source_ref = self.tool_config.get("source_ref")
-        postgres_source_ref = (
-            self.tool_config.get("postgres_source_ref")
-            or get_settings().ops_default_source_asset
-        )
+        postgres_source_ref = self.tool_config.get("postgres_source_ref")
         if not neo4j_source_ref:
             return ToolResult(
                 success=False,

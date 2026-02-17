@@ -20,8 +20,7 @@ from core.db_pg import get_pg_connection
 from core.logging import get_logger
 from sqlalchemy.orm import Session
 
-from app.modules.asset_registry.loader import load_query_asset, load_source_asset
-from app.modules.ops.services.connections import ConnectionFactory
+from app.modules.asset_registry.loader import load_query_asset
 
 logger = get_logger(__name__)
 
@@ -55,13 +54,6 @@ def _set_dotted_path(target: Dict[str, Any], dotted_path: str, value: Any) -> No
             cursor[part] = next_value
         cursor = next_value
     cursor[parts[-1]] = value
-
-
-def _get_connection():
-    """Get connection using source asset."""
-    settings = get_settings()
-    source_asset = load_source_asset(settings.ops_default_source_asset)
-    return ConnectionFactory.create(source_asset)
 
 
 class ExecutorResult:
@@ -290,12 +282,15 @@ async def handle_list_maintenance_filtered(
     Returns:
         AnswerBlock with table of maintenance tickets
     """
-    from core.config import get_settings
 
     device_id = inputs.get("device_id", "").strip()
     offset = inputs.get("offset", 0)
     limit = inputs.get("limit", 20)
     tenant_id = context.get("tenant_id") or get_settings().default_tenant_id
+
+    source_ref = (inputs.get("source_ref") or context.get("source_asset") or "").strip()
+    if not source_ref:
+        raise ValueError("source_ref is required")
 
     try:
         # Load query SQL for maintenance history from query asset
@@ -308,7 +303,7 @@ async def handle_list_maintenance_filtered(
 
         # Get PostgreSQL connection
         settings = get_settings()
-        conn = get_pg_connection(settings, use_source_asset=True)
+        conn = get_pg_connection(settings, use_source_asset=True, source_ref=source_ref)
 
         try:
             # Execute query with device filter (if provided)
@@ -455,13 +450,16 @@ async def handle_create_maintenance_ticket(
     import uuid
     from datetime import datetime, timezone
 
-    from core.config import get_settings
 
     device_id = inputs.get("device_id", "").strip()
     maint_type = inputs.get("maintenance_type", "").strip()
     scheduled_date = inputs.get("scheduled_date", "").strip()
     assigned_to = inputs.get("assigned_to", "Unknown").strip()
     tenant_id = context.get("tenant_id") or get_settings().default_tenant_id
+
+    source_ref = (inputs.get("source_ref") or context.get("source_asset") or "").strip()
+    if not source_ref:
+        raise ValueError("source_ref is required")
 
     # Validate inputs
     if not all([device_id, maint_type, scheduled_date]):
@@ -472,7 +470,7 @@ async def handle_create_maintenance_ticket(
     try:
         # Get PostgreSQL connection
         settings = get_settings()
-        conn = get_pg_connection(settings, use_source_asset=True)
+        conn = get_pg_connection(settings, use_source_asset=True, source_ref=source_ref)
 
         try:
             # Find CI ID for the device_id (ci_code)

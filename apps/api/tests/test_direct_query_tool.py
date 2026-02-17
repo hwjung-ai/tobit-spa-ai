@@ -66,20 +66,14 @@ class TestDirectQueryToolExecution:
 
     @pytest.mark.asyncio
     async def test_execute_missing_source_ref(self):
-        """Should return error when source_ref is missing and no default configured."""
+        """Should return error when source_ref is missing."""
         tool = DirectQueryTool()
         context = ToolContext(tenant_id="test-tenant")
+        result = await tool.execute(context, {"sql": "SELECT * FROM users"})
 
-        with patch(
-            "app.modules.ops.services.orchestration.tools.direct_query_tool.get_settings"
-        ) as mock_settings:
-            mock_settings.return_value.ops_default_source_asset = None
-
-            result = await tool.execute(context, {"sql": "SELECT * FROM users"})
-
-            assert result.success is False
-            assert "source_ref is required" in result.error
-            assert result.error_details["param"] == "source_ref"
+        assert result.success is False
+        assert "source_ref is required" in result.error
+        assert result.error_details["param"] == "source_ref"
 
     @pytest.mark.asyncio
     async def test_execute_source_asset_not_found(self):
@@ -423,36 +417,34 @@ class TestDirectQueryToolIntegration:
                 )
 
     @pytest.mark.asyncio
-    async def test_with_default_source_ref(self):
-        """Should use default source_ref from settings when not provided."""
+    async def test_with_context_metadata_source_ref(self):
+        """Should use source_ref from tool context metadata when not provided in params."""
         tool = DirectQueryTool()
-        context = ToolContext(tenant_id="test-tenant")
+        context = ToolContext(
+            tenant_id="test-tenant",
+            metadata={"source_ref": "default_postgres"},
+        )
 
         mock_source = MagicMock()
         mock_connection = MagicMock()
         mock_connection.execute.return_value = []
 
         with patch(
-            "app.modules.ops.services.orchestration.tools.direct_query_tool.get_settings"
-        ) as mock_settings:
+            "app.modules.ops.services.orchestration.tools.direct_query_tool.load_source_asset"
+        ) as mock_load:
             with patch(
-                "app.modules.ops.services.orchestration.tools.direct_query_tool.load_source_asset"
-            ) as mock_load:
-                with patch(
-                    "app.modules.ops.services.orchestration.tools.direct_query_tool.ConnectionFactory.create"
-                ) as mock_factory:
-                    mock_settings.return_value.ops_default_source_asset = "default_postgres"
-                    mock_load.return_value = mock_source
-                    mock_factory.return_value = mock_connection
+                "app.modules.ops.services.orchestration.tools.direct_query_tool.ConnectionFactory.create"
+            ) as mock_factory:
+                mock_load.return_value = mock_source
+                mock_factory.return_value = mock_connection
 
-                    result = await tool.execute(
-                        context,
-                        {"sql": "SELECT * FROM users"}
-                    )
+                result = await tool.execute(
+                    context,
+                    {"sql": "SELECT * FROM users"}
+                )
 
-                    assert result.success is True
-                    # Verify load_source_asset was called with default
-                    mock_load.assert_called_once_with("default_postgres")
+                assert result.success is True
+                mock_load.assert_called_once_with("default_postgres")
 
     @pytest.mark.asyncio
     async def test_connection_cleanup_on_error(self):

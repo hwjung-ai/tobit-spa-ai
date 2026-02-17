@@ -517,9 +517,9 @@ export default function OpsPage() {
             : JSON.stringify(action.payload ?? {}, null, 2);
         try {
           await navigator.clipboard?.writeText(payload);
-          setStatusMessage("Payload copied to clipboard");
+          setStatusMessage("Payload가 클립보드에 복사되었습니다.");
         } catch {
-          window.prompt("Copy payload", payload);
+          setStatusMessage("클립보드 복사에 실패했습니다. 수동으로 복사해주세요.");
         }
         return;
       }

@@ -83,6 +83,7 @@
   - CEP simulate 연계 + Event Browser 링크
   - CI 목록 미리보기
   - 선택적 Asset 바인딩: `source_asset`, `schema_asset`, `resolver_asset`를 통해 질문 정규화/trace 적용
+  - OPS 실행 경로는 `ops_default_*` 환경 변수 fallback 없이 요청/툴 설정에서 전달된 Asset 참조만 사용
   - `schema_asset` 미지정 시 `source_asset` 기준으로 게시된 catalog를 자동 해석해 planner context에 주입 (source-schema 불일치 시 source 우선으로 catalog 재해석)
 - SIM UI (`/sim`)
   - 시나리오 빌더(질문/서비스/전략/가정값/기간)

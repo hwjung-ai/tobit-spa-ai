@@ -7,7 +7,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from core.config import get_settings
 from psycopg import Connection
 
 from app.modules.asset_registry.loader import load_query_asset, load_source_asset
@@ -26,9 +25,13 @@ AGG_COLUMNS = [
 ]
 
 def _get_connection():
-    """Get connection using source asset."""
-    settings = get_settings()
-    source_asset = load_source_asset(settings.ops_default_source_asset)
+    """Get connection using an explicitly provided source asset."""
+    source_ref = os.environ.get("OPS_SOURCE_ASSET")
+    if not source_ref:
+        raise ValueError("OPS_SOURCE_ASSET is required")
+    source_asset = load_source_asset(source_ref)
+    if not source_asset:
+        raise ValueError(f"Source asset not found: {source_ref}")
     return ConnectionFactory.create(source_asset)
 
 

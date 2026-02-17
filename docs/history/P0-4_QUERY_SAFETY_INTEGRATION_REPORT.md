@@ -156,10 +156,10 @@ test_with_parameterized_query()
   - 파라미터: [1]
   - 검증: connection.execute()가 (query, params)로 호출됨
 
-# 기본 source_ref 사용
-test_with_default_source_ref()
+# 컨텍스트 기반 source_ref 사용
+test_with_context_metadata_source_ref()
   - source_ref 미제공
-  - 예상: 설정의 ops_default_source_asset 사용
+  - 예상: ToolContext metadata.source_ref 사용
 
 # 연결 정리 (에러 시)
 test_connection_cleanup_on_error()

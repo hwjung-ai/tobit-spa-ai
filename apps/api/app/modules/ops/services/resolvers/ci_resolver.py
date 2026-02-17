@@ -3,9 +3,8 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from core.config import get_settings
-
 from app.modules.asset_registry.loader import load_query_asset, load_source_asset
+from app.modules.inspector.asset_context import get_stage_assets, get_tracked_assets
 from app.modules.ops.services.connections import ConnectionFactory
 
 from .types import CIHit
@@ -14,10 +13,28 @@ CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app|mes)-[a-z0-9-]+\b", re.IGNORECASE
 )
 
-def _get_connection():
-    """Get connection using source asset."""
-    settings = get_settings()
-    source_asset = load_source_asset(settings.ops_default_source_asset)
+def _resolve_source_ref(source_ref: str | None = None) -> str | None:
+    if source_ref:
+        return source_ref
+    stage_assets = get_stage_assets()
+    stage_source = stage_assets.get("source") if isinstance(stage_assets, dict) else None
+    if isinstance(stage_source, dict) and stage_source.get("name"):
+        return str(stage_source["name"])
+    tracked_assets = get_tracked_assets()
+    tracked_source = tracked_assets.get("source") if isinstance(tracked_assets, dict) else None
+    if isinstance(tracked_source, dict) and tracked_source.get("name"):
+        return str(tracked_source["name"])
+    return None
+
+
+def _get_connection(source_ref: str | None = None):
+    """Get connection using explicitly selected source asset."""
+    resolved_source_ref = _resolve_source_ref(source_ref)
+    if not resolved_source_ref:
+        raise ValueError("source_ref is required for CI resolver")
+    source_asset = load_source_asset(resolved_source_ref)
+    if not source_asset:
+        raise ValueError(f"Source asset not found: {resolved_source_ref}")
     return ConnectionFactory.create(source_asset)
 
 
@@ -31,7 +48,10 @@ def _load_query(name: str) -> str:
 
 
 def resolve_ci(
-    question: str, tenant_id: str | None = None, limit: int = 5
+    question: str,
+    tenant_id: str | None = None,
+    limit: int = 5,
+    source_ref: str | None = None,
 ) -> list[CIHit]:
     """
     CI 해석: 3단계 검색 (우선도 기반)
@@ -45,12 +65,12 @@ def resolve_ci(
     - ci_code 패턴 검색 (score 0.8)
     - ci_name 패턴 검색 (score 0.6)
     """
-    resolved_tenant_id = tenant_id or get_settings().default_tenant_id
+    resolved_tenant_id = tenant_id or "default"
     codes = _extract_codes(question)
     hits: list[CIHit] = []
     seen_codes: set[str] = set()
 
-    connection = _get_connection()
+    connection = _get_connection(source_ref)
     try:
         conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
