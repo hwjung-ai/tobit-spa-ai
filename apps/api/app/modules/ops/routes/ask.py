@@ -43,8 +43,8 @@ from app.modules.inspector.span_tracker import (
     start_span,
 )
 from app.modules.ops.schemas import (
-    CiAskRequest,
-    CiAskResponse,
+    OpsAskRequest,
+    OpsAskResponse,
     ReplanPatchDiff,
     ReplanTrigger,
     RerunContext,
@@ -72,7 +72,7 @@ logger = get_logger(__name__)
 
 @router.post("/ask")
 def ask_ops(
-    payload: CiAskRequest,
+    payload: OpsAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
     current_user: TbUser = Depends(get_current_user),
@@ -93,7 +93,7 @@ def ask_ops(
         tenant_id: Tenant ID from header
 
     Returns:
-        CiAskResponse with answer, blocks, trace, and next actions
+        OpsAskResponse with answer, blocks, trace, and next actions
     """
     start = time.perf_counter()
     status = "ok"
@@ -131,13 +131,13 @@ def ask_ops(
             session.refresh(history_entry)
         history_id = history_entry.id
     except Exception as exc:
-        logger.exception("ci.history.create_failed", exc_info=exc)
+        logger.exception("ops.history.create_failed", exc_info=exc)
         history_id = None
 
     # 로깅을 위해 요청 데이터 마스킹
     masked_payload = SecurityUtils.mask_dict(payload.model_dump())
     logger.info(
-        "ci.ask.start",
+        "ops.ask.start",
         extra={
             "query_len": len(payload.question),
             "has_patch": patched,
@@ -169,11 +169,11 @@ def ask_ops(
     active_trace_id = getattr(request.state, "trace_id", None) or context.get("trace_id")
     request_id = getattr(request.state, "request_id", None) or context.get("request_id")
     logger.info(
-        f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}"
+        f"ops.ask.context: trace_id={active_trace_id}, request_id={request_id}"
     )
     if not active_trace_id or active_trace_id == "-" or active_trace_id == "None":
         active_trace_id = str(uuid.uuid4())
-        logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
+        logger.info(f"ops.ask.new_trace_id: {active_trace_id}")
     parent_trace_id = context.get("parent_trace_id")
     if parent_trace_id == "-":
         parent_trace_id = None
@@ -295,18 +295,18 @@ def ask_ops(
         if payload.rerun:
             # Handle rerun path (skip planner, go directly to validator)
             route_plan_start = time.perf_counter()
-            logger.info("ci.runner.planner.skipped", extra={"reason": "rerun"})
+            logger.info("ops.runner.planner.skipped", extra={"reason": "rerun"})
             validator_span = start_span("validator", "stage")
             try:
                 patched_plan = apply_patch(payload.rerun.base_plan, payload.rerun.patch)
-                logger.info("ci.runner.validator.start", extra={"phase": "rerun"})
+                logger.info("ops.runner.validator.start", extra={"phase": "rerun"})
                 plan_validated, plan_trace = validator.validate_plan(
                     patched_plan, resolver_payload=resolver_payload
                 )
-                logger.info("ci.runner.validator.done", extra={"phase": "rerun"})
+                logger.info("ops.runner.validator.done", extra={"phase": "rerun"})
                 end_span(validator_span, links={"plan_path": "plan.validated"})
                 planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
-                logger.info(f"ci.runner.rerun.route_plan_time: {planner_elapsed_ms}ms")
+                logger.info(f"ops.runner.rerun.route_plan_time: {planner_elapsed_ms}ms")
             except Exception as e:
                 end_span(
                     validator_span,
@@ -349,7 +349,7 @@ def ask_ops(
             planner_span = start_span("planner", "stage")
             try:
                 logger.info(
-                    "ci.runner.planner.start",
+                    "ops.runner.planner.start",
                     extra={
                         "llm_called": False,
                         "has_schema": bool(schema_payload),
@@ -363,7 +363,7 @@ def ask_ops(
                 )
                 planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
                 logger.info(
-                    "ci.runner.planner.done",
+                    "ops.runner.planner.done",
                     extra={"llm_called": False, "elapsed_ms": planner_elapsed_ms},
                 )
                 end_span(planner_span, links={"plan_path": "plan.raw"})
@@ -379,11 +379,11 @@ def ask_ops(
                 plan_raw = plan_output.plan
                 validator_span = start_span("validator", "stage")
                 try:
-                    logger.info("ci.runner.validator.start", extra={"phase": "initial"})
+                    logger.info("ops.runner.validator.start", extra={"phase": "initial"})
                     plan_validated, plan_trace = validator.validate_plan(
                         plan_raw, resolver_payload=resolver_payload
                     )
-                    logger.info("ci.runner.validator.done", extra={"phase": "initial"})
+                    logger.info("ops.runner.validator.done", extra={"phase": "initial"})
                     end_span(validator_span, links={"plan_path": "plan.validated"})
                 except Exception as e:
                     end_span(
@@ -583,12 +583,12 @@ def ask_ops(
             result["trace"]["trace_id"] = active_trace_id
             result["trace"]["parent_trace_id"] = parent_trace_id
 
-        response: CiAskResponse = CiAskResponse(**result)
+        response: OpsAskResponse = OpsAskResponse(**result)
         response_payload = ResponseEnvelope.success(data=response.model_dump())
 
     except Exception as exc:
         status = "error"
-        logger.exception("ci.ask.error", exc_info=exc)
+        logger.exception("ops.ask.error", exc_info=exc)
         error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
         error_response = JSONResponse(status_code=500, content=error_body)
         response_payload = None
@@ -606,7 +606,7 @@ def ask_ops(
                         session.add(history_entry)
                         session.commit()
             except Exception as hist_exc:
-                logger.exception("ci.history.error_update_failed", exc_info=hist_exc)
+                logger.exception("ops.history.error_update_failed", exc_info=hist_exc)
 
     finally:
         elapsed_ms = (
@@ -675,7 +675,7 @@ def ask_ops(
                         session.add(history_entry)
                         session.commit()
             except Exception as exc:
-                logger.exception("ci.history.update_failed", exc_info=exc)
+                logger.exception("ops.history.update_failed", exc_info=exc)
 
         logger.info(
             "ops.ask.done",

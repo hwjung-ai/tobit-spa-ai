@@ -575,7 +575,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           variant="outline"
           size="sm"
           onClick={handleEditSource}
-          className="border-variant bg-surface-base hover:bg-surface-elevated"
+          className="border border-variant bg-surface-base text-foreground hover:bg-surface-elevated"
         >
           Edit Connection
         </Button>
@@ -584,7 +584,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           size="sm"
           onClick={handleTestConnection}
           disabled={testMutation.isPending}
-          className="border-variant bg-surface-base hover:bg-surface-elevated"
+          className="border border-variant bg-surface-base text-foreground hover:bg-surface-elevated"
         >
           {testMutation.isPending ? "Testing..." : "Test Connection"}
         </Button>

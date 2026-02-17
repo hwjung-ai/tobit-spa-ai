@@ -745,6 +745,84 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
 
 # Schema Asset CRUD operations
 def build_schema_catalog(asset: TbAssetRegistry) -> SchemaCatalog:
+    def _to_bool(value: Any, default: bool = False) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"true", "t", "1", "yes", "y"}:
+                return True
+            if lowered in {"false", "f", "0", "no", "n"}:
+                return False
+            if lowered in {"yes", "no"}:
+                return lowered == "yes"
+        if value is None:
+            return default
+        return bool(value)
+
+    def _normalize_columns(columns: Any) -> list[dict[str, Any]]:
+        if not isinstance(columns, list):
+            return []
+        normalized: list[dict[str, Any]] = []
+        for raw in columns:
+            if not isinstance(raw, dict):
+                continue
+            name = raw.get("name") or raw.get("column_name")
+            data_type = raw.get("data_type")
+            if not name or not data_type:
+                continue
+            normalized.append(
+                {
+                    "name": str(name),
+                    "data_type": str(data_type),
+                    "is_nullable": _to_bool(raw.get("is_nullable"), True),
+                    "is_primary_key": _to_bool(raw.get("is_primary_key"), False),
+                    "is_foreign_key": _to_bool(raw.get("is_foreign_key"), False),
+                    "foreign_key_table": raw.get("foreign_key_table"),
+                    "foreign_key_column": raw.get("foreign_key_column"),
+                    "default_value": raw.get("default_value"),
+                    "description": raw.get("description") or raw.get("comment"),
+                    "constraints": raw.get("constraints", {}),
+                }
+            )
+        return normalized
+
+    def _normalize_tables(tables: Any) -> list[dict[str, Any]]:
+        if not isinstance(tables, list):
+            return []
+        normalized: list[dict[str, Any]] = []
+        for raw in tables:
+            if not isinstance(raw, dict):
+                continue
+            name = raw.get("name") or raw.get("table_name")
+            if not name:
+                continue
+            indexes = raw.get("indexes", {})
+            normalized_indexes: dict[str, Any]
+            if isinstance(indexes, dict):
+                normalized_indexes = indexes
+            elif isinstance(indexes, list):
+                normalized_indexes = {"items": indexes}
+            else:
+                normalized_indexes = {}
+
+            constraints = raw.get("constraints", {})
+            normalized_constraints = constraints if isinstance(constraints, dict) else {}
+
+            normalized.append(
+                {
+                    "name": str(name),
+                    "schema_name": raw.get("schema_name") or raw.get("schema") or "public",
+                    "description": raw.get("description") or raw.get("comment"),
+                    "columns": _normalize_columns(raw.get("columns", [])),
+                    "indexes": normalized_indexes,
+                    "constraints": normalized_constraints,
+                    "tags": raw.get("tags", {}),
+                    "row_count": raw.get("row_count"),
+                }
+            )
+        return normalized
+
     content = asset.content or {}
     catalog_data = content.get("catalog") or {}
 
@@ -762,7 +840,7 @@ def build_schema_catalog(asset: TbAssetRegistry) -> SchemaCatalog:
         name=catalog_name,
         description=catalog_data.get("description"),
         source_ref=source_ref,
-        tables=catalog_data.get("tables", []),
+        tables=_normalize_tables(catalog_data.get("tables", [])),
         last_scanned_at=catalog_data.get("last_scanned_at"),
         scan_status=catalog_data.get("scan_status", "pending"),
         scan_metadata=catalog_data.get("scan_metadata", {}),

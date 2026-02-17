@@ -38,7 +38,7 @@ from app.modules.inspector.span_tracker import (
     get_all_spans,
     start_span,
 )
-from app.modules.ops.schemas import CiAskRequest
+from app.modules.ops.schemas import OpsAskRequest
 from app.modules.ops.services.orchestration.orchestrator.runner import (
     OpsOrchestratorRunner,
 )
@@ -79,7 +79,7 @@ def _sse_event(event_type: str, data: dict[str, Any]) -> str:
 
 @router.post("/ask/stream")
 async def ask_ops_stream(
-    payload: CiAskRequest,
+    payload: OpsAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
     current_user: TbUser = Depends(get_current_user),
@@ -418,7 +418,7 @@ async def ask_ops_stream(
         except Exception as exc:
             status = "error"
             trace_status = "error"
-            logger.exception("ci.ask.stream.error", exc_info=exc)
+            logger.exception("ops.ask.stream.error", exc_info=exc)
             
             yield _sse_event("error", {
                 "message": str(exc),

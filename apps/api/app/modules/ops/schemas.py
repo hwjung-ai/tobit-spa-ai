@@ -98,7 +98,7 @@ class RerunRequest(BaseModel):
     patch: RerunPatch | None = None
 
 
-class CiAskRequest(BaseModel):
+class OpsAskRequest(BaseModel):
     question: str
     rerun: RerunRequest | None = None
     asset_overrides: Dict[str, str] | None = None
@@ -107,7 +107,7 @@ class CiAskRequest(BaseModel):
     resolver_asset: str | None = None
 
 
-class CiAskResponse(BaseModel):
+class OpsAskResponse(BaseModel):
     answer: str
     blocks: List[Dict[str, Any]]
     trace: Dict[str, Any]

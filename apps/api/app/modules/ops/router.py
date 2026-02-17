@@ -56,8 +56,8 @@ from app.modules.inspector.span_tracker import (
 )
 
 from .schemas import (
-    CiAskRequest,
-    CiAskResponse,
+    OpsAskRequest,
+    OpsAskResponse,
     IsolatedStageTestRequest,
     OpsQueryRequest,
     ReplanPatchDiff,
@@ -686,7 +686,7 @@ def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
 
 @router.post("/ask")
 def ask_ops(
-    payload: CiAskRequest,
+    payload: OpsAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
     current_user: TbUser = Depends(get_current_user),
@@ -862,7 +862,7 @@ def ask_ops(
                 schema_payload = resolved_catalog
                 schema_asset_name = str(resolved_catalog.get("name") or schema_asset_name)
                 logger.info(
-                    "ci.ask.catalog.auto_resolved",
+                    "ops.ask.catalog.auto_resolved",
                     extra={
                         "source_asset": source_asset_name,
                         "schema_asset": schema_asset_name,
@@ -883,7 +883,7 @@ def ask_ops(
                 resolved_catalog = resolve_catalog_asset_for_source(source_asset_name)
                 if resolved_catalog:
                     logger.warning(
-                        "ci.ask.catalog.source_mismatch.corrected",
+                        "ops.ask.catalog.source_mismatch.corrected",
                         extra={
                             "source_asset": source_asset_name,
                             "schema_asset_before": schema_asset_name,
@@ -895,7 +895,7 @@ def ask_ops(
                     schema_asset_name = str(resolved_catalog.get("name") or schema_asset_name)
                 else:
                     logger.warning(
-                        "ci.ask.catalog.source_mismatch.unresolved",
+                        "ops.ask.catalog.source_mismatch.unresolved",
                         extra={
                             "source_asset": source_asset_name,
                             "schema_asset": schema_asset_name,
@@ -1462,7 +1462,7 @@ def ask_ops(
             result["trace"] = {}
         result["trace"]["trace_id"] = active_trace_id
         result["trace"]["parent_trace_id"] = parent_trace_id
-        response: CiAskResponse = CiAskResponse(**result)
+        response: OpsAskResponse = OpsAskResponse(**result)
         response_payload = ResponseEnvelope.success(data=response.model_dump())
     except (PlanningError, ToolExecutionError) as exc:
         status = "error"
