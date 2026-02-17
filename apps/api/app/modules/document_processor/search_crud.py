@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from sqlalchemy import text
 from sqlmodel import Session
@@ -202,9 +203,7 @@ def search_chunks_by_vector(
 def log_search(
     session: Session,
     tenant_id: str,
-    user_id: str,
     query: str,
-    search_type: str,
     result_count: int,
     execution_time_ms: int,
 ) -> None:
@@ -214,23 +213,21 @@ def log_search(
     Args:
         session: Database session
         tenant_id: Tenant ID
-        user_id: User who performed the search
         query: Search query string
-        search_type: Type of search (text, vector, hybrid)
         result_count: Number of results returned
         execution_time_ms: Execution time in milliseconds
     """
     try:
+        search_id = str(uuid4())
         session.execute(
             text("""
-                INSERT INTO document_search_log (tenant_id, user_id, query, search_type, result_count, execution_time_ms, created_at)
-                VALUES (:tenant_id, :user_id, :query, :search_type, :result_count, :execution_time_ms, NOW())
+                INSERT INTO document_search_log (search_id, tenant_id, query, results_count, execution_time_ms, created_at)
+                VALUES (:search_id, :tenant_id, :query, :result_count, :execution_time_ms, NOW())
             """),
             {
+                "search_id": search_id,
                 "tenant_id": tenant_id,
-                "user_id": user_id,
                 "query": query,
-                "search_type": search_type,
                 "result_count": result_count,
                 "execution_time_ms": execution_time_ms,
             },

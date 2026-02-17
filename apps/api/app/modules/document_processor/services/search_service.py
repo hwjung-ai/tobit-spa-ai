@@ -274,9 +274,7 @@ class DocumentSearchService:
                 log_search(
                     session=self.db,
                     tenant_id=filters.tenant_id,
-                    user_id="",  # Not tracking user_id in current implementation
                     query=query,
-                    search_type=search_type,
                     result_count=results_count,
                     execution_time_ms=execution_time_ms,
                 )
