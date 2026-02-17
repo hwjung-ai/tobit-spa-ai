@@ -197,28 +197,59 @@ def _metric_payload_to_spec(payload: dict[str, str] | None) -> MetricSpec | None
 
 
 def _load_planner_prompt_definition() -> dict[str, Any] | None:
-    prompt_data = load_prompt_asset(PROMPT_SCOPE, PROMPT_ENGINE, PROMPT_NAME)
-    if not prompt_data:
-        logger.error(
-            "Prompt definition missing for ci planner (scope=%s)", PROMPT_SCOPE
+    # Try asset registry first
+    try:
+        prompt_data = load_prompt_asset(PROMPT_SCOPE, PROMPT_ENGINE, PROMPT_NAME)
+    except Exception as exc:
+        logger.warning(
+            "ci.planner.prompt_asset_load_failed",
+            extra={"error": str(exc)},
         )
-        return None
-    templates = prompt_data.get("templates")
-    if not isinstance(templates, dict):
-        logger.error(
-            "Prompt templates invalid for ci planner asset: %s", prompt_data.get("name")
-        )
-        return None
+        prompt_data = None
 
-    logger.info(
-        "ci.planner.prompt_loaded",
-        extra={
-            "prompt_source": prompt_data.get("source"),
-            "prompt_name": prompt_data.get("name"),
-            "prompt_version": prompt_data.get("version"),
-        },
+    # Validate templates have both system and user
+    if prompt_data:
+        templates = prompt_data.get("templates")
+        if isinstance(templates, dict) and templates.get("system") and templates.get("user"):
+            logger.info(
+                "ci.planner.prompt_loaded",
+                extra={
+                    "prompt_source": prompt_data.get("source"),
+                    "prompt_name": prompt_data.get("name"),
+                    "prompt_version": prompt_data.get("version"),
+                },
+            )
+            return prompt_data
+        logger.warning(
+            "ci.planner.prompt_incomplete",
+            extra={
+                "prompt_source": prompt_data.get("source"),
+                "has_system": bool(templates.get("system")) if isinstance(templates, dict) else False,
+                "has_user": bool(templates.get("user")) if isinstance(templates, dict) else False,
+            },
+        )
+
+    # Fallback to YAML file
+    from app.shared import config_loader
+
+    file_data = config_loader.load_yaml(f"prompts/{PROMPT_SCOPE}/planner.yaml")
+    if file_data and isinstance(file_data.get("templates"), dict):
+        templates = file_data["templates"]
+        if templates.get("system") and templates.get("user"):
+            logger.info(
+                "ci.planner.prompt_loaded",
+                extra={
+                    "prompt_source": "file",
+                    "prompt_name": file_data.get("name", PROMPT_NAME),
+                    "prompt_version": file_data.get("version", 1),
+                },
+            )
+            return file_data
+
+    logger.error(
+        "Prompt definition missing for ci planner (scope=%s)", PROMPT_SCOPE
     )
-    return prompt_data
+    return None
 
 
 def _build_output_parser_messages(

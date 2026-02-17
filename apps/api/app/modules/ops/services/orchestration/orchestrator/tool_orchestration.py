@@ -54,29 +54,46 @@ class DependencyAnalyzer:
         Infers the following dependency pattern:
         - primary: no dependencies (entry point)
         - secondary: no dependencies (independent)
-        - aggregate: depends on primary (needs ci_type filter)
-        - graph: depends on primary (needs ci_id)
-        - metric: can depend on aggregate (refinement)
+        - aggregate: depends on primary (needs ci_type filter) - ONLY if AGGREGATE intent
+        - graph: depends on primary (needs ci_id) - ONLY if CI identifier found
+        - metric: can depend on aggregate (refinement) - ONLY if metric spec exists
+        - history: depends on primary - ONLY if enabled and has CI filter
         """
         deps = []
 
-        # Primary tool (no dependencies)
-        if plan.primary and plan.primary.keywords:
+        # Determine what tools are actually needed based on intent and content
+        intent = plan.intent if plan.intent else None
+        has_ci_identifier = self._has_ci_identifier(plan)
+        needs_aggregation = self._needs_aggregation(plan)
+
+        # Primary tool - if spec exists (has keywords OR has filters OR aggregate/metric also exist)
+        primary_should_execute = bool(plan.primary) and (
+            bool(plan.primary.keywords) or
+            bool(plan.primary.filters) or
+            needs_aggregation or
+            bool(plan.metric) or
+            has_ci_identifier
+        )
+        if primary_should_execute:
             deps.append(ToolDependency(
                 tool_id="primary",
                 depends_on=[],
             ))
 
-        # Secondary tool (independent of primary)
+        # Secondary tool (independent of primary) - if spec exists with keywords
         if plan.secondary and plan.secondary.keywords:
             deps.append(ToolDependency(
                 tool_id="secondary",
                 depends_on=[],
             ))
 
-        # Aggregate depends on primary only if primary will execute
-        primary_will_execute = plan.primary and plan.primary.keywords
-        if plan.aggregate:
+        # Aggregate - execute if:
+        # 1. Intent is AGGREGATE, OR
+        # 2. Has metrics defined, OR
+        # 3. Has group_by defined (for distribution queries)
+        # 4. Question text indicates aggregation (total, count, distribution, etc.)
+        primary_will_execute = any(d.tool_id == "primary" for d in deps)
+        if plan.aggregate and needs_aggregation:
             agg_deps = ["primary"] if primary_will_execute else []
             deps.append(ToolDependency(
                 tool_id="aggregate",
@@ -86,9 +103,8 @@ class DependencyAnalyzer:
                 } if primary_will_execute else {}
             ))
 
-        # Metric can depend on aggregate or primary (ci_lookup with metric data)
+        # Metric: ONLY if metric spec exists
         if plan.metric:
-            # Prefer ci_lookup (primary) if it will execute, fallback to aggregate
             metric_deps = ["primary"] if primary_will_execute else (["aggregate"] if plan.aggregate else [])
             ci_source = "primary" if primary_will_execute else ("aggregate" if plan.aggregate else None)
             deps.append(ToolDependency(
@@ -99,49 +115,41 @@ class DependencyAnalyzer:
                 } if ci_source else {}
             ))
 
-        # History depends on primary or metric (needs ci_id from results)
-        # Only depend on primary if primary will actually execute (has keywords)
+        # History: ONLY if enabled AND has CI identifier (needs ci_id)
         if plan.history and plan.history.enabled:
-            if primary_will_execute:
-                deps.append(ToolDependency(
-                    tool_id="history",
-                    depends_on=["primary"],
-                    output_mapping={
-                        "ci_id": "primary.data.rows[0].ci_id"
-                    }
-                ))
-            elif plan.metric:
-                deps.append(ToolDependency(
-                    tool_id="history",
-                    depends_on=["metric"],
-                    output_mapping={
-                        "ci_id": "metric.data.rows[0].ci_id"
-                    }
-                ))
-            else:
-                # History is independent (no CI filter)
-                deps.append(ToolDependency(
-                    tool_id="history",
-                    depends_on=[],
-                ))
+            if has_ci_identifier:
+                if primary_will_execute:
+                    deps.append(ToolDependency(
+                        tool_id="history",
+                        depends_on=["primary"],
+                        output_mapping={
+                            "ci_id": "primary.data.rows[0].ci_id"
+                        }
+                    ))
+                elif plan.metric:
+                    deps.append(ToolDependency(
+                        tool_id="history",
+                        depends_on=["metric"],
+                        output_mapping={
+                            "ci_id": "metric.data.rows[0].ci_id"
+                        }
+                    ))
+            # Note: history without CI filter is independent but rarely used
 
-        # Graph depends on primary only if primary will execute
+        # Graph: ONLY if CI identifier found (needs specific root)
         # NOTE: keep graph last to avoid blocking other tools in serial execution.
         if plan.graph:
-            if primary_will_execute:
-                deps.append(ToolDependency(
-                    tool_id="graph",
-                    depends_on=["primary"],
-                    output_mapping={
-                        "root_ci_id": "primary.data.rows[0].ci_id"
-                    }
-                ))
-            else:
-                # Graph is independent (queries all relationships)
-                deps.append(ToolDependency(
-                    tool_id="graph",
-                    depends_on=[],
-                ))
+            # Only execute graph if we have a specific CI identifier
+            if has_ci_identifier:
+                if primary_will_execute:
+                    deps.append(ToolDependency(
+                        tool_id="graph",
+                        depends_on=["primary"],
+                        output_mapping={
+                            "root_ci_id": "primary.data.rows[0].ci_id"
+                        }
+                    ))
+            # No generic graph exploration without CI identifier
 
         # Document search (independent, no dependencies)
         if plan.document and (plan.document.get("enabled") or plan.document.get("tool_type")):
@@ -189,6 +197,90 @@ class DependencyAnalyzer:
             raise ValueError("Circular dependency detected in tool dependencies")
 
         return result
+
+    def _has_ci_identifier(self, plan: Plan) -> bool:
+        """Check if plan contains a specific CI identifier.
+
+        Returns True if filters reference a specific CI or keywords contain CI pattern.
+
+        Args:
+            plan: Plan to check
+
+        Returns:
+            True if CI identifier is present, False otherwise
+        """
+        # Check if primary has CI-specific filters
+        if plan.primary and plan.primary.filters:
+            for f in plan.primary.filters:
+                if f.get("field") in ["ci_code", "ci_id", "ci_name"]:
+                    return True
+
+        # Check keywords for CI code patterns (xxx-yyy-## format)
+        if plan.primary and plan.primary.keywords:
+            import re
+            keyword_text = " ".join(plan.primary.keywords)
+            # Pattern for CI codes like srv-mes-06, app-web-01
+            if re.search(r'\b[a-z]{3,}-[a-z]{2,}-\d{2,}\b', keyword_text.lower()):
+                return True
+
+        return False
+
+    def _needs_aggregation(self, plan: Plan) -> bool:
+        """Check if the query requires aggregation.
+
+        Returns True if:
+        1. Intent is AGGREGATE
+        2. Plan has aggregate spec defined (even with empty values - LLM may have set it)
+        3. Plan has aggregate metrics defined
+        4. Plan has group_by defined
+        5. Keywords indicate aggregation (total, count, how many, distribution, etc.)
+
+        Args:
+            plan: Plan to check
+
+        Returns:
+            True if aggregation is needed, False otherwise
+        """
+        from app.modules.ops.services.orchestration.planner.plan_schema import Intent
+
+        intent = plan.intent if plan.intent else None
+
+        # Check explicit intent
+        if intent == Intent.AGGREGATE:
+            logger.info(f"dependency.aggregation.intent_aggregate", extra={"intent": str(intent)})
+            return True
+
+        # Check if aggregate spec exists - even with empty values, if the LLM created it,
+        # it means the query requires aggregation
+        if plan.aggregate:
+            # The aggregate spec exists - check if it has meaningful content
+            # OR if the LLM explicitly created it (empty metrics/group_by could mean "use defaults")
+            if plan.aggregate.metrics or plan.aggregate.group_by:
+                logger.info(f"dependency.aggregation.has_metrics_or_groupby", extra={
+                    "metrics": plan.aggregate.metrics,
+                    "group_by": plan.aggregate.group_by
+                })
+                return True
+            # Fallback: if aggregate spec exists and has a scope, assume aggregation is needed
+            if hasattr(plan.aggregate, 'scope') and plan.aggregate.scope:
+                logger.info(f"dependency.aggregation.has_scope", extra={"scope": plan.aggregate.scope})
+                return True
+
+        # Check keywords for aggregation indicators
+        agg_keywords = {
+            "total", "count", "how", "many", "much", "number",
+            "distribution", "percentage", "rate", "ratio",
+            "average", "avg", "mean", "sum", "max", "min",
+            "most", "least", "top", "bottom", "highest", "lowest"
+        }
+        if plan.primary and plan.primary.keywords:
+            keyword_set = {k.lower() for k in plan.primary.keywords}
+            if keyword_set & agg_keywords:  # Intersection
+                logger.info(f"dependency.aggregation.has_agg_keywords", extra={"keywords": list(keyword_set & agg_keywords)})
+                return True
+
+        logger.info(f"dependency.aggregation.false", extra={"intent": str(intent)})
+        return False
 
 
 class DataFlowMapper:

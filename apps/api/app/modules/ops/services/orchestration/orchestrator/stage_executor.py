@@ -993,42 +993,39 @@ class StageExecutor:
                     else getattr(plan, "intent", "UNKNOWN")
                 )
 
+            # Always include aggregate results if available (useful for count/summary queries)
+            aggregate_results = [
+                r for r in execution_results if r.get("mode") == "aggregate"
+            ]
+            if aggregate_results:
+                composed_result["aggregate_result"] = aggregate_results[0]
+
+            # Always include primary results if available
+            primary_results_all = [
+                r for r in execution_results if r.get("mode") == "primary"
+            ]
+            if primary_results_all:
+                composed_result["primary_result"] = primary_results_all[0]
+
             if intent == "LOOKUP":
-                # For lookup, focus on primary results
-                primary_results = [
-                    r for r in execution_results if r.get("mode") == "primary"
-                ]
-                if primary_results:
-                    composed_result["primary_result"] = primary_results[0]
+                if primary_results_all:
                     composed_result["results_summary"] = self._summarize_lookup_results(
-                        primary_results
+                        primary_results_all
                     )
 
             elif intent == "AGGREGATE":
-                # For aggregate, focus on aggregate results
-                aggregate_results = [
-                    r for r in execution_results if r.get("mode") == "aggregate"
-                ]
                 if aggregate_results:
-                    composed_result["aggregate_result"] = aggregate_results[0]
                     composed_result["results_summary"] = (
                         self._summarize_aggregate_results(aggregate_results)
                     )
 
-                # Also expose primary/secondary results for CI-level context
-                primary_results = [
-                    r for r in execution_results if r.get("mode") == "primary"
-                ]
-                if primary_results:
-                    composed_result["primary_result"] = primary_results[0]
-
+                # Also expose secondary/metric/history results
                 secondary_results = [
                     r for r in execution_results if r.get("mode") == "secondary"
                 ]
                 if secondary_results:
                     composed_result["secondary_result"] = secondary_results[0]
 
-                # Also include metric and history results for aggregate intent
                 metric_results = [
                     r for r in execution_results if r.get("mode") == "metric"
                 ]
@@ -1376,13 +1373,14 @@ class StageExecutor:
 
             # Plan execution - compose blocks based on intent
 
-            # Always add blocks from runner's base_result if available
-            # The runner already has its own blocks from _run_async()
-            # We're here to add the LLM summary markdown block
-            # Don't duplicate blocks from compose stage
+            # Only add runner's blocks in non-orchestration mode
+            # In orchestration mode, blocks come from execution_results, not runner
             base_result = stage_input.params.get("base_result", {})
             runner_blocks = base_result.get("blocks", [])
-            blocks.extend(runner_blocks)
+            # Check if this is orchestration mode (has execution_results from new orchestration)
+            is_orchestration_mode = "execution_results" in base_result or "execution_results" in stage_input.params.get("prev_output", {}).get("result", {})
+            if runner_blocks and not is_orchestration_mode:
+                blocks.extend(runner_blocks)
 
             if isinstance(composed_result, dict):
 
@@ -1673,29 +1671,55 @@ class StageExecutor:
         return summary
 
     def _generate_summary(self, result: Dict[str, Any]) -> str:
-        """Generate a summary of the results."""
-        # Check for specific results in compose output
+        """Generate a meaningful summary from execution results data."""
+
+        def _extract_rows(res: Dict[str, Any] | None) -> list:
+            if not res or not isinstance(res, dict):
+                return []
+            rows = res.get("rows", [])
+            if not rows and isinstance(res.get("data"), dict):
+                rows = res["data"].get("rows", [])
+            return rows if isinstance(rows, list) else []
+
+        # Try aggregate result first - most useful for count/summary queries
+        if "aggregate_result" in result:
+            agg = result.get("aggregate_result", {})
+            rows = _extract_rows(agg)
+            if rows:
+                parts = []
+                for row in rows:
+                    if isinstance(row, dict):
+                        items = [f"{k}: {v}" for k, v in row.items() if v is not None]
+                        parts.append(", ".join(items))
+                if parts:
+                    return "집계 결과:\n" + "\n".join(f"- {p}" for p in parts)
+
+        # Try primary result
         if "primary_result" in result:
             primary = result.get("primary_result", {})
-            if isinstance(primary, dict):
-                rows_count = len(primary.get("rows", []))
-                if rows_count > 0:
-                    return f"쿼리 실행 완료: {rows_count}개의 결과를 찾았습니다."
-            return f"Successfully executed lookup query with {len(result.get('references', []))} references"
-        elif "aggregate_result" in result:
-            aggregate = result.get("aggregate_result", {})
-            if isinstance(aggregate, dict) and aggregate:
-                return "집계 쿼리 실행 완료: 결과 요약이 생성되었습니다."
-            return f"Successfully executed aggregate query with {len(result.get('references', []))} references"
-        elif "path_results" in result:
-            return f"Successfully executed path query with {len(result.get('references', []))} references"
-        elif "ci_detail" in result and result.get("ci_detail"):
-            ci_detail = result.get("ci_detail", {})
-            ci_name = ci_detail.get("ci_name", "CI")
-            return f"{ci_name}에 대한 정보를 조회했습니다. 상세 내용을 확인하세요."
-        else:
-            # Fallback for when no specific results are found
-            return "요청하신 쿼리가 실행되었습니다. 결과 데이터를 확인해주세요."
+            rows = _extract_rows(primary)
+            if rows:
+                count = len(rows)
+                # Show first row summary
+                first_row = rows[0] if rows else {}
+                if isinstance(first_row, dict):
+                    key_vals = [f"{k}={v}" for k, v in list(first_row.items())[:4] if v is not None]
+                    return f"{count}개의 결과를 찾았습니다. 예: {', '.join(key_vals)}"
+                return f"{count}개의 결과를 찾았습니다."
+
+        # CI detail
+        if "ci_detail" in result and result.get("ci_detail"):
+            ci = result["ci_detail"]
+            ci_name = ci.get("ci_name", "CI")
+            ci_type = ci.get("ci_type", "")
+            status = ci.get("status", "")
+            return f"{ci_name} ({ci_type}, {status})에 대한 정보를 조회했습니다."
+
+        # Path results
+        if "path_results" in result:
+            return "경로 분석 결과가 생성되었습니다."
+
+        return "쿼리가 실행되었습니다. 결과 데이터를 확인해주세요."
 
     def _create_table_block(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Create a table block from execution result."""
@@ -1890,30 +1914,69 @@ class StageExecutor:
 
                 continue
 
+            # Extract rows from both top-level and nested data
+            rows = result.get("rows", [])
+            if not rows and isinstance(result.get("data"), dict):
+                rows = result["data"].get("rows", [])
+
             # Add count info
-            count = result.get("count", 0)
+            count = result.get("count", 0) or len(rows)
             if count:
                 lines.append(f"   - Count: {count}")
 
             # Add headers for table results
             headers = result.get("headers", [])
+            if not headers and isinstance(result.get("data"), dict):
+                headers = result["data"].get("headers", [])
             if headers:
-                lines.append(f"   - Columns: {', '.join(headers[:5])}")
+                lines.append(f"   - Columns: {', '.join(str(h) for h in headers[:5])}")
 
-            # Add row count
-            rows = result.get("rows", [])
+            # Show ALL rows for aggregate results (they're typically small)
             if rows:
-                lines.append(f"   - Rows: {len(rows)}")
-                # Show first row as sample
-                if rows:
-                    sample_row = rows[0]
-                    if isinstance(sample_row, dict):
-                        sample_str = ", ".join(
-                            f"{k}={v}" for k, v in list(sample_row.items())[:3]
-                        )
-                        lines.append(f"   - Sample: {sample_str}")
-                    elif isinstance(sample_row, list):
-                        lines.append(f"   - Sample: {sample_row[:3]}")
+                lines.append(f"   - Rows ({len(rows)} total):")
+
+                # For aggregate results, calculate total if there's a count field
+                if mode == "aggregate" and rows:
+                    total_count = 0
+                    count_items = []
+                    for row in rows:
+                        if isinstance(row, dict):
+                            # Look for count/cnt field
+                            count_val = row.get("count") or row.get("cnt")
+                            if isinstance(count_val, (int, float)):
+                                total_count += count_val
+                                group_info = ", ".join(f"{k}={v}" for k, v in row.items()
+                                                   if k not in ("count", "cnt") and v is not None)
+                                count_items.append(f"{count_val} ({group_info})" if group_info else str(count_val))
+
+                    if total_count > 0:
+                        lines.append(f"   - **Total: {total_count}**")
+                        if count_items:
+                            lines.append(f"   - Breakdown: {', '.join(count_items[:5])}")
+                            if len(count_items) > 5:
+                                lines.append(f"     ... and {len(count_items) - 5} more groups")
+                    else:
+                        # No count field - show individual rows
+                        show_count = min(10, len(rows))
+                        for j, row in enumerate(rows[:show_count], 1):
+                            if isinstance(row, dict):
+                                row_str = ", ".join(
+                                    f"{k}={v}" for k, v in row.items() if v is not None
+                                )
+                                lines.append(f"     {j}. {row_str}")
+                            elif isinstance(row, (list, tuple)):
+                                lines.append(f"     {j}. {list(row)[:5]}")
+                else:
+                    # Non-aggregate: show first few rows
+                    show_count = min(3, len(rows))
+                    for j, row in enumerate(rows[:show_count], 1):
+                        if isinstance(row, dict):
+                            row_str = ", ".join(
+                                f"{k}={v}" for k, v in row.items() if v is not None
+                            )
+                            lines.append(f"     {j}. {row_str}")
+                        elif isinstance(row, (list, tuple)):
+                            lines.append(f"     {j}. {list(row)[:5]}")
 
             # Add metrics for aggregate results
             metrics = result.get("metrics", {})

@@ -6115,7 +6115,7 @@ class OpsOrchestratorRunner:
 
         # Determine strategy - use plan's strategy if available, otherwise infer
         if plan and plan.execution_strategy:
-            strategy = plan.execution_strategy.value
+            strategy = plan.execution_strategy.value if hasattr(plan.execution_strategy, 'value') else str(plan.execution_strategy)
         elif len(execution_groups) == 1:
             strategy = "serial"
         elif any(g.get("parallel_execution", False) for g in execution_groups):

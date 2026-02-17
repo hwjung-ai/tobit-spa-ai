@@ -149,9 +149,9 @@ SELECT ci_type, COUNT(*) FROM ci WHERE ci_type IN ('SW', 'HW') GROUP BY ci_type
 SELECT COUNT(*) FROM tb_audit_log
 ```
 
-**조회 결과**: 667
+**조회 결과**: 733
 
-**정답**: There are 667 audit log entries.
+**정답**: There are 733 audit log entries.
 
 ---
 
@@ -194,9 +194,9 @@ SELECT COUNT(*) FROM event_log WHERE DATE(time) = CURRENT_DATE
 SELECT COUNT(*) FROM metric_value WHERE DATE(time) = CURRENT_DATE
 ```
 
-**조회 결과**: 360,000
+**조회 결과**: 0
 
-**정답**: 360,000 metric values were recorded today.
+**정답**: 0 metric values were recorded today.
 
 ---
 
