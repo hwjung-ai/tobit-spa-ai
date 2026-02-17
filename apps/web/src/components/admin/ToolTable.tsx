@@ -68,6 +68,26 @@ export default function ToolTable({
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
 
+  const handleUnpublish = useCallback(
+    async (tool: ToolAsset, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (tool.status !== "published") return;
+
+      setPublishingId(tool.asset_id);
+      setPublishError(null);
+      try {
+        await fetchApi(`/asset-registry/tools/${tool.asset_id}/unpublish`, { method: "POST" });
+        onRefresh?.();
+      } catch (error) {
+        console.error("Unpublish failed:", error);
+        setPublishError(error instanceof Error ? error.message : "Failed to unpublish tool");
+      } finally {
+        setPublishingId(null);
+      }
+    },
+    [onRefresh],
+  );
+
   const handlePublish = useCallback(
     async (tool: ToolAsset, e: React.MouseEvent) => {
       e.stopPropagation();
@@ -142,6 +162,36 @@ export default function ToolTable({
         ),
       },
       {
+        headerName: "Capabilities",
+        field: "tags",
+        flex: 1.5,
+        minWidth: 150,
+        cellRenderer: (params: ICellRendererParams<ToolAsset>) => {
+          if (!params.data?.tags) return <span className="text-xs text-muted-foreground">-</span>;
+          const tags = params.data.tags as Record<string, unknown>;
+          const capabilities = (tags?.capabilities as string[]) || [];
+          if (capabilities.length === 0) {
+            return <span className="text-xs text-amber-500">auto</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {capabilities.slice(0, 3).map((cap) => (
+                <span
+                  key={cap}
+                  className="inline-flex rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-tiny font-medium text-sky-400"
+                  title={cap}
+                >
+                  {cap.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                </span>
+              ))}
+              {capabilities.length > 3 && (
+                <span className="text-tiny text-muted-foreground">+{capabilities.length - 3}</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         headerName: "Status",
         field: "status",
         width: 120,
@@ -189,7 +239,7 @@ export default function ToolTable({
               >
                 Test
               </button>
-              {tool.status === "draft" && (
+              {tool.status === "draft" ? (
                 <button
                   onClick={(e) => void handlePublish(tool, e)}
                   disabled={isPublishing}
@@ -198,13 +248,22 @@ export default function ToolTable({
                 >
                   {isPublishing ? "..." : "Publish"}
                 </button>
+              ) : (
+                <button
+                  onClick={(e) => void handleUnpublish(tool, e)}
+                  disabled={isPublishing}
+                  className="text-tiny font-bold uppercase tracking-wider text-amber-600 transition-colors hover:text-amber-500 disabled:opacity-50 dark:text-amber-400 dark:hover:text-amber-300"
+                  title="Unpublish this tool (return to draft)"
+                >
+                  {isPublishing ? "..." : "Unpublish"}
+                </button>
               )}
             </div>
           );
         },
       },
     ],
-    [handlePublish, onToolSelect, publishingId, selectedToolId],
+    [handlePublish, handleUnpublish, onToolSelect, publishingId, selectedToolId],
   );
 
   if (loading) {
