@@ -411,7 +411,7 @@ class StageExecutor:
                     # Extract execution_plan_trace from chain_result metadata
                     execution_plan_trace = (
                         chain_result.metadata.get("execution_plan_trace")
-                        if chain_result.metadata
+                        if hasattr(chain_result, "metadata") and chain_result.metadata
                         else None
                     )
 
