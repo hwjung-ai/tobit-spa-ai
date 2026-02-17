@@ -1767,6 +1767,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     if llm_payload.get("history"):
         history_spec = llm_payload["history"]
         plan.history = HistorySpec(
+            enabled=True,  # Required by dependency analyzer
             source=history_spec.get("source", "event"),
             scope=history_spec.get("scope", "ci"),
             mode=history_spec.get("mode", "aggregate"),
