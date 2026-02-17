@@ -355,7 +355,7 @@ class StageExecutor:
             from app.modules.ops.services.orchestration.planner.plan_schema import Intent
 
             if plan.intent == Intent.DOCUMENT and plan.document:
-                # Execute document search directly
+                # Execute document search directly via HTTP API
                 self.logger.info(
                     "execute_stage.document_search",
                     extra={
@@ -364,72 +364,58 @@ class StageExecutor:
                     }
                 )
 
-                # Call document_search tool from registry
-                from app.modules.ops.services.orchestration.tools.base import get_tool_registry
+                try:
+                    import httpx
 
-                tool_registry = get_tool_registry()
-                document_tool = tool_registry.get_tool("document_search")
-
-                if document_tool:
-                    try:
-                        # Create tool context for document search
-                        from app.modules.ops.services.orchestration.tools.base import ToolContext
-                        from core.logging import get_request_context
-
-                        request_ctx = get_request_context()
-                        tool_context = ToolContext(
-                            tenant_id=self.tenant_id or "default",
-                            user_id=self.user_id,
-                            request_id=request_ctx.get("request_id") if request_ctx else None,
-                            trace_id=request_ctx.get("trace_id") if request_ctx else None,
-                        )
-
-                        doc_result = await document_tool.execute(
-                            tool_context,
-                            {
+                    # Call document search API directly
+                    async with httpx.AsyncClient() as client:
+                        doc_response = await client.post(
+                            "http://localhost:8000/api/documents/search",
+                            json={
                                 "query": plan.document.get("query", question_text),
                                 "search_type": plan.document.get("search_type", "hybrid"),
                                 "top_k": plan.document.get("top_k", 10),
                                 "min_relevance": plan.document.get("min_relevance", 0.5),
-                            }
+                            },
+                            headers={"X-Tenant-Id": self.context.tenant_id or "default"},
+                            timeout=30.0
                         )
 
-                        # Convert result to execution result format
-                        execution_result = {
+                    if doc_response.status_code == 200:
+                        doc_data = doc_response.json().get("data", {})
+                        results.append({
                             "mode": "document",
                             "tool_name": "document_search",
                             "success": True,
-                            "data": doc_result.get("data", {}),
-                            "total_count": doc_result.get("total_count", 0),
-                            "duration_ms": doc_result.get("execution_time_ms", 0),
-                        }
-                        results.append(execution_result)
-                        references.append({
-                            "type": "document_search",
-                            "tool": "document_search",
-                            "query": plan.document.get("query", ""),
+                            "data": doc_data.get("results", []),
+                            "total_count": doc_data.get("total_count", 0),
+                            "duration_ms": doc_data.get("execution_time_ms", 0),
                         })
 
                         self.logger.info(
                             "execute_stage.document_search_success",
-                            extra={"result_count": doc_result.get("total_count", 0)}
+                            extra={"result_count": doc_data.get("total_count", 0)}
                         )
-                    except Exception as e:
-                        self.logger.error(f"Document search failed: {e}", exc_info=True)
+                    else:
+                        error_msg = f"API returned {doc_response.status_code}"
+                        self.logger.error(f"Document search failed: {error_msg}")
                         results.append({
                             "mode": "document",
                             "tool_name": "document_search",
                             "success": False,
-                            "error": str(e),
+                            "error": error_msg,
                         })
-                else:
-                    self.logger.warning("Document search tool not found in registry")
+
+                except Exception as e:
+                    error_msg = str(e)
+                    self.logger.error(f"Document search failed: {error_msg}", exc_info=True)
                     results.append({
                         "mode": "document",
                         "tool_name": "document_search",
                         "success": False,
-                        "error": "Document search tool not found in registry",
+                        "error": error_msg,
                     })
+
 
                 # Skip orchestration for document intent
                 return {
