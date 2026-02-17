@@ -371,19 +371,30 @@ class ToolRegistry:
             tool_type: The tool type to retrieve information for
 
         Returns:
-            Dictionary with tool name, description, input_schema, and output_schema,
+            Dictionary with tool name, description, type, tags, input_schema, and output_schema,
             or None if tool is not registered
         """
         if tool_type not in self._instances:
             return None
 
         tool = self._instances[tool_type]
-        return {
+        info = {
             "name": tool.tool_name,
             "type": tool.tool_type,
             "input_schema": tool.input_schema,
             "output_schema": tool.output_schema,
         }
+
+        # Add description if available
+        if hasattr(tool, 'description'):
+            info["description"] = tool.description
+
+        # Add tags/capabilities if available (from DynamicTool.asset_data)
+        if hasattr(tool, 'asset_data') and isinstance(tool.asset_data, dict):
+            info["tags"] = tool.asset_data.get("tags", {})
+            info["tool_config"] = tool.asset_data.get("tool_config", {})
+
+        return info
 
     def get_all_tools_info(self) -> list[Dict[str, Any]]:
         """

@@ -291,6 +291,17 @@ def create_tool_asset(
 ) -> TbAssetRegistry:
     """Create new tool asset in draft status"""
     resolved_tenant_id = normalize_tenant_id(tenant_id or DEFAULT_TENANT_ID)
+
+    # Auto-populate capabilities based on tool_type if not provided
+    if tags is None:
+        tags = {}
+
+    if "capabilities" not in tags:
+        tags["capabilities"] = _get_default_capabilities_for_tool_type(tool_type)
+
+    if "supported_modes" not in tags:
+        tags["supported_modes"] = _get_default_modes_for_tool_type(tool_type)
+
     asset = TbAssetRegistry(
         asset_type="tool",
         name=name,
@@ -312,6 +323,98 @@ def create_tool_asset(
     session.commit()
     session.refresh(asset)
     return asset
+
+
+def _get_default_capabilities_for_tool_type(tool_type: str) -> list[str]:
+    """
+    Get default capabilities for a tool type.
+
+    This provides sensible defaults based on the tool_type naming convention.
+    Users can override these when creating/updating the tool.
+    """
+    # Map tool_type prefixes/suffixes to capabilities
+    capability_map = {
+        # CI-related tools
+        "ci_lookup": ["ci_lookup", "ci_search"],
+        "ci_search": ["ci_search"],
+        "ci_list": ["ci_list", "ci_search"],
+        "ci_detail": ["ci_lookup"],
+        "ci_aggregate": ["ci_aggregate"],
+
+        # Document-related tools
+        "document_search": ["document_search"],
+
+        # Metric-related tools
+        "metric_query": ["metric_query"],
+        "metric_aggregate": ["metric_aggregate", "metric_query"],
+
+        # History-related tools
+        "history_search": ["history_search", "event_search"],
+        "event_search": ["event_search"],
+
+        # Graph-related tools
+        "graph_expand": ["graph_expand"],
+        "graph_path": ["graph_path"],
+        "graph_topology": ["graph_topology", "graph_expand"],
+    }
+
+    # Check for exact match first
+    if tool_type in capability_map:
+        return capability_map[tool_type]
+
+    # Check for partial matches
+    tool_type_lower = tool_type.lower()
+    for key, caps in capability_map.items():
+        if key in tool_type_lower:
+            return caps
+
+    # Default: no capabilities (user must specify)
+    return []
+
+
+def _get_default_modes_for_tool_type(tool_type: str) -> list[str]:
+    """
+    Get default supported modes for a tool type.
+
+    Tools that don't have mode-specific behavior default to ["all"].
+    """
+    mode_map = {
+        # Config mode tools
+        "ci_lookup": ["config", "all"],
+        "ci_search": ["config", "all"],
+        "ci_list": ["config", "all"],
+        "ci_detail": ["config", "all"],
+        "ci_aggregate": ["config", "all"],
+
+        # Document mode tools
+        "document_search": ["document", "all"],
+
+        # Metric mode tools
+        "metric_query": ["metric", "all"],
+        "metric_aggregate": ["metric", "all"],
+
+        # History mode tools
+        "history_search": ["history", "hist", "all"],
+        "event_search": ["history", "hist", "all"],
+
+        # Graph mode tools
+        "graph_expand": ["graph", "all"],
+        "graph_path": ["graph", "all"],
+        "graph_topology": ["graph", "all"],
+    }
+
+    # Check for exact match first
+    if tool_type in mode_map:
+        return mode_map[tool_type]
+
+    # Check for partial matches
+    tool_type_lower = tool_type.lower()
+    for key, modes in mode_map.items():
+        if key in tool_type_lower:
+            return modes
+
+    # Default: support all modes
+    return ["all"]
 
 
 def get_tool_asset(

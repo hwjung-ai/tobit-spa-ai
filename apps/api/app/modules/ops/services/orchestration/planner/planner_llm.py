@@ -691,49 +691,9 @@ def create_plan(
     plan.intent = derive_intent_from_output(output_types)
     plan.view = _determine_view(normalized, plan.intent)
 
-    # Detect document-related questions and override intent to DOCUMENT
-    document_keywords = [
-        "문서", "매뉴얼", "가이드", "도움말",
-        "help", "manual", "guide", "documentation",
-        "찾아줘", "검색해", "설명해"
-    ]
-    is_document_question = any(kw in normalized for kw in document_keywords)
-
-    logger.info(
-        "planner.document_detection",
-        extra={
-            "normalized": normalized[:100],
-            "is_document_question": is_document_question,
-            "original_intent": plan.intent.value if plan.intent else None,
-        }
-    )
-
-    if is_document_question:
-        # In "all" mode, don't override intent to DOCUMENT - instead enable document spec alongside others
-        if plan.mode != PlanMode.ALL:
-            plan.intent = Intent.DOCUMENT
-            plan.view = _determine_view(normalized, plan.intent)
-
-        # Always populate document spec with the user's question as search query
-        plan.document = {
-            "enabled": True,  # Required by dependency analyzer
-            "query": normalized,
-            "search_type": "hybrid",
-            "top_k": 10,
-            "min_relevance": 0.5,
-            "tool_type": "document_search",
-        }
-        logger.info(
-            "planner.document_handling",
-            extra={
-                "reason": "document_keywords_detected",
-                "detected_keywords": [kw for kw in document_keywords if kw in normalized],
-                "intent_override": plan.mode != PlanMode.ALL,
-                "new_intent": plan.intent.value if plan.mode != PlanMode.ALL else None,
-                "document_spec_enabled": True,
-                "plan_mode": plan.mode.value if hasattr(plan.mode, 'value') else str(plan.mode),
-            }
-        )
+    # NOTE: Removed keyword-based document detection.
+    # Now relying on LLM-driven planning in plan_llm_query() which uses
+    # tool capabilities to select appropriate tools dynamically.
 
     if graph_force:
         plan.intent = Intent.LOOKUP
@@ -1630,26 +1590,6 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             max_sample_rows=3,
         )
 
-    # Pre-check: Detect if this is a document search question
-    # If document keywords are detected, force DOCUMENT intent
-    document_keywords = [
-        "문서", "매뉴얼", "가이드", "도움말",
-        "help", "manual", "guide", "documentation",
-        "찾아줘", "검색해", "설명해"
-    ]
-    is_document_question = any(
-        kw in normalized for kw in document_keywords
-    )
-
-    logger.info(
-        "planner.keyword_check",
-        extra={
-            "normalized": normalized[:100],
-            "keywords": document_keywords,
-            "is_document_question": is_document_question
-        }
-    )
-
     # Build enhanced prompt with tool and catalog info
     prompt = _build_enhanced_planner_prompt(
         question=normalized, tools_info=tools_info, catalog_info=catalog_info
@@ -1689,24 +1629,9 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             f"LLM JSON parse error: {exc} | raw={json_text[:400]}"
         ) from exc
 
-    # Force DOCUMENT intent if document keywords detected
-    if is_document_question:
-        logger.info(
-            "planner.document_detection",
-            extra={
-                "detected": True,
-                "original_intent": llm_payload.get("intent", "unknown")
-            }
-        )
-        llm_payload["intent"] = "DOCUMENT"
-        # Add document spec
-        llm_payload["document"] = {
-            "query": normalized,
-            "search_type": "hybrid",
-            "top_k": 10,
-            "min_relevance": 0.5,
-            "tool_type": "document_search"
-        }
+    # NOTE: Removed keyword-based intent override.
+    # LLM now selects tools based on capabilities defined in tool assets.
+    # The prompt includes tool capabilities, so LLM can make informed decisions.
 
     # Create Plan from LLM response
     plan = Plan.model_construct()
@@ -1837,6 +1762,12 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
         ]
     plan.enable_intermediate_llm = llm_payload.get("enable_intermediate_llm", False)
 
+    # NEW: In "all" mode, activate all available data sources
+    # This enables comprehensive orchestration across all tools
+    if plan.mode == PlanMode.ALL:
+        logger.info("planner.all_mode_activating_all_specs")
+        _activate_all_specs_for_all_mode(plan, normalized, valid_tool_types)
+
     logger.info("ci.planner.plan_llm_query.plan_created", extra={"elapsed_ms": elapsed})
 
     return PlanOutput(
@@ -1845,6 +1776,89 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
         confidence=1.0,
         reasoning="Enhanced orchestration plan created with tool and catalog context",
         metadata={"elapsed_ms": elapsed},
+    )
+
+
+def _activate_all_specs_for_all_mode(plan: Plan, question: str, valid_tool_types: set) -> None:
+    """
+    In "all" mode, activate all data source specs for comprehensive orchestration.
+
+    This ensures that queries in "all" mode search across all available data sources:
+    - CI configuration (primary)
+    - Metrics (metric)
+    - History/Events (history)
+    - Graph relationships (graph)
+    - Documents (document)
+
+    Args:
+        plan: The plan to modify
+        question: The user's question (used for document search query)
+        valid_tool_types: Set of valid tool types from registry
+    """
+    activated = []
+
+    # 1. Primary CI lookup (if not already set)
+    if not plan.primary:
+        plan.primary = PrimarySpec(
+            keywords=[],
+            filters=[],
+            limit=10,
+            tool_type="ci_lookup" if "ci_lookup" in valid_tool_types else "database_query",
+        )
+        activated.append("primary")
+
+    # 2. Metric spec (if not already set)
+    if not plan.metric:
+        plan.metric = MetricSpec(
+            metric_name=None,
+            agg="avg",
+            time_range="last_24h",
+            tool_type="metric_query" if "metric_query" in valid_tool_types else "database_query",
+        )
+        activated.append("metric")
+
+    # 3. History spec (if not already set)
+    if not plan.history:
+        plan.history = HistorySpec(
+            enabled=True,
+            source="event",
+            scope="ci",
+            mode="aggregate",
+            time_range="last_24h",
+            limit=50,
+            tool_type="history_search" if "history_search" in valid_tool_types else "database_query",
+        )
+        activated.append("history")
+
+    # 4. Graph spec (if not already set)
+    if not plan.graph:
+        plan.graph = GraphSpec(
+            depth=2,
+            view=View.DEPENDENCY,
+            limits=GraphLimits(rows=100, nodes=100, relationships=200),
+            user_requested_depth=2,
+            tool_type="graph_expand" if "graph_expand" in valid_tool_types else "graph_query",
+        )
+        activated.append("graph")
+
+    # 5. Document spec (if not already set)
+    if not plan.document:
+        plan.document = {
+            "enabled": True,
+            "query": question,
+            "search_type": "hybrid",
+            "top_k": 5,
+            "min_relevance": 0.5,
+            "tool_type": "document_search" if "document_search" in valid_tool_types else "database_query",
+        }
+        activated.append("document")
+
+    logger.info(
+        "planner.all_mode_specs_activated",
+        extra={
+            "activated_specs": activated,
+            "total_specs": len(activated),
+        }
     )
 
 
@@ -1903,19 +1917,46 @@ You are an intelligent query planner for a CI/OPS system.
 Your task is to analyze the user's question and create an execution plan.
 """)
 
-    # NEW: Tool Registry Section
+    # Tool Registry Section with Capabilities
     if tools_info:
         prompt_parts.append("\n## Available Tools\n")
+        prompt_parts.append("Select tools based on their **capabilities**, not just names.\n")
+
         for tool in tools_info:
             prompt_parts.append(f"\n### {tool['name']} ({tool['type']})")
+
+            # Add capabilities from tags
+            tags = tool.get("tags", {})
+            capabilities = tags.get("capabilities", [])
+            supported_modes = tags.get("supported_modes", ["all"])
+
+            if capabilities:
+                prompt_parts.append(f"\n**Capabilities**: {', '.join(capabilities)}")
+            if supported_modes:
+                prompt_parts.append(f"\n**Supported Modes**: {', '.join(supported_modes)}")
+
+            if tool.get("description"):
+                prompt_parts.append(f"\n**Description**: {tool['description']}")
+
             if tool.get("input_schema"):
-                prompt_parts.append(
-                    f"Input Schema: {json.dumps(tool['input_schema'], indent=2)}"
-                )
-            if tool.get("output_schema"):
-                prompt_parts.append(
-                    f"Output Schema: {json.dumps(tool['output_schema'], indent=2)}"
-                )
+                # Simplify schema for readability
+                schema_str = json.dumps(tool['input_schema'], indent=2)
+                if len(schema_str) > 500:
+                    schema_str = schema_str[:500] + "..."
+                prompt_parts.append(f"\n**Input Schema**: {schema_str}")
+
+    # Capability to Intent Mapping Guide
+    prompt_parts.append("\n## Capability Selection Guide\n")
+    prompt_parts.append("""
+Match user intent to tool capabilities:
+- **CI lookup/detail** → tools with `ci_lookup` capability
+- **CI search/list** → tools with `ci_search` or `ci_list` capability
+- **Counting/aggregation** → tools with `ci_aggregate` or `metric_aggregate` capability
+- **Metrics/performance** → tools with `metric_query` capability
+- **History/events** → tools with `history_search` or `event_search` capability
+- **Graph/relationships** → tools with `graph_expand`, `graph_path`, or `graph_topology` capability
+- **Documents/manuals** → tools with `document_search` capability
+""")
 
     # NEW: Catalog Section
     if catalog_info:
@@ -1937,9 +1978,9 @@ Your task is to analyze the user's question and create an execution plan.
     prompt_parts.append("\n## Instructions\n")
     prompt_parts.append("""
 1. Identify the user's intent (LOOKUP, AGGREGATE, PATH, DOCUMENT, etc.)
-2. For document-related questions (keywords: "문서", "매뉴얼", "가이드", "검색", "찾아줘"), use document_search tool
-3. Select appropriate tool(s) from the Available Tools section
-4. Define tool parameters based on the Database Schema
+2. Select appropriate tool(s) based on **capabilities** from the Available Tools section
+3. Use the Capability Selection Guide above to match intent to tool capabilities
+4. Define tool parameters based on the Database Schema (if available)
 5. Specify tool dependencies if one tool needs output from another
 6. Return a Plan JSON with tool_type for each operation
 7. Choose execution_strategy: "serial", "parallel", or "dag"
@@ -1950,8 +1991,7 @@ Your task is to analyze the user's question and create an execution plan.
 
     # Plan schema
     prompt_parts.append("\n## Plan Schema\n")
-    prompt_parts.append("""
-{
+    prompt_parts.append("""{
   "intent": "LOOKUP|AGGREGATE|PATH|EXPAND|DOCUMENT",
   "view": "SUMMARY|COMPOSITION|DEPENDENCY|IMPACT|PATH",
   "primary": {

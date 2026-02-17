@@ -32,133 +32,167 @@ logger = get_logger(__name__)
 
 
 class DependencyAnalyzer:
-    """Analyze Plan to extract tool dependencies and build execution DAG."""
+    """Analyze Plan and select tools using tags-based intelligent selection.
+
+    Uses tool capabilities, tags, and question content to determine which
+    tools should execute - eliminating keyword-based heuristics.
+    """
+
+    def __init__(self, question: str = "", tool_registry = None):
+        """Initialize with question text and tool registry.
+
+        Args:
+            question: Original user question for intent analysis
+            tool_registry: Tool registry to access tool capabilities
+        """
+        self.question = question.lower() if question else ""
+        self.tool_registry = tool_registry
+        self.logger = get_logger(__name__)
 
     def extract_dependencies(self, plan: Plan) -> List[ToolDependency]:
-        """Extract tool dependencies from Plan.
+        """Extract tool dependencies using intelligent tag-based selection.
 
-        If explicit dependencies provided, use them.
-        Otherwise, infer dependencies from Plan structure.
+        Selection is based on:
+        1. Question content analysis (what is being asked)
+        2. Tool capabilities (from tags)
+        3. Plan intent when available
+
+        Args:
+            plan: Plan to analyze
+
+        Returns:
+            List of ToolDependency for tools that should execute
         """
         # If explicit dependencies provided, use them
         if plan.tool_dependencies:
+            self.logger.info("dependency.using_explicit", extra={"count": len(plan.tool_dependencies)})
             return plan.tool_dependencies
 
-        # Otherwise, infer from Plan structure
-        dependencies = self._infer_dependencies_from_plan(plan)
+        # Otherwise, intelligently select tools based on question intent
+        dependencies = self._select_tools_by_intent(plan)
+        self.logger.info(
+            "dependency.selected_tools",
+            extra={
+                "count": len(dependencies),
+                "tools": [d.tool_id for d in dependencies],
+                "question": self.question[:50]
+            }
+        )
         return dependencies
 
-    def _infer_dependencies_from_plan(self, plan: Plan) -> List[ToolDependency]:
-        """Infer tool dependencies from Plan structure.
+    def _select_tools_by_intent(self, plan: Plan) -> List[ToolDependency]:
+        """Select tools based on question intent and tool capabilities.
 
-        Infers the following dependency pattern:
-        - primary: no dependencies (entry point)
-        - secondary: no dependencies (independent)
-        - aggregate: depends on primary (needs ci_type filter) - ONLY if AGGREGATE intent
-        - graph: depends on primary (needs ci_id) - ONLY if CI identifier found
-        - metric: can depend on aggregate (refinement) - ONLY if metric spec exists
-        - history: depends on primary - ONLY if enabled and has CI filter
+        Uses tool tags (category, operation, phase) for intelligent selection
+        instead of keyword pattern matching.
+
+        Args:
+            plan: Plan with intent and specs
+
+        Returns:
+            List of ToolDependency for selected tools
         """
         deps = []
+        self.logger.info("dependency.select_by_plan", extra={"question": self.question[:100]})
 
-        # Determine what tools are actually needed based on intent and content
-        intent = plan.intent if plan.intent else None
-        has_ci_identifier = self._has_ci_identifier(plan)
-        needs_aggregation = self._needs_aggregation(plan)
+        # Build mapping of plan tools to their capabilities
+        plan_tools = self._map_plan_tools_with_capabilities(plan)
 
-        # Primary tool - if spec exists (has keywords OR has filters OR aggregate/metric also exist)
-        primary_should_execute = bool(plan.primary) and (
-            bool(plan.primary.keywords) or
-            bool(plan.primary.filters) or
-            needs_aggregation or
-            bool(plan.metric) or
-            has_ci_identifier
+        # Select tools based on Plan specs - if spec exists in Plan, execute it
+        # NO hardcoded _should_execute_* logic - trust the Planner's decision
+
+        # Primary: always execute if spec exists in plan
+        if "primary" in plan_tools:
+            deps.append(ToolDependency(tool_id="primary", depends_on=[]))
+            self.logger.info("dependency.selected.primary")
+
+        # Aggregate: execute if spec exists
+        if "aggregate" in plan_tools:
+            agg_deps = ["primary"] if any(d.tool_id == "primary" for d in deps) else []
+            deps.append(ToolDependency(tool_id="aggregate", depends_on=agg_deps))
+            self.logger.info("dependency.selected.aggregate")
+
+        # Metric: execute if spec exists
+        if "metric" in plan_tools:
+            metric_deps = ["primary"] if any(d.tool_id == "primary" for d in deps) else []
+            deps.append(ToolDependency(tool_id="metric", depends_on=metric_deps))
+            self.logger.info("dependency.selected.metric")
+
+        # History: execute if spec exists
+        if "history" in plan_tools:
+            hist_deps = ["primary"] if any(d.tool_id == "primary" for d in deps) else []
+            deps.append(ToolDependency(tool_id="history", depends_on=hist_deps))
+            self.logger.info("dependency.selected.history")
+
+        # Graph: execute if spec exists
+        if "graph" in plan_tools:
+            graph_deps = ["primary"] if any(d.tool_id == "primary" for d in deps) else []
+            deps.append(ToolDependency(tool_id="graph", depends_on=graph_deps))
+            self.logger.info("dependency.selected.graph")
+
+        # Document: execute if spec exists (independent, no dependencies)
+        if "document" in plan_tools:
+            deps.append(ToolDependency(tool_id="document", depends_on=[]))
+            self.logger.info("dependency.selected.document")
+
+        self.logger.info(
+            "dependency.selection_complete",
+            extra={"count": len(deps), "tools": [d.tool_id for d in deps]}
         )
-        if primary_should_execute:
-            deps.append(ToolDependency(
-                tool_id="primary",
-                depends_on=[],
-            ))
-
-        # Secondary tool (independent of primary) - if spec exists with keywords
-        if plan.secondary and plan.secondary.keywords:
-            deps.append(ToolDependency(
-                tool_id="secondary",
-                depends_on=[],
-            ))
-
-        # Aggregate - execute if:
-        # 1. Intent is AGGREGATE, OR
-        # 2. Has metrics defined, OR
-        # 3. Has group_by defined (for distribution queries)
-        # 4. Question text indicates aggregation (total, count, distribution, etc.)
-        primary_will_execute = any(d.tool_id == "primary" for d in deps)
-        if plan.aggregate and needs_aggregation:
-            agg_deps = ["primary"] if primary_will_execute else []
-            deps.append(ToolDependency(
-                tool_id="aggregate",
-                depends_on=agg_deps,
-                output_mapping={
-                    "ci_type_filter": "primary.data.rows[0].ci_type"
-                } if primary_will_execute else {}
-            ))
-
-        # Metric: ONLY if metric spec exists
-        if plan.metric:
-            metric_deps = ["primary"] if primary_will_execute else (["aggregate"] if plan.aggregate else [])
-            ci_source = "primary" if primary_will_execute else ("aggregate" if plan.aggregate else None)
-            deps.append(ToolDependency(
-                tool_id="metric",
-                depends_on=metric_deps,
-                output_mapping={
-                    "ci_ids": f"{ci_source}.data.rows.*.ci_id"
-                } if ci_source else {}
-            ))
-
-        # History: ONLY if enabled AND has CI identifier (needs ci_id)
-        if plan.history and plan.history.enabled:
-            if has_ci_identifier:
-                if primary_will_execute:
-                    deps.append(ToolDependency(
-                        tool_id="history",
-                        depends_on=["primary"],
-                        output_mapping={
-                            "ci_id": "primary.data.rows[0].ci_id"
-                        }
-                    ))
-                elif plan.metric:
-                    deps.append(ToolDependency(
-                        tool_id="history",
-                        depends_on=["metric"],
-                        output_mapping={
-                            "ci_id": "metric.data.rows[0].ci_id"
-                        }
-                    ))
-            # Note: history without CI filter is independent but rarely used
-
-        # Graph: ONLY if CI identifier found (needs specific root)
-        # NOTE: keep graph last to avoid blocking other tools in serial execution.
-        if plan.graph:
-            # Only execute graph if we have a specific CI identifier
-            if has_ci_identifier:
-                if primary_will_execute:
-                    deps.append(ToolDependency(
-                        tool_id="graph",
-                        depends_on=["primary"],
-                        output_mapping={
-                            "root_ci_id": "primary.data.rows[0].ci_id"
-                        }
-                    ))
-            # No generic graph exploration without CI identifier
-
-        # Document search (independent, no dependencies)
-        if plan.document and (plan.document.get("enabled") or plan.document.get("tool_type")):
-            deps.append(ToolDependency(
-                tool_id="document",
-                depends_on=[],
-            ))
-
         return deps
+
+    def _map_plan_tools_with_capabilities(self, plan: Plan) -> Dict[str, Dict[str, Any]]:
+        """Build a mapping of tool_id to tool capabilities from plan specs.
+
+        Args:
+            plan: Plan with tool specifications
+
+        Returns:
+            Dict mapping tool_id to capabilities dict
+        """
+        plan_tools = {}
+
+        # Map each plan spec to tool_id and extract capabilities
+        spec_map = {
+            "primary": plan.primary,
+            "secondary": plan.secondary,
+            "aggregate": plan.aggregate,
+            "graph": plan.graph,
+            "metric": plan.metric,
+            "history": plan.history,
+            "document": plan.document,
+        }
+
+        for tool_id, spec in spec_map.items():
+            if spec:
+                # Get tool_type from spec
+                tool_type = getattr(spec, 'tool_type', None)
+                if tool_type:
+                    # Query tool registry for tags/capabilities
+                    if self.tool_registry:
+                        tool_info = self.tool_registry.get_tool_info(tool_type)
+                        if tool_info:
+                            plan_tools[tool_id] = {
+                                "tool_type": tool_type,
+                                "tags": tool_info.get("tags", {}),
+                                "description": tool_info.get("description", ""),
+                            }
+                        else:
+                            # Fallback to empty capabilities if tool not found
+                            plan_tools[tool_id] = {
+                                "tool_type": tool_type,
+                                "tags": {},
+                                "description": "",
+                            }
+                    else:
+                        # No registry available - use defaults
+                        plan_tools[tool_id] = {
+                            "tool_type": tool_type,
+                            "tags": {},
+                            "description": "",
+                        }
+
+        return plan_tools
 
     def build_dependency_graph(self, dependencies: List[ToolDependency]) -> Dict[str, Set[str]]:
         """Build dependency graph as adjacency list.
@@ -197,90 +231,6 @@ class DependencyAnalyzer:
             raise ValueError("Circular dependency detected in tool dependencies")
 
         return result
-
-    def _has_ci_identifier(self, plan: Plan) -> bool:
-        """Check if plan contains a specific CI identifier.
-
-        Returns True if filters reference a specific CI or keywords contain CI pattern.
-
-        Args:
-            plan: Plan to check
-
-        Returns:
-            True if CI identifier is present, False otherwise
-        """
-        # Check if primary has CI-specific filters
-        if plan.primary and plan.primary.filters:
-            for f in plan.primary.filters:
-                if f.get("field") in ["ci_code", "ci_id", "ci_name"]:
-                    return True
-
-        # Check keywords for CI code patterns (xxx-yyy-## format)
-        if plan.primary and plan.primary.keywords:
-            import re
-            keyword_text = " ".join(plan.primary.keywords)
-            # Pattern for CI codes like srv-mes-06, app-web-01
-            if re.search(r'\b[a-z]{3,}-[a-z]{2,}-\d{2,}\b', keyword_text.lower()):
-                return True
-
-        return False
-
-    def _needs_aggregation(self, plan: Plan) -> bool:
-        """Check if the query requires aggregation.
-
-        Returns True if:
-        1. Intent is AGGREGATE
-        2. Plan has aggregate spec defined (even with empty values - LLM may have set it)
-        3. Plan has aggregate metrics defined
-        4. Plan has group_by defined
-        5. Keywords indicate aggregation (total, count, how many, distribution, etc.)
-
-        Args:
-            plan: Plan to check
-
-        Returns:
-            True if aggregation is needed, False otherwise
-        """
-        from app.modules.ops.services.orchestration.planner.plan_schema import Intent
-
-        intent = plan.intent if plan.intent else None
-
-        # Check explicit intent
-        if intent == Intent.AGGREGATE:
-            logger.info(f"dependency.aggregation.intent_aggregate", extra={"intent": str(intent)})
-            return True
-
-        # Check if aggregate spec exists - even with empty values, if the LLM created it,
-        # it means the query requires aggregation
-        if plan.aggregate:
-            # The aggregate spec exists - check if it has meaningful content
-            # OR if the LLM explicitly created it (empty metrics/group_by could mean "use defaults")
-            if plan.aggregate.metrics or plan.aggregate.group_by:
-                logger.info(f"dependency.aggregation.has_metrics_or_groupby", extra={
-                    "metrics": plan.aggregate.metrics,
-                    "group_by": plan.aggregate.group_by
-                })
-                return True
-            # Fallback: if aggregate spec exists and has a scope, assume aggregation is needed
-            if hasattr(plan.aggregate, 'scope') and plan.aggregate.scope:
-                logger.info(f"dependency.aggregation.has_scope", extra={"scope": plan.aggregate.scope})
-                return True
-
-        # Check keywords for aggregation indicators
-        agg_keywords = {
-            "total", "count", "how", "many", "much", "number",
-            "distribution", "percentage", "rate", "ratio",
-            "average", "avg", "mean", "sum", "max", "min",
-            "most", "least", "top", "bottom", "highest", "lowest"
-        }
-        if plan.primary and plan.primary.keywords:
-            keyword_set = {k.lower() for k in plan.primary.keywords}
-            if keyword_set & agg_keywords:  # Intersection
-                logger.info(f"dependency.aggregation.has_agg_keywords", extra={"keywords": list(keyword_set & agg_keywords)})
-                return True
-
-        logger.info(f"dependency.aggregation.false", extra={"intent": str(intent)})
-        return False
 
 
 class DataFlowMapper:
@@ -532,7 +482,11 @@ Should we execute {tool_id}? Answer 'Yes' or 'No' with brief reasoning.
 
 
 class ToolOrchestrator:
-    """Main orchestration layer coordinating all components."""
+    """Main orchestration layer coordinating all components.
+
+    Uses tool tags and capabilities to intelligently select which tools to execute
+    based on the query intent and question content.
+    """
 
     def __init__(self, plan: Plan, context: ToolContext):
         """Initialize orchestrator with plan and context.
@@ -543,10 +497,18 @@ class ToolOrchestrator:
         """
         self.plan = plan
         self.context = context
-        self.dependency_analyzer = DependencyAnalyzer()
+        # Extract question from context
+        self.question = context.metadata.get("question", "")
+        # Get tool registry to access tool capabilities
+        from app.modules.ops.services.orchestration.tools.base import get_tool_registry
+        self.tool_registry = get_tool_registry()
+        # Initialize dependency analyzer with question and tool registry
+        self.dependency_analyzer = DependencyAnalyzer(
+            question=self.question,
+            tool_registry=self.tool_registry
+        )
         self.data_flow_mapper = DataFlowMapper()
         self.execution_planner = ExecutionPlanner()
-        self.llm_decider = IntermediateLLMDecider() if plan.enable_intermediate_llm else None
         # Use get_chain_executor() to get the global executor which has proper registry
         from app.modules.ops.services.orchestration.orchestrator.chain_executor import (
             get_chain_executor,

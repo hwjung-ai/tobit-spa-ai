@@ -66,6 +66,32 @@ const TOOL_TYPES = [
     { value: "python_script", label: "Python Script", description: "Execute custom Python scripts" },
 ] as const;
 
+// Available capabilities for tool selection
+const AVAILABLE_CAPABILITIES = [
+    { value: "ci_lookup", label: "CI Lookup", description: "Retrieve single CI details" },
+    { value: "ci_search", label: "CI Search", description: "Search multiple CIs" },
+    { value: "ci_list", label: "CI List", description: "List CIs with pagination" },
+    { value: "ci_aggregate", label: "CI Aggregate", description: "Aggregate CI data" },
+    { value: "document_search", label: "Document Search", description: "Search documents" },
+    { value: "metric_query", label: "Metric Query", description: "Query metric data" },
+    { value: "metric_aggregate", label: "Metric Aggregate", description: "Aggregate metrics" },
+    { value: "history_search", label: "History Search", description: "Search event history" },
+    { value: "event_search", label: "Event Search", description: "Search events" },
+    { value: "graph_expand", label: "Graph Expand", description: "Expand CI relationships" },
+    { value: "graph_path", label: "Graph Path", description: "Find paths between CIs" },
+    { value: "graph_topology", label: "Graph Topology", description: "Get network topology" },
+] as const;
+
+// Available modes for tool support
+const AVAILABLE_MODES = [
+    { value: "config", label: "Config", description: "Configuration mode" },
+    { value: "metric", label: "Metric", description: "Metric mode" },
+    { value: "graph", label: "Graph", description: "Graph/Topology mode" },
+    { value: "history", label: "History", description: "History mode" },
+    { value: "document", label: "Document", description: "Document search mode" },
+    { value: "all", label: "All", description: "Supports all modes" },
+] as const;
+
 const DEFAULT_INPUT_SCHEMA = {
     type: "object",
     properties: {
@@ -100,6 +126,10 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
     const [mcpIsImporting, setMcpIsImporting] = useState(false);
     const [mcpDiscoveryError, setMcpDiscoveryError] = useState<string | null>(null);
     const [mcpImportResult, setMcpImportResult] = useState<{ imported: number; errors: string[] } | null>(null);
+
+    // Capabilities and modes state
+    const [selectedCapabilities, setSelectedCapabilities] = useState<Set<string>>(new Set());
+    const [selectedModes, setSelectedModes] = useState<Set<string>>(new Set(["all"]));
 
     const apiBaseUrl = useMemo(() => {
         const raw = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -396,6 +426,12 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             if (catalogRef.trim()) {
                 payload.tool_catalog_ref = catalogRef;
             }
+
+            // Add capabilities and supported_modes to tags
+            payload.tags = {
+                capabilities: Array.from(selectedCapabilities),
+                supported_modes: Array.from(selectedModes),
+            };
 
             const response = await fetchApi<{ asset: { asset_id: string } }>("/asset-registry/tools", {
                 method: "POST",
@@ -779,6 +815,84 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         rows={6}
                                         className="w-full px-4 py-3 border rounded-xl font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base"
                                     />
+                                </div>
+
+                                {/* Capabilities Selection */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
+                                        Capabilities
+                                        <span className="font-normal text-sky-500 ml-2">(What operations this tool can perform)</span>
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {AVAILABLE_CAPABILITIES.map((cap) => (
+                                            <button
+                                                key={cap.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedCapabilities((prev) => {
+                                                        const next = new Set(prev);
+                                                        if (next.has(cap.value)) {
+                                                            next.delete(cap.value);
+                                                        } else {
+                                                            next.add(cap.value);
+                                                        }
+                                                        return next;
+                                                    });
+                                                }}
+                                                className={`px-3 py-2 rounded-lg border text-left transition-all text-xs ${
+                                                    selectedCapabilities.has(cap.value)
+                                                        ? "bg-sky-600/20 border-sky-500 text-sky-400"
+                                                        : "bg-surface-base border-variant hover:border-sky-400"
+                                                }`}
+                                                title={cap.description}
+                                            >
+                                                {cap.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {selectedCapabilities.size === 0 && (
+                                        <p className="text-xs text-amber-500 mt-2">
+                                            ⚠️ No capabilities selected. System will auto-detect based on tool_type.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Supported Modes Selection */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
+                                        Supported Modes
+                                        <span className="font-normal text-sky-500 ml-2">(Which query modes this tool supports)</span>
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {AVAILABLE_MODES.map((mode) => (
+                                            <button
+                                                key={mode.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedModes((prev) => {
+                                                        const next = new Set(prev);
+                                                        if (next.has(mode.value)) {
+                                                            // Don't allow deselecting all modes
+                                                            if (next.size > 1) {
+                                                                next.delete(mode.value);
+                                                            }
+                                                        } else {
+                                                            next.add(mode.value);
+                                                        }
+                                                        return next;
+                                                    });
+                                                }}
+                                                className={`px-3 py-2 rounded-lg border text-left transition-all text-xs ${
+                                                    selectedModes.has(mode.value)
+                                                        ? "bg-emerald-600/20 border-emerald-500 text-emerald-400"
+                                                        : "bg-surface-base border-variant hover:border-emerald-400"
+                                                }`}
+                                                title={mode.description}
+                                            >
+                                                {mode.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </>
                         )}

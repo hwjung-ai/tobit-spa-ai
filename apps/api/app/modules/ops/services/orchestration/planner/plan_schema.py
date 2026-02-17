@@ -40,6 +40,53 @@ class Intent(str, Enum):
     DOCUMENT = "DOCUMENT"
 
 
+class ToolCapability(str, Enum):
+    """
+    Tool capabilities for dynamic tool selection.
+
+    Capabilities define what operations a tool can perform,
+    enabling intent-based tool selection without keyword matching.
+    """
+
+    # CI Operations
+    CI_LOOKUP = "ci_lookup"           # Single CI detail retrieval
+    CI_SEARCH = "ci_search"           # Multi-CI search
+    CI_LIST = "ci_list"               # CI listing with pagination
+    CI_AGGREGATE = "ci_aggregate"     # CI aggregation/counting
+
+    # Graph Operations
+    GRAPH_EXPAND = "graph_expand"     # Expand CI relationships
+    GRAPH_PATH = "graph_path"         # Find paths between CIs
+    GRAPH_TOPOLOGY = "graph_topology"  # Get network topology
+
+    # Metric Operations
+    METRIC_QUERY = "metric_query"     # Query metric data
+    METRIC_AGGREGATE = "metric_aggregate"  # Aggregate metrics
+
+    # History Operations
+    HISTORY_SEARCH = "history_search"  # Search event history
+    EVENT_SEARCH = "event_search"      # Search events
+
+    # Document Operations
+    DOCUMENT_SEARCH = "document_search"  # Search documents
+
+    # Generic Operations
+    HTTP_API = "http_api"              # Generic HTTP API call
+    DATABASE_QUERY = "database_query"  # Generic database query
+
+
+# Intent to Capability mapping for tool selection
+INTENT_CAPABILITY_MAP: dict[Intent, list[ToolCapability]] = {
+    Intent.LOOKUP: [ToolCapability.CI_LOOKUP, ToolCapability.CI_SEARCH],
+    Intent.SEARCH: [ToolCapability.CI_SEARCH, ToolCapability.DOCUMENT_SEARCH, ToolCapability.CI_LOOKUP],
+    Intent.LIST: [ToolCapability.CI_LIST, ToolCapability.CI_SEARCH],
+    Intent.AGGREGATE: [ToolCapability.CI_AGGREGATE, ToolCapability.METRIC_AGGREGATE],
+    Intent.EXPAND: [ToolCapability.GRAPH_EXPAND, ToolCapability.GRAPH_TOPOLOGY],
+    Intent.PATH: [ToolCapability.GRAPH_PATH, ToolCapability.GRAPH_EXPAND],
+    Intent.DOCUMENT: [ToolCapability.DOCUMENT_SEARCH],
+}
+
+
 class View(str, Enum):
     SUMMARY = "SUMMARY"
     COMPOSITION = "COMPOSITION"

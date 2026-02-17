@@ -301,6 +301,7 @@ class StageExecutor:
                 if self.context.test_mode
                 else {},
                 "full_time_range": full_time_range,
+                "question": question_text,  # Pass question for tool selection
             },
         )
 
