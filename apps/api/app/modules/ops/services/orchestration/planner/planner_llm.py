@@ -1762,6 +1762,39 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
         if plan.metric.tool_type not in valid_tool_types:
             logger.warning(f"Invalid metric tool_type: {plan.metric.tool_type}")
 
+    # History spec
+    if llm_payload.get("history"):
+        history_spec = llm_payload["history"]
+        plan.history = HistorySpec(
+            source=history_spec.get("source", "event"),
+            scope=history_spec.get("scope", "ci"),
+            mode=history_spec.get("mode", "aggregate"),
+            time_range=history_spec.get("time_range", "last_24h"),
+            limit=history_spec.get("limit", 100),
+            tool_type=history_spec.get("tool_type", "ci_history"),  # Use tool_type
+        )
+        # Validate tool_type
+        if plan.history.tool_type not in valid_tool_types:
+            logger.warning(f"Invalid history tool_type: {plan.history.tool_type}")
+
+    # Document spec
+    if llm_payload.get("document"):
+        document_spec = llm_payload["document"]
+        plan.document = {
+            "query": document_spec.get("query", ""),
+            "search_type": document_spec.get("search_type", "hybrid"),
+            "top_k": document_spec.get("top_k", 10),
+            "min_relevance": document_spec.get("min_relevance", 0.5),
+            "tool_type": document_spec.get("tool_type", "document_search"),
+        }
+        logger.info(
+            "planner.document_spec_assigned",
+            extra={
+                "query": document_spec.get("query", ""),
+                "document_spec_enabled": True,
+            }
+        )
+
     # NEW: Set orchestration fields
     plan.execution_strategy = llm_payload.get("execution_strategy", "serial")
     if llm_payload.get("tool_dependencies"):
