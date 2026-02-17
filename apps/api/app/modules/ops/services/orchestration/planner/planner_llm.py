@@ -678,9 +678,12 @@ def create_plan(
     )
 
     if is_document_question:
-        plan.intent = Intent.DOCUMENT
-        plan.view = _determine_view(normalized, plan.intent)
-        # Populate document spec with the user's question as search query
+        # In "all" mode, don't override intent to DOCUMENT - instead enable document spec alongside others
+        if plan.mode != PlanMode.ALL:
+            plan.intent = Intent.DOCUMENT
+            plan.view = _determine_view(normalized, plan.intent)
+
+        # Always populate document spec with the user's question as search query
         plan.document = {
             "query": normalized,
             "search_type": "hybrid",
@@ -689,12 +692,14 @@ def create_plan(
             "tool_type": "document_search",
         }
         logger.info(
-            "planner.document_intent_override",
+            "planner.document_handling",
             extra={
                 "reason": "document_keywords_detected",
                 "detected_keywords": [kw for kw in document_keywords if kw in normalized],
-                "new_intent": Intent.DOCUMENT.value,
-                "document_spec": plan.document,
+                "intent_override": plan.mode != PlanMode.ALL,
+                "new_intent": plan.intent.value if plan.mode != PlanMode.ALL else None,
+                "document_spec_enabled": True,
+                "plan_mode": plan.mode.value if hasattr(plan.mode, 'value') else str(plan.mode),
             }
         )
 

@@ -373,9 +373,13 @@ class StageExecutor:
 
             is_document_intent = plan.intent == Intent.DOCUMENT or (isinstance(plan.intent, str) and plan.intent == "DOCUMENT")
             has_document = bool(plan.document)
+            # Check if we're in "all" mode
+            from app.modules.ops.services.orchestration.planner.plan_schema import PlanMode
+            is_all_mode = plan.mode == PlanMode.ALL or (isinstance(plan.mode, str) and plan.mode == "all")
 
-            if is_document_intent and has_document:
-                # Execute document search directly via DocumentSearchService
+            # Execute document search if document intent OR if document spec is enabled in "all" mode
+            if is_document_intent and has_document and not is_all_mode:
+                # Document-only mode: Skip orchestration, execute document search and return
                 self.logger.info(
                     "execute_stage.document_search",
                     extra={
@@ -462,11 +466,14 @@ class StageExecutor:
                         "error": error_msg,
                     })
 
-                # Skip orchestration for document intent
+                # Document-only mode: Skip full orchestration and return
                 return {
                     "execution_results": results,
                     "references": references,
                 }
+
+            # If "all" mode with document intent, proceed to full orchestration
+            # Document search will be executed as part of orchestration
 
             # Check if orchestration should be used
             # IMPORTANT: Default to True to use new orchestration layer with Tool Registry
