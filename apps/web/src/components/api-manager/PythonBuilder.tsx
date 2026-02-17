@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Editor from "@monaco-editor/react";
+import Toast from "@/components/admin/Toast";
 
 interface PythonBuilderProps {
   code?: string;
@@ -130,6 +131,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
   const [selectedTemplate, setSelectedTemplate] = useState<string>("basic");
   const [selectedLibrary, setSelectedLibrary] = useState<string>("");
   const [selectedFunction, setSelectedFunction] = useState<string>("");
+  const [toast, setToast] = useState<{ message: string; type: "info" } | null>(null);
 
   const handleTemplateChange = (templateName: string) => {
     setSelectedTemplate(templateName);
@@ -160,7 +162,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
   const testPythonCode = async () => {
     // In production, this would execute the Python code in a sandbox
-    alert("Python code test would execute here. (In production, integrate with Pyodide or backend Python executor)");
+    setToast({ message: "Python code test would execute here. (In production, integrate with Pyodide or backend Python executor)", type: "info" });
   };
 
   return (
@@ -293,6 +295,11 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
           <p>• Available libraries: pandas, numpy, sqlalchemy, requests</p>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} duration={4000} />
+      )}
     </div>
   );
 }

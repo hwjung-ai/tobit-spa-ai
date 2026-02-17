@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shared";
 import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 import { authenticatedFetch } from "@/lib/apiClient";
+import { useConfirm } from "@/hooks/use-confirm";
 
 /**
  * Document category type
@@ -132,6 +133,9 @@ export default function DocsQueryPage() {
 
   // Left panel tabs
   const [leftPanelTab, setLeftPanelTab] = useState<"library" | "history">("library");
+
+  // Confirm dialog
+  const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -377,8 +381,13 @@ export default function DocsQueryPage() {
   const deleteDocument = async (docId: string) => {
     const doc = documents.find((d) => d.id === docId);
     if (!doc) return;
-    
-    if (!confirm(`"${doc.filename}" 문서를 삭제하시겠습니까?`)) return;
+
+    const ok = await confirmDialog({
+      title: "Delete Document",
+      description: `"${doc.filename}" 문서를 삭제하시겠습니까?`,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
 
     try {
       const response = await authenticatedFetch(`/api/documents/${docId}`, {
@@ -727,6 +736,9 @@ export default function DocsQueryPage() {
           </div>
         ))}
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">

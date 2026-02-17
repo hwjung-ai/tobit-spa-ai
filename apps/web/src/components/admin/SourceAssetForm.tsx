@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import Toast from "./Toast";
 import { fetchApi } from "../../lib/adminUtils";
 import type { ConnectionTestResult, SourceAssetResponse, SourceType } from "../../types/asset-registry";
 
@@ -37,11 +38,31 @@ interface SourceAssetFormProps {
   onSave: () => void;
 }
 
+const normalizeSourceType = (value: unknown): SourceType => {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "postgres") return "postgresql";
+  if (raw in SOURCE_TYPE_LABELS) return raw as SourceType;
+  return "postgresql";
+};
+
+const normalizeEditingSource = (source: Partial<SourceAssetResponse>): Partial<SourceAssetResponse> => ({
+  ...source,
+  source_type: normalizeSourceType(source.source_type),
+});
+
+const fieldClassName =
+  "border-variant bg-surface-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 focus-visible:border-sky-500/50 transition-colors";
+
 export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps) {
-  const [editingSource, setEditingSource] = useState<Partial<SourceAssetResponse> | null>(asset);
+  const [editingSource, setEditingSource] = useState<Partial<SourceAssetResponse> | null>(
+    normalizeEditingSource(asset),
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   const [testResults, setTestResults] = useState<ConnectionTestResult | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" | "info" } | null>(
+    null,
+  );
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, source }: { id: string; source: Partial<SourceAssetResponse> }) => {
@@ -54,7 +75,12 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
     onSuccess: () => {
       setIsEditDialogOpen(false);
       setEditingSource(null);
+      setToast({ message: "Source updated successfully.", type: "success" });
       onSave();
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Failed to update source.";
+      setToast({ message, type: "error" });
     },
   });
 
@@ -69,18 +95,23 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
       setTestResults(data);
       setIsTestDialogOpen(true);
     },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Connection test failed.";
+      setToast({ message, type: "error" });
+    },
   });
 
   const handleEditSource = () => {
-    setEditingSource(asset);
+    setEditingSource(normalizeEditingSource(asset));
     setIsEditDialogOpen(true);
   };
 
   const handleSaveSource = () => {
     if (editingSource && asset.asset_id) {
+      const normalizedSource = normalizeEditingSource(editingSource);
       updateMutation.mutate({
         id: asset.asset_id,
-        source: editingSource,
+        source: normalizedSource,
       });
     }
   };
@@ -96,6 +127,12 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
 
     const sourceTypes = Object.keys(SOURCE_TYPE_LABELS) as SourceType[];
     const currentSourceType = editingSource.source_type || "postgresql";
+    const isSqlLikeSource =
+      currentSourceType === "postgresql" ||
+      currentSourceType === "mysql" ||
+      currentSourceType === "bigquery" ||
+      currentSourceType === "snowflake";
+    const isCredentialSource = isSqlLikeSource || currentSourceType === "neo4j";
 
     return (
       <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 py-1 custom-scrollbar">
@@ -113,7 +150,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                 value={editingSource.name || ""}
                 onChange={(e) => setEditingSource({ ...editingSource, name: e.target.value })}
                 placeholder="Database Production"
-                className="  focus:border-sky-500/50 transition-colors"
+                className={fieldClassName}
               />
             </div>
 
@@ -126,10 +163,10 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                   source_type: value as SourceType
                 })}
               >
-                <SelectTrigger className=" ">
+                <SelectTrigger className={fieldClassName}>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent className=" ">
+                <SelectContent className="border-variant bg-surface-base text-foreground">
                   {sourceTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {SOURCE_TYPE_LABELS[type]}
@@ -148,12 +185,12 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
               onChange={(e) => setEditingSource({ ...editingSource, description: e.target.value })}
               placeholder="Primary analytical database for production metrics"
               rows={2}
-              className="  focus:border-sky-500/50 transition-colors resize-none"
+              className={`${fieldClassName} resize-none`}
             />
           </div>
         </section>
 
-        <section className="space-y-4 p-4 rounded-xl border   relative overflow-hidden">
+        <section className="space-y-4 p-4 rounded-xl border border-variant bg-surface-elevated/40 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sky-500"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
           </div>
@@ -164,8 +201,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           </div>
 
           {/* Database Connection Fields (PostgreSQL, MySQL, BigQuery, Snowflake) */}
-          {(currentSourceType === "postgresql" || currentSourceType === "mysql" ||
-            currentSourceType === "bigquery" || currentSourceType === "snowflake") && (
+          {isSqlLikeSource && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2 space-y-2">
@@ -181,7 +217,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="db.example.com"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
 
@@ -198,7 +234,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                         port: parseInt(e.target.value) || 5432
                       }
                     })}
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
               </div>
@@ -217,7 +253,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="admin"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
 
@@ -234,7 +270,44 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="production_db"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={editingSource.connection?.password || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        password: e.target.value
+                      }
+                    })}
+                    placeholder="DB password (dev) or leave empty"
+                    className={fieldClassName}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="secret_key_ref">Secret Key Ref</Label>
+                  <Input
+                    id="secret_key_ref"
+                    value={editingSource.connection?.secret_key_ref || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        secret_key_ref: e.target.value
+                      }
+                    })}
+                    placeholder="env:PG_PASSWORD"
+                    className={fieldClassName}
                   />
                 </div>
               </div>
@@ -258,7 +331,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="neo4j.example.com"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
 
@@ -275,7 +348,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                         port: parseInt(e.target.value) || 7687
                       }
                     })}
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
               </div>
@@ -293,8 +366,45 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                     }
                   })}
                   placeholder="neo4j"
-                  className="/50 /80 focus:border-sky-500/50 transition-colors"
+                  className={fieldClassName}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={editingSource.connection?.password || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        password: e.target.value
+                      }
+                    })}
+                    placeholder="Neo4j password (dev) or leave empty"
+                    className={fieldClassName}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="secret_key_ref">Secret Key Ref</Label>
+                  <Input
+                    id="secret_key_ref"
+                    value={editingSource.connection?.secret_key_ref || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        secret_key_ref: e.target.value
+                      }
+                    })}
+                    placeholder="env:NEO4J_PASSWORD"
+                    className={fieldClassName}
+                  />
+                </div>
               </div>
             </>
           )}
@@ -315,7 +425,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                     }
                   })}
                   placeholder="https://api.example.com"
-                  className="/50 /80 focus:border-sky-500/50 transition-colors"
+                  className={fieldClassName}
                 />
               </div>
 
@@ -333,7 +443,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="api_key_id"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
 
@@ -351,7 +461,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="Bearer token or API secret"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors"
+                    className={fieldClassName}
                   />
                 </div>
               </div>
@@ -373,27 +483,22 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                     timeout: parseInt(e.target.value) || 30
                   }
                 })}
-                className="/50 /80 focus:border-sky-500/50 transition-colors"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="scope">Environment / Scope</Label>
-              <Input
-                id="scope"
-                value={editingSource.scope || ""}
-                onChange={(e) => setEditingSource({ ...editingSource, scope: e.target.value })}
-                placeholder="e.g., production, staging"
-                className="/50 /80 focus:border-sky-500/50 transition-colors"
+                className={fieldClassName}
               />
             </div>
           </div>
+
+          {isCredentialSource && (
+            <p className="text-xs text-muted-foreground">
+              Prefer <code>secret_key_ref</code> (for example <code>env:PG_PASSWORD</code>) in real mode.
+            </p>
+          )}
         </section>
 
-        <div className="flex justify-end gap-3 pt-4 border-t /50">
+        <div className="flex justify-end gap-3 pt-4 border-t border-variant">
           <Button
             variant="ghost"
-            className="hover:"
+            className="text-muted-foreground hover:text-foreground hover:bg-surface-elevated"
             onClick={() => {
               setIsEditDialogOpen(false);
               setEditingSource(null);
@@ -422,28 +527,28 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Card className="/50  ">
+        <Card className="border-variant bg-surface-base">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs ">Connection Details</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider">Connection Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm ">
-            <div>Type: {SOURCE_TYPE_LABELS[asset.source_type as SourceType]}</div>
+          <CardContent className="space-y-1 text-sm text-foreground">
+            <div>Type: {SOURCE_TYPE_LABELS[normalizeSourceType(asset.source_type)]}</div>
             <div>Host: {asset.connection?.host}</div>
             <div>Port: {asset.connection?.port}</div>
             <div>Database: {asset.connection?.database}</div>
             <div>Username: {asset.connection?.username}</div>
+            <div>Secret Ref: {asset.connection?.secret_key_ref || "Not set"}</div>
             <div>Timeout: {asset.connection?.timeout}s</div>
           </CardContent>
         </Card>
 
-        <Card className="/50  ">
+        <Card className="border-variant bg-surface-base">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs ">Metadata</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider">Metadata</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm ">
+          <CardContent className="space-y-1 text-sm text-foreground">
             <div>ID: {asset.asset_id}</div>
             <div>Version: {asset.version}</div>
-            <div>Scope: {asset.scope || "None"}</div>
             <div>Created: {new Date(asset.created_at || "").toLocaleDateString()}</div>
             {asset.published_at && (
               <div>Published: {new Date(asset.published_at).toLocaleDateString()}</div>
@@ -453,12 +558,12 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
       </div>
 
       {asset.description && (
-        <Card className="/50  ">
+        <Card className="border-variant bg-surface-base">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs ">Description</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm ">
+            <p className="text-sm text-foreground">
               {asset.description}
             </p>
           </CardContent>
@@ -470,7 +575,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           variant="outline"
           size="sm"
           onClick={handleEditSource}
-          className=" /50  hover: hover:"
+          className="border-variant bg-surface-base hover:bg-surface-elevated"
         >
           Edit Connection
         </Button>
@@ -479,7 +584,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           size="sm"
           onClick={handleTestConnection}
           disabled={testMutation.isPending}
-          className=" /50  hover: hover:"
+          className="border-variant bg-surface-base hover:bg-surface-elevated"
         >
           {testMutation.isPending ? "Testing..." : "Test Connection"}
         </Button>
@@ -491,7 +596,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           setEditingSource(null);
         }
       }}>
-        <DialogContent className="max-w-3xl    shadow-2xl">
+        <DialogContent className="max-w-3xl border border-variant bg-surface-base text-foreground shadow-2xl">
           <DialogHeader className="mb-4">
             <div className="flex items-center gap-3 mb-1">
               <div className="p-2 bg-sky-500/10 rounded-lg">
@@ -501,7 +606,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                 <DialogTitle className="text-xl font-bold tracking-tight">
                   Edit Source
                 </DialogTitle>
-                <DialogDescription className="">
+                <DialogDescription className="text-muted-foreground">
                   Update connection settings and metadata
                 </DialogDescription>
               </div>
@@ -512,25 +617,25 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
       </Dialog>
 
       <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg border border-variant bg-surface-base text-foreground shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Test Connection</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg font-semibold">Test Connection</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Testing connection to {asset.name}
             </DialogDescription>
           </DialogHeader>
           {testResults && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4 rounded-xl border border-variant bg-surface-elevated/40 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
                 {testResults.success ? (
                   <>
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-sm text-green-400">Connection successful</span>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-emerald-500">Connection successful</span>
                   </>
                 ) : (
                   <>
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-sm text-red-400">Connection failed</span>
+                    <div className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span className="text-rose-500">Connection failed</span>
                   </>
                 )}
               </div>
@@ -538,31 +643,39 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
               {testResults.success && (
                 <div className="space-y-2">
                   {testResults.execution_time_ms && (
-                    <div className="text-sm ">
+                    <div className="text-sm text-foreground">
                       Execution time: {testResults.execution_time_ms}ms
                     </div>
                   )}
                   {testResults.test_result && (
-                    <div className="text-sm ">
-                      Result: {JSON.stringify(testResults.test_result, null, 2)}
-                    </div>
+                    <pre className="max-h-56 overflow-auto rounded-lg border border-variant bg-surface-base p-3 text-xs text-foreground custom-scrollbar">
+                      {JSON.stringify(testResults.test_result, null, 2)}
+                    </pre>
                   )}
                 </div>
               )}
 
               {testResults.error_details && (
-                <div className="text-sm text-red-300">
+                <div className="text-sm text-rose-500">
                   Error: {testResults.error_details}
                 </div>
               )}
 
-              <div className="text-xs ">
+              <div className="text-xs text-muted-foreground">
                 {testResults.message}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

@@ -25,9 +25,6 @@ class AppSettings(BaseSettings):
     ops_enable_langgraph: bool = False
     enable_system_apis: bool = False
     enable_data_explorer: bool = True
-    ops_default_source_asset: str | None = None
-    ops_default_schema_asset: str | None = None
-    ops_default_resolver_asset: str | None = None
     ops_timezone: str = "Asia/Seoul"
 
     cep_enable_metric_polling: bool = False

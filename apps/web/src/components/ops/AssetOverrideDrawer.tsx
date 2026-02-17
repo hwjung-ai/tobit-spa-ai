@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchApi } from "@/lib/apiClient/index";
+import Toast from "@/components/admin/Toast";
 import {
   Drawer,
   DrawerClose,
@@ -56,6 +57,7 @@ export default function AssetOverrideDrawer({
   const [testMode, setTestMode] = useState(false);
   const [baselineTraceId, setBaselineTraceId] = useState("");
   const [selectedQuestion, setSelectedQuestion] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "warning" | "error" } | null>(null);
 
   // Load available assets for each type
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function AssetOverrideDrawer({
 
   const handleTestRun = async () => {
     if (!selectedQuestion.trim()) {
-      alert("Please enter a question for testing");
+      setToast({ message: "Please enter a question for testing", type: "warning" });
       return;
     }
 
@@ -136,7 +138,7 @@ export default function AssetOverrideDrawer({
       window.open(`/admin/inspector?trace_id=${response.trace_id}`, "_blank");
     } catch (error) {
       console.error("Test run failed:", error);
-      alert("Test run failed");
+      setToast({ message: "Test run failed", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -160,6 +162,7 @@ export default function AssetOverrideDrawer({
   };
 
   return (
+    <>
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="w-full max-w-2xl">
         <DrawerHeader>
@@ -325,5 +328,11 @@ export default function AssetOverrideDrawer({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+
+    {/* Toast */}
+    {toast && (
+      <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
+    )}
+    </>
   );
 }

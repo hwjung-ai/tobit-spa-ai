@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Asset, fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import SourceAssetForm from "./SourceAssetForm";
 import SchemaAssetForm from "./SchemaAssetForm";
 import ResolverAssetForm from "./ResolverAssetForm";
@@ -50,9 +51,15 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
     const [showRollbackModal, setShowRollbackModal] = useState(false);
     const [rollbackVersion, setRollbackVersion] = useState("");
     const [selectedVersion, setSelectedVersion] = useState<number>(asset.version);
+    const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this draft asset? This action cannot be undone.")) return;
+        const ok = await confirmDialog({
+            title: "Delete Asset",
+            description: "Are you sure you want to delete this draft asset? This action cannot be undone.",
+            confirmLabel: "Delete",
+        });
+        if (!ok) return;
         setIsSaving(true);
         try {
             await fetchApi(`/asset-registry/assets/${asset.asset_id}`, { method: "DELETE" });
@@ -65,7 +72,12 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
     };
 
     const handleUnpublish = async () => {
-        if (!confirm("Are you sure you want to rollback this asset to draft? It will no longer be active until re-published.")) return;
+        const ok = await confirmDialog({
+            title: "Rollback to Draft",
+            description: "Are you sure you want to rollback this asset to draft? It will no longer be active until re-published.",
+            confirmLabel: "Rollback",
+        });
+        if (!ok) return;
         setIsRollingBack(true);
         try {
             await fetchApi(`/asset-registry/assets/${asset.asset_id}/unpublish`, { method: "POST" });
@@ -686,6 +698,9 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                     onDismiss={() => setToast(null)}
                 />
             )}
+
+            {/* Confirm Dialog */}
+            <ConfirmDialogComponent />
         </div>
     );
 }

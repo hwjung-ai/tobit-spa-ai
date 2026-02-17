@@ -17,6 +17,7 @@ import {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { Plus, Trash2, Save, Play } from "lucide-react";
+import Toast from "@/components/admin/Toast";
 
 interface WorkflowBuilderProps {
   workflow?: string;
@@ -103,6 +104,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(null);
   const [workflowName, setWorkflowName] = useState<string>("");
+  const [toast, setToast] = useState<{ message: string; type: "error" | "info" } | null>(null);
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
@@ -167,7 +169,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
       }
     } catch (error) {
       console.error("Failed to parse workflow JSON:", error);
-      alert("Invalid workflow JSON format");
+      setToast({ message: "Invalid workflow JSON format", type: "error" });
     }
   }, [setNodes, setEdges]);
 
@@ -426,7 +428,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <button
             onClick={() => {
               generateWorkflowJSON();
-              alert("Workflow execution would start here. (In production, integrate with Workflow Executor)");
+              setToast({ message: "Workflow execution would start here. (In production, integrate with Workflow Executor)", type: "info" });
             }}
             disabled={readOnly}
             className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-emerald-400 hover:shadow-md"
@@ -459,6 +461,11 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <p>• Available node types: SQL, HTTP, Python</p>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} duration={toast.type === "info" ? 4000 : 3000} />
+      )}
     </div>
   );
 }

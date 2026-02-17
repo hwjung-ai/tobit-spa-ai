@@ -16,3 +16,15 @@ def test_coerce_source_type_defaults_to_postgresql_for_unknown() -> None:
 def test_coerce_source_connection_supports_env_placeholder_port() -> None:
     connection = coerce_source_connection({"host": "db", "port": "${DB_PORT:5432}"})
     assert connection.port == 5432
+
+
+def test_coerce_source_connection_resolves_host_placeholder_default(monkeypatch) -> None:
+    monkeypatch.delenv("DB_HOST", raising=False)
+    connection = coerce_source_connection({"host": "${DB_HOST:localhost}"})
+    assert connection.host == "localhost"
+
+
+def test_coerce_source_connection_resolves_host_placeholder_env(monkeypatch) -> None:
+    monkeypatch.setenv("DB_HOST", "db.internal")
+    connection = coerce_source_connection({"host": "${DB_HOST:localhost}"})
+    assert connection.host == "db.internal"

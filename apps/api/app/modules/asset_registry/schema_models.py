@@ -191,6 +191,7 @@ class SchemaAsset(SQLModel):
     """Asset for storing schema information"""
 
     # Asset metadata
+    asset_id: Optional[str] = None
     asset_type: str = Field(default="catalog")
     name: str = Field(min_length=1)
     description: Optional[str] = None

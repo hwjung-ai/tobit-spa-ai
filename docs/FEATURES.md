@@ -1,6 +1,6 @@
 # Tobit SPA AI - 기능
 
-> 최종 업데이트: 2026-02-15
+> 최종 업데이트: 2026-02-17
 > **전체 완성도: 95%**
 
 ## 1. 문서 개요
@@ -92,6 +92,7 @@
   - 서비스 자동 초기값: `/api/sim/services` 조회 후 데이터 존재 서비스 우선 선택
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
+  - Source Asset은 `environment/scope` 입력/응답 필드를 사용하지 않으며, Source 연결 설정은 `name/description/source_type/connection/tags`만 관리
   - Catalog Scan API (`POST /asset-registry/catalogs/{asset_id}/scan`)는 JSON body `{ "schema_names": string[] | null, "include_row_counts": boolean }` 계약을 사용
   - Catalog Schema Discovery 실패는 브라우저 `alert()` 대신 Admin 표준 에러 UI(ValidationAlert + Toast)로 노출
   - Settings: 운영 설정 편집 (restart_required 표시)

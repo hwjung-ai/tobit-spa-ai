@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { fetchApi } from "@/lib/adminUtils";
 import RCAPanel from "./RCAPanel";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface GoldenQuery {
   id: string;
@@ -54,6 +55,7 @@ export default function RegressionWatchPanel() {
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [contextAssetId, setContextAssetId] = useState<string | null>(null);
   const [contextVersion, setContextVersion] = useState<string | null>(null);
+  const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
   useEffect(() => {
     setContextScreenId(searchParams.get("screen_id"));
@@ -179,7 +181,12 @@ export default function RegressionWatchPanel() {
   };
 
   const handleDeleteQuery = async (queryId: string) => {
-    if (!confirm("Are you sure?")) return;
+    const ok = await confirmDialog({
+      title: "Delete Query",
+      description: "Are you sure you want to delete this query?",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await fetchApi(`/ops/golden-queries/${queryId}`, {
         method: "DELETE",
@@ -636,6 +643,9 @@ export default function RegressionWatchPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
     </div>
   );
 }

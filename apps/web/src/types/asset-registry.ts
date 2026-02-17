@@ -18,6 +18,7 @@ export interface SourceConnection {
   port: number;
   username: string;
   database?: string | null;
+  password?: string | null;
   password_encrypted?: string | null;
   secret_key_ref?: string | null;
   timeout?: number;
@@ -36,7 +37,6 @@ export interface SourceAsset {
   status: string;
   source_type: SourceType;
   connection: SourceConnection;
-  scope?: string | null;
   tags?: Record<string, unknown> | null;
   created_by?: string | null;
   published_by?: string | null;
@@ -51,7 +51,6 @@ export interface SourceAssetCreate {
   description?: string | null;
   source_type: SourceType;
   connection: SourceConnection;
-  scope?: string | null;
   tags?: Record<string, unknown> | null;
 }
 
@@ -60,7 +59,6 @@ export interface SourceAssetUpdate {
   description?: string | null;
   source_type?: SourceType;
   connection?: SourceConnection;
-  scope?: string | null;
   tags?: Record<string, unknown> | null;
 }
 

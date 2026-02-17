@@ -187,13 +187,10 @@ async def ask_ops_stream(
             })
             completed_stages.append(OpsProgressStage.RESOLVING.value)
             
-            # Load assets
-            settings = get_settings()
-            resolver_asset_name = (
-                payload.resolver_asset or settings.ops_default_resolver_asset
-            )
-            schema_asset_name = payload.schema_asset or settings.ops_default_schema_asset
-            source_asset_name = payload.source_asset or settings.ops_default_source_asset
+            # Load assets (require explicit asset names in request)
+            resolver_asset_name = payload.resolver_asset
+            schema_asset_name = payload.schema_asset
+            source_asset_name = payload.source_asset
             
             resolver_payload = (
                 load_resolver_asset(resolver_asset_name) if resolver_asset_name else None

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
+import Toast from "./Toast";
 
 interface SchemaViewerPanelProps {
   schema: Record<string, unknown>;
@@ -11,6 +12,7 @@ interface SchemaViewerPanelProps {
 export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPanelProps) {
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
   const [togglingTable, setTogglingTable] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
 
   const catalog = schema.content?.catalog || {};
   const tables = catalog.tables || [];
@@ -42,7 +44,7 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
         throw new Error(response.message || "Failed to toggle table");
       }
     } catch (error) {
-      alert(`Failed to toggle table: ${error instanceof Error ? error.message : String(error)}`);
+      setToast({ message: `Failed to toggle table: ${error instanceof Error ? error.message : String(error)}`, type: "error" });
     } finally {
       setTogglingTable(null);
     }
@@ -69,6 +71,11 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
             />
           ))}
         </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );

@@ -500,7 +500,7 @@ def create_source_asset(
         name=source_data.name,
         asset_type="source",
         description=source_data.description,
-        scope=source_data.scope,
+        scope=None,
         tags=source_data.tags,
         tenant_id=tenant_id,
         created_by=created_by,
@@ -602,8 +602,6 @@ def update_source_asset(
         update_dict["content"] = content
     if updates.connection is not None:
         update_dict["content"] = content
-    if updates.scope is not None:
-        update_dict["scope"] = updates.scope
     if updates.tags is not None:
         update_dict["tags"] = updates.tags
 
@@ -813,7 +811,7 @@ def create_schema_asset(
     )
 
     return SchemaAsset(
-        asset_id=asset.asset_id,
+        asset_id=str(asset.asset_id),
         asset_type=asset.asset_type,
         name=asset.name,
         description=asset.description,
@@ -839,7 +837,7 @@ def get_schema_asset(session: Session, asset_id: str) -> SchemaAsset | None:
 
     # Extract schema data from content
     return SchemaAsset(
-        asset_id=asset.asset_id,
+        asset_id=str(asset.asset_id),
         asset_type=asset.asset_type,
         name=asset.name,
         description=asset.description,

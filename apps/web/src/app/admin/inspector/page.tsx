@@ -333,7 +333,7 @@ function InspectorContent() {
 
   const handleStageCompareClick = () => {
     if (!selectedTraceId) {
-      alert("Please select a trace first");
+      setStatusMessage("Please select a trace first");
       return;
     }
     setShowStageDiffView(true);

@@ -13,6 +13,7 @@ import ScreenEditorTabs from "./ScreenEditorTabs";
 import ScreenEditorErrors from "./common/ScreenEditorErrors";
 import Toast from "@/components/admin/Toast";
 import PublishGateModal from "./publish/PublishGateModal";
+import { useConfirm } from "@/hooks/use-confirm";
 
 const SCREEN_COPILOT_INSTRUCTION = `You are Tobit Screen Schema V1 Copilot.
 You must generate JSON Patch (RFC 6902) operations to modify an existing screen.
@@ -125,6 +126,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const [showPublishGate, setShowPublishGate] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
   const [authCheckDone, setAuthCheckDone] = useState(false);
+  const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
   // Resizable panel state (right copilot panel)
   const [rightPanelWidth, setRightPanelWidth] = useState(320);
@@ -245,7 +247,12 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   };
 
   const handleRollback = async () => {
-    if (!confirm("Are you sure you want to rollback to draft?")) return;
+    const ok = await confirmDialog({
+      title: "Rollback to Draft",
+      description: "Are you sure you want to rollback to draft?",
+      confirmLabel: "Rollback",
+    });
+    if (!ok) return;
 
     try {
       await rollback();
@@ -600,6 +607,9 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         onOpenChange={setShowPublishGate}
         onConfirm={handlePublishConfirm}
       />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
     </div>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Asset, fetchApi } from "../../../../lib/adminUtils";
 import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
 import { type TraceSummaryRow } from "@/lib/apiClientTypes";
 import { cn } from "@/lib/utils";
-
+import Toast from "@/components/admin/Toast";
 import { useQuery } from "@tanstack/react-query";
 
 function AssetDetailPageContent() {
@@ -17,6 +17,7 @@ function AssetDetailPageContent() {
     const searchParams = useSearchParams();
     const assetId = params.assetId as string;
     const [confirm, ConfirmDialogComponent] = useConfirm();
+    const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
 
     // Build back URL with preserved filter parameters
     const backUrl = useMemo(() => {
@@ -71,7 +72,7 @@ function AssetDetailPageContent() {
             await fetchApi(`/asset-registry/assets/${assetId}`, { method: "DELETE" });
             router.push("/admin/assets");
         } catch (err: unknown) {
-            alert((err as Error).message || "Failed to delete asset");
+            setToast({ message: (err as Error).message || "Failed to delete asset", type: "error" });
         }
     };
 
@@ -87,7 +88,7 @@ function AssetDetailPageContent() {
             await fetchApi(`/asset-registry/assets/${assetId}/unpublish`, { method: "POST" });
             refetch();
         } catch (err: unknown) {
-            alert((err as Error).message || "Failed to rollback asset");
+            setToast({ message: (err as Error).message || "Failed to rollback asset", type: "error" });
         }
     };
 
@@ -262,6 +263,9 @@ function AssetDetailPageContent() {
                 </div>
             ) : null}
             <ConfirmDialogComponent />
+            {toast && (
+                <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
+            )}
         </div>
     );
 }

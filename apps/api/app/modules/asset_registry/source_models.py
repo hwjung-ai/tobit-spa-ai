@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import os
 import re
 from datetime import datetime
 from typing import Any, Dict, List
@@ -69,6 +70,33 @@ def _coerce_int(value: Any, default: int | None) -> int | None:
     return default
 
 
+def _resolve_env_placeholder(value: Any) -> Any:
+    """Resolve ${ENV:default} placeholders for string values."""
+    if not isinstance(value, str):
+        return value
+
+    text = value.strip()
+    match = re.match(r"^\$\{([^:}]+)(?::([^}]*))?\}$", text)
+    if not match:
+        return value
+
+    env_name = match.group(1).strip()
+    fallback = match.group(2)
+    env_value = os.getenv(env_name)
+    if env_value is not None and env_value != "":
+        return env_value
+    return fallback if fallback is not None else value
+
+
+def _resolve_env_placeholders(value: Any) -> Any:
+    """Recursively resolve env placeholders in dict/list/string payloads."""
+    if isinstance(value, dict):
+        return {k: _resolve_env_placeholders(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_resolve_env_placeholders(v) for v in value]
+    return _resolve_env_placeholder(value)
+
+
 def coerce_source_connection(value: Any) -> "SourceConnection":
     """Convert legacy/raw connection payloads into SourceConnection safely."""
     if isinstance(value, SourceConnection):
@@ -76,7 +104,7 @@ def coerce_source_connection(value: Any) -> "SourceConnection":
     if not isinstance(value, dict):
         return SourceConnection()
 
-    data = dict(value)
+    data = _resolve_env_placeholders(dict(value))
     data["port"] = _coerce_int(data.get("port"), 5432)
     data["timeout"] = _coerce_int(data.get("timeout"), 30)
     data["max_connections"] = _coerce_int(data.get("max_connections"), None)
@@ -211,7 +239,6 @@ class SourceAssetCreate(SQLModel):
     description: str | None = None
     source_type: SourceType
     connection: SourceConnection
-    scope: str | None = None
     tags: Dict[str, Any] | None = Field(default_factory=dict)
 
 
@@ -220,7 +247,6 @@ class SourceAssetUpdate(SQLModel):
     description: str | None = None
     source_type: SourceType | None = None
     connection: SourceConnection | None = None
-    scope: str | None = None
     tags: Dict[str, Any] | None = None
 
 
@@ -233,7 +259,6 @@ class SourceAssetResponse(SQLModel):
     status: str
     source_type: SourceType
     connection: SourceConnection
-    scope: str | None
     tags: Dict[str, Any] | None
     created_by: str | None
     published_by: str | None

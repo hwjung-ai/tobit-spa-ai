@@ -5,6 +5,7 @@ import { Asset, fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
 import Link from "next/link";
+import { useConfirm } from "@/hooks/use-confirm";
 
 // Minimal JSON schema validator for screen schema
 function validateScreenSchema(schema: unknown): string[] {
@@ -89,6 +90,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
   });
 
   const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
+  const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
   const fetchScreenAsset = useCallback(async () => {
     setLoading(true);
@@ -238,7 +240,12 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
   const handleRollback = async () => {
     if (!asset) return;
-    if (!confirm("Are you sure you want to rollback this screen to draft?")) return;
+    const ok = await confirmDialog({
+      title: "Rollback to Draft",
+      description: "Are you sure you want to rollback this screen to draft?",
+      confirmLabel: "Rollback",
+    });
+    if (!ok) return;
 
     try {
       setErrors([]);
@@ -474,6 +481,9 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
           Back
         </Link>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
     </div>
   );
 }

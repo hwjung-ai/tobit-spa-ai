@@ -19,6 +19,7 @@ from app.modules.inspector.asset_context import (
 from app.shared import config_loader
 
 from .models import TbAssetRegistry
+from .source_models import coerce_source_connection, coerce_source_type
 
 logger = logging.getLogger(__name__)
 
@@ -460,10 +461,12 @@ def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] |
         if asset:
             logger.info(f"Loaded source from asset registry: {name} (v{asset.version})")
             content = asset.content or {}
+            normalized_connection = coerce_source_connection(content.get("connection", {})).model_dump()
+            normalized_source_type = coerce_source_type(content.get("source_type")).value
 
             payload = {
-                "source_type": content.get("source_type"),
-                "connection": content.get("connection", {}),
+                "source_type": normalized_source_type,
+                "connection": normalized_connection,
                 "spec": content.get("spec"),
                 "source": "asset_registry",
                 "asset_id": str(asset.asset_id),

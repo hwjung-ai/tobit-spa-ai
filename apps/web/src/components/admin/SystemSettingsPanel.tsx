@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { fetchApi } from '../../lib/adminUtils';
+import { useConfirm } from '@/hooks/use-confirm';
 
 interface Setting {
   key: string;
@@ -24,6 +25,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
   const [changes, setChanges] = useState<Record<string, unknown>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
   useEffect(() => {
     fetchSettings();
@@ -80,7 +82,12 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
   };
 
   const handleResetDefaults = async () => {
-    if (!confirm('Are you sure you want to reset all settings to defaults?')) {
+    const ok = await confirmDialog({
+      title: "Reset Settings",
+      description: "Are you sure you want to reset all settings to defaults?",
+      confirmLabel: "Reset",
+    });
+    if (!ok) {
       return;
     }
 
@@ -267,6 +274,9 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
     </div>
   );
 };

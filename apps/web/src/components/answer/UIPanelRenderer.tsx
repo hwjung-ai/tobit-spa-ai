@@ -12,6 +12,7 @@ import { substituteTemplate } from "@/lib/templateUtils";
 import { fetchApi } from "@/lib/adminUtils";
 import BlockRenderer from "./BlockRenderer";
 import type { AnswerBlock } from "./BlockRenderer";
+import Toast from "@/components/admin/Toast";
 
 interface UIPanelRendererProps {
   block: UIPanelBlock;
@@ -30,6 +31,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
 
   const [resultBlocks, setResultBlocks] = useState<AnswerBlock[]>([]);
   const [actionTraceId, setActionTraceId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "warning" } | null>(null);
 
   const executeMutation = useMutation({
     mutationFn: async (action: UIAction) => {
@@ -68,7 +70,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
       .map((input) => input.label);
 
     if (missingRequired.length > 0) {
-      alert(`Required fields: ${missingRequired.join(", ")}`);
+      setToast({ message: `Required fields: ${missingRequired.join(", ")}`, type: "warning" });
       return;
     }
 
@@ -142,6 +144,11 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
             <BlockRenderer blocks={resultBlocks} traceId={actionTraceId || ""} />
           </div>
         </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );

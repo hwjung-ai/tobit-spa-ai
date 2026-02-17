@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { fetchApi } from "@/lib/adminUtils";
+import Toast from "./Toast";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface CatalogAsset {
   asset_id: string;
@@ -29,9 +31,16 @@ export default function CatalogTable({
   onRefresh,
 }: CatalogTableProps) {
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
   const handleDelete = async (catalogId: string) => {
-    if (!confirm("Are you sure you want to delete this catalog?")) {
+    const ok = await confirmDialog({
+      title: "Delete Catalog",
+      description: "Are you sure you want to delete this catalog?",
+      confirmLabel: "Delete",
+    });
+    if (!ok) {
       return;
     }
 
@@ -42,7 +51,7 @@ export default function CatalogTable({
       });
       onRefresh();
     } catch (error) {
-      alert(`Failed to delete catalog: ${error}`);
+      setToast({ message: `Failed to delete catalog: ${error}`, type: "error" });
     } finally {
       setDeleting(null);
     }
@@ -57,6 +66,7 @@ export default function CatalogTable({
   };
 
   return (
+    <>
     <div className="space-y-2">
       {catalogs.length === 0 ? (
         <div className="text-center py-8 border border-variant rounded-lg text-muted-foreground bg-surface-overlay">
@@ -106,5 +116,18 @@ export default function CatalogTable({
         ))
       )}
     </div>
+
+    {/* Toast */}
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onDismiss={() => setToast(null)}
+      />
+    )}
+
+    {/* Confirm Dialog */}
+    <ConfirmDialogComponent />
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ScreenAction, ComponentActionRef } from "@/lib/ui-screen/screen.schema";
 import { PayloadTemplateEditor } from "@/components/admin/screen-editor/actions/PayloadTemplateEditor";
+import Toast from "@/components/admin/Toast";
 import {
   Dialog,
   DialogContent,
@@ -180,6 +181,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
     const [isTestingAction, setIsTestingAction] = useState(false);
     const [testResult, setTestResult] = useState<ActionTestResult | null>(null);
     const [testError, setTestError] = useState<string | null>(null);
+    const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
 
     // Shared catalog hook
     const {
@@ -215,11 +217,11 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
 
     const handleSave = () => {
       if (!formData.id || !formData.handler) {
-        alert("Action ID and Handler are required");
+        setToast({ message: "Action ID and Handler are required", type: "error" });
         return;
       }
       if (missingRequiredFields.length > 0) {
-        alert(`Required fields missing in payload template: ${missingRequiredFields.join(", ")}`);
+        setToast({ message: `Required fields missing in payload template: ${missingRequiredFields.join(", ")}`, type: "error" });
         return;
       }
 
@@ -292,6 +294,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
     };
 
      return (
+       <>
        <Dialog open={open} onOpenChange={onOpenChange}>
          <DialogContent className="max-w-2xl">
            <DialogHeader>
@@ -745,6 +748,12 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
+      )}
+      </>
     );
   }
 );
