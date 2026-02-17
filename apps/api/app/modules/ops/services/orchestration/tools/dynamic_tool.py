@@ -778,7 +778,8 @@ class DynamicTool(BaseTool):
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
         """Execute HTTP API tool."""
-        url = self.tool_config.get("url")
+        # Support both 'url' and 'endpoint' fields
+        url = self.tool_config.get("url") or self.tool_config.get("endpoint")
         method = self.tool_config.get("method", "GET")
         headers = self.tool_config.get("headers", {})
         body_template = self.tool_config.get("body_template")
@@ -795,10 +796,13 @@ class DynamicTool(BaseTool):
         body = None
         if body_template and method in ["POST", "PUT", "PATCH"]:
             body = {k: input_data.get(v, "") for k, v in body_template.items()}
+        elif method in ["POST", "PUT", "PATCH"]:
+            # If no body_template, use input_data directly as body
+            body = input_data
 
         async with httpx.AsyncClient() as client:
             if method == "GET":
-                response = await client.get(url, headers=headers, timeout=30)
+                response = await client.get(url, headers=headers, params=input_data, timeout=30)
             elif method == "POST":
                 response = await client.post(
                     url, headers=headers, json=body, timeout=30

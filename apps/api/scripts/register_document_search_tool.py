@@ -36,6 +36,14 @@ async def register_document_search():
             "headers": {
                 "Content-Type": "application/json"
             },
+            "body_template": {
+                "query": "query",
+                "top_k": "top_k",
+                "search_type": "search_type",
+                "date_from": "date_from",
+                "date_to": "date_to",
+                "document_types": "document_types"
+            },
             "auth_type": "bearer_token"
         },
         "tool_input_schema": {
