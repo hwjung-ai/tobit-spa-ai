@@ -1890,6 +1890,27 @@ class StageExecutor:
             mode = result.get("mode", "unknown")
             lines.append(f"\n{i}. {mode.upper()} Result:")
 
+            # Handle Document Search results (mode == "document")
+            if mode == "document":
+                total_count = result.get("total_count", 0)
+                data = result.get("data", [])
+
+                lines.append(f"   - Source: Document Search")
+                lines.append(f"   - Total Results: {total_count}")
+
+                if total_count > 0 and data:
+                    # Show top 5 documents
+                    sample_count = min(5, len(data))
+                    lines.append(f"   - Document Samples ({sample_count} documents):")
+                    for j, doc in enumerate(data[:sample_count], 1):
+                        title = doc.get("title", "Untitled")
+                        relevance = doc.get("relevance_score", 0)
+                        content = doc.get("content", "")[:100]
+                        lines.append(f"     {j}. Title: {title} (relevance: {relevance:.2f})")
+                        lines.append(f"        Content: {content}...")
+
+                continue
+
             # Handle Query Asset results (mode == "query_asset")
             if mode == "query_asset":
                 data = result.get("data", {})
