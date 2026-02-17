@@ -354,8 +354,11 @@ class StageExecutor:
             # Handle DOCUMENT intent separately
             from app.modules.ops.services.orchestration.planner.plan_schema import Intent
 
-            if plan.intent == Intent.DOCUMENT and plan.document:
-                # Execute document search directly via HTTP API
+            is_document_intent = plan.intent == Intent.DOCUMENT or (isinstance(plan.intent, str) and plan.intent == "DOCUMENT")
+            has_document = bool(plan.document)
+
+            if is_document_intent and has_document:
+                # Execute document search directly via DocumentSearchService
                 self.logger.info(
                     "execute_stage.document_search",
                     extra={
@@ -365,46 +368,72 @@ class StageExecutor:
                 )
 
                 try:
-                    import httpx
+                    from app.modules.document_processor.services.search_service import (
+                        DocumentSearchService,
+                        SearchFilters,
+                    )
 
-                    # Call document search API directly
-                    async with httpx.AsyncClient() as client:
-                        doc_response = await client.post(
-                            "http://localhost:8000/api/documents/search",
-                            json={
-                                "query": plan.document.get("query", question_text),
-                                "search_type": plan.document.get("search_type", "hybrid"),
-                                "top_k": plan.document.get("top_k", 10),
-                                "min_relevance": plan.document.get("min_relevance", 0.5),
-                            },
-                            headers={"X-Tenant-Id": self.context.tenant_id or "default"},
-                            timeout=30.0
+                    # Get database session
+                    with get_session_context() as session:
+                        search_service = DocumentSearchService(
+                            db_session=session,
                         )
 
-                    if doc_response.status_code == 200:
-                        doc_data = doc_response.json().get("data", {})
-                        results.append({
-                            "mode": "document",
-                            "tool_name": "document_search",
+                        # Create search filters with tenant isolation
+                        filters = SearchFilters(
+                            tenant_id=self.context.tenant_id or "default",
+                            min_relevance=plan.document.get("min_relevance", 0.01),
+                        )
+
+                        # Execute document search (asynchronous)
+                        search_results = await search_service.search(
+                            query=plan.document.get("query", question_text),
+                            filters=filters,
+                            search_type=plan.document.get("search_type", "hybrid"),
+                            top_k=plan.document.get("top_k", 10),
+                        )
+
+                        # Convert search results to dict format
+                        search_result = {
                             "success": True,
-                            "data": doc_data.get("results", []),
-                            "total_count": doc_data.get("total_count", 0),
-                            "duration_ms": doc_data.get("execution_time_ms", 0),
-                        })
+                            "results": [
+                                {
+                                    "chunk_id": r.chunk_id,
+                                    "document_id": r.document_id,
+                                    "title": r.document_name,
+                                    "content": r.chunk_text,
+                                    "page_number": r.page_number,
+                                    "relevance_score": r.relevance_score,
+                                }
+                                for r in search_results
+                            ],
+                            "total_count": len(search_results),
+                            "execution_time_ms": 0,
+                        }
 
-                        self.logger.info(
-                            "execute_stage.document_search_success",
-                            extra={"result_count": doc_data.get("total_count", 0)}
-                        )
-                    else:
-                        error_msg = f"API returned {doc_response.status_code}"
-                        self.logger.error(f"Document search failed: {error_msg}")
-                        results.append({
-                            "mode": "document",
-                            "tool_name": "document_search",
-                            "success": False,
-                            "error": error_msg,
-                        })
+                        if search_result.get("success", False):
+                            results.append({
+                                "mode": "document",
+                                "tool_name": "document_search",
+                                "success": True,
+                                "data": search_result.get("results", []),
+                                "total_count": search_result.get("total_count", 0),
+                                "duration_ms": search_result.get("execution_time_ms", 0),
+                            })
+
+                            self.logger.info(
+                                "execute_stage.document_search_success",
+                                extra={"result_count": search_result.get("total_count", 0)}
+                            )
+                        else:
+                            error_msg = search_result.get("error", "Unknown error")
+                            self.logger.error(f"Document search failed: {error_msg}")
+                            results.append({
+                                "mode": "document",
+                                "tool_name": "document_search",
+                                "success": False,
+                                "error": error_msg,
+                            })
 
                 except Exception as e:
                     error_msg = str(e)
@@ -415,7 +444,6 @@ class StageExecutor:
                         "success": False,
                         "error": error_msg,
                     })
-
 
                 # Skip orchestration for document intent
                 return {
@@ -1206,6 +1234,15 @@ class StageExecutor:
                     path_results
                 )
 
+            elif intent == "DOCUMENT":
+                # For document search, include document results
+                document_results = [r for r in execution_results if r.get("mode") == "document"]
+                if document_results:
+                    composed_result["document_result"] = document_results[0]
+                    composed_result["results_summary"] = self._summarize_document_results(
+                        document_results
+                    )
+
             # ===== NEW: Handle query_asset results =====
             query_asset_results = [
                 r for r in execution_results if r.get("mode") == "query_asset"
@@ -1615,6 +1652,38 @@ class StageExecutor:
         for result in results:
             path_count = result.get("path_count", 0)
             summary.append(f"Found {path_count} paths")
+        return summary
+
+    def _summarize_document_results(self, results: List[Dict[str, Any]]) -> List[str]:
+        """Summarize document search results for LLM context."""
+        summary = []
+        for result in results:
+            if result.get("success"):
+                doc_count = result.get("total_count", 0)
+                doc_data = result.get("data", [])
+
+                if doc_count > 0 and doc_data:
+                    summary_lines = [
+                        f"Document search found {doc_count} result(s):"
+                    ]
+
+                    # Format document results for LLM context
+                    for i, doc in enumerate(doc_data[:5]):  # Show top 5 documents
+                        doc_title = doc.get("title", "Untitled")
+                        doc_content = doc.get("content", "")
+                        # Truncate content to first 200 chars
+                        content_preview = doc_content[:200] + "..." if len(doc_content) > 200 else doc_content
+                        relevance = doc.get("relevance_score", 0)
+                        summary_lines.append(
+                            f"  {i + 1}. {doc_title} (relevance: {relevance:.2f})"
+                        )
+                        if content_preview:
+                            summary_lines.append(f"     {content_preview}")
+
+                    summary.extend(summary_lines)
+            else:
+                error = result.get("error", "Unknown error")
+                summary.append(f"Document search failed: {error}")
         return summary
 
     def _summarize_query_asset_results(
