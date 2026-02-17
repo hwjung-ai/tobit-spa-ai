@@ -617,6 +617,23 @@ class ToolOrchestrator:
         Returns:
             Dict with tool_type and params, or None if tool_id not recognized
         """
+        # Handle document spec (dict type) first, before trying getattr
+        if tool_id == "document":
+            tool_type = spec_obj.get('tool_type', 'unknown') if isinstance(spec_obj, dict) else getattr(spec_obj, 'tool_type', 'unknown')
+            return {
+                "tool_type": tool_type,
+                "params": {
+                    "query": spec_obj.get("query", ""),
+                    "search_type": spec_obj.get("search_type", "hybrid"),
+                    "top_k": spec_obj.get("top_k", 10),
+                    "min_relevance": spec_obj.get("min_relevance", 0.01),
+                    "date_from": spec_obj.get("date_from"),
+                    "date_to": spec_obj.get("date_to"),
+                    "document_types": spec_obj.get("document_types"),
+                    "tenant_id": self.context.tenant_id,
+                }
+            }
+
         tool_type = getattr(spec_obj, 'tool_type', 'unknown')
 
         if tool_id == "primary":
@@ -720,21 +737,6 @@ class ToolOrchestrator:
                     "ci_id": None,  # Will be populated from dependencies
                 }
             }
-        elif tool_id == "document":
-            return {
-                "tool_type": tool_type,
-                "params": {
-                    "query": spec_obj.get("query", ""),
-                    "search_type": spec_obj.get("search_type", "hybrid"),
-                    "top_k": spec_obj.get("top_k", 10),
-                    "min_relevance": spec_obj.get("min_relevance", 0.01),
-                    "date_from": spec_obj.get("date_from"),
-                    "date_to": spec_obj.get("date_to"),
-                    "document_types": spec_obj.get("document_types"),
-                    "tenant_id": self.context.tenant_id,
-                }
-            }
-
         return None
 
     def _create_execution_plan_trace(
