@@ -319,20 +319,12 @@ class StageExecutor:
                     "execute_stage.full_orchestration",
                     extra={"mode": str(plan.mode), "question": question_text}
                 )
-                # All mode: enable all available tools/specs
-                plan.primary.enabled = True
-                plan.secondary.enabled = True
+                # All mode: set default values for all available tools if needed
+                # (orchestration layer will handle tool selection based on Plan spec)
                 plan.metric = plan.metric or {}
-                plan.history.enabled = True
-                plan.list.enabled = True
                 plan.graph.depth = plan.graph.depth or 2
-                if plan.cep:
-                    plan.cep.enabled = True
-                # Also enable document if it has a tool_type (was planned by LLM)
-                if plan.document and plan.document.get("tool_type"):
-                    plan.document["enabled"] = True
 
-            if plan.history and plan.history.enabled:
+            if plan.history:
                 normalized_question = question_text.lower()
                 if plan.history.tool_type in {
                     "history",
