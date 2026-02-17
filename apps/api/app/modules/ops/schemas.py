@@ -100,6 +100,7 @@ class RerunRequest(BaseModel):
 
 class OpsAskRequest(BaseModel):
     question: str
+    mode: str | None = None  # "all", "config", "metric", "hist", "graph", "document"
     rerun: RerunRequest | None = None
     asset_overrides: Dict[str, str] | None = None
     source_asset: str | None = None

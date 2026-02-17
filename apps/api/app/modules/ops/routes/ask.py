@@ -360,6 +360,7 @@ def ask_ops(
                     normalized_question,
                     schema_context=schema_payload,
                     source_context=source_payload,
+                    mode=payload.mode,
                 )
                 planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
                 logger.info(

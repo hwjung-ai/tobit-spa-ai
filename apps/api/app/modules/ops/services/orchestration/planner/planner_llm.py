@@ -583,6 +583,7 @@ def create_plan(
     question: str,
     schema_context: dict[str, Any] | None = None,
     source_context: dict[str, Any] | None = None,
+    mode: str | None = None,
 ) -> Plan:
     normalized = question.strip()
     start = perf_counter()
@@ -592,10 +593,15 @@ def create_plan(
             "query_len": len(normalized),
             "has_schema": bool(schema_context),
             "has_source": bool(source_context),
+            "explicit_mode": mode,
         },
     )
     plan = Plan.model_construct()
-    plan.mode = _determine_mode(normalized)
+    # Use explicit mode if provided, otherwise determine from question
+    if mode and mode in ("ci", "auto", "all"):
+        plan.mode = PlanMode(mode)
+    else:
+        plan.mode = _determine_mode(normalized)
     llm_payload = None
     graph_force = _is_graph_force_query(normalized)
     try:
@@ -1312,6 +1318,7 @@ def create_plan_output(
     question: str,
     schema_context: dict[str, Any] | None = None,
     source_context: dict[str, Any] | None = None,
+    mode: str | None = None,
 ) -> PlanOutput:
     """Create a plan output with route determination (direct, plan, or reject)
 
@@ -1319,6 +1326,7 @@ def create_plan_output(
         question: User's question
         schema_context: Schema asset for catalog/field context
         source_context: Source asset for data source context
+        mode: Explicit mode ("all", "config", "metric", "hist", "graph", "document")
     """
     normalized = question.strip()
     start = perf_counter()
@@ -1424,7 +1432,7 @@ def create_plan_output(
 
     # Otherwise, create a normal plan
     plan = create_plan(
-        normalized, schema_context=schema_context, source_context=source_context
+        normalized, schema_context=schema_context, source_context=source_context, mode=mode
     )
     end = perf_counter()
     elapsed_ms = int((end - start) * 1000)

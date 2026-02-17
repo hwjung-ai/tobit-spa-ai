@@ -182,6 +182,7 @@ class AutoSpec(BaseModel):
 class PlanMode(str, Enum):
     CI = "ci"
     AUTO = "auto"
+    ALL = "all"  # Orchestrated "all" mode combining multiple queries
 
 
 class BudgetSpec(BaseModel):
