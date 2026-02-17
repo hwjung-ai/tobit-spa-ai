@@ -351,6 +351,92 @@ class StageExecutor:
                         }
                     )
 
+            # Handle DOCUMENT intent separately
+            from app.modules.ops.services.orchestration.planner.plan_schema import Intent
+
+            if plan.intent == Intent.DOCUMENT and plan.document:
+                # Execute document search directly
+                self.logger.info(
+                    "execute_stage.document_search",
+                    extra={
+                        "query": plan.document.get("query", ""),
+                        "search_type": plan.document.get("search_type", "hybrid"),
+                    }
+                )
+
+                # Call document_search tool from registry
+                from app.modules.ops.services.orchestration.tools.base import get_tool_registry
+
+                tool_registry = get_tool_registry()
+                document_tool = tool_registry.get_tool("document_search")
+
+                if document_tool:
+                    try:
+                        # Create tool context for document search
+                        from app.modules.ops.services.orchestration.tools.base import ToolContext
+                        from core.logging import get_request_context
+
+                        request_ctx = get_request_context()
+                        tool_context = ToolContext(
+                            tenant_id=self.tenant_id or "default",
+                            user_id=self.user_id,
+                            request_id=request_ctx.get("request_id") if request_ctx else None,
+                            trace_id=request_ctx.get("trace_id") if request_ctx else None,
+                        )
+
+                        doc_result = await document_tool.execute(
+                            tool_context,
+                            {
+                                "query": plan.document.get("query", question_text),
+                                "search_type": plan.document.get("search_type", "hybrid"),
+                                "top_k": plan.document.get("top_k", 10),
+                                "min_relevance": plan.document.get("min_relevance", 0.5),
+                            }
+                        )
+
+                        # Convert result to execution result format
+                        execution_result = {
+                            "mode": "document",
+                            "tool_name": "document_search",
+                            "success": True,
+                            "data": doc_result.get("data", {}),
+                            "total_count": doc_result.get("total_count", 0),
+                            "duration_ms": doc_result.get("execution_time_ms", 0),
+                        }
+                        results.append(execution_result)
+                        references.append({
+                            "type": "document_search",
+                            "tool": "document_search",
+                            "query": plan.document.get("query", ""),
+                        })
+
+                        self.logger.info(
+                            "execute_stage.document_search_success",
+                            extra={"result_count": doc_result.get("total_count", 0)}
+                        )
+                    except Exception as e:
+                        self.logger.error(f"Document search failed: {e}", exc_info=True)
+                        results.append({
+                            "mode": "document",
+                            "tool_name": "document_search",
+                            "success": False,
+                            "error": str(e),
+                        })
+                else:
+                    self.logger.warning("Document search tool not found in registry")
+                    results.append({
+                        "mode": "document",
+                        "tool_name": "document_search",
+                        "success": False,
+                        "error": "Document search tool not found in registry",
+                    })
+
+                # Skip orchestration for document intent
+                return {
+                    "execution_results": results,
+                    "references": references,
+                }
+
             # Check if orchestration should be used
             # IMPORTANT: Default to True to use new orchestration layer with Tool Registry
             enable_orchestration = stage_input.params.get("enable_orchestration", True)
@@ -1444,11 +1530,21 @@ class StageExecutor:
             #                 self._create_table_block(composed_result["path_results"])
             #             )
 
+        # If no blocks were created and no summary was provided,
+        # create a default answer block from the question
+        summary_text = composed_result.get("llm_summary") or self._generate_summary(composed_result)
+        if not blocks and summary_text:
+            # Create a text block with the summary as the answer
+            blocks.append({
+                "type": "text",
+                "content": summary_text,
+                "metadata": {"generated_by": "fallback_summary"}
+            })
+
         result = {
             "blocks": blocks,
             "references": composed_result.get("references", []),
-            "summary": composed_result.get("llm_summary")
-            or self._generate_summary(composed_result),
+            "summary": summary_text,
             "presented_at": time.time(),
         }
 
@@ -1579,14 +1675,28 @@ class StageExecutor:
 
     def _generate_summary(self, result: Dict[str, Any]) -> str:
         """Generate a summary of the results."""
+        # Check for specific results in compose output
         if "primary_result" in result:
+            primary = result.get("primary_result", {})
+            if isinstance(primary, dict):
+                rows_count = len(primary.get("rows", []))
+                if rows_count > 0:
+                    return f"쿼리 실행 완료: {rows_count}개의 결과를 찾았습니다."
             return f"Successfully executed lookup query with {len(result.get('references', []))} references"
         elif "aggregate_result" in result:
+            aggregate = result.get("aggregate_result", {})
+            if isinstance(aggregate, dict) and aggregate:
+                return "집계 쿼리 실행 완료: 결과 요약이 생성되었습니다."
             return f"Successfully executed aggregate query with {len(result.get('references', []))} references"
         elif "path_results" in result:
             return f"Successfully executed path query with {len(result.get('references', []))} references"
+        elif "ci_detail" in result and result.get("ci_detail"):
+            ci_detail = result.get("ci_detail", {})
+            ci_name = ci_detail.get("ci_name", "CI")
+            return f"{ci_name}에 대한 정보를 조회했습니다. 상세 내용을 확인하세요."
         else:
-            return "Execution completed successfully"
+            # Fallback for when no specific results are found
+            return "요청하신 쿼리가 실행되었습니다. 결과 데이터를 확인해주세요."
 
     def _create_table_block(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Create a table block from execution result."""

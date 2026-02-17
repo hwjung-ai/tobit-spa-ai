@@ -37,6 +37,7 @@ class Intent(str, Enum):
     AGGREGATE = "AGGREGATE"
     EXPAND = "EXPAND"
     PATH = "PATH"
+    DOCUMENT = "DOCUMENT"
 
 
 class View(str, Enum):
@@ -276,6 +277,10 @@ class Plan(BaseModel):
     cep: CepSpec | None = None
     auto: AutoSpec = Field(default_factory=lambda: AutoSpec())
     list: ListSpec = Field(default_factory=lambda: ListSpec())
+    document: Dict[str, Any] | None = Field(
+        default=None,
+        description="Document search specification (query, search_type, top_k, min_relevance, tool_type)"
+    )
     normalized_from: str | None = None
     normalized_to: str | None = None
     # Multi-step execution support

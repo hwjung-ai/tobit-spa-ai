@@ -902,10 +902,21 @@ def ask_ops(
                             "schema_source_ref": schema_source_ref,
                         },
                     )
-        # Load mapping asset to ensure tracking
-        mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
-        # Load policy asset to ensure tracking (for all routes including reject)
-        _ = load_policy_asset("plan_budget", scope="ops")
+        # Load tracking assets opportunistically. Missing assets should not block ask flow.
+        try:
+            load_mapping_asset("graph_relation", scope="ops")
+        except Exception as e:
+            logger.warning(
+                "ops.ask.optional_mapping_load_failed",
+                extra={"mapping_type": "graph_relation", "scope": "ops", "error": str(e)},
+            )
+        try:
+            load_policy_asset("plan_budget", scope="ops")
+        except Exception as e:
+            logger.warning(
+                "ops.ask.optional_policy_load_failed",
+                extra={"policy_type": "plan_budget", "scope": "ops", "error": str(e)},
+            )
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload

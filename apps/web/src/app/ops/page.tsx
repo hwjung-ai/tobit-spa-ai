@@ -351,6 +351,15 @@ export default function OpsPage() {
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid all mode response format");
         }
+        // Validate all mode response
+        const normalizedAnswer = normalizeHistoryResponse({
+          data: { answer: ciPayload },
+        } as ServerHistoryEntry["response"]);
+        if (normalizedAnswer && Array.isArray((normalizedAnswer as AnswerEnvelope).blocks)) {
+          // normalized answer is ready
+        } else {
+          throw new Error("Invalid all mode blocks format");
+        }
       } else {
         // All other modes (ci/config, metric, history, relation, document) use /ops/query
         const data = await authenticatedFetch<
@@ -396,13 +405,24 @@ export default function OpsPage() {
       setStatusMessage(`Error: ${normalized.message}`);
     } finally {
       // Refresh history from server (server writes final history entry)
-      setSelectedId(null);
+      // For "all" mode, fetch history and select the latest entry
       await fetchHistory();
+      if (requestedMode.id === "all") {
+        // After fetching, the latest entry should be at index 0
+        // Set a small timeout to ensure state has updated
+        setTimeout(() => {
+          if (history.length > 0) {
+            setSelectedId(history[0].id);
+          }
+        }, 100);
+      } else {
+        setSelectedId(null);
+      }
       setQuestion("");
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [assetContext, currentModeDefinition, isRunning, question, fetchHistory]);
+  }, [assetContext, currentModeDefinition, isRunning, question, fetchHistory, history]);
 
   // Fetch conversation summary for modal preview
   const fetchConversationSummary = useCallback(async () => {

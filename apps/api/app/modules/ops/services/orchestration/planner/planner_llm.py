@@ -631,6 +631,45 @@ def create_plan(
                 ci_keywords = tuple(recovered)
     plan.intent = derive_intent_from_output(output_types)
     plan.view = _determine_view(normalized, plan.intent)
+
+    # Detect document-related questions and override intent to DOCUMENT
+    document_keywords = [
+        "문서", "매뉴얼", "가이드", "도움말",
+        "help", "manual", "guide", "documentation",
+        "찾아줘", "검색해", "설명해"
+    ]
+    is_document_question = any(kw in normalized for kw in document_keywords)
+
+    logger.info(
+        "planner.document_detection",
+        extra={
+            "normalized": normalized[:100],
+            "is_document_question": is_document_question,
+            "original_intent": plan.intent.value if plan.intent else None,
+        }
+    )
+
+    if is_document_question:
+        plan.intent = Intent.DOCUMENT
+        plan.view = _determine_view(normalized, plan.intent)
+        # Populate document spec with the user's question as search query
+        plan.document = {
+            "query": normalized,
+            "search_type": "hybrid",
+            "top_k": 10,
+            "min_relevance": 0.5,
+            "tool_type": "document_search",
+        }
+        logger.info(
+            "planner.document_intent_override",
+            extra={
+                "reason": "document_keywords_detected",
+                "detected_keywords": [kw for kw in document_keywords if kw in normalized],
+                "new_intent": Intent.DOCUMENT.value,
+                "document_spec": plan.document,
+            }
+        )
+
     if graph_force:
         plan.intent = Intent.LOOKUP
         plan.view = _determine_view(normalized, plan.intent)
@@ -1492,6 +1531,26 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             max_sample_rows=3,
         )
 
+    # Pre-check: Detect if this is a document search question
+    # If document keywords are detected, force DOCUMENT intent
+    document_keywords = [
+        "문서", "매뉴얼", "가이드", "도움말",
+        "help", "manual", "guide", "documentation",
+        "찾아줘", "검색해", "설명해"
+    ]
+    is_document_question = any(
+        kw in normalized for kw in document_keywords
+    )
+
+    logger.info(
+        "planner.keyword_check",
+        extra={
+            "normalized": normalized[:100],
+            "keywords": document_keywords,
+            "is_document_question": is_document_question
+        }
+    )
+
     # Build enhanced prompt with tool and catalog info
     prompt = _build_enhanced_planner_prompt(
         question=normalized, tools_info=tools_info, catalog_info=catalog_info
@@ -1530,6 +1589,25 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
         raise ValueError(
             f"LLM JSON parse error: {exc} | raw={json_text[:400]}"
         ) from exc
+
+    # Force DOCUMENT intent if document keywords detected
+    if is_document_question:
+        logger.info(
+            "planner.document_detection",
+            extra={
+                "detected": True,
+                "original_intent": llm_payload.get("intent", "unknown")
+            }
+        )
+        llm_payload["intent"] = "DOCUMENT"
+        # Add document spec
+        llm_payload["document"] = {
+            "query": normalized,
+            "search_type": "hybrid",
+            "top_k": 10,
+            "min_relevance": 0.5,
+            "tool_type": "document_search"
+        }
 
     # Create Plan from LLM response
     plan = Plan.model_construct()
@@ -1724,12 +1802,13 @@ Your task is to analyze the user's question and create an execution plan.
     # Existing instruction sections
     prompt_parts.append("\n## Instructions\n")
     prompt_parts.append("""
-1. Identify the user's intent (LOOKUP, AGGREGATE, PATH, etc.)
-2. Select appropriate tool(s) from the Available Tools section
-3. Define tool parameters based on the Database Schema
-4. Specify tool dependencies if one tool needs output from another
-5. Return a Plan JSON with tool_type for each operation
-6. Choose execution_strategy: "serial", "parallel", or "dag"
+1. Identify the user's intent (LOOKUP, AGGREGATE, PATH, DOCUMENT, etc.)
+2. For document-related questions (keywords: "문서", "매뉴얼", "가이드", "검색", "찾아줘"), use document_search tool
+3. Select appropriate tool(s) from the Available Tools section
+4. Define tool parameters based on the Database Schema
+5. Specify tool dependencies if one tool needs output from another
+6. Return a Plan JSON with tool_type for each operation
+7. Choose execution_strategy: "serial", "parallel", or "dag"
 """)
 
     # User question
@@ -1739,7 +1818,7 @@ Your task is to analyze the user's question and create an execution plan.
     prompt_parts.append("\n## Plan Schema\n")
     prompt_parts.append("""
 {
-  "intent": "LOOKUP|AGGREGATE|PATH|EXPAND",
+  "intent": "LOOKUP|AGGREGATE|PATH|EXPAND|DOCUMENT",
   "view": "SUMMARY|COMPOSITION|DEPENDENCY|IMPACT|PATH",
   "primary": {
     "keywords": ["string"],
@@ -1772,6 +1851,13 @@ Your task is to analyze the user's question and create an execution plan.
     "metric_name": "string",
     "agg": "avg|sum|count|min|max",
     "time_range": null,
+    "tool_type": "string"
+  },
+  "document": {
+    "query": "string",
+    "search_type": "hybrid|text|vector",
+    "top_k": 10,
+    "min_relevance": 0.5,
     "tool_type": "string"
   },
   "execution_strategy": "serial|parallel|dag",
