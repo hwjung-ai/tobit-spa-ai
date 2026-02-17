@@ -666,6 +666,16 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
               </div>
             </div>
           )}
+          <div className="flex justify-end pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border border-variant bg-surface-base text-foreground hover:bg-surface-elevated"
+              onClick={() => setIsTestDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

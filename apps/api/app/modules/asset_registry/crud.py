@@ -523,7 +523,7 @@ def create_source_asset(
     )
 
     return SourceAsset(
-        asset_id=asset.asset_id,
+        asset_id=str(asset.asset_id),
         asset_type=asset.asset_type,
         name=asset.name,
         description=asset.description,
@@ -551,7 +551,7 @@ def get_source_asset(session: Session, asset_id: str) -> SourceAsset | None:
     # Extract source data from content
     content = asset.content or {}
     return SourceAsset(
-        asset_id=asset.asset_id,
+        asset_id=str(asset.asset_id),
         asset_type=asset.asset_type,
         name=asset.name,
         description=asset.description,
@@ -577,12 +577,12 @@ def update_source_asset(
     updated_by: str | None = None,
 ) -> SourceAsset:
     """Update a source asset"""
-    asset = get_source_asset(session, asset_id)
-    if not asset:
+    db_asset = get_asset(session, asset_id)
+    if not db_asset or db_asset.asset_type != "source":
         raise ValueError("Source asset not found")
 
     # Convert to dict for updates
-    content = asset.content or {}
+    content = dict(db_asset.content or {})
 
     # Update connection if provided
     if updates.connection:
@@ -590,6 +590,8 @@ def update_source_asset(
         content["spec"] = (
             updates.connection.spec if hasattr(updates.connection, "spec") else None
         )
+    if updates.source_type is not None:
+        content["source_type"] = updates.source_type.value
 
     # Build update dictionary
     update_dict = {}
@@ -597,18 +599,55 @@ def update_source_asset(
         update_dict["name"] = updates.name
     if updates.description is not None:
         update_dict["description"] = updates.description
-    if updates.source_type is not None:
-        update_dict["source_type"] = updates.source_type.value
-        update_dict["content"] = content
-    if updates.connection is not None:
+    if updates.source_type is not None or updates.connection is not None:
         update_dict["content"] = content
     if updates.tags is not None:
         update_dict["tags"] = updates.tags
 
+    if not update_dict:
+        return get_source_asset(session, asset_id)
+
+    if db_asset.status == "published":
+        # Source connection updates are operational changes and must be editable
+        # without forcing an unpublish/publish cycle.
+        context = get_request_context()
+        trace_id = context.get("trace_id") or str(uuid.uuid4())
+        parent_trace_id = context.get("parent_trace_id") or None
+        old_values = {}
+        changes = {}
+        for key, value in update_dict.items():
+            old_value = getattr(db_asset, key, None)
+            old_values[key] = old_value
+            changes[key] = f"{old_value} -> {value}"
+            setattr(db_asset, key, value)
+        db_asset.updated_at = datetime.now()
+        session.add(db_asset)
+        session.commit()
+        session.refresh(db_asset)
+        if changes and updated_by:
+            create_audit_log(
+                session=session,
+                trace_id=trace_id,
+                parent_trace_id=parent_trace_id,
+                resource_type="asset",
+                resource_id=str(db_asset.asset_id),
+                action="update",
+                actor=updated_by,
+                changes=changes,
+                old_values=old_values,
+                new_values=update_dict,
+                metadata={
+                    "asset_type": db_asset.asset_type,
+                    "asset_name": db_asset.name,
+                    "status": db_asset.status,
+                },
+            )
+        return get_source_asset(session, asset_id)
+
     # Update the asset
     update_asset(
         session=session,
-        asset=asset,
+        asset=db_asset,
         updates=update_dict,
         updated_by=updated_by,
     )

@@ -1165,9 +1165,12 @@ def update_source(
 ):
     """Update a source asset"""
     with get_session_context() as session:
-        asset = update_source_asset(
-            session, asset_id, payload, updated_by=current_user.id
-        )
+        try:
+            asset = update_source_asset(
+                session, asset_id, payload, updated_by=current_user.id
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         return ResponseEnvelope.success(
             data=SourceAssetResponse(
                 asset_id=str(asset.asset_id),

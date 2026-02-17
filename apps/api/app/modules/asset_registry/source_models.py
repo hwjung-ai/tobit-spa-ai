@@ -172,6 +172,7 @@ class SourceConnection(SQLModel):
 
 class SourceAsset(SQLModel):
     # Asset metadata
+    asset_id: str | None = None
     asset_type: str = Field(default="source")
     name: str = Field(min_length=1)
     description: str | None = None
@@ -243,7 +244,7 @@ class SourceAssetCreate(SQLModel):
 
 
 class SourceAssetUpdate(SQLModel):
-    name: str | None = Field(min_length=1)
+    name: str | None = Field(default=None, min_length=1)
     description: str | None = None
     source_type: SourceType | None = None
     connection: SourceConnection | None = None
