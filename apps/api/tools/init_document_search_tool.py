@@ -28,7 +28,7 @@ from sqlmodel import Session
 DOCUMENT_SEARCH_TOOL_CONFIG = {
     "name": "document_search",
     "description": "Search documents using hybrid vector + BM25 search with pgvector embeddings",
-    "tool_type": "http_api",
+    "tool_type": "document_search",
     "tool_config": {
         "url": "{API_BASE_URL}/api/documents/search",
         "method": "POST",
