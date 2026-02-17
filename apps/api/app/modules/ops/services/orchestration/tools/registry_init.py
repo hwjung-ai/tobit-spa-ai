@@ -67,3 +67,4 @@ def initialize_tools() -> None:
 
     except Exception as e:
         logger.error(f"Failed to initialize tools from Asset Registry: {e}")
+
