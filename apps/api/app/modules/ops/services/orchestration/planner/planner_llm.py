@@ -685,6 +685,7 @@ def create_plan(
 
         # Always populate document spec with the user's question as search query
         plan.document = {
+            "enabled": True,  # Required by dependency analyzer
             "query": normalized,
             "search_type": "hybrid",
             "top_k": 10,
@@ -1781,6 +1782,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     if llm_payload.get("document"):
         document_spec = llm_payload["document"]
         plan.document = {
+            "enabled": True,  # Required by dependency analyzer
             "query": document_spec.get("query", ""),
             "search_type": document_spec.get("search_type", "hybrid"),
             "top_k": document_spec.get("top_k", 10),
