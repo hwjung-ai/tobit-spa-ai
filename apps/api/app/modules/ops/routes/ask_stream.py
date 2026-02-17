@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import datetime
 from typing import Any
 
 from core.auth import get_current_user
@@ -29,6 +28,7 @@ from app.modules.asset_registry.loader import (
     load_policy_asset,
     load_resolver_asset,
     load_source_asset,
+    resolve_catalog_asset_for_source,
 )
 from app.modules.auth.models import TbUser
 from app.modules.inspector.service import persist_execution_trace
@@ -39,7 +39,6 @@ from app.modules.inspector.span_tracker import (
     start_span,
 )
 from app.modules.ops.schemas import CiAskRequest
-from app.modules.ops.security import SecurityUtils
 from app.modules.ops.services.orchestration.orchestrator.runner import (
     OpsOrchestratorRunner,
 )
@@ -49,7 +48,7 @@ from app.modules.ops.services.orchestration.planner.plan_schema import (
     PlanOutputKind,
 )
 
-from .utils import _tenant_id, apply_patch, generate_references_from_tool_calls
+from .utils import _tenant_id
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -106,7 +105,6 @@ async def ask_ops_stream(
     """
     from app.modules.ops.services.ops_sse_handler import (
         OpsProgressStage,
-        ops_sse_handler,
     )
     
     start_time = time.perf_counter()
@@ -200,12 +198,22 @@ async def ask_ops_stream(
             resolver_payload = (
                 load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
             )
-            schema_payload = (
-                load_catalog_asset(schema_asset_name) if schema_asset_name else None
-            )
-            source_payload = (
-                load_source_asset(source_asset_name) if source_asset_name else None
-            )
+            source_payload = load_source_asset(source_asset_name) if source_asset_name else None
+            schema_payload = load_catalog_asset(schema_asset_name) if schema_asset_name else None
+
+            if not schema_payload and source_asset_name:
+                resolved_catalog = resolve_catalog_asset_for_source(source_asset_name)
+                if resolved_catalog:
+                    schema_payload = resolved_catalog
+                    schema_asset_name = str(
+                        resolved_catalog.get("name") or schema_asset_name
+                    )
+
+            if not source_payload and schema_payload:
+                derived_source_ref = schema_payload.get("source_ref")
+                if derived_source_ref:
+                    source_asset_name = str(derived_source_ref)
+                    source_payload = load_source_asset(source_asset_name)
             mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
             load_policy_asset("plan_budget", scope="ops")
             

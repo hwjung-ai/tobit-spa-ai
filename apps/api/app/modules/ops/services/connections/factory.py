@@ -203,6 +203,12 @@ class PostgreSQLConnection(SourceConnection):
                     execute_params = params
                     query_to_execute = query
 
+                # psycopg treats '%' as placeholder prefix.
+                # Escape literal percent signs used in SQL string patterns.
+                query_to_execute = SQLTemplateProcessor.escape_literal_percents(
+                    query_to_execute
+                )
+
                 # Validate parameter count if using positional placeholders
                 if "%s" in query_to_execute and isinstance(execute_params, tuple):
                     if not SQLTemplateProcessor.validate_param_count(query_to_execute, execute_params):

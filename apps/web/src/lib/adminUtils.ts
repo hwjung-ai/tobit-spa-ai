@@ -109,20 +109,38 @@ function stringifyErrorValue(value: unknown): string {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (Array.isArray(value)) {
+    if (value.length === 0) return "";
     const joined = value
       .map((item) => (typeof item === "string" ? item.trim() : JSON.stringify(item)))
       .filter(Boolean)
       .join(", ");
-    return joined || JSON.stringify(value);
+    return joined;
   }
   if (value && typeof value === "object") {
+    const asRecord = value as Record<string, unknown>;
+    const nestedMessage =
+      stringifyErrorValue(asRecord.message) ||
+      stringifyErrorValue(asRecord.detail) ||
+      stringifyErrorValue(asRecord.error) ||
+      stringifyErrorValue(asRecord.errors);
+    if (nestedMessage) return nestedMessage;
+
+    if (Object.keys(asRecord).length === 0) return "";
     try {
-      return JSON.stringify(value);
+      const serialized = JSON.stringify(value);
+      if (!serialized || serialized === "{}" || serialized === "[]") return "";
+      return serialized;
     } catch {
       return "";
     }
   }
   return "";
+}
+
+function isMeaningfulErrorText(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  return trimmed !== "[]" && trimmed !== "{}" && trimmed !== "null" && trimmed !== "undefined";
 }
 
 export async function fetchApi<T = Record<string, unknown>>(
@@ -279,23 +297,35 @@ export async function fetchApi<T = Record<string, unknown>>(
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.error("[API] Request failed:", {
+      const normalizedError =
+        errorData instanceof Error
+          ? {
+              name: errorData.name,
+              message: errorData.message,
+              stack: errorData.stack,
+            }
+          : errorData;
+      console.warn("[API] Request failed:", {
         endpoint,
         url,
         method: options?.method || "GET",
         status: response.status,
         statusText: response.statusText,
-        error: errorData,
+        error: normalizedError,
         rawResponse: rawText.substring(0, 500),
       });
     }
 
     const errorRecord = errorData as Record<string, unknown>;
+    const detailText = stringifyErrorValue(errorRecord?.detail);
+    const messageText = stringifyErrorValue(errorRecord?.message);
+    const errorText = stringifyErrorValue(errorData);
+    const rawTextMessage = rawText.trim();
     const errorMessage =
-      stringifyErrorValue(errorRecord?.detail) ||
-      stringifyErrorValue(errorRecord?.message) ||
-      stringifyErrorValue(errorData) ||
-      rawText.trim() ||
+      (isMeaningfulErrorText(detailText) ? detailText : "") ||
+      (isMeaningfulErrorText(messageText) ? messageText : "") ||
+      (isMeaningfulErrorText(errorText) ? errorText : "") ||
+      (isMeaningfulErrorText(rawTextMessage) ? rawTextMessage : "") ||
       `HTTP ${response.status}: ${response.statusText}`;
     const error = new Error(String(errorMessage));
     (error as unknown as { statusCode: number }).statusCode = response.status;

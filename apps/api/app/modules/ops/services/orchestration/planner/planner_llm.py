@@ -246,8 +246,26 @@ def _build_output_parser_messages(
     if schema_context:
         catalog = schema_context.get("catalog", {})
         if isinstance(catalog, dict):
-            tables = list(catalog.keys())[:5]  # Top 5 tables
-            context_info += f"\nAvailable tables: {', '.join(tables)}"
+            tables = catalog.get("tables", []) if isinstance(catalog.get("tables", []), list) else []
+            table_lines: list[str] = []
+            for table in tables[:5]:
+                if not isinstance(table, dict):
+                    continue
+                table_name = str(table.get("name") or "unknown_table")
+                raw_columns = table.get("columns") if isinstance(table.get("columns"), list) else []
+                column_names: list[str] = []
+                for col in raw_columns[:8]:
+                    if not isinstance(col, dict):
+                        continue
+                    col_name = col.get("name") or col.get("column_name")
+                    if col_name:
+                        column_names.append(str(col_name))
+                if column_names:
+                    table_lines.append(f"{table_name}({', '.join(column_names)})")
+                else:
+                    table_lines.append(table_name)
+            if table_lines:
+                context_info += f"\nAvailable tables: {'; '.join(table_lines)}"
 
     if source_context:
         source_type = source_context.get("source_type")

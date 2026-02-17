@@ -51,7 +51,14 @@ const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
 ];
 
 const MODE_STORAGE_KEY = "ops:mode:v2"; // v2: default changed to "all"
+const ASSET_CONTEXT_STORAGE_KEY = "ops:asset-context:v1";
 const HISTORY_LIMIT = 40;
+
+type OpsAssetContext = {
+  source_asset: string;
+  schema_asset: string;
+  resolver_asset: string;
+};
 
 export default function OpsPage() {
   const { isLoading: authLoading, user } = useAuth();
@@ -61,6 +68,11 @@ export default function OpsPage() {
   const [question, setQuestion] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [assetContext, setAssetContext] = useState<OpsAssetContext>({
+    source_asset: "",
+    schema_asset: "",
+    resolver_asset: "",
+  });
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -167,6 +179,25 @@ export default function OpsPage() {
   useEffect(() => {
     window.localStorage.setItem(MODE_STORAGE_KEY, uiMode);
   }, [uiMode]);
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(ASSET_CONTEXT_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Partial<OpsAssetContext>;
+      setAssetContext({
+        source_asset: typeof parsed.source_asset === "string" ? parsed.source_asset : "",
+        schema_asset: typeof parsed.schema_asset === "string" ? parsed.schema_asset : "",
+        resolver_asset: typeof parsed.resolver_asset === "string" ? parsed.resolver_asset : "",
+      });
+    } catch {
+      // Ignore malformed localStorage payload
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(ASSET_CONTEXT_STORAGE_KEY, JSON.stringify(assetContext));
+  }, [assetContext]);
 
   const selectedEntry = useMemo(() => {
     // If selectedId is set, find that specific entry
@@ -303,12 +334,18 @@ export default function OpsPage() {
     setStatusMessage(null);
     const requestedMode = currentModeDefinition;
     const payload = { mode: requestedMode.backend, question: question.trim() };
+    const askAssetContextPayload = Object.fromEntries(
+      Object.entries(assetContext).filter(([, value]) => value.trim().length > 0),
+    );
     try {
       if (requestedMode.id === "all") {
         // "all" mode uses /ops/ask endpoint for orchestration
         const response = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ask`, {
           method: "POST",
-          body: JSON.stringify({ question: question.trim() }),
+          body: JSON.stringify({
+            question: question.trim(),
+            ...askAssetContextPayload,
+          }),
         });
         const ciPayload = response?.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
@@ -365,7 +402,7 @@ export default function OpsPage() {
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [currentModeDefinition, isRunning, question, fetchHistory]);
+  }, [assetContext, currentModeDefinition, isRunning, question, fetchHistory]);
 
   // Fetch conversation summary for modal preview
   const fetchConversationSummary = useCallback(async () => {
@@ -516,6 +553,9 @@ export default function OpsPage() {
       try {
         const rerunBody: {
           question: string;
+          source_asset?: string;
+          schema_asset?: string;
+          resolver_asset?: string;
           rerun: {
             base_plan: unknown;
             selected_ci_id?: string;
@@ -536,6 +576,15 @@ export default function OpsPage() {
         }
         if (action.payload?.patch) {
           rerunBody.rerun.patch = action.payload.patch;
+        }
+        if (assetContext.source_asset.trim()) {
+          rerunBody.source_asset = assetContext.source_asset.trim();
+        }
+        if (assetContext.schema_asset.trim()) {
+          rerunBody.schema_asset = assetContext.schema_asset.trim();
+        }
+        if (assetContext.resolver_asset.trim()) {
+          rerunBody.resolver_asset = assetContext.resolver_asset.trim();
         }
         const data = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ask`, {
           method: "POST",
@@ -566,7 +615,7 @@ export default function OpsPage() {
         setTraceOpen(false);
       }
     },
-    [currentModeDefinition.backend, fetchHistory, selectedEntry],
+    [assetContext, currentModeDefinition.backend, fetchHistory, selectedEntry],
   );
 
   const shouldShowSidebar = !isFullScreen;
@@ -896,6 +945,46 @@ export default function OpsPage() {
                     placeholder="예: 최근 배포 중단 이유 알려줘"
                   />
                 </label>
+                <div className="mt-2 rounded-2xl border p-2 border-border">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-standard">
+                    Asset Context (Optional)
+                  </p>
+                  <div className="mt-2 grid grid-cols-1 gap-2">
+                    <input
+                      value={assetContext.source_asset}
+                      onChange={(event) =>
+                        setAssetContext((prev) => ({
+                          ...prev,
+                          source_asset: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
+                      placeholder="source_asset (e.g. primary_postgres_ops)"
+                    />
+                    <input
+                      value={assetContext.schema_asset}
+                      onChange={(event) =>
+                        setAssetContext((prev) => ({
+                          ...prev,
+                          schema_asset: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
+                      placeholder="schema_asset (e.g. primary_postgres_catalog)"
+                    />
+                    <input
+                      value={assetContext.resolver_asset}
+                      onChange={(event) =>
+                        setAssetContext((prev) => ({
+                          ...prev,
+                          resolver_asset: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
+                      placeholder="resolver_asset (optional)"
+                    />
+                  </div>
+                </div>
                 <div className="mt-3 flex flex-col gap-2">
                   <button
                     onClick={runQuery}

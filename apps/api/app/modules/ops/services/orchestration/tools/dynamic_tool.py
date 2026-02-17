@@ -7,6 +7,7 @@ This module implements dynamic tool execution based on Tool Asset configuration.
 from __future__ import annotations
 
 import re
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from core.config import get_settings
@@ -222,7 +223,10 @@ class DynamicTool(BaseTool):
                 # Validate agg function (whitelist approach)
                 if agg not in ("AVG", "MIN", "MAX", "SUM", "COUNT", "STDDEV"):
                     agg = "AVG"
-                processed_query = processed_query.replace("{function}", agg)
+                if "{function}" in processed_query and " AS value" in processed_query:
+                    processed_query = processed_query.replace("{function}", f"{agg}(mv.value)")
+                else:
+                    processed_query = processed_query.replace("{function}", agg)
 
             # Handle ci_ids array placeholder - parameterized
             if "{ci_ids}" in processed_query:
@@ -232,12 +236,8 @@ class DynamicTool(BaseTool):
                     processed_query = processed_query.replace("ARRAY{ci_ids}", f"ARRAY[{placeholders}]::uuid[]")
                     params.extend(ci_ids)
                 else:
-                    # Empty array - remove the ci_id filter
-                    processed_query = re.sub(
-                        r"\s+AND\s+mv\.ci_id\s*=\s*ANY\s*\(\s*ARRAY\[.*?\]::uuid\[\]\s*\)",
-                        "",
-                        processed_query
-                    )
+                    # Empty array - keep SQL valid and make filter non-matching
+                    processed_query = processed_query.replace("ARRAY{ci_ids}", "ARRAY[]::uuid[]")
 
             # Handle group_by (column names only)
             raw_group_by = input_data.get("group_by")
@@ -271,33 +271,211 @@ class DynamicTool(BaseTool):
                 else:
                     processed_query = processed_query.replace("{time_filter}", "")
 
-            # Replace all other {key} placeholders - parameterized
-            skip_keys = {"group_by", "ci_ids", "agg"}
+            # Replace all other {key} placeholders in query order - parameterized
+            # This prevents parameter-order mismatches (query placeholder order vs dict iteration order)
+            skip_keys = {"group_by", "ci_ids", "agg", "function"}
 
-            for key, value in input_data.items():
+            wildcard_pattern = re.compile(r"'%\{([a-zA-Z_][a-zA-Z0-9_]*)\}%'")
+            quoted_pattern = re.compile(r"'\{([a-zA-Z_][a-zA-Z0-9_]*)\}'")
+
+            def replace_wildcard(match: re.Match[str]) -> str:
+                key = match.group(1)
                 if key in skip_keys:
-                    continue
+                    return match.group(0)
+                value = input_data.get(key)
+                if value is None:
+                    params.append("%")
+                else:
+                    params.append(f"%{value}%")
+                return "%s"
 
-                placeholder = f"{{{key}}}"
-                if placeholder in processed_query:
-                    if value is None:
-                        # Handle NULL - remove AND clause
-                        null_pattern = rf"\s+AND\s+\w+(?:\.\w+)?\s*=\s*'{placeholder}'"
-                        processed_query = re.sub(null_pattern, "", processed_query)
-                    elif isinstance(value, list):
-                        # Convert list to parameterized IN clause
-                        placeholders = ", ".join(["%s"] * len(value))
-                        processed_query = processed_query.replace(placeholder, f"({placeholders})")
-                        params.extend(value)
-                    elif isinstance(value, dict):
-                        # Skip dict values
-                        continue
-                    else:
-                        # Replace with parameterized placeholder
-                        processed_query = processed_query.replace(placeholder, "%s")
-                        params.append(value)
+            def replace_quoted(match: re.Match[str]) -> str:
+                key = match.group(1)
+                if key in skip_keys:
+                    return match.group(0)
+                value = input_data.get(key)
+                params.append(value)
+                return "%s"
+
+            processed_query = wildcard_pattern.sub(replace_wildcard, processed_query)
+            processed_query = quoted_pattern.sub(replace_quoted, processed_query)
+
+            generic_pattern = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+
+            def replace_generic(match: re.Match[str]) -> str:
+                key = match.group(1)
+                if key in skip_keys:
+                    return match.group(0)
+
+                value = input_data.get(key)
+                if isinstance(value, dict):
+                    return match.group(0)
+                if isinstance(value, list):
+                    if not value:
+                        return "NULL"
+                    placeholders = ", ".join(["%s"] * len(value))
+                    params.extend(value)
+                    return f"({placeholders})"
+
+                params.append(value)
+                return "%s"
+
+            processed_query = generic_pattern.sub(replace_generic, processed_query)
 
         return processed_query, params
+
+    def _default_value_for_field(self, field_name: str, field_schema: dict[str, Any], context: ToolContext) -> Any:
+        """Generate deterministic defaults for missing required test fields."""
+        if "default" in field_schema:
+            return field_schema["default"]
+
+        lower_name = field_name.lower()
+        field_type = str(field_schema.get("type") or "").lower()
+
+        if lower_name == "tenant_id":
+            return context.tenant_id
+        if lower_name == "limit":
+            return 100
+        if lower_name == "offset":
+            return 0
+        if lower_name in {"start_time", "start_at"}:
+            return (datetime.now(UTC) - timedelta(days=1)).isoformat()
+        if lower_name in {"end_time", "end_at"}:
+            return datetime.now(UTC).isoformat()
+
+        if field_type in {"integer", "number"}:
+            return 0
+        if field_type == "boolean":
+            return False
+        if field_type == "array":
+            return []
+        if field_type == "object":
+            return {}
+        if field_type == "string":
+            if lower_name == "id" or lower_name.endswith("_id"):
+                return None
+            return ""
+        return None
+
+    def _materialize_input_data(
+        self, input_data: dict[str, Any], context: ToolContext
+    ) -> dict[str, Any]:
+        """
+        Fill missing required fields from input schema defaults so test execution
+        can bind query parameters predictably.
+        """
+        if not isinstance(self._input_schema, dict):
+            return dict(input_data or {})
+
+        data: dict[str, Any] = dict(input_data or {})
+        required_fields = self._input_schema.get("required") or []
+        properties = self._input_schema.get("properties") or {}
+        if not isinstance(required_fields, list) or not isinstance(properties, dict):
+            return data
+
+        for field_name in required_fields:
+            if field_name in data and data[field_name] is not None:
+                continue
+            field_schema = properties.get(field_name)
+            if not isinstance(field_schema, dict):
+                field_schema = {}
+            data[field_name] = self._default_value_for_field(
+                field_name, field_schema, context
+            )
+
+        # Normalize empty-string sentinel values so UUID/timestamp casts don't fail in SQL.
+        for field_name, value in list(data.items()):
+            if value != "":
+                continue
+            lower_name = field_name.lower()
+            field_schema = properties.get(field_name) if isinstance(properties, dict) else {}
+            if not isinstance(field_schema, dict):
+                field_schema = {}
+            field_format = str(field_schema.get("format") or "").lower()
+            if (
+                lower_name == "id"
+                or lower_name.endswith("_id")
+                or lower_name.endswith("_time")
+                or lower_name.endswith("_at")
+                or field_format in {"uuid", "date-time", "date"}
+            ):
+                data[field_name] = None
+
+        return data
+
+    def _hydrate_template_placeholders(
+        self, query_template: str | None, input_data: dict[str, Any], context: ToolContext
+    ) -> dict[str, Any]:
+        """Backfill {placeholder} keys used in SQL template when input omitted them."""
+        data = dict(input_data)
+        if not query_template:
+            return data
+
+        placeholder_keys = set(re.findall(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}", query_template))
+        properties = (
+            self._input_schema.get("properties", {})
+            if isinstance(self._input_schema, dict)
+            else {}
+        )
+        if not isinstance(properties, dict):
+            properties = {}
+
+        for key in placeholder_keys:
+            if key in data and data[key] is not None:
+                continue
+            field_schema = properties.get(key)
+            if not isinstance(field_schema, dict):
+                field_schema = {}
+            data[key] = self._default_value_for_field(key, field_schema, context)
+
+        return data
+
+    def _bind_native_placeholders(
+        self, query: str, input_data: dict[str, Any]
+    ) -> dict[str, Any] | list[Any]:
+        """
+        Bind psycopg-style placeholders when template processing did not emit params.
+        Supports named placeholders (%(name)s) and positional placeholders (%s).
+        """
+        named_keys = re.findall(r"%\(([^)]+)\)s", query)
+        if named_keys:
+            return {key: input_data.get(key) for key in named_keys}
+
+        positional_count = len(re.findall(r"(?<!%)%s", query))
+        if positional_count <= 0:
+            return []
+
+        configured_order = self.tool_config.get("param_order")
+        if isinstance(configured_order, list) and all(
+            isinstance(k, str) for k in configured_order
+        ):
+            param_order = configured_order
+        else:
+            required = self._input_schema.get("required") if isinstance(self._input_schema, dict) else None
+            param_order = required if isinstance(required, list) else list(input_data.keys())
+
+        values: list[Any] = []
+        used: set[str] = set()
+        for key in param_order:
+            if len(values) >= positional_count:
+                break
+            if isinstance(key, str):
+                values.append(input_data.get(key))
+                used.add(key)
+
+        if len(values) < positional_count:
+            for key, value in input_data.items():
+                if key in used:
+                    continue
+                values.append(value)
+                if len(values) >= positional_count:
+                    break
+
+        # Keep placeholder count aligned for test execution.
+        if len(values) < positional_count:
+            values.extend([None] * (positional_count - len(values)))
+
+        return values
 
     async def _execute_database_query(
         self, context: ToolContext, input_data: dict[str, Any]
@@ -314,6 +492,27 @@ class DynamicTool(BaseTool):
             )
 
         source_asset = load_source_asset(name=source_ref)
+        source_ref_effective = source_ref
+        if not source_asset:
+            settings = get_settings()
+            fallback_candidates = [
+                "default_postgres",
+                settings.ops_default_source_asset,
+            ]
+            for candidate in fallback_candidates:
+                if not candidate or candidate == source_ref:
+                    continue
+                candidate_asset = load_source_asset(name=candidate)
+                if candidate_asset:
+                    logger.warning(
+                        "Source asset '%s' not found for tool '%s'; fallback to '%s'",
+                        source_ref,
+                        self.name,
+                        candidate,
+                    )
+                    source_asset = candidate_asset
+                    source_ref_effective = str(candidate)
+                    break
         if not source_asset:
             return ToolResult(
                 success=False,
@@ -321,13 +520,31 @@ class DynamicTool(BaseTool):
                 error_details={"source_ref": source_ref},
             )
 
+        effective_input = self._materialize_input_data(input_data, context)
+        effective_input = self._hydrate_template_placeholders(
+            query_template, effective_input, context
+        )
+
         # For history tool: override query_template based on source parameter
-        source_param = input_data.get("source")
+        source_param = effective_input.get("source")
         if self.name == "history" and source_param and source_param != "event_log":
-            query, params = self._build_history_query_by_source(source_param, input_data)
+            query, params = self._build_history_query_by_source(
+                source_param, effective_input
+            )
         else:
             # Process query template to replace placeholders - now returns (query, params) tuple
-            query, params = self._process_query_template(query_template, input_data)
+            query, params = self._process_query_template(query_template, effective_input)
+
+        if isinstance(query, str) and "%" in query:
+            named_placeholder_keys = re.findall(r"%\(([^)]+)\)s", query)
+            positional_placeholder_count = len(re.findall(r"(?<!%)%s", query))
+            if named_placeholder_keys:
+                if not isinstance(params, dict) or set(params.keys()) != set(named_placeholder_keys):
+                    params = self._bind_native_placeholders(query, effective_input)
+            elif positional_placeholder_count > 0:
+                current_param_count = len(params) if isinstance(params, list) else 0
+                if current_param_count != positional_placeholder_count:
+                    params = self._bind_native_placeholders(query, effective_input)
 
         source_type = str(source_asset.get("source_type", "")).lower()
         if source_type not in {"postgres", "postgresql", "mysql", "bigquery", "snowflake"}:
@@ -345,12 +562,12 @@ class DynamicTool(BaseTool):
         except Exception as exc:
             logger.error(
                 f"Database query failed: {str(exc)}",
-                extra={"query": query[:200], "source_ref": source_ref},
+                extra={"query": query[:200], "source_ref": source_ref_effective},
             )
             return ToolResult(
                 success=False,
                 error=f"Database query failed: {str(exc)}",
-                error_details={"exception": str(exc), "source_ref": source_ref},
+                error_details={"exception": str(exc), "source_ref": source_ref_effective},
             )
         finally:
             if connection:

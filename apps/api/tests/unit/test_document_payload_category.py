@@ -1,6 +1,5 @@
-from models.document import Document, DocumentStatus
-
 from app.modules.document_processor.router import _build_document_payload
+from models.document import Document, DocumentStatus
 
 
 def test_build_document_payload_includes_category_and_tags():

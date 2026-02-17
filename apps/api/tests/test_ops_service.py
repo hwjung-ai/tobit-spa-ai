@@ -290,9 +290,9 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
     monkeypatch.setenv("OPS_ENABLE_LANGGRAPH", "true")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-    from schemas.tool_contracts import ExecutorResult
     from app.modules.ops.services.ops_all_runner import OpsAllRunner
     from core.config import AppSettings
+    from schemas.tool_contracts import ExecutorResult
 
     def mock_metric_executor(_question: str):
         # Return dict blocks (not Pydantic models)

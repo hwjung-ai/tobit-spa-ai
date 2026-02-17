@@ -87,6 +87,9 @@ class TbAssetRegistry(SQLModel, table=True):
     tool_output_schema: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSONB, nullable=True)
     )
+    tool_catalog_ref: str | None = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
 
     # Common fields
     tags: dict[str, Any] | None = Field(

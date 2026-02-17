@@ -44,6 +44,7 @@ from app.modules.asset_registry.loader import (
     load_policy_asset,
     load_resolver_asset,
     load_source_asset,
+    resolve_catalog_asset_for_source,
 )
 from app.modules.auth.models import TbUser
 from app.modules.inspector.service import persist_execution_trace
@@ -853,12 +854,56 @@ def ask_ops(
         resolver_payload = (
             load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
         )
-        schema_payload = (
-            load_catalog_asset(schema_asset_name) if schema_asset_name else None
-        )
-        source_payload = (
-            load_source_asset(source_asset_name) if source_asset_name else None
-        )
+        source_payload = load_source_asset(source_asset_name) if source_asset_name else None
+        schema_payload = load_catalog_asset(schema_asset_name) if schema_asset_name else None
+
+        # Auto-resolve catalog from source when schema isn't explicitly provided.
+        if not schema_payload and source_asset_name:
+            resolved_catalog = resolve_catalog_asset_for_source(source_asset_name)
+            if resolved_catalog:
+                schema_payload = resolved_catalog
+                schema_asset_name = str(resolved_catalog.get("name") or schema_asset_name)
+                logger.info(
+                    "ci.ask.catalog.auto_resolved",
+                    extra={
+                        "source_asset": source_asset_name,
+                        "schema_asset": schema_asset_name,
+                    },
+                )
+
+        # If schema is selected but source is missing, derive source from schema payload.
+        if not source_payload and schema_payload:
+            derived_source_ref = schema_payload.get("source_ref")
+            if derived_source_ref:
+                source_asset_name = str(derived_source_ref)
+                source_payload = load_source_asset(source_asset_name)
+
+        # If both are present but mismatched, prefer source-bound catalog for consistency.
+        if schema_payload and source_asset_name:
+            schema_source_ref = schema_payload.get("source_ref")
+            if schema_source_ref and schema_source_ref != source_asset_name:
+                resolved_catalog = resolve_catalog_asset_for_source(source_asset_name)
+                if resolved_catalog:
+                    logger.warning(
+                        "ci.ask.catalog.source_mismatch.corrected",
+                        extra={
+                            "source_asset": source_asset_name,
+                            "schema_asset_before": schema_asset_name,
+                            "schema_source_ref": schema_source_ref,
+                            "schema_asset_after": resolved_catalog.get("name"),
+                        },
+                    )
+                    schema_payload = resolved_catalog
+                    schema_asset_name = str(resolved_catalog.get("name") or schema_asset_name)
+                else:
+                    logger.warning(
+                        "ci.ask.catalog.source_mismatch.unresolved",
+                        extra={
+                            "source_asset": source_asset_name,
+                            "schema_asset": schema_asset_name,
+                            "schema_source_ref": schema_source_ref,
+                        },
+                    )
         # Load mapping asset to ensure tracking
         mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
         # Load policy asset to ensure tracking (for all routes including reject)

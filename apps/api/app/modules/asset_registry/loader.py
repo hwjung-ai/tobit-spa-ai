@@ -28,6 +28,17 @@ def _is_real_mode() -> bool:
     return settings.ops_mode == "real"
 
 
+def _extract_catalog_source_ref(content: dict[str, Any]) -> str | None:
+    """Extract source_ref from catalog payload with backward compatibility."""
+    catalog_data = content.get("catalog", {}) if isinstance(content, dict) else {}
+    if isinstance(catalog_data, dict):
+        nested_source_ref = catalog_data.get("source_ref")
+        if nested_source_ref:
+            return str(nested_source_ref)
+    top_level_source_ref = content.get("source_ref") if isinstance(content, dict) else None
+    return str(top_level_source_ref) if top_level_source_ref else None
+
+
 def load_prompt_asset(
     scope: str, engine: str, name: str, version: int | None = None
 ) -> dict[str, Any] | None:
@@ -543,7 +554,7 @@ def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] 
 
             payload = {
                 "name": asset.name,
-                "source_ref": content.get("source_ref"),
+                "source_ref": _extract_catalog_source_ref(content),
                 "catalog": catalog,
                 "spec": content.get("spec"),
                 "source": "asset_registry",
@@ -684,8 +695,67 @@ def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any]
 
     logger.warning(f"Resolver asset not found: {name}")
     return None
+def load_tool_asset(
+    name_or_id: str,
+    version: int | None = None,
+    status: str | None = "published",
+) -> dict[str, Any] | None:
+    """
+    Load a tool asset by name (preferred) or UUID.
 
+    Args:
+        name_or_id: Tool name or UUID string
+        version: Specific version to load (None for latest by status)
+        status: Status filter (default: published, None to ignore status)
 
+    Returns:
+        Tool asset dict or None if not found
+    """
+    import uuid
+
+    with get_session_context() as session:
+        query = select(TbAssetRegistry).where(TbAssetRegistry.asset_type == "tool")
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        elif status:
+            query = query.where(TbAssetRegistry.status == status)
+
+        # Prefer exact name match first
+        by_name = session.exec(query.where(TbAssetRegistry.name == name_or_id)).first()
+        asset = by_name
+
+        # Fallback to UUID lookup
+        if asset is None:
+            try:
+                asset_uuid = uuid.UUID(name_or_id)
+                by_id_query = select(TbAssetRegistry).where(
+                    TbAssetRegistry.asset_type == "tool",
+                    TbAssetRegistry.asset_id == asset_uuid,
+                )
+                if version is not None:
+                    by_id_query = by_id_query.where(TbAssetRegistry.version == version)
+                elif status:
+                    by_id_query = by_id_query.where(TbAssetRegistry.status == status)
+                asset = session.exec(by_id_query).first()
+            except (ValueError, TypeError):
+                asset = None
+
+        if asset is None:
+            return None
+
+        return {
+            "asset_id": str(asset.asset_id),
+            "name": asset.name,
+            "description": asset.description,
+            "tool_type": asset.tool_type,
+            "tool_catalog_ref": getattr(asset, "tool_catalog_ref", None),
+            "tool_config": getattr(asset, "tool_config", None) or {},
+            "tool_input_schema": getattr(asset, "tool_input_schema", None) or {},
+            "tool_output_schema": getattr(asset, "tool_output_schema", None) or {},
+            "version": asset.version,
+            "status": asset.status,
+            "source": "asset_registry",
+        }
 
 
 def load_all_published_tools() -> list[dict[str, Any]]:
@@ -710,6 +780,7 @@ def load_all_published_tools() -> list[dict[str, Any]]:
                 "name": asset.name,
                 "description": asset.description,
                 "tool_type": asset.tool_type,
+                "tool_catalog_ref": getattr(asset, "tool_catalog_ref", None),
                 "tool_config": getattr(asset, 'tool_config', None) or {},
                 "tool_input_schema": getattr(asset, 'tool_input_schema', None) or {},
                 "tool_output_schema": getattr(asset, 'tool_output_schema', None) or {},
@@ -753,6 +824,46 @@ def load_all_published_mappings() -> dict[str, Any]:
         return result
 
 
+def resolve_catalog_asset_for_source(source_ref: str) -> dict[str, Any] | None:
+    """
+    Resolve a published catalog asset payload for a source_ref.
+
+    Returns:
+        Catalog asset payload (same shape as load_catalog_asset) or None
+    """
+    if not source_ref:
+        return None
+
+    with get_session_context() as session:
+        query = (
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "catalog")
+            .where(TbAssetRegistry.status == "published")
+            .order_by(TbAssetRegistry.updated_at.desc())
+        )
+        assets = session.exec(query).all()
+
+        for asset in assets:
+            content = asset.content or {}
+            catalog = asset.schema_json or content.get("catalog", {})
+            catalog_source_ref = _extract_catalog_source_ref(content)
+            if catalog_source_ref != source_ref:
+                continue
+            return {
+                "name": asset.name,
+                "source_ref": catalog_source_ref,
+                "catalog": catalog if isinstance(catalog, dict) else {},
+                "spec": content.get("spec"),
+                "source": "asset_registry",
+                "asset_id": str(asset.asset_id),
+                "version": asset.version,
+                "scope": asset.scope,
+                "tags": asset.tags,
+            }
+
+    return None
+
+
 def load_catalog_for_source(source_ref: str) -> dict[str, Any] | None:
     """
     Load catalog information for a specific data source from Asset Registry.
@@ -764,21 +875,14 @@ def load_catalog_for_source(source_ref: str) -> dict[str, Any] | None:
         Full catalog data with tables, columns, and metadata, or None if not found
     """
 
-    with get_session_context() as session:
-        query = (
-            select(TbAssetRegistry)
-            .where(TbAssetRegistry.asset_type == "catalog")
-            .where(TbAssetRegistry.status == "published")
-        )
-        assets = session.exec(query).all()
-
-        for asset in assets:
-            content = asset.content or {}
-            catalog_data = content.get("catalog")
-
-            if catalog_data and catalog_data.get("source_ref") == source_ref:
-                logger.info(f"Loaded catalog for source: {source_ref}")
-                return catalog_data
+    asset_payload = resolve_catalog_asset_for_source(source_ref)
+    if asset_payload:
+        catalog_data = asset_payload.get("catalog", {})
+        if isinstance(catalog_data, dict):
+            if not catalog_data.get("source_ref"):
+                catalog_data = {**catalog_data, "source_ref": source_ref}
+            logger.info(f"Loaded catalog for source: {source_ref}")
+            return catalog_data
 
     logger.warning(f"Catalog not found for source: {source_ref}")
     return None
@@ -815,8 +919,61 @@ def load_catalog_for_llm(
         return None
 
     try:
+        normalized_tables: list[dict[str, Any]] = []
+        for table in (catalog_data.get("tables") or []):
+            if not isinstance(table, dict):
+                continue
+            raw_columns = table.get("columns") or []
+            normalized_columns: list[dict[str, Any]] = []
+            for col in raw_columns:
+                if not isinstance(col, dict):
+                    continue
+                normalized_columns.append(
+                    {
+                        "name": col.get("name") or col.get("column_name"),
+                        "data_type": col.get("data_type") or col.get("type") or "text",
+                        "is_nullable": col.get("is_nullable", True),
+                        "is_primary_key": col.get("is_primary_key", False),
+                        "is_foreign_key": col.get("is_foreign_key", False),
+                        "description": col.get("description") or col.get("comment"),
+                        "column_size": col.get("column_size"),
+                        "numeric_precision": col.get("numeric_precision"),
+                        "numeric_scale": col.get("numeric_scale"),
+                        "data_samples": col.get("data_samples") or col.get("samples"),
+                        "distinct_count": col.get("distinct_count"),
+                        "null_count": col.get("null_count"),
+                        "min_value": col.get("min_value"),
+                        "max_value": col.get("max_value"),
+                        "avg_value": col.get("avg_value"),
+                        "is_indexed": col.get("is_indexed", False),
+                        "is_unique": col.get("is_unique", False),
+                        "character_maximum_length": col.get("character_maximum_length"),
+                        "ordinal_position": col.get("ordinal_position"),
+                    }
+                )
+
+            normalized_table = {
+                "name": table.get("name"),
+                "schema_name": table.get("schema_name") or table.get("schema") or "public",
+                "description": table.get("description"),
+                "columns": [
+                    c for c in normalized_columns if c.get("name")
+                ],
+                "row_count": table.get("row_count"),
+                "size_bytes": table.get("size_bytes"),
+                "sample_rows": table.get("sample_rows"),
+            }
+            if normalized_table["name"]:
+                normalized_tables.append(normalized_table)
+
+        normalized_catalog_data = {
+            **catalog_data,
+            "source_ref": catalog_data.get("source_ref") or source_ref,
+            "tables": normalized_tables,
+        }
+
         # Convert dict to SchemaCatalog object
-        catalog = SchemaCatalog(**catalog_data)
+        catalog = SchemaCatalog(**normalized_catalog_data)
 
         # Convert to LLM format
         llm_format = catalog.to_llm_format(

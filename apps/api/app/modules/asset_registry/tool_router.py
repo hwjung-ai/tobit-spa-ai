@@ -27,10 +27,110 @@ from app.modules.asset_registry.schemas import (
     ToolAssetCreate,
     ToolAssetUpdate,
 )
+from app.modules.asset_registry.tool_validator import validate_tool_for_publication
 from app.modules.audit_log.crud import create_audit_log
 from app.modules.auth.models import TbUser
 
 router = APIRouter(prefix="/asset-registry/tools", tags=["tool-assets"])
+
+
+def _extract_catalog_source_ref_from_asset(asset: TbAssetRegistry | None) -> str | None:
+    if not asset:
+        return None
+    content = asset.content or {}
+    nested_catalog = content.get("catalog")
+    if isinstance(nested_catalog, dict):
+        nested_source_ref = nested_catalog.get("source_ref")
+        if nested_source_ref:
+            return str(nested_source_ref)
+    top_source_ref = content.get("source_ref")
+    return str(top_source_ref) if top_source_ref else None
+
+
+def _resolve_published_asset_by_ref(
+    session: Session,
+    *,
+    asset_type: str,
+    ref: str,
+    tenant_id: str,
+) -> TbAssetRegistry | None:
+    if not ref:
+        return None
+
+    query = (
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == asset_type)
+        .where(TbAssetRegistry.status == "published")
+        .where(
+            (TbAssetRegistry.tenant_id == tenant_id)
+            | (TbAssetRegistry.tenant_id.is_(None))
+        )
+    )
+
+    try:
+        ref_uuid = uuid.UUID(ref)
+    except ValueError:
+        ref_uuid = None
+
+    if ref_uuid:
+        asset = session.exec(query.where(TbAssetRegistry.asset_id == ref_uuid)).first()
+        if asset:
+            return asset
+
+    return session.exec(query.where(TbAssetRegistry.name == ref)).first()
+
+
+def _validate_tool_references(
+    session: Session,
+    *,
+    tool_type: str | None,
+    tool_config: dict[str, Any] | None,
+    tool_catalog_ref: str | None,
+    tenant_id: str,
+) -> list[str]:
+    errors: list[str] = []
+    normalized_type = (tool_type or "").strip().lower()
+    config = tool_config or {}
+    source_ref_value = config.get("source_ref")
+    source_ref = str(source_ref_value).strip() if source_ref_value else ""
+
+    if normalized_type in {"database_query", "graph_query"}:
+        if not source_ref:
+            errors.append(f"{normalized_type}: source_ref is required in tool_config")
+        else:
+            source_asset = _resolve_published_asset_by_ref(
+                session,
+                asset_type="source",
+                ref=source_ref,
+                tenant_id=tenant_id,
+            )
+            if not source_asset:
+                errors.append(
+                    f"{normalized_type}: source_ref '{source_ref}' not found in published source assets"
+                )
+
+    if tool_catalog_ref:
+        catalog_asset = _resolve_published_asset_by_ref(
+            session,
+            asset_type="catalog",
+            ref=tool_catalog_ref,
+            tenant_id=tenant_id,
+        )
+        if not catalog_asset:
+            errors.append(
+                f"tool_catalog_ref '{tool_catalog_ref}' not found in published catalog assets"
+            )
+            return errors
+
+        catalog_source_ref = _extract_catalog_source_ref_from_asset(catalog_asset)
+        if source_ref and catalog_source_ref and source_ref != catalog_source_ref:
+            errors.append(
+                "tool_catalog_ref source mismatch: "
+                f"tool_config.source_ref='{source_ref}' "
+                f"!= catalog.source_ref='{catalog_source_ref}'"
+            )
+
+    return errors
 
 
 def _serialize_tool_asset(asset: TbAssetRegistry) -> dict[str, Any]:
@@ -43,6 +143,7 @@ def _serialize_tool_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "version": asset.version,
         "status": asset.status,
         "tool_type": asset.tool_type,
+        "tool_catalog_ref": getattr(asset, "tool_catalog_ref", None),
         "tool_config": asset.tool_config,
         "tool_input_schema": asset.tool_input_schema,
         "tool_output_schema": asset.tool_output_schema,
@@ -204,12 +305,23 @@ def create_tool(
                 detail=f"Tool with name '{payload.name}' already exists",
             )
 
+        ref_errors = _validate_tool_references(
+            session,
+            tool_type=payload.tool_type,
+            tool_config=payload.tool_config,
+            tool_catalog_ref=payload.tool_catalog_ref,
+            tenant_id=tenant_id,
+        )
+        if ref_errors:
+            raise HTTPException(status_code=400, detail="; ".join(ref_errors))
+
         # Create tool asset
         asset = TbAssetRegistry(
             asset_type="tool",
             name=payload.name,
             description=payload.description,
             tool_type=payload.tool_type,
+            tool_catalog_ref=payload.tool_catalog_ref,
             tool_config=payload.tool_config,
             tool_input_schema=payload.tool_input_schema,
             tool_output_schema=payload.tool_output_schema,
@@ -231,6 +343,7 @@ def create_tool(
                 "name": asset.name,
                 "description": asset.description,
                 "tool_type": asset.tool_type,
+                "tool_catalog_ref": getattr(asset, "tool_catalog_ref", None),
                 "tool_config": asset.tool_config,
                 "tool_input_schema": asset.tool_input_schema,
                 "tool_output_schema": asset.tool_output_schema,
@@ -325,6 +438,25 @@ def update_tool(
                 status_code=400, detail="Only draft tools can be updated"
             )
 
+        effective_tool_type = payload.tool_type if payload.tool_type is not None else asset.tool_type
+        effective_tool_config = (
+            payload.tool_config if payload.tool_config is not None else asset.tool_config
+        )
+        effective_tool_catalog_ref = (
+            payload.tool_catalog_ref
+            if payload.tool_catalog_ref is not None
+            else asset.tool_catalog_ref
+        )
+        ref_errors = _validate_tool_references(
+            session,
+            tool_type=effective_tool_type,
+            tool_config=effective_tool_config,
+            tool_catalog_ref=effective_tool_catalog_ref,
+            tenant_id=asset.tenant_id or "",
+        )
+        if ref_errors:
+            raise HTTPException(status_code=400, detail="; ".join(ref_errors))
+
         # Update fields
         if payload.name is not None:
             asset.name = payload.name
@@ -332,6 +464,8 @@ def update_tool(
             asset.description = payload.description
         if payload.tool_type is not None:
             asset.tool_type = payload.tool_type
+        if payload.tool_catalog_ref is not None:
+            asset.tool_catalog_ref = payload.tool_catalog_ref
         if payload.tool_config is not None:
             asset.tool_config = payload.tool_config
         if payload.tool_input_schema is not None:
@@ -454,6 +588,21 @@ def publish_tool(
         if not asset:
             raise HTTPException(status_code=404, detail="Tool asset not found")
 
+        ref_errors = _validate_tool_references(
+            session,
+            tool_type=asset.tool_type,
+            tool_config=asset.tool_config,
+            tool_catalog_ref=asset.tool_catalog_ref,
+            tenant_id=asset.tenant_id or "",
+        )
+        publication_errors = validate_tool_for_publication(asset)
+        all_errors = [*ref_errors, *publication_errors]
+        if all_errors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Tool publication validation failed: {'; '.join(all_errors)}",
+            )
+
         # Increment version and publish
         asset.version = (asset.version or 0) + 1
         asset.status = "published"
@@ -471,6 +620,7 @@ def publish_tool(
                 "name": asset.name,
                 "description": asset.description,
                 "tool_type": asset.tool_type,
+                "tool_catalog_ref": getattr(asset, "tool_catalog_ref", None),
                 "tool_config": asset.tool_config,
                 "tool_input_schema": asset.tool_input_schema,
                 "tool_output_schema": asset.tool_output_schema,
@@ -540,35 +690,24 @@ async def test_tool(
 
         # Execute tool
         try:
-            from app.modules.asset_registry.schemas import ToolAssetRead
             from app.modules.ops.services.orchestration.tools.dynamic_tool import (
                 DynamicTool,
             )
 
-            # Create DynamicTool instance
-            tool_asset_read = ToolAssetRead(
-                asset_id=str(asset.asset_id),
-                asset_type=asset.asset_type,
-                name=asset.name,
-                description=asset.description or "",
-                version=asset.version,
-                status=asset.status,
-                tool_type=asset.tool_type or "",
-                tool_config=asset.tool_config or {},
-                tool_input_schema=asset.tool_input_schema or {},
-                tool_output_schema=asset.tool_output_schema,
-                tags=asset.tags,
-                created_by=asset.created_by,
-                published_by=asset.published_by,
-                published_at=asset.published_at,
-                created_at=asset.created_at,
-                updated_at=asset.updated_at,
-            )
+            # Create DynamicTool instance from plain dict payload.
+            tool_asset_payload = {
+                "asset_id": str(asset.asset_id),
+                "name": asset.name,
+                "description": asset.description or "",
+                "tool_type": asset.tool_type or "",
+                "tool_catalog_ref": getattr(asset, "tool_catalog_ref", None),
+                "tool_config": asset.tool_config or {},
+                "tool_input_schema": asset.tool_input_schema or {},
+                "tool_output_schema": asset.tool_output_schema,
+                "tags": asset.tags,
+            }
 
-            tool = DynamicTool(
-                asset_id=str(asset.asset_id),
-                asset_data=tool_asset_read,
-            )
+            tool = DynamicTool(tool_asset_payload)
 
             result = await tool.execute(context, test_input)
 
@@ -626,6 +765,7 @@ def reload_tools(
                         version=asset.version,
                         status=asset.status,
                         tool_type=asset.tool_type or "",
+                        tool_catalog_ref=getattr(asset, "tool_catalog_ref", None),
                         tool_config=asset.tool_config or {},
                         tool_input_schema=asset.tool_input_schema or {},
                         tool_output_schema=asset.tool_output_schema,

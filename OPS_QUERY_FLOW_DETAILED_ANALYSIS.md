@@ -1,25 +1,41 @@
 # 🔄 OPS 질의 처리 전체 흐름 상세 분석
 
-**작성일**: 2026-02-16
+**작성일**: 2026-02-16 (최종 수정: 2026-02-16)
 **범위**: 질의 입수부터 응답까지 전체 처리 과정
 
 ---
 
-## 📍 시작: HTTP 요청 진입점
+## ⚠️ 핵심: 세 개의 엔드포인트, 두 가지 아키텍처
 
-### 1️⃣ **HTTP 엔드포인트**
+OPS에는 **완전히 다른 2가지 실행 아키텍처**가 있습니다:
+
+| 엔드포인트 | 도구 선택 방식 | Plan 생성 | 소스 위치 |
+|-----------|-------------|---------|---------|
+| **`POST /ops/ask`** | ✅ **LLM이 Tool description 읽고 동적 선택** | LLM Function Calling | `ci_ask.py` |
+| **`POST /ops/ask/stream`** | ✅ **동일 (SSE 스트리밍 버전)** | LLM Function Calling | `ask_stream.py` |
+| **`POST /ops/query`** | ❌ **모드별 하드코딩 Plan** | `_create_simple_plan(mode)` | `query.py` |
+
+### Frontend에서의 라우팅
 
 ```
-POST /ops/ask
+UI 모드 선택
+├── "전체(all)" 모드 → POST /ops/ask 또는 /ops/ask/stream
+└── 개별 모드 (config, metric, history, graph, document) → POST /ops/query
 ```
+
+---
+
+## 🅰️ `/ops/ask` — LLM 기반 범용 오케스트레이션
+
+### 진입점
 
 **파일**: `apps/api/app/modules/ops/routes/ci_ask.py:72-78`
 
 ```python
-@router.post("/ops/ask")
+@router.post("/ask")
 def ask_ops(
-    payload: CiAskRequest,          # 사용자의 질의 입력
-    request: Request,                # HTTP 요청 객체
+    payload: CiAskRequest,          # question, rerun, resolver_asset, schema_asset, ...
+    request: Request,
     tenant_id: str = Depends(_tenant_id),
     current_user: TbUser = Depends(get_current_user),
 ):
@@ -33,58 +49,75 @@ def ask_ops(
 }
 ```
 
----
-
-## 🔄 전체 처리 흐름 (6단계)
-
-### **Phase 1️⃣: 질의 정규화 (Question Normalization)**
+### 전체 처리 흐름 (6단계)
 
 ```
-HTTP Request /ops/ask
-    ↓
-[진입점] ask_ops() 함수 시작
-    ↓
-RESOLVER Assets 로드
+┌────────────────────────────────────────────────────────────────────────┐
+│ Phase 1: 질의 정규화 (Normalization)                                    │
+│ ci_ask.py:247-271                                                      │
+│ - Resolver/Schema/Source/Mapping/Policy Asset 로드                     │
+│ - _apply_resolver_rules() → alias_mapping, pattern_rule, transformation│
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ Phase 2: 계획 생성 (LLM Function Calling)                              │
+│ ci_ask.py:340-392                                                      │
+│                                                                        │
+│ planner_llm.create_plan_output(question, schema, source)               │
+│   → _call_output_parser_llm()  (planner_llm.py:280)                   │
+│     → build_tools_for_llm_prompt()  (tool_schema_converter.py:160)     │
+│       → convert_tools_to_function_calling()  (tool_schema_converter.py:17)│
+│         → registry.get_available_tools()  ← ✅ Tool Registry 동적 로드  │
+│     → llm.create_response(tools=tools)  ← ✅ LLM Function Calling      │
+│     → extract_tool_call_from_response()  ← tool_use 추출               │
+│                                                                        │
+│ 결과: PlanOutput (kind=PLAN/DIRECT/REJECT)                             │
+│ - PLAN → Phase 3으로 진행                                               │
+│ - DIRECT → 직접 답변 반환 (도구 실행 없음)                               │
+│ - REJECT → 거부 응답 반환                                               │
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ Phase 3: 계획 검증 (Validation)                                        │
+│ ci_ask.py:372-392                                                      │
+│                                                                        │
+│ validator.validate_plan(plan_raw, resolver_payload)                     │
+│ - 도구 존재 여부 확인                                                    │
+│ - 파라미터 유효성 검증                                                    │
+│ - Policy 제약 조건 적용                                                  │
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ Phase 4: 단계별 실행 (OpsOrchestratorRunner)                           │
+│ ci_ask.py:456-476                                                      │
+│                                                                        │
+│ runner = OpsOrchestratorRunner(plan_validated, plan_raw, tenant_id, ...)│
+│ result = runner.run(plan_output)                                       │
+│                                                                        │
+│ [Stage 1] Validate: Policy 확인 (tool_limits, time_ranges)            │
+│ [Stage 2] Execute: Tool & Query 실행 (DB 조회)                         │
+│ [Stage 3] Compose: Mapping 적용 + 블록 생성                            │
+│ [Stage 4] Present: 최종 포맷팅 (마크다운)                               │
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ Phase 5: 오류 처리 (Fallback)                                          │
+│ ci_ask.py:479-520                                                      │
+│                                                                        │
+│ evaluate_replan() → 계획 수정 및 재시도                                  │
+│ build_fallback_plan() → 단순화된 plan으로 재시도                         │
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ Phase 6: 응답 및 저장 (Response & Persistence)                         │
+│                                                                        │
+│ - persist_execution_trace() → Inspector에 실행 흔적 저장               │
+│ - QueryHistory 업데이트 (status, response, summary, trace_id)          │
+│ - ResponseEnvelope 직렬화 → HTTP 응답 반환                              │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-**처리 내용**:
-- 사용자 입력 정규화 (공백 제거, 대소문자 통일 등)
-- RESOLVER Asset 활용: 환경 변수 호환성 확인
-
-**사용되는 Assets**:
-- **Prompt**: (이 단계에서는 아직 프롬프트 미사용)
-- **Resolver**: `default_resolver` (ID: 92406ef9...)
-  - 환경 변수 폴백 규칙 적용
-
-**결과**:
-```json
-{
-  "normalized_question": "CI MES-06의 최근 30일 이력 조회",
-  "question_metadata": {
-    "length": 20,
-    "entity": "MES-06",
-    "time_range": "30 days"
-  }
-}
-```
-
----
-
-### **Phase 2️⃣: 계획 생성 (Plan Generation with LLM)**
-
-```
-정규화된 질의
-    ↓
-[PROMPT 호출 #1] ops_all_router 또는 특정 모드 라우터
-    ↓
-Claude LLM이 Tool Description 분석하여 도구 선택
-    ↓
-Plan 생성 (어떤 도구를 어떤 순서로 실행할 것인가?)
-```
-
-#### **🎯 Tool 오케스트레이션 원칙: LLM 기반 Dynamic Tool Selection**
-
-✅ **핵심**: OPS는 **Tool Registry의 description을 읽고 LLM이 Tools을 동적으로 선택**합니다.
+### 🎯 핵심: LLM 기반 Dynamic Tool Selection
 
 **실제 소스 코드 (3단계 증명)**:
 
@@ -113,992 +146,523 @@ def build_tools_for_llm_prompt(include_planner: bool = True):
     """Build complete tools list and a descriptive text for LLM prompt."""
     available_tools = convert_tools_to_function_calling()  # ✅ Tool Registry 기반
     all_tools.extend(available_tools)
-
-    # Tool 목록 (25개 Tools 모두):
-    # - work_history_query: "Query work history records for a CI..."
-    # - maintenance_history_list: "List maintenance records..."
-    # - ci_detail_lookup: "Fetch CI configuration..."
-    # - metric_series: "Fetch time series metric..."
-    # - ci_graph_query: "Query CI relationships..."
-    # ... (모두 description 포함)
 ```
 
 **Step 3: LLM Function Calling** (`planner_llm.py:280-340`)
 ```python
 def _call_output_parser_llm(...):
-    """Call LLM for query planning with native function calling support."""
-
-    # ✅ Tools 빌드 (Tool Registry 기반, 동적)
     tools, _ = build_tools_for_llm_prompt(include_planner=True)  # 라인 311
-
-    # ✅ LLM에 ALL Tools 전달 (Function Calling)
     response = llm.create_response(
         model=OUTPUT_PARSER_MODEL,
         input=messages,
-        tools=tools if tools else None,  # ✅ Function calling tools 전달
+        tools=tools if tools else None,  # ✅ Function calling
         temperature=0,
-    )  # 라인 318-323
-
-    # ✅ LLM의 tool_use 응답 추출
+    )
     tool_call = extract_tool_call_from_response(response)  # 라인 326
     if tool_call and tool_call.get("name") == "create_execution_plan":
         payload = tool_call.get("input", {})  # ✅ LLM이 선택한 plan
 ```
 
-**실제 동작 흐름**:
-
+**동작 요약**:
 ```
-1️⃣ 사용자 질의
-   "MES-06의 최근 30일 이력"
-
-2️⃣ Tool Registry 동적 로드 (convert_tools_to_function_calling)
-   registry.get_available_tools()에서:
-   ├─ work_history_query: "Query work history records for a CI with time range..."
-   ├─ maintenance_history_list: "List maintenance records..."
-   ├─ ci_detail_lookup: "Fetch CI configuration..."
-   ├─ metric_series: "Fetch time series metric..."
-   ├─ ci_graph_query: "Query CI relationships..."
-   └─ ... (25개 모두)
-
-3️⃣ LLM에 ALL Tools 전달 (Function Calling)
-   llm.create_response(
-       tools=[
-           {name: "work_history_query", description: "Query work history records..."},
-           {name: "maintenance_history_list", description: "List maintenance..."},
-           ...
-       ]
-   )
-
-4️⃣ Claude LLM이 Tools 분석 (description 기반)
-   - "Query work history records for a CI" + "time range filtering"
-   - → "MES-06의 이력" + "30일" 의미와 일치 ✅
-   - → work_history_query 선택
-
-5️⃣ LLM 응답: tool_use("create_execution_plan")
-   {
-     "tools": ["work_history_query"],
-     "params": {
-       "ci_code": "MES-06",
-       "start_time": "2026-01-17",
-       "end_time": "2026-02-16"
-     }
-   }
-
-6️⃣ Orchestrator가 plan 실행
-   execute_tool("work_history_query", params)
-
-7️⃣ 결과 반환
+사용자 질의 → Tool Registry에서 25개 Tool 동적 로드
+  → 각 Tool의 description + input_schema를 LLM에 전달
+  → LLM이 description 분석하여 최적 Tool 선택
+  → Tool 추가 = Asset Registry 추가만 하면 됨 (코드 변경 불필요)
 ```
-
-**결론**:
-- ✅ **Tool Registry에서 동적으로 모든 Tools 로드**
-- ✅ **Tool의 description을 LLM에 전달**
-- ✅ **LLM이 description 기반으로 Tools 선택**
-- ✅ **Tool 추가 = Asset Registry 추가 (코드 변경 불필요)**
-- ✅ **완벽한 범용 오케스트레이션 (Generic Tool-based Orchestration)**
 
 ---
 
-**단계별 상세 분석**:
+## 🅱️ `/ops/query` — 모드별 하드코딩 Plan
 
-#### **2-1. 라우터 선택**
+### 진입점
 
-**현재 상황**: 사용자가 어떤 모드인지 결정
-- `mode = "all"` (기본값)
+**파일**: `apps/api/app/modules/ops/routes/query.py:39-45`
 
-**사용되는 Prompts** (22개 중 선택):
-
-| 모드 | Prompt Asset | 역할 |
-|------|-------------|------|
-| all | ops_all_router | 전체 모드 라우팅 (모든 도구 병렬 실행) |
-| config | ops_planner | 설정 분석 (구성 정보 조회) |
-| metric | ops_metric_router | 메트릭 조회 (성능 지표 분석) |
-| history | ops_history_router | 이력 조회 (변경 로그 검색) |
-| graph | ops_graph_router | 그래프 관계 (CI 관계도 표시) |
-| document | ops_normalizer / DocumentSearchService | 문서 검색 (하이브리드 검색: BM25 + pgvector) |
-
----
-
-### 📄 Document 모드 상세 설명
-
-**Document 모드**는 질의와 관련된 문서를 검색하고 정보를 제공하는 모드입니다.
-
-#### 처리 흐름:
-
-```
-사용자 질의
-    ↓
-ops_normalizer (Prompt Asset)
-    ↓
-DocumentSearchService.search()
-    ├─ _text_search()     → PostgreSQL tsvector (BM25 전문검색)
-    ├─ _vector_search()   → pgvector (semantic search, 1536-dim)
-    └─ 결과 병합: RRF (Reciprocal Rank Fusion)
-    ↓
-문서 목록 + 요약 반환
+```python
+@router.post("/query", response_model=ResponseEnvelope)
+def query_ops(
+    payload: OpsQueryRequest,       # mode + question
+    request: Request,
+    tenant_id: str = Depends(_tenant_id),
+    current_user: TbUser = Depends(get_current_user),
+):
 ```
 
-#### 구현 위치:
-
-- **Backend**: `apps/api/app/modules/document_processor/services/search_service.py`
-- **API Router**: `apps/api/app/modules/document_processor/router.py`
-  - Endpoint: `POST /api/documents/search`
-- **OPS Integration**: `apps/api/app/modules/ops/services/__init__.py:run_document()`
-
-#### 검색 전략:
-
-1. **Text Search (BM25)**
-   - 문서 제목, 내용에서 키워드 매칭
-   - PostgreSQL tsvector 사용
-   - 정확도: 높음, 속도: 빠름 (<50ms)
-
-2. **Vector Search (Semantic)**
-   - 문서의 의미론적 유사성 검색
-   - pgvector (1536차원 embedding)
-   - 정확도: 높음, 속도: 중간 (~100ms)
-
-3. **Hybrid Fusion (RRF)**
-   - 두 검색 결과의 순위 통합
-   - Reciprocal Rank Fusion 알고리즘
-   - 최적의 결과 도출 (<150ms)
-
-#### 예시:
-
+**입력**:
 ```json
 {
-  "question": "ECS 배포 가이드에서 권장 사항은?",
-  "mode": "document",
-  "tools": ["DocumentSearchService"],
-  "result": {
-    "documents": [
-      {
-        "id": "doc-001",
-        "title": "AWS ECS 배포 가이드",
-        "excerpt": "ECS 클러스터 배포 시 다음을 권장합니다...",
-        "relevance_score": 0.92
-      },
-      {
-        "id": "doc-002",
-        "title": "ECS 보안 best practices",
-        "excerpt": "보안 관점에서 다음을 권장합니다...",
-        "relevance_score": 0.85
-      }
-    ],
-    "summary": "ECS 배포에 관련된 2개의 문서를 찾았습니다."
-  }
+  "question": "CI 'MES-06'의 최근 30일 이력 조회",
+  "mode": "history"
 }
+```
+
+### 전체 처리 흐름 (단순화)
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ 1. 라우팅                                                              │
+│ query.py:105                                                           │
+│                                                                        │
+│ envelope, trace_data = handle_ops_query(payload.mode, payload.question)│
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ 2. 모드별 디스패치                                                      │
+│ __init__.py:809-900 (handle_ops_query)                                 │
+│                                                                        │
+│ → _execute_real_mode(mode, question, settings)  (__init__.py:955)      │
+│   → execute_universal(question, mode, tenant_id) (__init__.py:94)      │
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ 3. 하드코딩 Plan 생성 ← ❌ LLM 미사용                                  │
+│ __init__.py:230-334 (_create_simple_plan)                              │
+│                                                                        │
+│ mode == "config":                                                      │
+│   → PrimarySpec(limit=10, tool_type="ci_lookup")                      │
+│                                                                        │
+│ mode == "graph":                                                       │
+│   → GraphSpec(depth=2, view=NEIGHBORS, tool_type="ci_graph")          │
+│                                                                        │
+│ mode == "document":                                                    │
+│   → PrimarySpec(limit=5, tool_type="document_search")                 │
+│                                                                        │
+│ mode in ("metric", "all"):                                             │
+│   → MetricSpec(metric_name="cpu_usage", agg="max", time_range="last_24h")│
+│                                                                        │
+│ mode in ("hist", "history"):                                           │
+│   → HistorySpec(enabled=True, source="work_and_maintenance", limit=30)│
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ 4. OpsOrchestratorRunner 실행                                          │
+│ __init__.py:117-130                                                    │
+│                                                                        │
+│ runner = OpsOrchestratorRunner(plan, plan, tenant_id, question, ...)   │
+│ result = runner.run(plan_output=None)                                  │
+│ → 고정된 Plan에 따라 Tool 실행 (LLM 선택 없음)                          │
+└────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│ 5. 응답 반환                                                           │
+│ query.py:107-143                                                       │
+│                                                                        │
+│ ResponseEnvelope.success(data={answer, trace})                         │
+│ QueryHistory 업데이트                                                   │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 특징
+
+- ❌ **LLM 미사용**: `_create_simple_plan()`이 모드에 따라 고정된 Plan 생성
+- ❌ **Tool description 미참조**: 모드 → tool_type 매핑이 코드에 하드코딩
+- ✅ **동일한 Runner 사용**: OpsOrchestratorRunner는 `/ops/ask`와 동일
+- ✅ **빠른 응답**: LLM 호출 없이 바로 실행
+
+---
+
+## 🅲 `/ops/ask/stream` — SSE 스트리밍 버전
+
+### 진입점
+
+**파일**: `apps/api/app/modules/ops/routes/ask_stream.py:81-106`
+
+```python
+@router.post("/ask/stream")
+async def ask_ops_stream(
+    payload: CiAskRequest,
+    request: Request,
+    tenant_id: str = Depends(_tenant_id),
+    current_user: TbUser = Depends(get_current_user),
+) -> StreamingResponse:
+```
+
+### 처리 흐름
+
+`/ops/ask`와 **동일한 아키텍처** (LLM Function Calling)를 사용하되, SSE 이벤트로 진행 상황을 실시간 전달합니다.
+
+**SSE 이벤트 타입**:
+- `progress`: 현재 단계 (init → resolving → planning → executing → composing → presenting → complete)
+- `tool_complete`: 도구 실행 완료
+- `block`: 개별 응답 블록
+- `complete`: 최종 결과
+- `error`: 오류 발생
+
+**처리 단계** (`ask_stream.py:130-411`):
+```
+Stage 1 (init)      → history entry 생성, SSE progress 전송
+Stage 2 (resolving) → Asset 로드 (resolver, schema, source, mapping, policy)
+Stage 3 (planning)  → planner_llm.create_plan_output() ← ✅ LLM Function Calling
+Stage 4 (executing) → OpsOrchestratorRunner.run()
+Stage 5 (composing) → 블록별 SSE block 이벤트 전송
+Stage 6 (presenting)→ complete 이벤트 전송
 ```
 
 ---
 
-**예시: 이력 조회 모드 선택 시**
+## 📊 두 아키텍처 비교
+
+| 항목 | `/ops/ask` (LLM 범용) | `/ops/query` (모드별 고정) |
+|------|----------------------|--------------------------|
+| **Tool 선택 주체** | Claude LLM | 코드 (`_create_simple_plan`) |
+| **Tool description 활용** | ✅ Registry에서 읽어 LLM에 전달 | ❌ 미사용 |
+| **새 Tool 추가 시** | Asset Registry에 추가만 하면 됨 | 코드 수정 필요 |
+| **LLM 호출** | ✅ 1회 이상 (planner) | ❌ 없음 |
+| **응답 속도** | 느림 (LLM 호출 포함) | 빠름 (직접 실행) |
+| **유연성** | 높음 (질의에 따라 동적) | 낮음 (모드에 고정) |
+| **사용 모드** | "전체(all)" | config, metric, history, graph, document |
+| **Plan 유형** | PlanOutput (PLAN/DIRECT/REJECT) | Plan (고정 spec) |
+| **오류 복구** | evaluate_replan() 재계획 | 없음 |
+| **Runner** | OpsOrchestratorRunner (동일) | OpsOrchestratorRunner (동일) |
+
+### 핵심 차이
+
+```
+/ops/ask:
+  사용자 질의 → LLM이 25개 Tool의 description 분석 → 최적 Tool 선택 → 실행
+
+/ops/query:
+  사용자 질의 + mode → 코드가 mode에 따라 고정 tool_type 선택 → 실행
+```
+
+---
+
+## 📋 사용되는 Asset 유형별 정리
+
+### Published Tools (25개) — `/ops/ask`에서 LLM이 동적 선택
+
+Tool Registry에 등록된 모든 Tool의 `name`, `description`, `input_schema`가 LLM에 전달됩니다.
+
+주요 Tool 예시:
+- `work_history_query`: "Query work history records for a CI with optional time range filtering"
+- `maintenance_history_list`: "List maintenance records with optional filtering and pagination"
+- `ci_detail_lookup`: "Fetch CI configuration details"
+- `metric_series`: "Fetch time series metric data"
+- `ci_graph_query`: "Query CI relationships and topology"
+- `document_search`: "Search documents with hybrid BM25 + vector search"
+
+### Published Prompts (14개)
+
+| 분류 | Prompt | 역할 |
+|------|--------|------|
+| **라우팅** | ops_all_router | 전체 모드 라우팅 |
+| **라우팅** | ops_metric_router | 메트릭 모드 라우팅 |
+| **라우팅** | ops_graph_router | 그래프 모드 라우팅 |
+| **라우팅** | ops_history_router | 이력 모드 라우팅 |
+| **계획** | ci_universal_planner | 범용 계획 수립 |
+| **계획** | ci_planner_output_parser | 계획 출력 파싱 |
+| **합성** | ci_compose_summary | 결과 요약 합성 |
+| **합성** | ci_universal_compose | 범용 결과 합성 |
+| **합성** | ops_composer | OPS 결과 합성 |
+| **제시** | ci_universal_present | 범용 최종 제시 |
+| **제시** | ci_response_builder | 응답 구축 |
+| **유틸** | ops_normalizer | 질의 정규화 |
+| **유틸** | ci_validator | 응답 검증 |
+| **유틸** | ops_langgraph | LangGraph 기반 합성 |
+
+### 기타 Assets
+
+| 유형 | 예시 | 역할 |
+|------|------|------|
+| **Resolver** | default_resolver | 환경 변수 폴백, alias mapping |
+| **Schema** | ops_default_schema | 스키마 컨텍스트 |
+| **Source** | default_postgres | DB 연결 정보 |
+| **Mapping** | graph_relation, history_keywords, table_hints | 데이터 변환 규칙 |
+| **Policy** | plan_budget, tool_limits, time_ranges | 제약 조건 |
+
+---
+
+## 🔄 `/ops/ask` Phase별 상세
+
+### Phase 1: 질의 정규화 (ci_ask.py:247-271)
 
 ```python
-# ci_ask.py:200-250 (가상 코드)
+# Asset 로드
+resolver_payload = load_resolver_asset(resolver_asset_name)
+schema_payload = load_catalog_asset(schema_asset_name)
+source_payload = load_source_asset(source_asset_name)
+mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
+load_policy_asset("plan_budget", scope="ops")
 
-# Step 1: 질의 분석
-question = "CI 'MES-06'의 최근 30일 이력"
-
-# Step 2: Prompt Asset 로드
-prompt_asset = load_catalog_asset("ops_history_router")
-# ID: 47991817... (Published) ✅
-
-# Step 3: LLM에 프롬프트 전달
-llm_response = planner_llm.analyze(
-    prompt_template=prompt_asset.template,
-    question=question,
-    mode="history"
+# Resolver 규칙 적용
+normalized_question, resolver_rules_applied = _apply_resolver_rules(
+    payload.question, resolver_payload
 )
+```
 
-# Step 4: 계획 생성
-plan = Plan(
-    intent=Intent(
-        mode="history",
-        action="retrieve",
-        target_entity="MES-06"
-    ),
-    tools=[
-        {
-            "name": "work_history_query",
-            "params": {
-                "ci_code": "MES-06",
-                "start_time": "2026-01-17",
-                "end_time": "2026-02-16"
-            }
-        }
-    ],
-    views=["table", "timeline"]
+**Resolver 규칙 유형** (`ci_ask.py:180-225`):
+- `alias_mapping`: 엔티티명 치환 (예: "MES서버" → "MES-06")
+- `pattern_rule`: 정규식 기반 변환
+- `transformation`: lowercase, uppercase, strip
+
+### Phase 2: 계획 생성 (ci_ask.py:340-392)
+
+```python
+# 정상 경로 (rerun이 아닌 경우)
+plan_output = planner_llm.create_plan_output(
+    normalized_question,
+    schema_context=schema_payload,
+    source_context=source_payload,
 )
-```
-
-#### **2-2. LLM 프롬프트 상세**
-
-**Prompt Asset: ops_history_router** 또는 **ci_universal_planner**
-
-| 속성 | 값 |
-|------|-----|
-| **이름** | ops_history_router (이력 모드) 또는 ci_universal_planner (범용) |
-| **Status** | Published ✅ |
-| **역할** | 사용자 질의 분석 + 도구 선택 |
-| **설명** | "Universal planner for 100 test questions covering CI, Graph, Metric, and History tools" |
-
-**Prompt의 역할**:
-프롬프트는 다음 정보를 기반으로 **어떤 Tool을 선택**할지 결정합니다:
-
-1. **Tool의 Description 분석** (Prompt는 Tool의 description 읽음)
-   - `work_history_query`: "Query work history records for a CI with optional time range filtering"
-   - `maintenance_history_list`: "List maintenance records with optional filtering and pagination"
-   - `history_combined_union`: "Fetch combined work and maintenance history"
-
-2. **사용자 질의 분석**
-   - 질의: "MES-06의 최근 30일 이력"
-   - Tool Description과 매칭 → `work_history_query` 선택
-
-3. **실행 계획 수립**
-   ```json
-   {
-     "tool": "work_history_query",
-     "params": {
-       "ci_code": "MES-06",
-       "start_time": "2026-01-17",
-       "end_time": "2026-02-16"
-     },
-     "reasoning": "Description '업무 이력 조회'가 사용자 질의와 일치"
-   }
-   ```
-
----
-
-### **Phase 3️⃣: 계획 검증 및 라우팅 (Validation & Routing)**
-
-```
-생성된 Plan
-    ↓
-[검증자 호출] validator
-    ↓
-3가지 경로 중 선택:
-  - direct: 직접 실행
-  - reject: 거부
-  - orchestration: 오케스트레이션 실행
-```
-
-**처리 코드** (`ci_ask.py:300-400` 가상):
-
-```python
-# Step 1: 계획 검증
-is_valid = validator.validate(plan)
-
-if not is_valid:
-    return CiAskResponse(
-        answer="질의를 처리할 수 없습니다.",
-        status="rejected",
-        reason="Invalid plan"
-    )
-
-# Step 2: 경로 결정
-route = determine_route(plan)
-# → "orchestration" (도구 실행 필요)
-
-# Step 3: 정책 로드
-policies = load_policy_asset("tool_limits")
-# ID: 70e97812... (Published) ✅
-# max_rows: 1000, max_retries: 3
-```
-
----
-
-### **Phase 4️⃣: 단계별 실행 (Stage Execution)**
-
-```
-Orchestration 경로 선택됨
-    ↓
-4개 Stage 순차 실행:
-  1. Validate Stage
-  2. Execute Stage  ← [TOOL & QUERY 호출]
-  3. Compose Stage  ← [MAPPING & PROMPT 호출]
-  4. Present Stage  ← [PROMPT 호출]
-```
-
-#### **4-1. Validate Stage**
-
-```python
-# 계획이 실행 가능한지 최종 검증
-
-# Assets 사용:
-# - Policy: ci_column_allowlist (ID: 34bee1cf...)
-# - Policy: time_ranges (ID: df4778a9...)
-
-def validate_execution_plan(plan: Plan, policies: List[Policy]):
-    # 요청된 CI가 allowlist에 있나?
-    if plan.params['ci_code'] not in policies['ci_column_allowlist']:
-        raise ValidationError("CI not allowed")
-
-    # 시간 범위가 policy를 초과하나?
-    lookback_days = 30
-    max_lookback = policies['time_ranges']['max_lookback']  # 90 days
-
-    if lookback_days > max_lookback:
-        raise ValidationError("Time range exceeds limit")
-
-    return True
-```
-
-**Result**: ✅ Plan validated
-
----
-
-#### **4-2. Execute Stage** ⭐ **핵심 단계**
-
-```python
-# TOOL과 QUERY Assets가 실제로 실행되는 지점
-```
-
-**2-1단계에서 생성된 Plan**:
-```json
-{
-  "tools": [
-    {
-      "name": "work_history_query",
-      "params": {
-        "ci_code": "MES-06",
-        "start_time": "2026-01-17",
-        "end_time": "2026-02-16"
-      }
-    }
-  ]
-}
-```
-
-**실행 흐름**:
-
-```
-┌─ TOOL Asset 선택 ────────────────────────┐
-│ work_history_query (ID: ad89c4ec...)     │
-│ Type: database_query                     │
-│ Status: Published ✅                      │
-│ Data Source: default_postgres            │
-└──────────────────────────────────────────┘
-    ↓
-┌─ QUERY Asset 로드 ────────────────────────┐
-│ work_history_recent (ID: 6534d352...)    │
-│ SELECT wh.* FROM work_history            │
-│ WHERE ci_code = {ci_code}                │
-│ AND start_time >= {start_time}           │
-└──────────────────────────────────────────┘
-    ↓
-┌─ SOURCE Asset 확인 ────────────────────────┐
-│ default_postgres (ID: a8d63836...)        │
-│ Host: localhost:5432                      │
-│ Database: spa                             │
-│ Status: Connected ✅                       │
-└──────────────────────────────────────────┘
-    ↓
-┌─ POLICY 적용 ─────────────────────────────┐
-│ tool_limits:                              │
-│   max_rows: 1000                          │
-│   max_retries: 3                          │
-│ time_ranges:                              │
-│   max_lookback: 90 days                   │
-└──────────────────────────────────────────┘
-    ↓
-[SQL 실행]
-
-SELECT
-    wh.id,
-    wh.work_type,
-    wh.summary,
-    wh.detail,
-    wh.start_time,
-    wh.end_time,
-    c.ci_code,
-    c.ci_name
-FROM work_history AS wh
-LEFT JOIN ci AS c ON c.ci_id = wh.ci_id
-WHERE c.ci_code = 'MES-06'
-  AND wh.start_time >= '2026-01-17'
-  AND wh.start_time < '2026-02-16'
-ORDER BY wh.start_time DESC
-LIMIT 1000
-
-    ↓
-[결과 반환]
-{
-  "rows": [
-    {
-      "id": "work_12345",
-      "work_type": "maintenance",
-      "summary": "정기 점검",
-      "detail": "...",
-      "start_time": "2026-02-15",
-      "ci_code": "MES-06",
-      "ci_name": "MES Server 06"
-    },
-    ...
-  ],
-  "row_count": 47
-}
-```
-
-**Output from Execute Stage**:
-```python
-execution_result = {
-    "tool_name": "work_history_query",
-    "status": "success",
-    "data": [...47개 행],
-    "metadata": {
-        "query_time_ms": 125,
-        "row_count": 47
-    }
-}
-```
-
----
-
-#### **4-3. Compose Stage** ⭐ **데이터 변환**
-
-```
-실행 결과 (47개 행)
-    ↓
-[MAPPING Assets 적용]
-    ↓
-[PROMPT로 결과 합성]
-    ↓
-구조화된 응답 블록 생성
-```
-
-**처리 단계**:
-
-```python
-# Step 1: MAPPING Assets 로드
-mapping_assets = {
-    "history_keywords": load_mapping_asset("history_keywords"),
-    # ID: 25047100... (Published) ✅
-
-    "table_hints": load_mapping_asset("table_hints"),
-    # ID: d367ff32... (Published) ✅
-}
-
-# history_keywords 매핑 예시:
-# "change" → event_type = "change"
-# "maintenance" → event_type = "maintenance"
-# "recent" → ORDER BY created_at DESC
-
-# table_hints 매핑 예시:
-# "summary" → show_summary_column
-# "timeline" → render_as_timeline_chart
-
-# Step 2: 데이터 변환
-transformed_data = []
-for row in execution_result['data']:
-    transformed_row = {
-        "date": row['start_time'],
-        "type": mapping['history_keywords'].get(row['work_type']),
-        "description": row['summary'],
-        "duration": calculate_duration(row),
-        "source": "work_history"
-    }
-    transformed_data.append(transformed_row)
-
-# Step 3: PROMPT로 합성
-prompt_asset = load_catalog_asset("ci_compose_summary")
-# ID: 347ce84d... (Published) ✅
-
-llm_response = planner_llm.compose(
-    prompt_template=prompt_asset.template,
-    data=transformed_data,
-    format="summary"
-)
-
-# Step 4: 블록 생성
-compose_result = {
-    "blocks": [
-        {
-            "type": "table",
-            "title": "MES-06 작업 이력",
-            "data": transformed_data[:20],  # 상위 20개
-            "columns": ["date", "type", "description", "duration"]
-        },
-        {
-            "type": "timeline",
-            "title": "작업 타임라인",
-            "data": transformed_data,
-            "events": [
-                {"date": "2026-02-15", "label": "정기 점검"},
-                {"date": "2026-02-10", "label": "유지보수"},
-                ...
-            ]
-        }
-    ],
-    "summary": "MES-06은 최근 30일간 총 47개의 작업 기록이 있습니다..."
-}
-```
-
-**Output from Compose Stage**:
-```json
-{
-  "blocks": [
-    {
-      "type": "table",
-      "title": "MES-06 작업 이력",
-      "data": [...],
-      "rowCount": 20
-    },
-    {
-      "type": "timeline",
-      "title": "작업 타임라인",
-      "data": [...]
-    },
-    {
-      "type": "summary",
-      "content": "MES-06은 최근 30일간..."
-    }
-  ]
-}
-```
-
----
-
-#### **4-4. Present Stage** ⭐ **최종 응답 포맷팅**
-
-```
-구조화된 블록
-    ↓
-[PROMPT로 최종 포맷팅]
-    ↓
-사용자 친화적 응답 생성
-```
-
-**처리**:
-
-```python
-# Step 1: PROMPT 로드
-prompt_asset = load_catalog_asset("ci_universal_present")
-# ID: d5478b27... (Published) ✅
-
-# Step 2: 최종 포맷팅
-final_response = planner_llm.present(
-    prompt_template=prompt_asset.template,
-    blocks=compose_result['blocks'],
-    question=original_question,
-    format="markdown_with_json"
-)
-
-# Step 3: 응답 생성
-present_result = {
-    "answer": """
-    # MES-06의 최근 30일 이력
-
-    **요약**: MES-06은 지난 30일간 총 47개의 작업 기록이 있습니다.
-
-    ## 주요 활동
-    - 정기 점검 (2026-02-15): 시스템 정상
-    - 유지보수 (2026-02-10): 패치 적용
-    - ...
-
-    자세한 내용은 아래 표를 참고하세요.
-    """,
-    "blocks": compose_result['blocks'],
-    "metadata": {
-        "response_time_ms": 456,
-        "blocks_count": 3
-    }
-}
-```
-
-**Output from Present Stage**:
-```json
-{
-  "answer": "최종 마크다운 형식 답변",
-  "blocks": [
-    { "type": "table", ... },
-    { "type": "timeline", ... },
-    { "type": "summary", ... }
-  ],
-  "status": "success",
-  "metadata": { ... }
-}
-```
-
----
-
-### **Phase 5️⃣: 오류 처리 및 재계획 (Error Handling & Fallback)**
-
-```
-Execute/Compose/Present 중 오류 발생
-    ↓
-[오류 감지]
-    ↓
-evaluate_replan() 호출
-    ↓
-오류 유형별 처리
-```
-
-**오류 시나리오**:
-
-```python
-try:
-    execution_result = execute_tools(plan)
-except ToolExecutionError as e:
-    logger.error(f"Tool execution failed: {e}")
-
-    # Fallback 1: 계획 수정 및 재시도
-    modified_plan = evaluate_replan(
-        original_plan=plan,
-        error=e,
-        retry_count=1
-    )
-
-    if modified_plan:
-        # 다른 도구로 재시도
-        execution_result = execute_tools(modified_plan)
-    else:
-        # Fallback 2: Mock 데이터 제공
-        execution_result = get_mock_data(plan)
-
-except PlanningError as e:
-    logger.error(f"Planning failed: {e}")
-    # Fallback 3: 간단한 응답 제공
-    return CiAskResponse(
-        answer="상세 분석을 수행할 수 없습니다. 다시 시도해주세요.",
-        status="degraded",
-        blocks=[text_block("오류가 발생했습니다.")]
+# → 내부적으로 LLM Function Calling 실행
+# → Tool Registry에서 모든 Tool 동적 로드
+# → LLM이 Tool description 분석하여 최적 선택
+
+# 검증
+if plan_output.kind == PlanOutputKind.PLAN and plan_output.plan:
+    plan_validated, plan_trace = validator.validate_plan(
+        plan_raw, resolver_payload=resolver_payload
     )
 ```
 
----
+**PlanOutput 3가지 경로**:
+- `PLAN` → 도구 실행이 필요 → Phase 4로 진행
+- `DIRECT` → LLM이 직접 답변 가능 → 바로 응답 (ci_ask.py:410-451)
+- `REJECT` → 처리 불가 → 거부 응답 반환
 
-### **Phase 6️⃣: 응답 및 이력 저장 (Response & Persistence)**
-
-```
-최종 응답 생성
-    ↓
-[응답 직렬화]
-    ↓
-[실행 흔적 저장]
-    ↓
-[쿼리 이력 업데이트]
-    ↓
-HTTP 응답 반환
-```
-
-**처리**:
+### Phase 3: 계획 검증 (ci_ask.py:372-392)
 
 ```python
-# Step 1: 응답 직렬화
-response_envelope = ResponseEnvelope(
-    time=datetime.now().isoformat(),
-    code=0,
-    message="OK",
-    data=present_result
+plan_validated, plan_trace = validator.validate_plan(
+    plan_raw, resolver_payload=resolver_payload
 )
+plan_output = plan_output.model_copy(update={"plan": plan_validated})
+```
 
-# Step 2: 실행 흔적 저장 (Inspector)
-all_spans = get_all_spans()
+### Phase 4: 단계별 실행 (ci_ask.py:456-476)
+
+```python
+runner = OpsOrchestratorRunner(
+    plan_validated,   # 검증된 Plan
+    plan_raw,         # 원본 Plan
+    tenant_id,
+    normalized_question,
+    plan_trace,
+    rerun_context=rerun_ctx,
+    asset_overrides=payload.asset_overrides,
+)
+runner._flow_spans_enabled = True
+runner._runner_span_id = runner_span
+result = runner.run(plan_output)
+```
+
+**Runner 내부 4단계**:
+1. **Validate Stage**: Policy 확인 (ci_column_allowlist, time_ranges)
+2. **Execute Stage**: Tool 실행 → Query Asset으로 SQL 조회 → Source Asset으로 DB 연결
+3. **Compose Stage**: Mapping Asset 적용 → 데이터 변환 → 블록 생성
+4. **Present Stage**: Prompt Asset으로 최종 마크다운 포맷팅
+
+### Phase 5: 오류 처리 (ci_ask.py 내부)
+
+```python
+# 오류 발생 시 재계획
+replan_result = evaluate_replan(...)
+# 또는 단순화된 fallback plan
+fallback_plan = build_fallback_plan(source_plan)
+```
+
+### Phase 6: 응답 및 저장
+
+```python
+# Inspector에 실행 흔적 저장
 persist_execution_trace(
-    trace={
-        "spans": all_spans,
-        "plan": plan,
-        "execution_result": execution_result,
-        "response": present_result
-    },
-    history_id=history_id
+    session=session,
+    trace_id=active_trace_id,
+    feature="ops",
+    endpoint="/ops/ask",
+    ...
 )
 
-# Step 3: 쿼리 이력 업데이트
-update_query_history(
-    history_id=history_id,
-    status="completed",
-    response=present_result,
-    summary="MES-06 최근 30일 이력: 47개 기록",
-    execution_time_ms=time.perf_counter() - start
+# QueryHistory 업데이트
+history_entry.status = status
+history_entry.response = result
+history_entry.summary = meta.get("summary")
+```
+
+---
+
+## 🔄 `/ops/query` Phase별 상세
+
+### 1. 모드 디스패치 (query.py:105)
+
+```python
+envelope, trace_data = handle_ops_query(payload.mode, payload.question)
+```
+
+### 2. handle_ops_query (__init__.py:809-900)
+
+```python
+def handle_ops_query(mode, question):
+    settings = get_settings()
+    # → _execute_real_mode(mode, question, settings)
+```
+
+### 3. 하드코딩 Plan 생성 (__init__.py:230-334)
+
+```python
+def _create_simple_plan(mode: str, question: str = "") -> Plan:
+    if mode == "config":
+        primary = PrimarySpec(limit=10, tool_type="ci_lookup")
+    elif mode == "graph":
+        graph = GraphSpec(depth=2, view=View.NEIGHBORS, tool_type="ci_graph")
+    elif mode == "document":
+        primary = PrimarySpec(limit=5, tool_type="document_search", keywords=[question])
+    elif mode in ("metric", "all"):
+        metric = MetricSpec(metric_name="cpu_usage", agg="max", time_range="last_24h")
+    elif mode in ("hist", "history"):
+        history = HistorySpec(enabled=True, source="work_and_maintenance", limit=30)
+
+    return Plan(
+        intent=intent, view=view, mode=plan_mode,
+        primary=primary, aggregate=aggregate, graph=graph,
+        metric=metric, history=history, output=output,
+        execution_strategy=ExecutionStrategy.SERIAL,
+        mode_hint=mode,
+    )
+```
+
+### 4. OpsOrchestratorRunner 실행 (__init__.py:117-130)
+
+```python
+runner = OpsOrchestratorRunner(
+    plan=plan, plan_raw=plan, tenant_id=tenant_id,
+    question=question, policy_trace=policy_trace,
 )
-
-# Step 4: HTTP 응답 반환
-return JSONResponse(
-    status_code=200,
-    content=jsonable_encoder(response_envelope.dict())
-)
+result = runner.run(plan_output=None)  # plan_output=None → DIRECT/REJECT 경로 없음
 ```
 
-**최종 HTTP 응답**:
-```json
-{
-  "time": "2026-02-16T12:45:00Z",
-  "code": 0,
-  "message": "OK",
-  "data": {
-    "answer": "MES-06의 최근 30일...",
-    "blocks": [...],
-    "metadata": {
-      "execution_time_ms": 456,
-      "tools_called": 1,
-      "rows_returned": 47,
-      "status": "completed"
-    }
-  }
-}
+### 5. 응답 (query.py:107-143)
+
+```python
+response_payload = ResponseEnvelope.success(data={"answer": answer_dict, "trace": trace_data})
+# QueryHistory 업데이트
 ```
 
 ---
 
-## 📊 22개 Prompt Assets의 역할 분류
+## 📄 Document 모드 상세
 
-### **1. 라우팅 Prompts (4개)**
+Document 모드는 두 경로 모두에서 사용됩니다:
+
+### `/ops/ask`에서 Document 처리
+- LLM이 `document_search` Tool의 description을 분석
+- 질의가 문서 관련이면 LLM이 자동으로 `document_search` 선택
+- 다른 Tool과 병렬 실행 가능
+
+### `/ops/query`에서 Document 처리
+- `mode="document"` → `_create_simple_plan("document", question)`
+- `PrimarySpec(limit=5, tool_type="document_search", keywords=[question])`
+
+### DocumentSearchService 내부 흐름
 
 ```
-이 프롬프트들은 질의가 들어오면 가장 먼저 호출됨
+질의
+  ├─ _text_search()     → PostgreSQL tsvector (BM25 전문검색)
+  ├─ _vector_search()   → pgvector (semantic search, 1536-dim)
+  └─ 결과 병합: RRF (Reciprocal Rank Fusion)
 ```
 
-| Prompt | ID | 역할 |
-|--------|-----|------|
-| **ops_all_router** | 8af5fa0d... | 전체 모드 (모든 도구 동원) |
-| **ops_metric_router** | 7be0f699... | 메트릭 모드 (메트릭만 조회) |
-| **ops_graph_router** | 96338acf... | 그래프 모드 (관계도만 조회) |
-| **ops_history_router** | 47991817... | 이력 모드 (이력만 조회) |
-
-**호출 시점**: Phase 2-1 (계획 생성)
-
-**역할**:
-```
-질의 분석 → 어떤 도구를 사용할 것인가? → 도구 선택
-```
+**구현 위치**:
+- Service: `apps/api/app/modules/document_processor/services/search_service.py`
+- API: `apps/api/app/modules/document_processor/router.py` → `POST /api/documents/search`
+- OPS 통합: `apps/api/app/modules/ops/services/__init__.py:_run_document()`
 
 ---
 
-### **2. 계획/검증 Prompts (2개)**
-
-| Prompt | ID | 역할 |
-|--------|-----|------|
-| **ci_planner_output_parser** | 6b3e95c3... | 계획 출력 파싱 |
-| **ci_universal_planner** | ed13a98e... | 범용 계획 수립 |
-
-**호출 시점**: Phase 2 (계획 생성)
-
----
-
-### **3. 합성 Prompts (4개)**
-
-| Prompt | ID | 역할 |
-|--------|-----|------|
-| **ci_compose_summary** | 347ce84d... | 결과 요약 합성 |
-| **ci_universal_compose** | 670ef710... | 범용 결과 합성 |
-| **ops_composer** | e6f15250... | OPS 결과 합성 |
-| **ops_langgraph** | ff9836dc... | LangGraph 기반 합성 |
-
-**호출 시점**: Phase 4-3 (합성)
-
-**역할**:
-```
-실행 결과 → 변환 및 정렬 → 구조화된 블록
-```
-
----
-
-### **4. 제시 Prompts (2개)**
-
-| Prompt | ID | 역할 |
-|--------|-----|------|
-| **ci_universal_present** | d5478b27... | 범용 최종 제시 |
-| **ci_response_builder** | c3379121... | 응답 구축 |
-
-**호출 시점**: Phase 4-4 (제시)
-
-**역할**:
-```
-구조화된 블록 → 사용자 친화적 최종 응답 포맷팅
-```
-
----
-
-### **5. 유틸리티 Prompts (10개)**
-
-| Prompt | 역할 |
-|--------|------|
-| **ci_validator** | 응답 검증 |
-| **ops_metric_router** | 메트릭 라우팅 |
-| **ops_graph_router** | 그래프 라우팅 |
-| 기타 | 특화된 분석/합성 |
-
----
-
-## 🎯 전체 흐름 시각화
+## 🎯 전체 시각화
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ 사용자 질의: "CI 'MES-06' 최근 30일 이력"                                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ Phase 1: 정규화 (Normalization)                                                │
-│ - Resolver Assets 로드                                                          │
-│ - 환경 변수 호환성 확인                                                          │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ Phase 2: 계획 생성 (Planning) ← [PROMPT 호출 #1]                                │
-│                                                                                 │
-│ Step 1: 라우터 선택                                                             │
-│   → ops_history_router (PROMPT #1)                                            │
-│      Decide: "이력 모드 사용"                                                  │
-│                                                                                 │
-│ Step 2: 도구 선택                                                              │
-│   → ci_universal_planner (PROMPT #2)                                          │
-│      Select: "work_history_query 도구 사용"                                    │
-│                                                                                 │
-│ Step 3: 계획 파싱                                                              │
-│   → ci_planner_output_parser (PROMPT #3)                                      │
-│      Parse: {tools: [work_history_query], params: {...}}                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ Phase 3: 검증 & 라우팅 (Validation & Routing)                                  │
-│ - Plan 유효성 검증                                                              │
-│ - Route 결정: "orchestration" (도구 실행 경로)                                  │
-│ - Policy 로드                                                                   │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ Phase 4: 단계별 실행 (Stage Execution)                                         │
-│                                                                                 │
-│ [Stage 1] Validate: ci_column_allowlist, time_ranges Policy 확인              │
-│                                                                                 │
-│ [Stage 2] Execute ← [TOOL & QUERY 호출]  ★ 핵심 단계                          │
-│   - TOOL: work_history_query (database_query)                                │
-│   - QUERY: work_history_recent (SELECT ... FROM work_history ...)            │
-│   - SOURCE: default_postgres (연결 확인)                                      │
-│   - POLICY 적용: max_rows=1000, max_retries=3                                │
-│   → Result: 47개 행 반환                                                      │
-│                                                                                 │
-│ [Stage 3] Compose ← [MAPPING & PROMPT #4 호출]                               │
-│   - MAPPING: history_keywords, table_hints 로드                              │
-│   - PROMPT: ci_compose_summary (#4) → 데이터 변환                            │
-│   - PROMPT: ci_universal_compose (#5) → 블록 생성                            │
-│   → Result: 테이블, 타임라인, 요약 블록 생성                                   │
-│                                                                                 │
-│ [Stage 4] Present ← [PROMPT #6 호출]                                         │
-│   - PROMPT: ci_universal_present (#6) → 최종 포맷팅                          │
-│   → Result: 마크다운 형식의 최종 응답                                          │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ Phase 5: 오류 처리 (Error Handling)                                            │
-│ - 오류 감지 시 재계획 (Fallback)                                               │
-│ - Mock 데이터 제공                                                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ Phase 6: 응답 및 저장 (Response & Persistence)                                │
-│ - ResponseEnvelope 직렬화                                                       │
-│ - 실행 흔적 저장 (Inspector)                                                   │
-│ - 쿼리 이력 업데이트                                                            │
-│ - HTTP 응답 반환 (200 OK)                                                      │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-                        ┌──────────────────────┐
-                        │  최종 응답 (JSON)     │
-                        │ {                     │
-                        │   answer: "...",      │
-                        │   blocks: [...],      │
-                        │   metadata: {...}     │
-                        │ }                     │
-                        └──────────────────────┘
-```
-
----
-
-## 📊 Assets 호출 순서 및 빈도
-
-### **반드시 호출되는 Assets** (모든 질의에서)
-
-```
-1. Prompt #1: 라우터 (ops_*_router)
-   ├─ Resolver: default_resolver
-
-2. Prompt #2: 계획자 (ci_universal_planner)
-   ├─ Tool: 선택된 도구
-   │  ├─ Query: 해당 쿼리
-   │  └─ Source: 데이터베이스 연결
-   ├─ Policy: tool_limits, time_ranges
-   └─ Mapping: 자연어 처리
-
-3. Prompt #3: 파서 (ci_planner_output_parser)
-
-4. Prompt #4-5: 합성 (ci_compose_summary, ci_universal_compose)
-   └─ Mapping: history_keywords, table_hints 등
-
-5. Prompt #6: 제시 (ci_universal_present)
-
-6. Inspector: 실행 흔적 저장
-```
-
-### **조건부 호출되는 Assets**
-
-```
-- 오류 발생: evaluate_replan() → 계획 재구성
-- 메타데이터: ci_aggregate, metric_aggregate
-- 보안: ci_column_allowlist, view_depth_policies
+┌─────────────────────────────────────────────────────────────────┐
+│                        사용자 질의                                │
+│                   "CI 'MES-06' 최근 30일 이력"                    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    ┌─────────┴─────────┐
+                    │  Frontend 모드 선택  │
+                    └─────────┬─────────┘
+              ┌───────────────┼───────────────┐
+              ↓                               ↓
+    ┌─────────────────┐             ┌─────────────────┐
+    │  "전체(all)" 모드  │             │   개별 모드 선택   │
+    │  → POST /ops/ask │             │  → POST /ops/query│
+    └────────┬────────┘             └────────┬────────┘
+             ↓                               ↓
+    ┌─────────────────┐             ┌─────────────────┐
+    │ Phase 1: 정규화   │             │ handle_ops_query │
+    │ Resolver 적용     │             │ mode dispatch    │
+    └────────┬────────┘             └────────┬────────┘
+             ↓                               ↓
+    ┌─────────────────┐             ┌─────────────────┐
+    │ Phase 2: LLM     │             │ _create_simple_  │
+    │ Function Calling │             │ plan(mode)       │
+    │ Tool Registry    │             │ ❌ 하드코딩       │
+    │ ✅ 동적 선택      │             └────────┬────────┘
+    └────────┬────────┘                      │
+             ↓                               │
+    ┌─────────────────┐                      │
+    │ Phase 3: 검증    │                      │
+    │ validator        │                      │
+    └────────┬────────┘                      │
+             ↓                               ↓
+    ┌─────────────────────────────────────────────────┐
+    │         OpsOrchestratorRunner.run()              │
+    │  (동일한 Runner가 양쪽 경로 모두 실행)              │
+    │                                                   │
+    │  [Validate] → [Execute] → [Compose] → [Present]  │
+    │       ↓           ↓           ↓           ↓       │
+    │    Policy      Tool/Query   Mapping     Prompt    │
+    │    Assets      Assets       Assets      Assets    │
+    └────────────────────┬────────────────────────────┘
+                         ↓
+    ┌─────────────────────────────────────────────────┐
+    │              최종 응답 (JSON)                      │
+    │  {                                               │
+    │    answer: "MES-06의 최근 30일...",                │
+    │    blocks: [table, timeline, summary],           │
+    │    trace: {...},                                  │
+    │    meta: {timing_ms, summary, trace_id}          │
+    │  }                                               │
+    └─────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🔍 핵심 통찰
 
-### ✅ **왜 22개의 Prompt Assets이 필요한가?**
+### 1. 두 아키텍처가 공존하는 이유
 
-1. **모드별 라우팅** (4개)
-   - 각 모드(all, metric, history, graph)마다 고유한 라우팅 로직
+- `/ops/ask`: **범용성** — 어떤 질의든 LLM이 최적 Tool 조합을 찾아냄
+- `/ops/query`: **속도** — 모드가 이미 정해져 있으므로 LLM 호출 없이 바로 실행
+- 공통점: 최종 실행은 동일한 `OpsOrchestratorRunner`가 담당
 
-2. **다양한 도메인** (6개)
-   - CI 분석, 메트릭, 그래프, 이력 등 각각 특화된 프롬프트
+### 2. Tool 추가 시 영향
 
-3. **파이프라인 단계** (6개)
-   - 계획 → 검증 → 합성 → 제시 각 단계의 고유 프롬프트
+- `/ops/ask` 경로: **코드 변경 불필요** — Asset Registry에 Tool 추가만 하면 LLM이 자동으로 인식
+- `/ops/query` 경로: **코드 수정 필요** — `_create_simple_plan()`에 새 모드/tool_type 추가 필요
 
-4. **재사용 및 특화** (6개)
-   - 범용(universal) 프롬프트 + 특화된 프롬프트
+### 3. Streaming 엔드포인트
 
-### ✅ **Prompts가 언제 호출되는가?**
-
-```
-Phase 2 (계획):    Prompts #1-3 호출 (라우팅, 계획, 파싱)
-Phase 4-3 (합성):  Prompts #4-5 호출 (데이터 변환)
-Phase 4-4 (제시):  Prompts #6+ 호출 (최종 포맷팅)
-```
-
-### ✅ **Assets 간 의존성**
-
-```
-Prompt (의사결정)
-  ↓
-Tool (실행 지점)
-  ↓
-Query (데이터 접근)
-  ↓
-Source (DB 연결)
-  ↓
-← Policy (제약 조건)
-← Mapping (자연어)
-← Resolver (규칙)
-```
+- `/ops/ask/stream`은 `/ops/ask`와 동일한 LLM 기반 아키텍처
+- SSE로 실시간 진행 상황 전달 (ChatGPT 스타일 상태 표시)
 
 ---
 
-## 🎯 다음 단계
+## 📁 주요 소스 파일
 
-1. **Prompt 최적화**
-   - 22개 Prompts 중 실제 사용되는 것 측정
-   - 불필요한 Prompts 통합
-
-2. **Query Draft 정리**
-   - 140개 Query 중 72% Draft 상태
-   - PostgreSQL Catalog 쿼리 활성화
-
-3. **성능 개선**
-   - Prompts 캐싱
-   - 병렬 실행 가능 부분 식별
+| 파일 | 역할 |
+|------|------|
+| `routes/ci_ask.py` | `/ops/ask` 엔드포인트 (LLM 범용) |
+| `routes/ask_stream.py` | `/ops/ask/stream` SSE 스트리밍 |
+| `routes/query.py` | `/ops/query` 엔드포인트 (모드별 고정) |
+| `services/__init__.py` | `handle_ops_query()`, `_create_simple_plan()`, `execute_universal()` |
+| `services/orchestration/planner/planner_llm.py` | LLM Function Calling |
+| `services/orchestration/planner/tool_schema_converter.py` | Tool Registry → LLM 도구 변환 |
+| `services/orchestration/planner/validator.py` | Plan 검증 |
+| `services/orchestration/orchestrator/runner.py` | OpsOrchestratorRunner (공용) |
+| `services/control_loop.py` | evaluate_replan() 오류 복구 |
 
 ---
 
-**이 문서는 OPS 질의 처리의 모든 단계를 상세히 설명합니다.**
-
+*이 문서의 모든 코드 참조는 실제 소스 코드 기반입니다.*
 *생성일: 2026-02-16*

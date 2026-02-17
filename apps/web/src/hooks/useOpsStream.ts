@@ -1,14 +1,3 @@
-<task_progress>- [x] ops 질의 화면 구조 파악 (BLUEPRINT 문서 확인)
-- [x] 프론트엔드 OPS 페이지 확인
-- [x] 백엔드 ci_ask.py 분석
-- [x] SSE 구현 사례 확인 (Simulation)
-- [x] 진행 상태 표시 방안 설계
-- [x] SSE 핸들러 클래스 구현
-- [x] 백엔드 SSE 라우트 구현
-- [x] 라우터 등록
-- [x] 프론트엔드 UI 컴포넌트 구현
-- [ ] SSE 클라이언트 훅 구현
-- [ ] 테스트 및 검증</task_progress>
 "use client";
 
 import { useCallback, useRef, useState } from "react";

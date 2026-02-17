@@ -66,6 +66,7 @@ export default function ToolTable({
   onRefresh,
 }: ToolTableProps) {
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const handlePublish = useCallback(
     async (tool: ToolAsset, e: React.MouseEvent) => {
@@ -73,11 +74,13 @@ export default function ToolTable({
       if (tool.status === "published") return;
 
       setPublishingId(tool.asset_id);
+      setPublishError(null);
       try {
         await fetchApi(`/asset-registry/tools/${tool.asset_id}/publish`, { method: "POST" });
         onRefresh?.();
       } catch (error) {
         console.error("Publish failed:", error);
+        setPublishError(error instanceof Error ? error.message : "Failed to publish tool");
       } finally {
         setPublishingId(null);
       }
@@ -255,6 +258,11 @@ export default function ToolTable({
 
   return (
     <div className="insp-section overflow-hidden flex h-full w-full flex-col shadow-sm">
+      {publishError && (
+        <div className="mx-4 mt-4 rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+          {publishError}
+        </div>
+      )}
       <div className="flex items-center justify-between border-b border-variant px-4 py-2">
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />

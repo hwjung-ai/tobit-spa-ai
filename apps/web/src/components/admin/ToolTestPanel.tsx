@@ -44,6 +44,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
     const [testResult, setTestResult] = useState<TestResult | null>(null);
     const [isExecuting, setIsExecuting] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
+    const [publishError, setPublishError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"test" | "schema" | "config">("test");
 
     const handleTest = async () => {
@@ -76,6 +77,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
 
     const handlePublish = async () => {
         setIsPublishing(true);
+        setPublishError(null);
         try {
             await fetchApi(`/asset-registry/tools/${tool.asset_id}/publish`, {
                 method: "POST",
@@ -83,6 +85,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
             onRefresh?.();
         } catch (err) {
             console.error("Publish failed:", err);
+            setPublishError(err instanceof Error ? err.message : "Failed to publish tool");
         } finally {
             setIsPublishing(false);
         }
@@ -295,27 +298,34 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t border-variant flex gap-3">
-                {tool.status === "draft" && (
-                    <button
-                        onClick={handlePublish}
-                        disabled={isPublishing}
-                        className={cn(
-                            "flex-1 py-3 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest",
-                            isPublishing
-                                ? "bg-surface-elevated text-muted-foreground cursor-not-allowed"
-                                : "bg-emerald-600 hover:bg-emerald-500 text-white"
-                        )}
-                    >
-                        {isPublishing ? "Publishing..." : "Publish Tool"}
-                    </button>
+            <div className="p-4 border-t border-variant space-y-3">
+                {publishError && (
+                    <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                        {publishError}
+                    </div>
                 )}
-                <button
-                    onClick={onClose}
-                    className="flex-1 py-3 bg-surface-elevated hover:bg-surface-overlay rounded-lg transition-all font-bold text-tiny uppercase tracking-widest text-muted-foreground"
-                >
-                    Close
-                </button>
+                <div className="flex gap-3">
+                    {tool.status === "draft" && (
+                        <button
+                            onClick={handlePublish}
+                            disabled={isPublishing}
+                            className={cn(
+                                "flex-1 py-3 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest",
+                                isPublishing
+                                    ? "bg-surface-elevated text-muted-foreground cursor-not-allowed"
+                                    : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                            )}
+                        >
+                            {isPublishing ? "Publishing..." : "Publish Tool"}
+                        </button>
+                    )}
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 bg-surface-elevated hover:bg-surface-overlay rounded-lg transition-all font-bold text-tiny uppercase tracking-widest text-muted-foreground"
+                    >
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     );

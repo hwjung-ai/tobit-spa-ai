@@ -294,3 +294,45 @@ class SQLTemplateProcessor:
             return False
 
         return True
+
+    @staticmethod
+    def escape_literal_percents(sql: str) -> str:
+        """
+        Escape literal '%' characters for psycopg parameter style.
+
+        Keeps valid placeholders intact:
+        - %s, %b, %t
+        - %(name)s
+        - %%
+        """
+        if "%" not in sql:
+            return sql
+
+        out: list[str] = []
+        i = 0
+        length = len(sql)
+
+        while i < length:
+            ch = sql[i]
+            if ch != "%":
+                out.append(ch)
+                i += 1
+                continue
+
+            if i + 1 >= length:
+                out.append("%%")
+                i += 1
+                continue
+
+            nxt = sql[i + 1]
+            if nxt in {"%", "s", "b", "t", "("}:
+                out.append("%")
+                out.append(nxt)
+                i += 2
+                continue
+
+            # Literal percent (e.g. LIKE '%cpu%') must be doubled.
+            out.append("%%")
+            i += 1
+
+        return "".join(out)

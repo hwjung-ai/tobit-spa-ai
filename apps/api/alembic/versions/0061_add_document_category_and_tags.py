@@ -5,8 +5,8 @@ Revises: 0060_add_regression_schedule
 Create Date: 2026-02-15 20:35:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '0061_add_document_category_and_tags'

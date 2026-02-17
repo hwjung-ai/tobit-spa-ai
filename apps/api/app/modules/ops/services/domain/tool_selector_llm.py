@@ -148,8 +148,9 @@ JSON 응답:"""
                 columns = table.get("columns", [])
                 # Show only first 5 columns per table
                 col_names = [
-                    f"{c.get('column_name')} ({c.get('data_type')})"
+                    f"{c.get('name') or c.get('column_name')} ({c.get('data_type') or c.get('type')})"
                     for c in columns[:5]
+                    if c.get("name") or c.get("column_name")
                 ]
                 col_str = ", ".join(col_names)
                 if len(columns) > 5:

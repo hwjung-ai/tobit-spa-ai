@@ -39,7 +39,7 @@ class CacheManager:
     """Manages caching for CEP operations"""
 
     def __init__(
-        self, redis_client: Optional[Redis | None] = None, prefix: str = "cep:cache"
+        self, redis_client: Optional["RedisType"] = None, prefix: str = "cep:cache"
     ):
         """
         Initialize cache manager.
@@ -124,27 +124,7 @@ class CacheManager:
 
         try:
             full_pattern = f"{self.prefix}:{pattern}"
-            deleted = 0
-
-            while True:
-                # type: ignore[attr-defined]
-                scan_result = await self.redis_client.scan(cursor, match=full_pattern)
-                if scan_result:
-                    cursor = scan_result[0]  # type: ignore[attr-defined]
-                    keys = scan_result[1] if len(scan_result) > 1 else []
-                    if keys:
-                        deleted += await self.redis_client.delete(*keys)  # type: ignore[attr-defined]
-                if cursor == 0:
-                    break
-
-            return deleted
-        except Exception as e:
-            logger.warning(f"Cache pattern delete failed for {pattern}: {e}")
-            return 0
-
-        try:
-            full_pattern = f"{self.prefix}:{pattern}"
-            cursor: 0
+            cursor = 0
             deleted = 0
 
             while True:

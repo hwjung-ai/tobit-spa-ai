@@ -32,6 +32,7 @@ from app.modules.asset_registry.loader import (
     load_policy_asset,
     load_resolver_asset,
     load_source_asset,
+    resolve_catalog_asset_for_source,
 )
 from app.modules.auth.models import TbUser
 from app.modules.inspector.service import persist_execution_trace
@@ -256,12 +257,20 @@ def ask_ops(
         resolver_payload = (
             load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
         )
-        schema_payload = (
-            load_catalog_asset(schema_asset_name) if schema_asset_name else None
-        )
-        source_payload = (
-            load_source_asset(source_asset_name) if source_asset_name else None
-        )
+        source_payload = load_source_asset(source_asset_name) if source_asset_name else None
+        schema_payload = load_catalog_asset(schema_asset_name) if schema_asset_name else None
+
+        if not schema_payload and source_asset_name:
+            resolved_catalog = resolve_catalog_asset_for_source(source_asset_name)
+            if resolved_catalog:
+                schema_payload = resolved_catalog
+                schema_asset_name = str(resolved_catalog.get("name") or schema_asset_name)
+
+        if not source_payload and schema_payload:
+            derived_source_ref = schema_payload.get("source_ref")
+            if derived_source_ref:
+                source_asset_name = str(derived_source_ref)
+                source_payload = load_source_asset(source_asset_name)
         mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
         # Load policy asset to ensure tracking (even though we don't use the result)
         load_policy_asset("plan_budget", scope="ops")

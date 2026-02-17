@@ -96,8 +96,12 @@ app.include_router(chat_router, dependencies=auth_required)
 app.include_router(thread_router, dependencies=auth_required)
 app.include_router(document_processor_router, dependencies=auth_required)
 app.include_router(ops_router, dependencies=auth_required)
-app.include_router(asset_registry_router, dependencies=auth_required)
+# NOTE:
+# asset_registry_router also contains legacy /asset-registry/tools endpoints.
+# Register tool_router first so the dedicated tool implementation is matched
+# before legacy duplicates.
 app.include_router(tool_router, dependencies=auth_required)
+app.include_router(asset_registry_router, dependencies=auth_required)
 app.include_router(operation_settings_router, dependencies=auth_required)
 app.include_router(cep_builder_router, dependencies=auth_required)
 app.include_router(ci_management_router, dependencies=auth_required)
@@ -206,8 +210,6 @@ def _run_heavy_startup_sync(logger) -> None:
 
     logger.info("Startup: Runtime tool discovery system started.")
 
-    _run_migrations(logger)
-
     logger.info("Startup: Starting CEP scheduler...")
     start_scheduler()
     logger.info("Startup: CEP scheduler started.")
@@ -243,6 +245,10 @@ async def on_startup() -> None:
     logger = logging.getLogger(__name__)
     _startup_ready = False
     _startup_error = None
+
+    # Run schema migration first to prevent startup services from querying
+    # tables/columns that are not yet present in the runtime database.
+    _run_migrations(logger)
 
     if _should_defer_heavy_startup():
         logger.info(

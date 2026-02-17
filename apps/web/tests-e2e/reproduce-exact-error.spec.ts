@@ -152,6 +152,10 @@ test('Exact Error Reproduction: Login → Navigate → Add Text → Save Draft',
       throw new Error('No PUT request made!');
     }
 
+    if (hasError) {
+      throw new Error('Unexpected [API] Request failed console error was emitted');
+    }
+
     if (postRequests.length === 0) {
       console.log('\nℹ️  No POST request made (PUT succeeded). Skipping POST validation.');
     } else {

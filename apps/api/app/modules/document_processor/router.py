@@ -606,7 +606,7 @@ async def delete_doc_query_history(
 
 
 @router.get("/{document_id}", response_model=ResponseEnvelope)
-async def get_document(
+async def get_document_by_id(
     document_id: str,
     current_user: TbUser = Depends(get_current_user),
     session: Session = Depends(get_session),
@@ -1677,7 +1677,9 @@ async def query_all_documents_stream(
                 return
 
             start_time = time.time()
-            elapsed_ms = lambda: int((time.time() - start_time) * 1000)
+
+            def elapsed_ms() -> int:
+                return int((time.time() - start_time) * 1000)
 
             # Send progress: init
             yield f"event: progress\ndata: {json.dumps({'stage': 'init', 'message': '질의 분석 중...', 'elapsed_ms': elapsed_ms()})}\n\n"

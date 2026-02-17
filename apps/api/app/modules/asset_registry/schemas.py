@@ -158,6 +158,7 @@ class ToolAssetCreate(BaseModel):
     tool_config: dict[str, Any]
     tool_input_schema: dict[str, Any]
     tool_output_schema: dict[str, Any] | None = None
+    tool_catalog_ref: str | None = None
     tags: dict[str, Any] | None = None
     created_by: str | None = None
 
@@ -174,6 +175,7 @@ class ToolAssetRead(BaseModel):
     tool_config: dict[str, Any]
     tool_input_schema: dict[str, Any]
     tool_output_schema: dict[str, Any] | None = None
+    tool_catalog_ref: str | None = None
     tags: dict[str, Any] | None = None
     created_by: str | None = None
     published_by: str | None = None
@@ -190,4 +192,5 @@ class ToolAssetUpdate(BaseModel):
     tool_config: dict[str, Any] | None = None
     tool_input_schema: dict[str, Any] | None = None
     tool_output_schema: dict[str, Any] | None = None
+    tool_catalog_ref: str | None = None
     tags: dict[str, Any] | None = None

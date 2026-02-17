@@ -27,6 +27,37 @@ interface McpDiscoveredTool {
     inputSchema: Record<string, unknown>;
 }
 
+interface SourceAssetItem {
+    asset_id: string;
+    name: string;
+    source_type?: string;
+}
+
+interface CatalogAssetItem {
+    asset_id: string;
+    name: string;
+    catalog?: {
+        source_ref?: string;
+        tables?: unknown[];
+    };
+}
+
+interface AssetListResponse<T> {
+    assets?: T[];
+}
+
+interface McpDiscoverResponse {
+    tools?: McpDiscoveredTool[];
+    total?: number;
+}
+
+interface McpImportResponse {
+    imported?: { asset_id: string; name: string }[];
+    errors?: { name?: string; error?: string }[];
+    total_imported?: number;
+    total_errors?: number;
+}
+
 const TOOL_TYPES = [
     { value: "database_query", label: "Database Query", description: "Execute SQL queries against data sources" },
     { value: "http_api", label: "HTTP API", description: "Call external REST APIs" },
@@ -52,6 +83,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [toolType, setToolType] = useState<string>("database_query");
+    const [sourceRef, setSourceRef] = useState<string>("");
     const [catalogRef, setCatalogRef] = useState<string>("");
     const [toolConfig, setToolConfig] = useState(JSON.stringify(DEFAULT_TOOL_CONFIG, null, 2));
     const [inputSchema, setInputSchema] = useState(JSON.stringify(DEFAULT_INPUT_SCHEMA, null, 2));
@@ -75,11 +107,21 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
     }, []);
 
     // Fetch available catalogs
-    const { data: catalogsData } = useQuery({
+    const { data: catalogsData = [] } = useQuery<CatalogAssetItem[]>({
         queryKey: ["admin-catalogs-for-tool"],
         queryFn: async () => {
-            const response = await fetchApi("/asset-registry/catalogs?status=published");
-            return response.data?.assets || [];
+            const response = await fetchApi<AssetListResponse<CatalogAssetItem>>("/asset-registry/catalogs?status=published");
+            const data = response.data as AssetListResponse<CatalogAssetItem> | undefined;
+            return data?.assets ?? [];
+        },
+    });
+
+    const { data: sourcesData = [] } = useQuery<SourceAssetItem[]>({
+        queryKey: ["admin-sources-for-tool"],
+        queryFn: async () => {
+            const response = await fetchApi<AssetListResponse<SourceAssetItem>>("/asset-registry/sources?status=published");
+            const data = response.data as AssetListResponse<SourceAssetItem> | undefined;
+            return data?.assets ?? [];
         },
     });
 
@@ -126,6 +168,36 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
         setInputSchema(JSON.stringify(apiInputSchema, null, 2));
     };
 
+    const handleSourceSelection = (nextSourceRef: string) => {
+        setSourceRef(nextSourceRef);
+        try {
+            const parsed = JSON.parse(toolConfig) as Record<string, unknown>;
+            const nextConfig: Record<string, unknown> = { ...parsed };
+            if (nextSourceRef.trim()) {
+                nextConfig.source_ref = nextSourceRef.trim();
+            } else {
+                delete nextConfig.source_ref;
+            }
+            setToolConfig(JSON.stringify(nextConfig, null, 2));
+        } catch {
+            // Keep raw JSON as-is. Validation on create will report invalid config JSON.
+        }
+    };
+
+    const selectedCatalog = useMemo(
+        () => catalogsData.find((catalog) => catalog.name === catalogRef),
+        [catalogsData, catalogRef]
+    );
+
+    const filteredCatalogs = useMemo(() => {
+        if (!sourceRef.trim()) {
+            return catalogsData;
+        }
+        return catalogsData.filter(
+            (catalog) => (catalog.catalog?.source_ref || "").trim() === sourceRef.trim()
+        );
+    }, [catalogsData, sourceRef]);
+
     // MCP Discovery
     const handleMcpDiscover = async () => {
         if (!mcpServerUrl.trim()) {
@@ -140,7 +212,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
         setMcpImportResult(null);
 
         try {
-            const response = await fetchApi<{ tools: McpDiscoveredTool[]; total: number }>(
+            const response = await fetchApi<McpDiscoverResponse>(
                 "/asset-registry/tools/discover-mcp-tools",
                 {
                     method: "POST",
@@ -151,7 +223,8 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                 }
             );
 
-            const tools = (response.data as Record<string, unknown>)?.tools as McpDiscoveredTool[] || [];
+            const data = response.data as McpDiscoverResponse | undefined;
+            const tools = data?.tools || [];
             setMcpDiscoveredTools(tools);
 
             if (tools.length === 0) {
@@ -216,12 +289,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     inputSchema: t.inputSchema,
                 }));
 
-            const response = await fetchApi<{
-                imported: { asset_id: string; name: string }[];
-                errors: { name: string; error: string }[];
-                total_imported: number;
-                total_errors: number;
-            }>("/asset-registry/tools/import-from-mcp", {
+            const response = await fetchApi<McpImportResponse>("/asset-registry/tools/import-from-mcp", {
                 method: "POST",
                 body: JSON.stringify({
                     server_url: mcpServerUrl,
@@ -230,18 +298,19 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                 }),
             });
 
-            const data = response.data as Record<string, unknown>;
-            const importErrors = ((data?.errors as Array<{ name?: string; error?: string }>) || []).map((e) => `${e.name || "?"}: ${e.error}`);
+            const data = response.data as McpImportResponse | undefined;
+            const importErrors = (data?.errors || []).map((e) => `${e.name || "?"}: ${e.error}`);
+            const totalImported = data?.total_imported || 0;
 
             setMcpImportResult({
-                imported: data?.total_imported || 0,
+                imported: totalImported,
                 errors: importErrors,
             });
 
-            if (data?.total_imported > 0) {
+            if (totalImported > 0) {
                 // Auto close after successful import
                 setTimeout(() => {
-                    onSuccess(data.imported?.[0]?.asset_id || "");
+                    onSuccess(data?.imported?.[0]?.asset_id || "");
                 }, 1500);
             }
         } catch (err: unknown) {
@@ -282,6 +351,33 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             return;
         }
 
+        const effectiveConfig: Record<string, unknown> = {
+            ...parsedConfig,
+        };
+
+        if (toolType === "database_query" || toolType === "graph_query") {
+            const sourceFromConfig = typeof effectiveConfig.source_ref === "string" ? effectiveConfig.source_ref : "";
+            const effectiveSourceRef = sourceRef.trim() || sourceFromConfig.trim();
+            if (!effectiveSourceRef) {
+                validationErrors.push("Source is required for database_query / graph_query tools");
+            } else {
+                effectiveConfig.source_ref = effectiveSourceRef;
+            }
+
+            if (catalogRef && selectedCatalog?.catalog?.source_ref && effectiveSourceRef) {
+                if (selectedCatalog.catalog.source_ref !== effectiveSourceRef) {
+                    validationErrors.push(
+                        `Selected catalog source_ref (${selectedCatalog.catalog.source_ref}) does not match tool source_ref (${effectiveSourceRef})`
+                    );
+                }
+            }
+        }
+
+        if (validationErrors.length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
         setIsCreating(true);
         setErrors([]);
 
@@ -290,7 +386,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                 name,
                 description,
                 tool_type: toolType,
-                tool_config: parsedConfig,
+                tool_config: effectiveConfig,
                 tool_input_schema: parsedInputSchema,
                 tool_output_schema: null,
                 created_by: "admin",
@@ -307,7 +403,8 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             });
 
             // API returns { data: { asset: { asset_id, ... } } }
-            const assetId = ((response.data as Record<string, unknown>)?.asset as Record<string, unknown> | undefined)?.asset_id;
+            const responseData = response.data as { asset?: { asset_id?: string } } | undefined;
+            const assetId = responseData?.asset?.asset_id;
             if (!assetId) {
                 throw new Error("No asset_id in response");
             }
@@ -597,6 +694,31 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                     />
                                 </div>
 
+                                {/* Source Reference (Required for DB/Graph) */}
+                                {(toolType === "database_query" || toolType === "graph_query") && (
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
+                                            Data Source
+                                        </label>
+                                        <select
+                                            value={sourceRef}
+                                            onChange={(e) => handleSourceSelection(e.target.value)}
+                                            className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
+                                        >
+                                            <option value="">-- Select Published Source --</option>
+                                            {sourcesData.map((source) => (
+                                                <option key={source.asset_id} value={source.name}>
+                                                    {source.name}
+                                                    {source.source_type ? ` (${source.source_type})` : ""}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs mt-1 ml-1 text-muted-foreground">
+                                            source_ref is managed from this selector and synced into Tool Configuration JSON.
+                                        </p>
+                                    </div>
+                                )}
+
                                 {/* Catalog Reference (Optional) */}
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
@@ -604,15 +726,26 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                     </label>
                                     <select
                                         value={catalogRef}
-                                        onChange={(e) => setCatalogRef(e.target.value)}
+                                        onChange={(e) => {
+                                            const nextCatalogRef = e.target.value;
+                                            setCatalogRef(nextCatalogRef);
+                                            if (!nextCatalogRef) {
+                                                return;
+                                            }
+                                            const matched = catalogsData.find((catalog) => catalog.name === nextCatalogRef);
+                                            const catalogSourceRef = matched?.catalog?.source_ref?.trim();
+                                            if (catalogSourceRef && !sourceRef.trim()) {
+                                                handleSourceSelection(catalogSourceRef);
+                                            }
+                                        }}
                                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
                                     >
                                         <option value="">-- No Catalog Selected --</option>
-                                        {catalogsData?.map((catalog: Record<string, unknown>) => {
-                                            const tableCount = ((catalog.content as Record<string, unknown>)?.catalog as Record<string, unknown>)?.tables as unknown[] | undefined;
+                                        {filteredCatalogs.map((catalog) => {
+                                            const tableCount = catalog.catalog?.tables;
                                             return (
-                                                <option key={catalog.asset_id as string} value={catalog.name as string}>
-                                                    {catalog.name as string} (Tables: {tableCount?.length || 0})
+                                                <option key={catalog.asset_id} value={catalog.name}>
+                                                    {catalog.name} (Tables: {tableCount?.length || 0})
                                                 </option>
                                             );
                                         })}

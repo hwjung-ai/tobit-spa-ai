@@ -74,6 +74,9 @@ class ToolAssetValidator:
         if not asset.name or not asset.name.strip():
             errors.append("Tool name cannot be empty")
 
+        # 6. Validate catalog linkage (if configured)
+        errors.extend(ToolAssetValidator._validate_catalog_linkage(asset))
+
         return errors
 
     @staticmethod
@@ -225,6 +228,38 @@ class ToolAssetValidator:
         return errors
 
     @staticmethod
+    def _validate_catalog_linkage(asset: Any) -> list[str]:
+        """
+        Validate tool_catalog_ref relationship with tool_config.source_ref.
+        """
+        errors: list[str] = []
+        catalog_ref = getattr(asset, "tool_catalog_ref", None)
+        if not catalog_ref:
+            return errors
+
+        try:
+            from app.modules.asset_registry.loader import load_catalog_asset
+        except Exception as exc:  # pragma: no cover
+            logger.warning("Failed to import load_catalog_asset: %s", exc)
+            return errors
+
+        catalog_payload = load_catalog_asset(catalog_ref)
+        if not catalog_payload:
+            errors.append(f"tool_catalog_ref '{catalog_ref}' not found")
+            return errors
+
+        catalog_source_ref = catalog_payload.get("source_ref")
+        tool_source_ref = (getattr(asset, "tool_config", None) or {}).get("source_ref")
+        if tool_source_ref and catalog_source_ref and tool_source_ref != catalog_source_ref:
+            errors.append(
+                "tool_catalog_ref source mismatch: "
+                f"tool_config.source_ref='{tool_source_ref}' "
+                f"!= catalog.source_ref='{catalog_source_ref}'"
+            )
+
+        return errors
+
+    @staticmethod
     def validate_for_publication(asset: Any) -> list[str]:
         """
         Enhanced validation for tool publication.
@@ -242,10 +277,6 @@ class ToolAssetValidator:
         # Additional publication checks
         if not asset.description or not asset.description.strip():
             errors.append("Tool description is required for publication")
-
-        # Check that tags are present (helpful for discoverability)
-        if not asset.tags or not asset.tags.get("source"):
-            errors.append("Tool tags with 'source' are recommended for publication")
 
         return errors
 

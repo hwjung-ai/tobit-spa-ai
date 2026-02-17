@@ -18,7 +18,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncGenerator, Callable
+from typing import Any, AsyncGenerator, Callable, Literal
 
 
 class OpsProgressStage(str, Enum):
@@ -40,7 +40,7 @@ class ToolCallProgress:
     """Progress information for a tool call."""
     tool_type: str
     tool_name: str
-    status: "started" | "completed" | "error"
+    status: Literal["started", "completed", "error"]
     elapsed_ms: float = 0.0
     message: str = ""
     result_summary: str | None = None
