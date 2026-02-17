@@ -31,8 +31,8 @@ def main():
         "document_search": {"query": "test"},
     }
 
-    print(f"{'tool_name':<30} {'tool_type':<15} {'work_or_not':<12} {'data_count':<10}")
-    print("-" * 70)
+    print(f"{'tool_name':<30} {'tool_type':<15} {'work_or_not':<12} {'data_count':<10} {'error'}")
+    print("-" * 120)
 
     for tool in tools_data:
         name = tool["name"]
@@ -52,12 +52,18 @@ def main():
                 result_data = data["data"].get("data", {})
                 rows = result_data.get("rows", [])
                 count = len(rows) if isinstance(rows, list) else (1 if rows else 0)
-                print(f"{name:<30} {tool_type:<15} {'OK':<12} {count:<10}")
+                # Check for error_details even if success is true
+                error_details = data["data"].get("error_details")
+                if error_details:
+                    print(f"{name:<30} {tool_type:<15} {'WARN':<12} {count:<10} {str(error_details)[:60]}")
+                else:
+                    print(f"{name:<30} {tool_type:<15} {'OK':<12} {count:<10}")
             else:
                 error = data.get("data", {}).get("error", "Unknown error") if data.get("data") else data.get("message", "Unknown error")
-                print(f"{name:<30} {tool_type:<15} {'ERROR':<12} {str(error)[:30]}")
+                error_details = data.get("data", {}).get("error_details", "") if data.get("data") else ""
+                print(f"{name:<30} {tool_type:<15} {'ERROR':<12} {'0':<10} {str(error)[:60]} {str(error_details)[:60]}")
         except Exception as e:
-            print(f"{name:<30} {tool_type:<15} {'FAIL':<12} {str(e)[:30]}")
+            print(f"{name:<30} {tool_type:<15} {'FAIL':<12} {'0':<10} {str(e)[:60]}")
 
 if __name__ == "__main__":
     main()

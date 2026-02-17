@@ -598,9 +598,31 @@ def create_plan(
     )
     plan = Plan.model_construct()
     # Use explicit mode if provided, otherwise determine from question
-    if mode and mode in ("ci", "auto", "all"):
-        plan.mode = PlanMode(mode)
+    logger.info("ci.planner.mode_logic", extra={
+        "explicit_mode_param": mode,
+        "mode_is_truthy": bool(mode),
+        "normalized_question": normalized[:100],
+    })
+    if mode:
+        # Explicit mode provided by user/client
+        try:
+            plan.mode = PlanMode(mode)
+            logger.info("ci.planner.explicit_mode_set", extra={
+                "mode": mode,
+                "plan_mode": plan.mode.value,
+            })
+        except (ValueError, KeyError) as e:
+            # Invalid mode, fall back to auto-detection
+            logger.warning("ci.planner.invalid_mode", extra={
+                "mode": mode,
+                "error": str(e),
+            })
+            plan.mode = _determine_mode(normalized)
     else:
+        # No explicit mode, auto-detect from question
+        logger.info("ci.planner.auto_detect_mode", extra={
+            "question": normalized[:100],
+        })
         plan.mode = _determine_mode(normalized)
     llm_payload = None
     graph_force = _is_graph_force_query(normalized)
@@ -1336,6 +1358,7 @@ def create_plan_output(
             "query_len": len(normalized),
             "has_schema": bool(schema_context),
             "has_source": bool(source_context),
+            "mode": mode,
         },
     )
 

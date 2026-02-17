@@ -309,9 +309,26 @@ class StageExecutor:
 
         if plan_output_kind == "plan" and plan_dict:
             # Convert dict back to Plan object for easier access
-            from app.modules.ops.services.orchestration.planner.plan_schema import Plan
+            from app.modules.ops.services.orchestration.planner.plan_schema import Plan, PlanMode
 
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
+
+            # Handle "all" mode - full orchestration with all available tools
+            if plan.mode == PlanMode.ALL or (isinstance(plan.mode, str) and plan.mode == "all"):
+                self.logger.info(
+                    "execute_stage.full_orchestration",
+                    extra={"mode": str(plan.mode), "question": question_text}
+                )
+                # All mode: enable all available tools/specs
+                plan.primary.enabled = True
+                plan.secondary.enabled = True
+                plan.metric = plan.metric or {}
+                plan.history.enabled = True
+                plan.list.enabled = True
+                plan.graph.depth = plan.graph.depth or 2
+                if plan.cep:
+                    plan.cep.enabled = True
+
             if plan.history and plan.history.enabled:
                 normalized_question = question_text.lower()
                 if plan.history.tool_type in {

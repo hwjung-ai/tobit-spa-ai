@@ -356,11 +356,13 @@ def ask_ops(
                         "has_source": bool(source_payload),
                     },
                 )
+                # Use explicit mode if provided, default to "all" for orchestration
+                explicit_mode = payload.mode or "all"
                 plan_output = planner_llm.create_plan_output(
                     normalized_question,
                     schema_context=schema_payload,
                     source_context=source_payload,
-                    mode=payload.mode,
+                    mode=explicit_mode,
                 )
                 planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
                 logger.info(
@@ -667,8 +669,8 @@ def ask_ops(
                             )
                             history_entry.metadata_info = jsonable_encoder(
                                 {
-                                    "uiMode": "all",
-                                    "backendMode": "all",
+                                    "uiMode": explicit_mode,
+                                    "backendMode": explicit_mode,
                                     "trace": trace_payload,
                                     "nextActions": next_actions,
                                 }
