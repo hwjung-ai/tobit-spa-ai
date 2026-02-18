@@ -386,7 +386,49 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
     elif asset.asset_type == "catalog":
         result["catalog"] = content.get("catalog", {})
     elif asset.asset_type == "resolver":
-        result["config"] = content.get("config", {})
+        # Build config with properly parsed rules
+        from .resolver_models import (
+            AliasMapping,
+            PatternRule,
+            ResolverRule,
+            ResolverType,
+            TransformationRule,
+        )
+
+        rules_data = content.get("rules", [])
+        rules = []
+        for rule_data in rules_data:
+            rule_type = rule_data.get("rule_type", "alias_mapping")
+            # Extract the actual rule-specific data (nested in "rule_data" key)
+            inner_rule_data = rule_data.get("rule_data", rule_data)
+
+            if rule_type == "alias_mapping":
+                rule_data_obj = AliasMapping(**inner_rule_data).model_dump()
+            elif rule_type == "pattern_rule":
+                rule_data_obj = PatternRule(**inner_rule_data).model_dump()
+            elif rule_type == "transformation":
+                rule_data_obj = TransformationRule(**inner_rule_data).model_dump()
+            else:
+                rule_data_obj = rule_data
+
+            rules.append({
+                "rule_type": rule_type,
+                "name": rule_data.get("name", ""),
+                "description": rule_data.get("description"),
+                "is_active": rule_data.get("is_active", True),
+                "priority": rule_data.get("priority", 0),
+                "extra_metadata": rule_data.get("extra_metadata", {}),
+                "rule_data": rule_data_obj,
+            })
+
+        result["config"] = {
+            "name": asset.name,
+            "description": asset.description,
+            "rules": rules,
+            "default_namespace": content.get("default_namespace"),
+            "tags": asset.tags,
+            "version": asset.version,
+        }
 
     return result
 
