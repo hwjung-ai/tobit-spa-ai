@@ -10,6 +10,7 @@ All handlers follow this signature:
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 from typing import Any, Callable, Dict
 from urllib.parse import urlparse
@@ -20,7 +21,7 @@ from core.db_pg import get_pg_connection
 from core.logging import get_logger
 from sqlalchemy.orm import Session
 
-from app.modules.asset_registry.loader import load_query_asset
+from app.modules.ops.services.orchestration.tools.base import ToolContext, get_tool_registry
 
 logger = get_logger(__name__)
 
@@ -293,89 +294,87 @@ async def handle_list_maintenance_filtered(
         raise ValueError("source_ref is required")
 
     try:
-        # Load query SQL for maintenance history from query asset
-        query_asset, _ = load_query_asset("history", "maintenance_history")
-        query_sql = query_asset.get("sql") if query_asset else None
-        if not query_sql:
+        # Use Tool Registry to find maintenance history tool by capability
+        registry = get_tool_registry()
+        tool = registry.find_tool_by_capability("maintenance_history")
+
+        if not tool:
             raise ValueError(
-                "maintenance_history query not found in Asset Registry: history/maintenance_history"
+                "No maintenance history tool found in Tool Registry. "
+                "Please create a Tool with name containing 'maintenance_history' "
+                "or with tool_config.capabilities including 'maintenance_history'."
             )
 
-        # Get PostgreSQL connection
-        settings = get_settings()
-        conn = get_pg_connection(settings, use_source_asset=True, source_ref=source_ref)
+        # Create tool context
+        tool_context = ToolContext(
+            tenant_id=tenant_id,
+            user_id=context.get("user_id", "system"),
+            request_id=context.get("request_id", ""),
+            trace_id=context.get("trace_id", ""),
+            metadata={
+                "source_ref": source_ref,
+                "device_id": device_id,
+            }
+        )
 
-        try:
-            # Execute query with device filter (if provided)
-            if device_id:
-                # Query with device_id filter - use parameterized subquery
-                query_with_filter = (
-                    query_sql
-                    + " AND h.ci_id IN (SELECT ci_id FROM ci WHERE tenant_id = %s AND ci_code = %s)"
-                )
-                rows = conn.execute(
-                    query_with_filter,
-                    (tenant_id, device_id, "2099-01-01", "2024-01-01"),
-                ).fetchall()
+        # Execute tool
+        tool_params = {
+            "device_id": device_id,
+            "offset": offset,
+            "limit": limit,
+            "source_ref": source_ref,
+        }
+
+        result = asyncio.get_event_loop().run_until_complete(
+            tool.execute(tool_context, tool_params)
+        )
+
+        if not result.success:
+            raise ValueError(f"Tool execution failed: {result.error}")
+
+        # Format result as table
+        tool_data = result.data or []
+        table_rows = []
+        for i, row in enumerate(tool_data[offset : offset + limit], 1):
+            if isinstance(row, dict):
+                table_rows.append([
+                    row.get("id", f"M{offset + i:03d}"),
+                    row.get("device_id", device_id or "General"),
+                    row.get("type", row.get("maint_type", "Maintenance")),
+                    row.get("status", "Completed"),
+                ])
             else:
-                # Query all maintenance records
-                rows = conn.execute(
-                    query_sql, (tenant_id, None, "2099-01-01", "2024-01-01")
-                ).fetchall()
+                # Legacy format: tuple/list
+                table_rows.append([
+                    f"M{offset + i:03d}",
+                    device_id or "General",
+                    row[1] if len(row) > 1 else "Maintenance",
+                    row[3] if len(row) > 3 else "Completed",
+                ])
 
-            # Format as table
-            table_rows = []
-            for i, row in enumerate(rows[offset : offset + limit], 1):
-                # row format: (start_time, maint_type, duration_min, result, summary)
-                table_rows.append(
-                    [
-                        f"M{offset + i:03d}",
-                        device_id or "General",
-                        row[1] if len(row) > 1 else "Maintenance",
-                        row[3] if len(row) > 3 else "Completed",
-                    ]
-                )
+        blocks = [
+            {
+                "type": "table",
+                "columns": ["ID", "Device", "Type", "Status"],
+                "rows": table_rows if table_rows else [["M001", "General", "Preventive", "Scheduled"]],
+            }
+        ]
 
-            blocks = [
-                {
-                    "type": "table",
-                    "columns": ["ID", "Device", "Type", "Status"],
-                    "rows": table_rows
-                    if table_rows
-                    else [["M001", "General", "Preventive", "Scheduled"]],
-                }
-            ]
+        # Calculate total for pagination
+        total = len(tool_data) if tool_data else 0
 
-            # Calculate total for pagination
-            total = len(rows) if rows else 0
-
-            return ExecutorResult(
-                blocks=blocks,
-                summary={
-                    "device_id": device_id,
-                    "offset": offset,
-                    "limit": limit,
-                    "total": total,
-                    "returned": len(table_rows),
-                },
-                state_patch={
-                    "maintenance_list": [
-                        {
-                            "id": f"M{i:03d}",
-                            "device_id": device_id or "General",
-                            "type": row[1] if len(row) > 1 else "Maintenance",
-                            "status": row[3] if len(row) > 3 else "Completed",
-                            "date": str(row[0]) if len(row) > 0 else "",
-                        }
-                        for i, row in enumerate(
-                            rows[offset : offset + limit], offset + 1
-                        )
-                    ],
-                    "pagination": {"offset": offset, "limit": limit, "total": total},
-                },
-            )
-        finally:
-            conn.close()
+        return ExecutorResult(
+            blocks=blocks,
+            summary={
+                "total": total,
+                "offset": offset,
+                "limit": limit,
+            },
+            state_patch={
+                "maintenance_list": tool_data,
+                "pagination": {"offset": offset, "limit": limit, "total": total},
+            },
+        )
 
     except Exception as e:
         logger.error(

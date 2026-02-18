@@ -363,6 +363,55 @@ class ToolRegistry:
         """List all registered tool type strings."""
         return list(self._instances.keys())
 
+    def find_tools_by_type(self, tool_type: str) -> list[BaseTool]:
+        """
+        Find all tools matching a specific tool_type.
+
+        Args:
+            tool_type: The tool type to search for (e.g., 'database_query', 'http_api')
+
+        Returns:
+            List of tool instances matching the type
+        """
+        matches = []
+        for tool in self._instances.values():
+            if getattr(tool, 'tool_type', None) == tool_type:
+                matches.append(tool)
+        return matches
+
+    def find_tool_by_capability(self, capability: str) -> Optional[BaseTool]:
+        """
+        Find first tool matching a capability by checking:
+        1. tool_config.capabilities list
+        2. tool name contains the capability
+        3. tool type equals the capability
+
+        Args:
+            capability: The capability to search for (e.g., 'maintenance_history')
+
+        Returns:
+            First matching tool instance or None
+        """
+        capability_lower = capability.lower()
+
+        for tool in self._instances.values():
+            # Check tool_config capabilities
+            tool_config = getattr(tool, 'tool_config', {}) or {}
+            capabilities = tool_config.get('capabilities', [])
+            if capability in capabilities or capability_lower in [c.lower() for c in capabilities]:
+                return tool
+
+            # Check tool name
+            tool_name = getattr(tool, 'tool_name', '') or getattr(tool, 'name', '')
+            if capability_lower in tool_name.lower():
+                return tool
+
+            # Check tool type
+            if getattr(tool, 'tool_type', '') == capability:
+                return tool
+
+        return None
+
     def get_tool_info(self, tool_type: str) -> Optional[Dict[str, Any]]:
         """
         Get information about a registered tool.
