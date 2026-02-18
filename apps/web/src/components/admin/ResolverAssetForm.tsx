@@ -103,7 +103,7 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
             <CardTitle className="text-xs">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm ">
+            <p className="text-sm text-muted-foreground">
               {asset.description}
             </p>
           </CardContent>
@@ -117,7 +117,7 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
           </CardHeader>
           <CardContent className="space-y-2">
             {config.rules.map((rule, index) => (
-              <div key={index} className="flex items-center justify-between rounded border  p-2 text-xs">
+              <div key={index} className="flex items-center justify-between rounded border border-border p-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{rule.name}</span>
                   <Badge variant="outline" className="text-xs">
@@ -129,7 +129,7 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
                     </Badge>
                   )}
                 </div>
-                <div className="">
+                <div className="text-muted-foreground">
                   Priority: {rule.priority}
                 </div>
               </div>
@@ -177,25 +177,25 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-sm">{result.original_entity}</div>
-                      <div className="text-xs ">
+                      <div className="text-xs text-muted-foreground">
                         Confidence: {(result.confidence_score * 100).toFixed(1)}%
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="">→</span>
+                      <span className="text-muted-foreground">→</span>
                       <span className="text-sm font-medium text-sky-400">{result.resolved_entity}</span>
                     </div>
                     {result.transformations_applied.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-xs ">Transformations:</div>
+                        <div className="text-xs text-muted-foreground">Transformations:</div>
                         {result.transformations_applied.map((transform, i) => (
-                          <div key={i} className="text-xs ">• {transform}</div>
+                          <div key={i} className="text-xs text-muted-foreground">• {transform}</div>
                         ))}
                       </div>
                     )}
                     {result.matched_rules.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-xs ">Matched Rules:</div>
+                        <div className="text-xs text-muted-foreground">Matched Rules:</div>
                         {result.matched_rules.map((rule, i) => (
                           <Badge key={i} variant="outline" className="text-xs">
                             {rule}
