@@ -31,6 +31,7 @@ async def register_document_search():
         "description": "Search documents using vector and text search",
         "tool_type": "http_api",
         "tool_config": {
+            "url": "http://localhost:8000/api/documents/search",
             "endpoint": "http://localhost:8000/api/documents/search",
             "method": "POST",
             "headers": {
@@ -77,7 +78,11 @@ async def register_document_search():
                 }
             }
         },
-        "tags": {"category": "document"}
+        "tags": {
+            "category": "document",
+            "capabilities": ["document_search"],
+            "supported_modes": ["document", "all"],
+        }
     }
 
     # Register the tool

@@ -171,6 +171,31 @@ class OperationSettingsService:
             "restart_required": False,
             "description": "When true, API key scopes must satisfy runtime API required scopes",
         },
+        "ops_tool_capabilities": {
+            "type": list,
+            "default": [
+                "ci_lookup",
+                "ci_search",
+                "ci_list",
+                "ci_aggregate",
+                "document_search",
+                "metric_query",
+                "metric_aggregate",
+                "history_search",
+                "event_search",
+                "graph_expand",
+                "graph_path",
+                "graph_topology",
+            ],
+            "restart_required": False,
+            "description": "Tool capability options shown in Admin Tool creation UI",
+        },
+        "ops_tool_supported_modes": {
+            "type": list,
+            "default": ["config", "metric", "graph", "history", "document", "all"],
+            "restart_required": False,
+            "description": "Tool supported mode options shown in Admin Tool creation UI",
+        },
     }
 
     @staticmethod
@@ -221,6 +246,8 @@ class OperationSettingsService:
             "llm_routing_policy": current_app_settings.llm_routing_policy,
             "api_auth_default_mode": current_app_settings.api_auth_default_mode,
             "api_auth_enforce_scopes": current_app_settings.api_auth_enforce_scopes,
+            "ops_tool_capabilities": None,
+            "ops_tool_supported_modes": None,
         }
 
         for (
@@ -286,6 +313,8 @@ class OperationSettingsService:
             "llm_routing_policy": current_app_settings.llm_routing_policy,
             "api_auth_default_mode": current_app_settings.api_auth_default_mode,
             "api_auth_enforce_scopes": current_app_settings.api_auth_enforce_scopes,
+            "ops_tool_capabilities": None,
+            "ops_tool_supported_modes": None,
         }
 
         env_value = env_values.get(setting_key)
@@ -339,6 +368,11 @@ class OperationSettingsService:
             raise ValueError(
                 f"Invalid type for {setting_key}: expected {expected_type.__name__}, got {type(new_value).__name__}"
             )
+        if expected_type is list:
+            if not all(isinstance(item, str) and item.strip() for item in new_value):
+                raise ValueError(
+                    f"Invalid value for {setting_key}: list must contain non-empty strings only"
+                )
 
         # Validate against allowed values if defined
         if "allowed_values" in config and new_value not in config["allowed_values"]:

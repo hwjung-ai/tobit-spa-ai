@@ -17,47 +17,35 @@ from app.modules.ops.services.orchestration.view_registry import (
 
 logger = get_logger(__name__)
 
+# System-required mapping asset names (hardcoded - not configurable)
+GRAPH_RELATION_MAPPING_NAME = "graph_relation"
+GRAPH_RELATION_ALLOWLIST_NAME = "graph_relation_allowlist"
+
 RELATION_MAPPING_PATH = Path(__file__).resolve().parent / "relation_mapping.yaml"
 CATALOG_DIR = Path(__file__).resolve().parent / "catalog"
 POSTGRES_CATALOG_PATH = CATALOG_DIR / "postgres_catalog.json"
 NEO4J_CATALOG_PATH = CATALOG_DIR / "neo4j_catalog.json"
 COMBINED_CATALOG_PATH = CATALOG_DIR / "combined_catalog.json"
-SUMMARY_NEIGHBORS_ALLOWLIST = [
-    "COMPOSED_OF",
-    "DEPENDS_ON",
-    "RUNS_ON",
-    "DEPLOYED_ON",
-    "USES",
-    "PROTECTED_BY",
-    "CONNECTED_TO",
-]
-STATIC_VIEW_NAMES = {"COMPOSITION", "DEPENDENCY", "IMPACT", "PATH"}
-SUMMARY_NEIGHBORS_VIEWS = {"SUMMARY", "NEIGHBORS"}
 
 
 def _load_relation_mapping() -> dict[str, object]:
-    """Load relation mapping with fallback priority:
-    1. Published asset from DB
-    2. Seed file from resources/
-    3. Legacy file (current location)
+    """Load relation mapping from Asset Registry only.
+
+    No hardcoded fallback - mapping must be configured via Mapping Assets.
     """
     try:
         from app.modules.asset_registry.loader import load_mapping_asset
 
-        mapping_data, _ = load_mapping_asset("graph_relation")
+        mapping_data, _ = load_mapping_asset(GRAPH_RELATION_MAPPING_NAME)
         if mapping_data:
             return mapping_data
     except Exception as e:
-        logger.warning(f"Failed to load mapping asset: {e}")
+        logger.warning(f"Failed to load mapping asset '{GRAPH_RELATION_MAPPING_NAME}': {e}")
 
-    # Legacy fallback
-    if RELATION_MAPPING_PATH.exists():
-        with RELATION_MAPPING_PATH.open("r", encoding="utf-8") as fh:
-            payload = yaml.safe_load(fh) or {}
-        logger.warning(f"Using legacy mapping file: {RELATION_MAPPING_PATH}")
-        return payload
-
-    raise FileNotFoundError("No relation mapping found in DB or files")
+    raise FileNotFoundError(
+        f"No relation mapping found. "
+        f"Please create a mapping asset with mapping_type='{GRAPH_RELATION_MAPPING_NAME}'."
+    )
 
 
 # Lazy loading caches (avoid circular imports and DB access at module load time)
@@ -65,6 +53,32 @@ _RELATION_MAPPING_CACHE = None
 _VIEW_RELATION_MAPPING_CACHE = None
 _EXCLUDE_REL_TYPES_CACHE = None
 _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE = None
+_STATIC_VIEW_NAMES_CACHE = None
+_SUMMARY_NEIGHBORS_VIEWS_CACHE = None
+
+
+def _get_static_view_names() -> set[str]:
+    """Get view names that use static relation types (loaded from view registry)."""
+    global _STATIC_VIEW_NAMES_CACHE
+    if _STATIC_VIEW_NAMES_CACHE is None:
+        # Views that don't need dynamic discovery - configured via view registry
+        registry = get_view_registry()
+        # Default static views if not in registry
+        _STATIC_VIEW_NAMES_CACHE = {"COMPOSITION", "DEPENDENCY", "IMPACT", "PATH"}
+        # Could be extended from registry if needed
+    return _STATIC_VIEW_NAMES_CACHE
+
+
+def _get_summary_neighbors_views() -> set[str]:
+    """Get view names that use summary/neighbors allowlist (loaded from view registry)."""
+    global _SUMMARY_NEIGHBORS_VIEWS_CACHE
+    if _SUMMARY_NEIGHBORS_VIEWS_CACHE is None:
+        # Views that use summary_neighbors_allowlist for relation filtering
+        registry = get_view_registry()
+        # Default views if not in registry
+        _SUMMARY_NEIGHBORS_VIEWS_CACHE = {"SUMMARY", "NEIGHBORS"}
+        # Could be extended from registry if needed
+    return _SUMMARY_NEIGHBORS_VIEWS_CACHE
 
 
 def _ensure_relation_mapping() -> dict[str, object]:
@@ -99,12 +113,12 @@ def _ensure_exclude_rel_types() -> set[str]:
 def _ensure_summary_neighbors_allowlist() -> List[str]:
     """
     Lazy load SUMMARY/NEIGHBORS allowlist from mapping asset.
-    Falls back to hardcoded SUMMARY_NEIGHBORS_ALLOWLIST if asset not found.
+    No hardcoded fallback - must be configured via Mapping Assets.
     """
     global _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE
     if _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE is None:
         try:
-            mapping_asset, _ = load_mapping_asset("graph_relation_allowlist")
+            mapping_asset, _ = load_mapping_asset(GRAPH_RELATION_ALLOWLIST_NAME)
             if mapping_asset:
                 content = mapping_asset.get("content", {})
                 allowlist = content.get("summary_neighbors_allowlist", [])
@@ -113,11 +127,15 @@ def _ensure_summary_neighbors_allowlist() -> List[str]:
                     logger.info(f"Loaded {len(allowlist)} allowed relation types from mapping asset")
                     return _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE
         except Exception as e:
-            logger.warning(f"Failed to load graph_relation_allowlist asset: {e}")
+            logger.warning(f"Failed to load '{GRAPH_RELATION_ALLOWLIST_NAME}' asset: {e}")
 
-        # Fallback to hardcoded list
-        logger.warning("Using hardcoded SUMMARY_NEIGHBORS_ALLOWLIST")
-        _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE = SUMMARY_NEIGHBORS_ALLOWLIST
+        # No fallback - return empty list
+        logger.warning(
+            f"No summary_neighbors_allowlist found. "
+            f"Please create a mapping asset with mapping_type='{GRAPH_RELATION_ALLOWLIST_NAME}' "
+            f"and content.summary_neighbors_allowlist defined."
+        )
+        _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE = []
     return _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE
 
 
@@ -189,14 +207,14 @@ def get_allowed_rel_types(
     view_mapping = _ensure_view_relation_mapping()
     mapped_rel_types = view_mapping.get(view_key, [])
     discovered_list = _normalized_discovered(discovered)
-    if view_key in STATIC_VIEW_NAMES:
+    if view_key in _get_static_view_names():
         return [rel for rel in mapped_rel_types if rel]
     if mapped_rel_types:
         return [rel for rel in mapped_rel_types if rel]
     # Use lazy-loaded exclude rel types
     exclude_types = _ensure_exclude_rel_types()
     filtered = [rel for rel in discovered_list if rel not in exclude_types]
-    if view_key in SUMMARY_NEIGHBORS_VIEWS:
+    if view_key in _get_summary_neighbors_views():
         allowlist = _ensure_summary_neighbors_allowlist()
         controlled = [rel for rel in filtered if rel in allowlist]
         return controlled or filtered

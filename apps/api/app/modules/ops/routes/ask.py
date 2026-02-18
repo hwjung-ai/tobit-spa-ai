@@ -69,6 +69,11 @@ from .utils import _tenant_id, apply_patch, generate_references_from_tool_calls
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
 
+# System-required asset names (hardcoded - not configurable)
+PLAN_BUDGET_POLICY_NAME = "plan_budget"
+GRAPH_RELATION_MAPPING_NAME = "graph_relation"
+DEFAULT_RESOLVER_ASSET_NAME = "default_resolver"
+
 
 @router.post("/ask")
 def ask_ops(
@@ -251,9 +256,14 @@ def ask_ops(
         schema_asset_name = payload.schema_asset
         source_asset_name = payload.source_asset
 
-        resolver_payload = (
-            load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
-        )
+        resolver_payload = None
+        if resolver_asset_name:
+            resolver_payload = load_resolver_asset(resolver_asset_name)
+        else:
+            default_resolver = load_resolver_asset(DEFAULT_RESOLVER_ASSET_NAME)
+            if default_resolver:
+                resolver_payload = default_resolver
+                resolver_asset_name = DEFAULT_RESOLVER_ASSET_NAME
         source_payload = load_source_asset(source_asset_name) if source_asset_name else None
         schema_payload = load_catalog_asset(schema_asset_name) if schema_asset_name else None
 
@@ -268,9 +278,9 @@ def ask_ops(
             if derived_source_ref:
                 source_asset_name = str(derived_source_ref)
                 source_payload = load_source_asset(source_asset_name)
-        mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
+        mapping_payload, _ = load_mapping_asset(GRAPH_RELATION_MAPPING_NAME, scope="ops")
         # Load policy asset to ensure tracking (even though we don't use the result)
-        load_policy_asset("plan_budget", scope="ops")
+        load_policy_asset(PLAN_BUDGET_POLICY_NAME, scope="ops")
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload

@@ -54,11 +54,12 @@ from app.modules.inspector.span_tracker import (
     get_all_spans,
     start_span,
 )
+from app.modules.ops.routes.ask import ask_ops as modular_ask_ops
 
 from .schemas import (
+    IsolatedStageTestRequest,
     OpsAskRequest,
     OpsAskResponse,
-    IsolatedStageTestRequest,
     OpsQueryRequest,
     ReplanPatchDiff,
     ReplanTrigger,
@@ -85,8 +86,15 @@ from .services.orchestration.planner.plan_schema import (
 from .services.ui_editor_collab import ui_editor_collab_manager
 from .services.ui_editor_presence import ui_editor_presence_manager
 
+# System-required asset names (hardcoded - not configurable)
+PLAN_BUDGET_POLICY_NAME = "plan_budget"
+GRAPH_RELATION_MAPPING_NAME = "graph_relation"
+
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
+
+# Single source of truth for /ops/ask implementation
+router.add_api_route("/ask", modular_ask_ops, methods=["POST"])
 
 
 def _generate_references_from_tool_calls(
@@ -684,7 +692,7 @@ def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
     return plan.copy(update=updates) if updates else plan
 
 
-@router.post("/ask")
+@router.post("/ask-legacy")
 def ask_ops(
     payload: OpsAskRequest,
     request: Request,
@@ -904,18 +912,18 @@ def ask_ops(
                     )
         # Load tracking assets opportunistically. Missing assets should not block ask flow.
         try:
-            load_mapping_asset("graph_relation", scope="ops")
+            load_mapping_asset(GRAPH_RELATION_MAPPING_NAME, scope="ops")
         except Exception as e:
             logger.warning(
                 "ops.ask.optional_mapping_load_failed",
-                extra={"mapping_type": "graph_relation", "scope": "ops", "error": str(e)},
+                extra={"mapping_type": GRAPH_RELATION_MAPPING_NAME, "scope": "ops", "error": str(e)},
             )
         try:
-            load_policy_asset("plan_budget", scope="ops")
+            load_policy_asset(PLAN_BUDGET_POLICY_NAME, scope="ops")
         except Exception as e:
             logger.warning(
                 "ops.ask.optional_policy_load_failed",
-                extra={"policy_type": "plan_budget", "scope": "ops", "error": str(e)},
+                extra={"policy_type": PLAN_BUDGET_POLICY_NAME, "scope": "ops", "error": str(e)},
             )
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(

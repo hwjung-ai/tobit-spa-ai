@@ -48,6 +48,11 @@ from app.modules.ops.services.orchestration.planner.plan_schema import (
     PlanOutputKind,
 )
 
+# System-required asset names (hardcoded - not configurable)
+PLAN_BUDGET_POLICY_NAME = "plan_budget"
+GRAPH_RELATION_MAPPING_NAME = "graph_relation"
+DEFAULT_RESOLVER_ASSET_NAME = "default_resolver"
+
 from .utils import _tenant_id
 
 router = APIRouter(prefix="/ops", tags=["ops"])
@@ -192,9 +197,14 @@ async def ask_ops_stream(
             schema_asset_name = payload.schema_asset
             source_asset_name = payload.source_asset
             
-            resolver_payload = (
-                load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
-            )
+            resolver_payload = None
+            if resolver_asset_name:
+                resolver_payload = load_resolver_asset(resolver_asset_name)
+            else:
+                default_resolver = load_resolver_asset(DEFAULT_RESOLVER_ASSET_NAME)
+                if default_resolver:
+                    resolver_payload = default_resolver
+                    resolver_asset_name = DEFAULT_RESOLVER_ASSET_NAME
             source_payload = load_source_asset(source_asset_name) if source_asset_name else None
             schema_payload = load_catalog_asset(schema_asset_name) if schema_asset_name else None
 
@@ -211,8 +221,8 @@ async def ask_ops_stream(
                 if derived_source_ref:
                     source_asset_name = str(derived_source_ref)
                     source_payload = load_source_asset(source_asset_name)
-            mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
-            load_policy_asset("plan_budget", scope="ops")
+            mapping_payload, _ = load_mapping_asset(GRAPH_RELATION_MAPPING_NAME, scope="ops")
+            load_policy_asset(PLAN_BUDGET_POLICY_NAME, scope="ops")
             
             # Apply resolver rules if any
             normalized_question = payload.question

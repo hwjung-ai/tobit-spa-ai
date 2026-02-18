@@ -9,8 +9,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import StatusFilterButtons from "../../../components/admin/StatusFilterButtons";
 
 // Define types for select options
-type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "source" | "resolver";
+// Note: "query" type removed - use Tools instead
+type AssetType = "all" | "prompt" | "mapping" | "policy" | "source" | "resolver";
 type AssetStatus = "all" | "draft" | "published";
+const EXCLUDED_ASSET_TYPES = new Set(["tool", "screen", "catalog"]);
 
 export default function AssetsPageContent() {
     const router = useRouter();
@@ -25,7 +27,7 @@ export default function AssetsPageContent() {
     const statusParam = searchParams.get("status") as AssetStatus | null;
 
     const initialTypeFilter = useMemo(() => {
-        if (typeParam && ["all", "prompt", "mapping", "policy", "query", "source", "resolver"].includes(typeParam)) {
+        if (typeParam && ["all", "prompt", "mapping", "policy", "source", "resolver"].includes(typeParam)) {
             return typeParam;
         }
         return "all";
@@ -72,7 +74,8 @@ export default function AssetsPageContent() {
             const queryString = params.toString();
             const endpoint = `/asset-registry/assets${queryString ? `?${queryString}` : ""}`;
             const response = await fetchApi<{ assets: Asset[] }>(endpoint, { cache: "no-store" });
-            return response.data.assets;
+            const rows = response.data.assets ?? [];
+            return rows.filter((asset) => !EXCLUDED_ASSET_TYPES.has(asset.asset_type));
         }
     });
 
@@ -93,7 +96,7 @@ export default function AssetsPageContent() {
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === "all" || value === "prompt" || value === "mapping" ||
-                                    value === "policy" || value === "query" ||
+                                    value === "policy" ||
                                     value === "source" || value === "resolver") {
                                     handleTypeFilterChange(value as AssetType);
                                 }
@@ -104,7 +107,6 @@ export default function AssetsPageContent() {
                             <option value="prompt" className="bg-surface-elevated text-foreground">Prompts</option>
                             <option value="mapping" className="bg-surface-elevated text-foreground">Mappings</option>
                             <option value="policy" className="bg-surface-elevated text-foreground">Policies</option>
-                            <option value="query" className="bg-surface-elevated text-foreground">Queries</option>
                             <option value="source" className="bg-surface-elevated text-foreground">Sources</option>
                             <option value="resolver" className="bg-surface-elevated text-foreground">Resolvers</option>
                         </select>

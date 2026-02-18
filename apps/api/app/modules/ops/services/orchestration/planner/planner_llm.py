@@ -471,9 +471,9 @@ OUTPUT_PARSER_MODEL = os.environ.get(
     "OPS_CI_OUTPUT_PARSER_MODEL", os.environ.get("CHAT_MODEL", "gpt-4o-mini")
 )
 
-PROMPT_SCOPE = "ci"
+PROMPT_SCOPE = "ops"
 PROMPT_ENGINE = "planner"
-PROMPT_NAME = "ci_planner_output_parser"
+PROMPT_NAME = "ops_planner_output_parser"
 
 
 def _determine_intent(text: str) -> Intent:
@@ -1639,6 +1639,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
 
     # Extract and validate tool_type values
     valid_tool_types = {tool["type"] for tool in tools_info}
+    document_tool_name = _resolve_document_tool_name(tools_info, valid_tool_types)
 
     # Validate Plan
     validation_errors = _validate_plan(plan, tools_info)
@@ -1744,7 +1745,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             "search_type": document_spec.get("search_type", "hybrid"),
             "top_k": document_spec.get("top_k", 10),
             "min_relevance": document_spec.get("min_relevance", 0.5),
-            "tool_type": document_spec.get("tool_type", "document_search"),
+            "tool_type": document_spec.get("tool_type", document_tool_name),
         }
         logger.info(
             "planner.document_spec_assigned",
@@ -1766,7 +1767,12 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     # This enables comprehensive orchestration across all tools
     if plan.mode == PlanMode.ALL:
         logger.info("planner.all_mode_activating_all_specs")
-        _activate_all_specs_for_all_mode(plan, normalized, valid_tool_types)
+        _activate_all_specs_for_all_mode(
+            plan,
+            normalized,
+            valid_tool_types,
+            tools_info=tools_info,
+        )
 
     logger.info("ci.planner.plan_llm_query.plan_created", extra={"elapsed_ms": elapsed})
 
@@ -1779,7 +1785,52 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
     )
 
 
-def _activate_all_specs_for_all_mode(plan: Plan, question: str, valid_tool_types: set) -> None:
+def _resolve_document_tool_name(
+    tools_info: List[Dict[str, Any]],
+    valid_tool_types: set[str],
+) -> str:
+    """Resolve best document tool name from registered tools."""
+    # 1) Capability-first: prefer tools explicitly marked for document search
+    for tool in tools_info:
+        tags = tool.get("tags") or {}
+        caps = tags.get("capabilities") or []
+        if isinstance(caps, list) and "document_search" in caps:
+            return str(tool.get("type") or "")
+
+    # 2) Name/type heuristic
+    for tool in tools_info:
+        name = str(tool.get("name") or "").lower()
+        tool_type = str(tool.get("type") or "").lower()
+        if "document" in name or "document" in tool_type:
+            return str(tool.get("type") or "")
+
+    # 3) Legacy fallback
+    if "document_search" in valid_tool_types:
+        return "document_search"
+
+    # 4) Last resort
+    return "database_query"
+
+
+def _resolve_tool_type(
+    valid_tool_types: set[str],
+    candidates: List[str],
+    default: str = "database_query",
+) -> str:
+    """Return first available tool type from candidates."""
+    for candidate in candidates:
+        if candidate in valid_tool_types:
+            return candidate
+    return default
+
+
+def _activate_all_specs_for_all_mode(
+    plan: Plan,
+    question: str,
+    valid_tool_types: set,
+    *,
+    tools_info: List[Dict[str, Any]],
+) -> None:
     """
     In "all" mode, activate all data source specs for comprehensive orchestration.
 
@@ -1803,7 +1854,10 @@ def _activate_all_specs_for_all_mode(plan: Plan, question: str, valid_tool_types
             keywords=[],
             filters=[],
             limit=10,
-            tool_type="ci_lookup" if "ci_lookup" in valid_tool_types else "database_query",
+            tool_type=_resolve_tool_type(
+                valid_tool_types,
+                ["ci_lookup", "ci_search", "database_query"],
+            ),
         )
         activated.append("primary")
 
@@ -1813,7 +1867,10 @@ def _activate_all_specs_for_all_mode(plan: Plan, question: str, valid_tool_types
             metric_name=None,
             agg="avg",
             time_range="last_24h",
-            tool_type="metric_query" if "metric_query" in valid_tool_types else "database_query",
+            tool_type=_resolve_tool_type(
+                valid_tool_types,
+                ["metric_query", "metric_aggregate", "database_query"],
+            ),
         )
         activated.append("metric")
 
@@ -1826,7 +1883,10 @@ def _activate_all_specs_for_all_mode(plan: Plan, question: str, valid_tool_types
             mode="aggregate",
             time_range="last_24h",
             limit=50,
-            tool_type="history_search" if "history_search" in valid_tool_types else "database_query",
+            tool_type=_resolve_tool_type(
+                valid_tool_types,
+                ["history_search", "event_search", "database_query"],
+            ),
         )
         activated.append("history")
 
@@ -1837,19 +1897,23 @@ def _activate_all_specs_for_all_mode(plan: Plan, question: str, valid_tool_types
             view=View.DEPENDENCY,
             limits=GraphLimits(rows=100, nodes=100, relationships=200),
             user_requested_depth=2,
-            tool_type="graph_expand" if "graph_expand" in valid_tool_types else "graph_query",
+            tool_type=_resolve_tool_type(
+                valid_tool_types,
+                ["graph_expand", "graph_query", "database_query"],
+            ),
         )
         activated.append("graph")
 
     # 5. Document spec (if not already set)
     if not plan.document:
+        document_tool_name = _resolve_document_tool_name(tools_info, valid_tool_types)
         plan.document = {
             "enabled": True,
             "query": question,
             "search_type": "hybrid",
             "top_k": 5,
             "min_relevance": 0.5,
-            "tool_type": "document_search" if "document_search" in valid_tool_types else "database_query",
+            "tool_type": document_tool_name,
         }
         activated.append("document")
 

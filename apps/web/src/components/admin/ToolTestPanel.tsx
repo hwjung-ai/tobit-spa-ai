@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { fetchApi } from "../../lib/adminUtils";
 import { cn } from "../../lib/utils";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface ToolAsset {
     asset_id: string;
@@ -44,8 +45,11 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
     const [testResult, setTestResult] = useState<TestResult | null>(null);
     const [isExecuting, setIsExecuting] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
+    const [isUnpublishing, setIsUnpublishing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"test" | "schema" | "config">("test");
+    const [confirmDialog, ConfirmDialogComponent] = useConfirm();
 
     const handleTest = async () => {
         setIsExecuting(true);
@@ -83,6 +87,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                 method: "POST",
             });
             onRefresh?.();
+            onClose();
         } catch (err) {
             console.error("Publish failed:", err);
             setPublishError(err instanceof Error ? err.message : "Failed to publish tool");
@@ -91,24 +96,74 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
         }
     };
 
+    const handleUnpublish = async () => {
+        const ok = await confirmDialog({
+            title: "Return to Draft",
+            description: "Are you sure you want to return this tool to draft status?",
+            confirmLabel: "Return",
+        });
+        if (!ok) return;
+
+        setIsUnpublishing(true);
+        setPublishError(null);
+        try {
+            await fetchApi(`/asset-registry/tools/${tool.asset_id}/unpublish`, {
+                method: "POST",
+            });
+            onRefresh?.();
+            onClose();
+        } catch (err) {
+            console.error("Unpublish failed:", err);
+            setPublishError(err instanceof Error ? err.message : "Failed to unpublish tool");
+        } finally {
+            setIsUnpublishing(false);
+        }
+    };
+
+    const handleDeleteDraft = async () => {
+        const ok = await confirmDialog({
+            title: "Delete Draft Tool",
+            description: "Delete this draft tool? This action cannot be undone.",
+            confirmLabel: "Delete",
+            variant: "destructive",
+        });
+        if (!ok) return;
+
+        setIsDeleting(true);
+        setPublishError(null);
+        try {
+            await fetchApi(`/asset-registry/tools/${tool.asset_id}`, {
+                method: "DELETE",
+            });
+            onRefresh?.();
+            onClose();
+        } catch (err) {
+            console.error("Delete failed:", err);
+            setPublishError(err instanceof Error ? err.message : "Failed to delete tool");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
+        <>
         <div className="rounded-2xl border border-variant bg-surface-base overflow-hidden shadow-2xl backdrop-blur-sm h-full flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-variant flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         <span className={cn(
-                            "px-2 py-0.5 rounded text-tiny font-bold uppercase tracking-wider border",
+                            "inline-flex px-3 py-1 rounded-full text-tiny uppercase font-bold tracking-widest border",
                             tool.status === "published"
-                                ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50"
-                                : "bg-surface-overlay text-muted-foreground border-variant"
+                                ? "bg-success/15 text-success border-success/30"
+                                : "bg-surface-elevated text-muted-foreground border-border"
                         )}>
                             {tool.status}
                         </span>
-                        <span className="text-xs font-mono text-muted-foreground">v{tool.version}</span>
+                        <span className="text-tiny font-mono text-muted-foreground">v{tool.version}</span>
                     </div>
-                    <h3 className="text-foreground font-bold text-lg mt-1 truncate">{tool.name}</h3>
-                    <p className="text-xs mt-0.5 line-clamp-2 text-muted-foreground">{tool.description || "No description"}</p>
+                    <h3 className="text-foreground font-bold text-base mt-2 truncate">{tool.name}</h3>
+                    <p className="text-tiny mt-1 line-clamp-2 text-muted-foreground">{tool.description || "No description"}</p>
                 </div>
                 <button
                     onClick={onClose}
@@ -185,29 +240,29 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                             <div className={cn(
                                 "rounded-lg border p-4",
                                 testResult.success
-                                    ? "bg-emerald-950/30 border-emerald-800/50"
-                                    : "bg-red-950/30 border-red-800/50"
+                                    ? "bg-success/10 border-success/30"
+                                    : "bg-error/10 border-error/30"
                             )}>
                                 <div className="flex items-center gap-2 mb-2">
                                     {testResult.success ? (
-                                        <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     ) : (
-                                        <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-4 h-4 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     )}
                                     <span className={cn(
-                                        "text-sm font-bold",
-                                        testResult.success ? "text-emerald-300" : "text-red-300"
+                                        "text-tiny font-bold uppercase tracking-wider",
+                                        testResult.success ? "text-success" : "text-error"
                                     )}>
                                         {testResult.success ? "Success" : "Failed"}
                                     </span>
                                 </div>
 
                                 {testResult.error && (
-                                    <div className="text-red-300 text-xs mb-2">
+                                    <div className="text-error text-tiny mb-2">
                                         {testResult.error}
                                     </div>
                                 )}
@@ -217,7 +272,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                                         <label className="block text-tiny font-bold uppercase tracking-widest mb-1 text-muted-foreground">
                                             Output
                                         </label>
-                                        <pre className="rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-60 overflow-y-auto bg-surface-base text-muted-foreground">
+                                        <pre className="rounded-lg p-3 text-tiny font-mono overflow-x-auto max-h-60 overflow-y-auto bg-surface-base text-muted-foreground">
                                             {JSON.stringify(testResult.data, null, 2)}
                                         </pre>
                                     </div>
@@ -233,7 +288,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                             <label className="block text-tiny font-bold uppercase tracking-widest mb-2 text-muted-foreground">
                                 Input Schema
                             </label>
-                            <pre className="rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-60 overflow-y-auto border border-variant bg-surface-base text-muted-foreground">
+                            <pre className="rounded-lg p-3 text-tiny font-mono overflow-x-auto max-h-60 overflow-y-auto border border-variant bg-surface-base text-muted-foreground">
                                 {JSON.stringify(tool.tool_input_schema, null, 2)}
                             </pre>
                         </div>
@@ -243,7 +298,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                                 <label className="block text-tiny font-bold uppercase tracking-widest mb-2 text-muted-foreground">
                                     Output Schema
                                 </label>
-                                <pre className="rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-60 overflow-y-auto border border-variant bg-surface-base text-muted-foreground">
+                                <pre className="rounded-lg p-3 text-tiny font-mono overflow-x-auto max-h-60 overflow-y-auto border border-variant bg-surface-base text-muted-foreground">
                                     {JSON.stringify(tool.tool_output_schema, null, 2)}
                                 </pre>
                             </div>
@@ -258,7 +313,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                                 Tool Type
                             </label>
                             <div className="px-3 py-2 border border-variant rounded-lg bg-surface-base">
-                                <span className="text-sm font-mono text-muted-foreground">{tool.tool_type}</span>
+                                <span className="text-tiny font-mono text-muted-foreground">{tool.tool_type}</span>
                             </div>
                         </div>
 
@@ -268,7 +323,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                                     🗄️ Linked Catalog
                                 </label>
                                 <div className="px-3 py-2 bg-sky-950/30 border border-sky-800/50 rounded-lg">
-                                    <span className="text-sky-300 text-sm font-mono">{tool.tool_catalog_ref}</span>
+                                    <span className="text-sky-300 text-tiny font-mono">{tool.tool_catalog_ref}</span>
                                 </div>
                                 <p className="text-tiny mt-1 text-muted-foreground">This Tool references a database schema catalog for accurate SQL generation</p>
                             </div>
@@ -278,7 +333,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                             <label className="block text-tiny font-bold uppercase tracking-widest mb-2 text-muted-foreground">
                                 Configuration
                             </label>
-                            <pre className="rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-80 overflow-y-auto border border-variant bg-surface-base text-muted-foreground">
+                            <pre className="rounded-lg p-3 text-tiny font-mono overflow-x-auto max-h-80 overflow-y-auto border border-variant bg-surface-base text-muted-foreground">
                                 {JSON.stringify(tool.tool_config, null, 2)}
                             </pre>
                         </div>
@@ -288,7 +343,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                                 <label className="block text-tiny font-bold uppercase tracking-widest mb-2 text-muted-foreground">
                                     Tags
                                 </label>
-                                <pre className="rounded-lg p-3 text-xs font-mono overflow-x-auto border border-variant bg-surface-base text-muted-foreground">
+                                <pre className="rounded-lg p-3 text-tiny font-mono overflow-x-auto border border-variant bg-surface-base text-muted-foreground">
                                     {JSON.stringify(tool.tags, null, 2)}
                                 </pre>
                             </div>
@@ -300,34 +355,79 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
             {/* Footer Actions */}
             <div className="p-4 border-t border-variant space-y-3">
                 {publishError && (
-                    <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                    <div className="rounded-md border border-error/40 bg-error/10 px-3 py-2 text-tiny text-error">
                         {publishError}
                     </div>
                 )}
                 <div className="flex gap-3">
                     {tool.status === "draft" && (
+                        <>
+                            <button
+                                onClick={handleDeleteDraft}
+                                disabled={isDeleting || isPublishing}
+                                className={cn(
+                                    "flex-1 px-4 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest",
+                                    isDeleting
+                                        ? "bg-surface-elevated border-variant text-muted-foreground cursor-not-allowed opacity-70"
+                                        : "bg-error/15 text-error border-error/40 hover:bg-error/25 hover:border-error"
+                                )}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    {isDeleting ? "Deleting..." : "Delete Draft"}
+                                </span>
+                            </button>
+                            <button
+                                onClick={handlePublish}
+                                disabled={isPublishing || isDeleting}
+                                className={cn(
+                                    "flex-1 px-4 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest",
+                                    isPublishing
+                                        ? "bg-surface-elevated border-variant text-muted-foreground cursor-not-allowed opacity-70"
+                                        : "bg-success/15 text-success border-success/40 hover:bg-success/25 hover:border-success"
+                                )}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {isPublishing ? "Publishing..." : "Publish Tool"}
+                                </span>
+                            </button>
+                        </>
+                    )}
+                    {tool.status === "published" && (
                         <button
-                            onClick={handlePublish}
-                            disabled={isPublishing}
+                            onClick={handleUnpublish}
+                            disabled={isUnpublishing}
                             className={cn(
-                                "flex-1 py-3 rounded-lg transition-all font-bold text-tiny uppercase tracking-widest",
-                                isPublishing
-                                    ? "bg-surface-elevated text-muted-foreground cursor-not-allowed"
-                                    : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                                "flex-1 px-4 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest",
+                                isUnpublishing
+                                    ? "bg-surface-elevated border-variant text-muted-foreground cursor-not-allowed opacity-70"
+                                    : "bg-warning/15 text-warning border-warning/40 hover:bg-warning/25 hover:border-warning"
                             )}
                         >
-                            {isPublishing ? "Publishing..." : "Publish Tool"}
+                            <span className="flex items-center justify-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                                </svg>
+                                {isUnpublishing ? "Rolling back..." : "Return to Draft"}
+                            </span>
                         </button>
                     )}
                     <button
                         onClick={onClose}
-                        className="flex-1 py-3 bg-surface-elevated hover:bg-surface-overlay rounded-lg transition-all font-bold text-tiny uppercase tracking-widest text-muted-foreground"
+                        className="flex-1 px-4 py-3 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-surface-base text-foreground border-variant hover:border-sky-600 hover:bg-sky-600 dark:bg-surface-base dark:text-muted-foreground dark:border-variant dark:hover:border-sky-500 dark:hover:bg-sky-600"
                     >
                         Close
                     </button>
                 </div>
             </div>
         </div>
+        <ConfirmDialogComponent />
+        </>
     );
 }
 

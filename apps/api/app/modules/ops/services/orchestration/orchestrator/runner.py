@@ -73,6 +73,7 @@ from app.modules.ops.services.orchestration.tools import (
     ToolType,
     get_tool_executor,
 )
+from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 from app.modules.ops.services.orchestration.tools.cache import ToolResultCache
 from app.modules.ops.services.orchestration.tools.observability import ExecutionTracer
 
@@ -644,6 +645,34 @@ class OpsOrchestratorRunner:
                 "error_type": type(e).__name__,
                 "data": None,
             }
+
+    def _resolve_tool_asset_name(
+        self,
+        preferred_name: str,
+        capability_hints: Sequence[str] | None = None,
+        type_hints: Sequence[str] | None = None,
+    ) -> str:
+        """Resolve tool asset name from runtime registry."""
+        try:
+            registry = get_tool_registry()
+            if registry.is_registered(preferred_name):
+                return preferred_name
+
+            for capability in capability_hints or []:
+                candidate = registry.find_tool_by_capability(capability)
+                if candidate:
+                    return getattr(candidate, "tool_name", preferred_name)
+
+            for tool_type in type_hints or []:
+                matches = registry.find_tools_by_type(tool_type)
+                if matches:
+                    return getattr(matches[0], "tool_name", preferred_name)
+        except Exception as exc:
+            self.logger.warning(
+                "tool_asset_name_resolution_failed",
+                extra={"preferred": preferred_name, "error": str(exc)},
+            )
+        return preferred_name
 
     def _build_metric_blocks_from_data(
         self,
@@ -4172,7 +4201,12 @@ class OpsOrchestratorRunner:
             "agg": metric_spec.agg or "AVG",
         }
 
-        result = await self._execute_tool_asset_async("metric_query", metric_params)
+        metric_tool_name = self._resolve_tool_asset_name(
+            "metric_query",
+            capability_hints=("metric_query", "metric_aggregate"),
+            type_hints=("metric_query", "database_query"),
+        )
+        result = await self._execute_tool_asset_async(metric_tool_name, metric_params)
 
         if not result.get("success"):
             error_msg = result.get("error", "Failed to retrieve metric data")
@@ -4230,7 +4264,12 @@ class OpsOrchestratorRunner:
             "time_range": metric_spec.time_range or "last_24h",
         }
 
-        result = await self._execute_tool_asset_async("ci_aggregation", agg_params)
+        aggregation_tool_name = self._resolve_tool_asset_name(
+            "ci_aggregation",
+            capability_hints=("ci_aggregate", "metric_aggregate"),
+            type_hints=("database_query",),
+        )
+        result = await self._execute_tool_asset_async(aggregation_tool_name, agg_params)
 
         if not result.get("success"):
             error_msg = result.get("error", "Failed to aggregate metrics")

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchApi } from "../../lib/adminUtils";
+import { cn } from "@/lib/utils";
 import ValidationAlert from "./ValidationAlert";
 
 interface CreateToolModalProps {
@@ -58,6 +59,10 @@ interface McpImportResponse {
     total_errors?: number;
 }
 
+interface OperationSettingValue {
+    value?: unknown;
+}
+
 const TOOL_TYPES = [
     { value: "database_query", label: "Database Query", description: "Execute SQL queries against data sources" },
     { value: "http_api", label: "HTTP API", description: "Call external REST APIs" },
@@ -67,7 +72,7 @@ const TOOL_TYPES = [
 ] as const;
 
 // Available capabilities for tool selection
-const AVAILABLE_CAPABILITIES = [
+const DEFAULT_CAPABILITIES = [
     { value: "ci_lookup", label: "CI Lookup", description: "Retrieve single CI details" },
     { value: "ci_search", label: "CI Search", description: "Search multiple CIs" },
     { value: "ci_list", label: "CI List", description: "List CIs with pagination" },
@@ -83,7 +88,7 @@ const AVAILABLE_CAPABILITIES = [
 ] as const;
 
 // Available modes for tool support
-const AVAILABLE_MODES = [
+const DEFAULT_MODES = [
     { value: "config", label: "Config", description: "Configuration mode" },
     { value: "metric", label: "Metric", description: "Metric mode" },
     { value: "graph", label: "Graph", description: "Graph/Topology mode" },
@@ -162,6 +167,66 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             return (response.data as { apis?: ApiManagerItem[] })?.apis || [];
         },
     });
+
+    const { data: toolOptionSettings } = useQuery({
+        queryKey: ["tool-option-settings"],
+        queryFn: async () => {
+            const response = await fetchApi<{ settings?: Record<string, OperationSettingValue> }>("/settings/operations");
+            return response.data?.settings ?? {};
+        },
+    });
+
+    const capabilityOptions = useMemo(() => {
+        const raw = toolOptionSettings?.ops_tool_capabilities?.value;
+        if (!Array.isArray(raw)) {
+            return DEFAULT_CAPABILITIES;
+        }
+        const normalized = raw
+            .map((item) => String(item ?? "").trim())
+            .filter(Boolean)
+            .map((value) => ({
+                value,
+                label: value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                description: `Custom capability: ${value}`,
+            }));
+        return normalized.length > 0 ? normalized : DEFAULT_CAPABILITIES;
+    }, [toolOptionSettings]);
+
+    const modeOptions = useMemo(() => {
+        const raw = toolOptionSettings?.ops_tool_supported_modes?.value;
+        if (!Array.isArray(raw)) {
+            return DEFAULT_MODES;
+        }
+        const normalized = raw
+            .map((item) => String(item ?? "").trim())
+            .filter(Boolean)
+            .map((value) => ({
+                value,
+                label: value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                description: `Custom mode: ${value}`,
+            }));
+        return normalized.length > 0 ? normalized : DEFAULT_MODES;
+    }, [toolOptionSettings]);
+
+    useEffect(() => {
+        setSelectedCapabilities((prev) => {
+            const allowed = new Set(capabilityOptions.map((opt) => opt.value));
+            const next = new Set(Array.from(prev).filter((value) => allowed.has(value)));
+            return next;
+        });
+    }, [capabilityOptions]);
+
+    useEffect(() => {
+        setSelectedModes((prev) => {
+            const allowed = new Set(modeOptions.map((opt) => opt.value));
+            const filtered = Array.from(prev).filter((value) => allowed.has(value));
+            if (filtered.length > 0) {
+                return new Set(filtered);
+            }
+            const fallback = allowed.has("all") ? "all" : modeOptions[0]?.value;
+            return fallback ? new Set([fallback]) : new Set();
+        });
+    }, [modeOptions]);
 
     const handleApiSelection = (apiId: string) => {
         setSelectedApiId(apiId);
@@ -457,7 +522,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-            <div className="container-panel max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] bg-surface-base dark:bg-surface-base text-foreground dark:text-slate-50">
+            <div className="rounded-2xl border border-variant bg-surface-base max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-6 border-b border-variant">
                     <div>
                         <h2 className="text-xl font-bold text-foreground">Create New Tool</h2>
@@ -465,7 +530,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     </div>
                     <button
                         onClick={onClose}
-                        className="hover:text-foreground transition-colors text-muted-foreground dark:text-muted-foreground"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -501,18 +566,21 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                 setToolConfig(JSON.stringify(DEFAULT_TOOL_CONFIG, null, 2));
                                             }
                                         }}
-                                        className={`px-4 py-3 rounded-xl border text-left transition-all ${
+                                        className={cn(
+                                            "px-4 py-3 rounded-xl border text-left transition-all",
                                             toolType === type.value
-                                                ? "bg-sky-600/20 border-sky-500 shadow-lg shadow-sky-900/10"
-                                                : "hover:"
-                                        } bg-surface-base border-variant`}
+                                                ? "bg-sky-600/20 border-sky-500 text-sky-300 shadow-lg shadow-sky-900/10"
+                                                : "bg-surface-base border-variant text-foreground hover:bg-surface-elevated"
+                                        )}
                                     >
                                         <span className={`block font-bold text-sm ${
-                                            toolType === type.value ? "text-sky-400" : ""
-                                        } text-foreground`}>
+                                            toolType === type.value ? "text-sky-300" : "text-foreground"
+                                        }`}>
                                             {type.label}
                                         </span>
-                                        <span className="block text-xs mt-0.5 text-muted-foreground">
+                                        <span className={`block text-xs mt-0.5 ${
+                                            toolType === type.value ? "text-sky-200/90" : "text-muted-foreground"
+                                        }`}>
                                             {type.description}
                                         </span>
                                     </button>
@@ -529,7 +597,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 <select
                                     value={selectedApiId}
                                     onChange={(e) => handleApiSelection(e.target.value)}
-                                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
+                                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                 >
                                     <option value="">-- Select API Manager API --</option>
                                     {apiManagerApis.map((api: ApiManagerItem) => (
@@ -560,7 +628,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             value={mcpServerUrl}
                                             onChange={(e) => setMcpServerUrl(e.target.value)}
                                             placeholder="e.g. http://localhost:3100/sse"
-                                            className="w-full px-3 py-3 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
+                                            className="w-full px-3 py-3 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                         />
                                     </div>
                                     <div className="w-[180px]">
@@ -726,7 +794,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Describe what this tool does and include keywords that help LLM select it. E.g., 'Search equipment inventory. Keywords: equipment, 장비, machine, 설비'"
                                         rows={3}
-                                        className="w-full px-4 py-3 border rounded-xl placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
+                                        className="w-full px-4 py-3 border rounded-xl placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base"
                                     />
                                 </div>
 
@@ -739,7 +807,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         <select
                                             value={sourceRef}
                                             onChange={(e) => handleSourceSelection(e.target.value)}
-                                            className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
+                                            className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                         >
                                             <option value="">-- Select Published Source --</option>
                                             {sourcesData.map((source) => (
@@ -774,7 +842,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                 handleSourceSelection(catalogSourceRef);
                                             }
                                         }}
-                                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base dark:bg-surface-base/50 dark:text-white dark:focus:border-sky-400"
+                                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                     >
                                         <option value="">-- No Catalog Selected --</option>
                                         {filteredCatalogs.map((catalog) => {
@@ -824,7 +892,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         <span className="font-normal text-sky-500 ml-2">(What operations this tool can perform)</span>
                                     </label>
                                     <div className="grid grid-cols-3 gap-2">
-                                        {AVAILABLE_CAPABILITIES.map((cap) => (
+                                        {capabilityOptions.map((cap) => (
                                             <button
                                                 key={cap.value}
                                                 type="button"
@@ -864,7 +932,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         <span className="font-normal text-sky-500 ml-2">(Which query modes this tool supports)</span>
                                     </label>
                                     <div className="grid grid-cols-3 gap-2">
-                                        {AVAILABLE_MODES.map((mode) => (
+                                        {modeOptions.map((mode) => (
                                             <button
                                                 key={mode.value}
                                                 type="button"
@@ -904,14 +972,19 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 border border-variant text-foreground hover:bg-slate-100 dark:border-variant dark:text-muted-foreground dark:hover:bg-surface-elevated transition-colors font-bold uppercase tracking-widest text-xs"
+                            className="flex-1 py-3 text-muted-foreground hover:text-foreground transition-colors font-bold uppercase tracking-widest text-xs"
                         >
-                            Cancel
+                            Discard
                         </button>
                         <button
                             onClick={handleCreate}
                             disabled={isCreating}
-                            className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-lg transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95 dark:bg-sky-700 dark:hover:bg-sky-600"
+                            className={cn(
+                                "flex-[2] py-3 rounded-xl transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95",
+                                isCreating
+                                    ? "bg-surface-elevated text-muted-foreground opacity-50"
+                                    : "bg-sky-600 hover:bg-sky-500 text-white dark:bg-sky-700 dark:hover:bg-sky-600"
+                            )}
                         >
                             {isCreating ? "Creating..." : "Create Tool Draft"}
                         </button>

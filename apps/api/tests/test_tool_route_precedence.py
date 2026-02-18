@@ -22,3 +22,8 @@ def test_tool_test_endpoint_prefers_dedicated_tool_router() -> None:
 def test_tool_publish_endpoint_prefers_dedicated_tool_router() -> None:
     module_name = _first_route_module("/asset-registry/tools/{asset_id}/publish", "POST")
     assert module_name == "app.modules.asset_registry.tool_router"
+
+
+def test_tool_unpublish_endpoint_prefers_dedicated_tool_router() -> None:
+    module_name = _first_route_module("/asset-registry/tools/{asset_id}/unpublish", "POST")
+    assert module_name == "app.modules.asset_registry.tool_router"

@@ -6,16 +6,22 @@ import platform
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List
 
 from psycopg import Connection
 
-from app.modules.asset_registry.loader import load_query_asset, load_source_asset
+from app.modules.asset_registry.loader import load_policy_asset, load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
+
+# System-required policy asset name (hardcoded - not configurable)
+DISCOVERY_POLICY_NAME = "discovery_config"
 
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "postgres_catalog.json"
-TARGET_TABLES = ["ci", "ci_ext"]
-AGG_COLUMNS = [
+
+# Default configuration (overridden by policy asset)
+_DEFAULT_TARGET_TABLES = ["ci", "ci_ext"]
+_DEFAULT_AGG_COLUMNS = [
     "ci_type",
     "ci_subtype",
     "ci_category",
@@ -23,6 +29,39 @@ AGG_COLUMNS = [
     "location",
     "owner",
 ]
+
+# Cache for discovery config
+_DISCOVERY_CONFIG_CACHE: Dict[str, Any] | None = None
+
+
+def _get_discovery_config() -> Dict[str, Any]:
+    """Load PostgreSQL discovery configuration from policy asset."""
+    global _DISCOVERY_CONFIG_CACHE
+    if _DISCOVERY_CONFIG_CACHE is not None:
+        return _DISCOVERY_CONFIG_CACHE
+
+    try:
+        policy = load_policy_asset(DISCOVERY_POLICY_NAME)
+        if policy:
+            content = policy.get("content", {})
+            pg_config = content.get("postgres", {})
+            if pg_config:
+                _DISCOVERY_CONFIG_CACHE = {
+                    "target_tables": pg_config.get("target_tables", _DEFAULT_TARGET_TABLES),
+                    "agg_columns": pg_config.get("agg_columns", _DEFAULT_AGG_COLUMNS),
+                    "queries": pg_config.get("queries", {}),
+                }
+                return _DISCOVERY_CONFIG_CACHE
+    except Exception as e:
+        pass  # Fall through to defaults
+
+    _DISCOVERY_CONFIG_CACHE = {
+        "target_tables": _DEFAULT_TARGET_TABLES,
+        "agg_columns": _DEFAULT_AGG_COLUMNS,
+        "queries": {},
+    }
+    return _DISCOVERY_CONFIG_CACHE
+
 
 def _get_connection():
     """Get connection using an explicitly provided source asset."""
@@ -36,15 +75,23 @@ def _get_connection():
 
 
 def _load_query(name: str) -> str:
-    # Discovery queries are served from query assets in DB.
+    """Load discovery query from Policy Asset.
+
+    Discovery queries are stored in Policy Assets with policy_type from DISCOVERY_POLICY_NAME.
+    The policy content should have a 'postgres.queries' dict mapping query names to query strings.
+    """
     query_name = Path(name).stem
-    asset, _ = load_query_asset("discovery", query_name)
-    query = asset.get("sql") if asset else None
-    if not query:
-        raise ValueError(
-            f"Postgres catalog query '{name}' not found in Asset Registry"
-        )
-    return query
+    config = _get_discovery_config()
+    queries = config.get("queries", {})
+    query = queries.get(query_name) or queries.get(name)
+    if query:
+        return query
+
+    raise ValueError(
+        f"Discovery query '{query_name}' not found. "
+        f"Please add it to policy asset '{DISCOVERY_POLICY_NAME}' "
+        f"under content.postgres.queries.{query_name}"
+    )
 
 
 def _mask_sensitive(value: str | None) -> str | None:
@@ -149,6 +196,10 @@ def _collect_jsonb_key_stats(conn: Connection, column: str) -> list[dict[str, ob
 
 
 def _build_catalog(conn: Connection) -> dict[str, object]:
+    config = _get_discovery_config()
+    target_tables = config.get("target_tables", _DEFAULT_TARGET_TABLES)
+    agg_columns = config.get("agg_columns", _DEFAULT_AGG_COLUMNS)
+
     columns = _fetch_columns(conn)
     available_columns = {
         col["column_name"] for col in columns if col["table_name"] == "ci"
@@ -166,7 +217,7 @@ def _build_catalog(conn: Connection) -> dict[str, object]:
         "tenant_counts": tenant_counts,
         "breakdowns": {},
     }
-    for column in AGG_COLUMNS:
+    for column in agg_columns:
         if column in available_columns:
             stats["ci_counts"]["breakdowns"][column] = _fetch_aggregation(conn, column)
     jsonb_catalog = {
@@ -174,7 +225,7 @@ def _build_catalog(conn: Connection) -> dict[str, object]:
         "attributes_keys": _collect_jsonb_key_stats(conn, "attributes"),
     }
     table_row_counts = {
-        table: _fetch_table_row_count(conn, table) for table in TARGET_TABLES
+        table: _fetch_table_row_count(conn, table) for table in target_tables
     }
     return {
         "schema": {"columns": columns},

@@ -149,7 +149,7 @@ class CIPlanner(BaseDomainPlanner):
 
     def get_prompt_asset_name(self) -> str:
         """Return the CI planner prompt asset name."""
-        return "ci_planner_output_parser"
+        return "ops_planner_output_parser"
 
     def get_prompt_scope(self) -> str:
         """Return the prompt scope for CI domain."""

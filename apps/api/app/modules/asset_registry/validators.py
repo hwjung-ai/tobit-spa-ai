@@ -25,23 +25,13 @@ def validate_asset(asset: TbAssetRegistry) -> None:
 
 def validate_prompt_asset(asset: TbAssetRegistry) -> None:
     """Validate prompt asset fields"""
-    if not asset.scope or asset.scope not in ["ci", "ops"]:
-        raise ValueError("Prompt asset must have scope of 'ci' or 'ops'")
+    # No hardcoded scope validation - allow any custom scope
+    if not asset.scope:
+        raise ValueError("Prompt asset must have scope")
 
-    # Accept all valid engine types including routers and langgraph
-    valid_engines = [
-        "planner",
-        "compose",
-        "langgraph",
-        "response_builder",
-        "validator",
-        "all_router",
-        "graph_router",
-        "history_router",
-        "metric_router",
-    ]
-    if not asset.engine or asset.engine not in valid_engines:
-        raise ValueError(f"Prompt asset must have engine of one of {valid_engines}")
+    # No hardcoded engine validation - allow any custom engine
+    if not asset.engine:
+        raise ValueError("Prompt asset must have engine")
 
     if not asset.template or not asset.template.strip():
         raise ValueError("Prompt asset must have non-empty template")
@@ -77,59 +67,16 @@ def validate_prompt_asset(asset: TbAssetRegistry) -> None:
 
 def validate_mapping_asset(asset: TbAssetRegistry) -> None:
     """Validate mapping asset fields"""
-    if not asset.mapping_type or asset.mapping_type != "graph_relation":
-        raise ValueError("Mapping asset must have mapping_type of 'graph_relation'")
+    if not asset.mapping_type:
+        raise ValueError("Mapping asset must have mapping_type")
 
     if not asset.content:
         raise ValueError("Mapping asset must have content")
 
-    # Validate structure matches relation_mapping.yaml
-    if "version" not in asset.content:
-        raise ValueError("Mapping content must have 'version' field")
-
-    if "views" not in asset.content:
-        raise ValueError("Mapping content must have 'views' field")
-
-    views = asset.content.get("views", {})
-    if not isinstance(views, dict):
-        raise ValueError("Mapping content 'views' must be a dictionary")
-
-    # Extended validation: views structure details
-    required_views = {
-        "SUMMARY",
-        "COMPOSITION",
-        "DEPENDENCY",
-        "IMPACT",
-        "PATH",
-        "NEIGHBORS",
-    }
-
-    for view_name in required_views:
-        if view_name not in views:
-            raise ValueError(f"Mapping content.views must include '{view_name}'")
-
-        view_config = views[view_name]
-        if not isinstance(view_config, dict):
-            raise ValueError(f"Mapping content.views.{view_name} must be a dictionary")
-
-        # rel_types required
-        if "rel_types" not in view_config:
-            raise ValueError(
-                f"Mapping content.views.{view_name} must have 'rel_types' field"
-            )
-
-        rel_types = view_config["rel_types"]
-        if not isinstance(rel_types, list):
-            raise ValueError(
-                f"Mapping content.views.{view_name}.rel_types must be a list"
-            )
-
-        # All elements must be strings
-        for rel_type in rel_types:
-            if not isinstance(rel_type, str):
-                raise ValueError(
-                    f"Mapping content.views.{view_name}.rel_types must contain only strings"
-                )
+    # No hardcoded structure validation - allow flexible mapping content
+    # Basic validation only
+    if not isinstance(asset.content, dict):
+        raise ValueError("Mapping content must be a dictionary")
 
     # summary_neighbors_allowlist validation (optional)
     if "summary_neighbors_allowlist" in asset.content:
@@ -153,91 +100,14 @@ def validate_mapping_asset(asset: TbAssetRegistry) -> None:
 
 def validate_policy_asset(asset: TbAssetRegistry) -> None:
     """Validate policy asset fields"""
-    valid_types = ["plan_budget", "view_depth"]
-    if not asset.policy_type or asset.policy_type not in valid_types:
-        raise ValueError(f"Policy asset must have policy_type in {valid_types}")
+    if not asset.policy_type:
+        raise ValueError("Policy asset must have policy_type")
 
-    if not asset.limits:
-        raise ValueError("Policy asset must have limits")
+    if not asset.limits and not asset.content:
+        raise ValueError("Policy asset must have limits or content")
 
-    limits = asset.limits
-
-    if asset.policy_type == "plan_budget":
-        # Validate max_steps
-        max_steps = limits.get("max_steps")
-        if max_steps is None or not isinstance(max_steps, int) or max_steps < 1:
-            raise ValueError("limits.max_steps must be integer >= 1")
-
-        # Validate timeout_ms
-        timeout_ms = limits.get("timeout_ms")
-        if timeout_ms is None or not isinstance(timeout_ms, int) or timeout_ms < 1000:
-            raise ValueError("limits.timeout_ms must be integer >= 1000")
-
-        # Validate max_depth
-        max_depth = limits.get("max_depth")
-        if max_depth is None or not isinstance(max_depth, int) or max_depth < 1:
-            raise ValueError("limits.max_depth must be integer >= 1")
-
-        if max_depth > 10:
-            raise ValueError("limits.max_depth must be <= 10")
-
-        # Validate max_branches (optional, default=3)
-        max_branches = limits.get("max_branches", 3)
-        if not isinstance(max_branches, int) or max_branches < 1:
-            raise ValueError("limits.max_branches must be integer >= 1")
-
-        # Validate max_iterations (optional, default=100)
-        max_iterations = limits.get("max_iterations", 100)
-        if not isinstance(max_iterations, int) or max_iterations < 1:
-            raise ValueError("limits.max_iterations must be integer >= 1")
-
-    elif asset.policy_type == "view_depth":
-        # Validate view_depth policy type
-        views = limits.get("views")
-        if not views or not isinstance(views, dict):
-            raise ValueError("limits.views must be a dictionary")
-
-        required_views = {
-            "SUMMARY",
-            "COMPOSITION",
-            "DEPENDENCY",
-            "IMPACT",
-            "PATH",
-            "NEIGHBORS",
-        }
-        for view_name in required_views:
-            if view_name not in views:
-                raise ValueError(f"limits.views must include '{view_name}'")
-
-            view_policy = views[view_name]
-            if not isinstance(view_policy, dict):
-                raise ValueError(f"limits.views.{view_name} must be a dictionary")
-
-            # default_depth validation
-            default_depth = view_policy.get("default_depth")
-            if (
-                default_depth is None
-                or not isinstance(default_depth, int)
-                or default_depth < 1
-            ):
-                raise ValueError(
-                    f"limits.views.{view_name}.default_depth must be integer >= 1"
-                )
-
-            # max_depth validation
-            max_depth = view_policy.get("max_depth")
-            if max_depth is None or not isinstance(max_depth, int) or max_depth < 1:
-                raise ValueError(
-                    f"limits.views.{view_name}.max_depth must be integer >= 1"
-                )
-            if max_depth > 10:
-                raise ValueError(f"limits.views.{view_name}.max_depth must be <= 10")
-
-            # default_depth <= max_depth constraint
-            if default_depth > max_depth:
-                raise ValueError(
-                    f"limits.views.{view_name}.default_depth must be <= max_depth"
-                )
+    # No hardcoded policy_type validation - allow any custom policy type
+    # No hardcoded structure validation - limits/content structure is flexible
 
 
 def validate_query_asset(asset: TbAssetRegistry) -> None:
@@ -373,5 +243,4 @@ def validate_screen_asset(asset: TbAssetRegistry) -> None:
 
     if "initial" not in state:
         raise ValueError("Screen schema_json.state must include 'initial'")
-
 

@@ -15,6 +15,9 @@ from app.modules.ops.services.orchestration.planner.plan_schema import (
     View,
 )
 
+# System-required policy asset name (hardcoded - not configurable)
+PLAN_BUDGET_POLICY_NAME = "plan_budget"
+
 AUTO_METRIC_CANDIDATES = ["cpu_usage", "latency", "error"]
 
 
@@ -23,7 +26,7 @@ def get_default_budget() -> BudgetSpec:
     try:
         from app.modules.asset_registry.loader import load_policy_asset
 
-        policy_asset = load_policy_asset("plan_budget")
+        policy_asset = load_policy_asset(PLAN_BUDGET_POLICY_NAME)
         if policy_asset:
             return BudgetSpec(
                 max_steps=policy_asset.get("max_steps", 10),
@@ -33,7 +36,7 @@ def get_default_budget() -> BudgetSpec:
                 max_iterations=policy_asset.get("max_iterations", 100),
             )
     except Exception as e:
-        logger.warning(f"Failed to load policy asset for budget: {e}")
+        logger.warning(f"Failed to load policy asset '{PLAN_BUDGET_POLICY_NAME}' for budget: {e}")
 
     # Ultimate fallback
     return BudgetSpec()
@@ -387,12 +390,12 @@ def validate_plan(
     # This ensures policy is tracked even when Plan is deserialized from JSON
     from app.modules.asset_registry.loader import load_policy_asset
 
-    logger.info("validate_plan: Loading policy asset for tracking")
-    policy_data = load_policy_asset("plan_budget")
+    logger.info(f"validate_plan: Loading policy asset '{PLAN_BUDGET_POLICY_NAME}' for tracking")
+    policy_data = load_policy_asset(PLAN_BUDGET_POLICY_NAME)
     if policy_data:
         logger.info(f"validate_plan: Policy loaded from source={policy_data.get('_asset_meta', {}).get('source', 'unknown')}")
     else:
-        logger.warning("validate_plan: Policy load returned None")
+        logger.warning(f"validate_plan: Policy '{PLAN_BUDGET_POLICY_NAME}' load returned None")
 
     normalized = plan.copy()
     mode = normalized.mode

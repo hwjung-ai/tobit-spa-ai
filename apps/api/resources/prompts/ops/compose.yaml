@@ -1,5 +1,5 @@
 version: 1
-name: ci_compose_summary
+name: ops_compose_summary
 templates:
   system: |
     You are an expert CI (Configuration Item) operations analyst. Your task is to create a clear, concise summary of query results for the user.

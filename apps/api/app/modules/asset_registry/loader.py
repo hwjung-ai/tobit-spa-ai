@@ -138,21 +138,18 @@ def load_prompt_asset(
 
 
 def load_mapping_asset(
-    mapping_type: str = "graph_relation", version: int | None = None, scope: str | None = None
-) -> dict[str, Any] | None:
+    mapping_type: str, version: int | None = None, scope: str | None = None
+) -> tuple[dict[str, Any] | None, str | None]:
     """
-    Load mapping asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. File from resources/
-    3. Legacy file (current location)
+    Load mapping asset from Asset Registry (DB only).
 
     Args:
-        mapping_type: Mapping type identifier
+        mapping_type: Mapping type identifier (required)
         version: Specific version to load (None for published)
         scope: Scope to filter by (e.g., "ops", "ci"). If None, searches all scopes.
 
     Returns:
-        Mapping asset content dict, or None if not found
+        Tuple of (content_dict, metadata_str) or (None, None) if not found
     """
     with get_session_context() as session:
         # Query by name instead of mapping_type since mapping_type may be NULL
@@ -191,66 +188,19 @@ def load_mapping_asset(
             # Return tuple: (content_dict, metadata_str)
             return (dict(asset.content or {}), metadata_str)
 
-    # Fallback to seed file (only in test/dev mode)
-    if _is_real_mode():
-        raise ValueError(
-            f"[REAL MODE] Mapping asset not found in Asset Registry: {mapping_type}. "
-            f"Asset must be published to Asset Registry (DB) in real mode. "
-            f"Please create and publish the asset in Admin → Assets."
-        )
-
-    seed_path = "mappings/graph_relation_mapping.yaml"
-    seed_data = config_loader.load_yaml(seed_path)
-
-    if seed_data and "content" in seed_data:
-        logger.warning(f"Using seed file for mapping: resources/{seed_path}")
-        metadata_str = f"seed_file:{mapping_type}"
-        track_mapping_asset(
-            {
-                "asset_id": None,
-                "name": mapping_type,
-                "version": None,
-                "source": "seed_file",
-                "mapping_type": mapping_type,
-            }
-        )
-        # Return tuple: (content_dict, metadata_str)
-        return (dict(seed_data.get("content") or {}), metadata_str)
-
-    # Legacy fallback
-    legacy_path = "app/modules/ops/services/ci/relation_mapping.yaml"
-    legacy_data = config_loader.load_yaml(legacy_path)
-
-    if legacy_data:
-        logger.warning(f"Using legacy file for mapping: {legacy_path}")
-        metadata_str = f"legacy_file:{mapping_type}"
-        track_mapping_asset(
-            {
-                "asset_id": None,
-                "name": mapping_type,
-                "version": None,
-                "source": "legacy_file",
-                "mapping_type": mapping_type,
-            }
-        )
-        # Return tuple: (content_dict, metadata_str)
-        return (dict(legacy_data), metadata_str)
-
-    logger.warning(f"Mapping asset not found: {mapping_type}")
+    # Asset not found
+    logger.warning(f"Mapping asset not found: {mapping_type} (scope={scope})")
     return (None, None)
 
 
 def load_policy_asset(
-    policy_type: str = "plan_budget", version: int | None = None, scope: str | None = None
+    policy_type: str, version: int | None = None, scope: str | None = None
 ) -> dict[str, Any] | None:
     """
-    Load policy asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. Seed file from resources/
-    3. Hardcoded defaults
+    Load policy asset from Asset Registry (DB only).
 
     Args:
-        policy_type: Policy type identifier
+        policy_type: Policy type identifier (required)
         version: Specific version to load (None for published)
         scope: Scope to filter by (e.g., "ops", "ci"). If None, searches all scopes.
     """
@@ -311,56 +261,14 @@ def load_policy_asset(
             )
             return payload
 
-    # Fallback to seed file or hardcoded (only in test/dev mode)
-    if _is_real_mode():
-        raise ValueError(
-            f"[REAL MODE] Policy asset not found in Asset Registry: {policy_type}. "
-            f"Asset must be published to Asset Registry (DB) in real mode. "
-            f"Please create and publish the asset in Admin → Assets."
-        )
-
-    seed_file_map = {
-        "plan_budget": "policies/plan_budget.yaml",
-        "view_depth": "policies/view_depth_policies.yaml",
-    }
-
-    if policy_type in seed_file_map:
-        seed_path = seed_file_map[policy_type]
-        seed_data = config_loader.load_yaml(seed_path)
-        if seed_data and "limits" in seed_data:
-            logger.warning(
-                f"Using seed file for policy '{policy_type}': resources/{seed_path}"
-            )
-            payload = dict(seed_data["limits"] or {})
-            payload["_asset_meta"] = {
-                "asset_id": None,
-                "name": policy_type,
-                "version": None,
-                "source": "seed_file",
-                "policy_type": policy_type,
-            }
-            track_policy_asset(
-                {
-                    "asset_id": None,
-                    "name": policy_type,
-                    "version": None,
-                    "source": "seed_file",
-                    "policy_type": policy_type,
-                }
-            )
-            return payload
-
-    # No fallback - policy asset is required
-    logger.error(f"Policy asset '{policy_type}' not found in DB or seed files")
-    raise ValueError(
-        f"Policy asset '{policy_type}' is required but not found. "
-        f"Please create the policy asset in the database or provide a seed file."
-    )
+    # Asset not found
+    logger.warning(f"Policy asset not found: {policy_type} (scope={scope})")
+    return None
 
 
 def load_query_asset(
     scope: str, name: str, version: int | None = None
-) -> dict[str, Any] | None:
+) -> tuple[dict[str, Any] | None, str | None]:
     """
     Load query asset from Asset Registry (DB):
     1. Specific version from DB (if version specified), or

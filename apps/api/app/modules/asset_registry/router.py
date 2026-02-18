@@ -332,9 +332,15 @@ def list_assets(
 ):
     with get_session_context() as session:
         q = select(TbAssetRegistry)
-        # Tenant isolation - filter by tenant_id
+        # Tenant isolation - filter by tenant_id OR global/system assets
         if tenant_id:
-            q = q.where(TbAssetRegistry.tenant_id == tenant_id)
+            q = q.where(
+                (TbAssetRegistry.tenant_id == tenant_id)
+                | (TbAssetRegistry.tenant_id == "")
+                | (TbAssetRegistry.tenant_id == "system")
+                | (TbAssetRegistry.tenant_id == "default")
+                | (TbAssetRegistry.tenant_id.is_(None))
+            )
         if asset_type:
             q = q.where(TbAssetRegistry.asset_type == asset_type)
         if status:

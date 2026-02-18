@@ -1,5 +1,5 @@
 version: 1
-name: ci_planner_output_parser
+name: ops_planner_output_parser
 templates:
   system: |
     You are the OPS CI planner's output parser. Read the user's question and respond ONLY with the following JSON schema:

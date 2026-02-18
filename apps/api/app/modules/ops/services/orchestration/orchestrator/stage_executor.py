@@ -25,11 +25,16 @@ from app.modules.ops.schemas import (
     StageInput,
     StageOutput,
 )
-from app.modules.ops.services.orchestration.tools.base import ToolContext
+from app.modules.ops.services.orchestration.planner.plan_schema import Plan, PlanMode
+from app.modules.ops.services.orchestration.tools.base import (
+    ToolContext,
+    get_tool_registry,
+)
 from app.modules.ops.services.orchestration.tools.executor import ToolExecutor
 from app.shared import config_loader
 
 logger = get_logger(__name__)
+DEFAULT_OUTPUT_FORMAT_NAME = "default_output_format"
 
 
 class StageExecutor:
@@ -60,6 +65,7 @@ class StageExecutor:
         self.stage_inputs: List[StageInput] = []
         self.stage_outputs: List[StageOutput] = []
         self._llm = None  # Lazy-loaded LLM client
+        self._output_format_cache: Dict[str, Any] | None = None
         self._query_asset_results: List[
             Dict[str, Any]
         ] = []  # Cache Query Asset results per execution
@@ -310,8 +316,6 @@ class StageExecutor:
 
         if plan_output_kind == "plan" and plan_dict:
             # Convert dict back to Plan object for easier access
-            from app.modules.ops.services.orchestration.planner.plan_schema import Plan, PlanMode
-
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
 
             # Handle "all" mode - full orchestration with all available tools
@@ -546,9 +550,14 @@ class StageExecutor:
                                     "LIMIT 1"
                                 )
                                 try:
+                                    detail_tool_name = self._resolve_runtime_tool_name(
+                                        "direct_query",
+                                        capability_hints=["database_query"],
+                                        type_hints=["database_query"],
+                                    )
                                     detail_result = (
                                         await self.tool_executor.execute_tool(
-                                            tool_type="direct_query",
+                                            tool_type=detail_tool_name,
                                             params={"sql": sql},
                                             context=tool_context,
                                         )
@@ -1065,11 +1074,11 @@ class StageExecutor:
                         }
 
                 # If CI detail is missing, derive from primary results (best-effort)
-                if not composed_result.get("ci_detail") and primary_results:
+                if not composed_result.get("ci_detail") and primary_results_all:
                     primary_rows = []
-                    primary_data = primary_results[0].get("data", {})
-                    if isinstance(primary_results[0].get("rows"), list):
-                        primary_rows = primary_results[0].get("rows", [])
+                    primary_data = primary_results_all[0].get("data", {})
+                    if isinstance(primary_results_all[0].get("rows"), list):
+                        primary_rows = primary_results_all[0].get("rows", [])
                     elif isinstance(primary_data, dict) and isinstance(
                         primary_data.get("rows"), list
                     ):
@@ -1184,6 +1193,36 @@ class StageExecutor:
 
         return self._sanitize_json_value(composed_result)
 
+    def _load_default_output_format(self) -> Dict[str, Any]:
+        """Load default output format definition from resources."""
+        if self._output_format_cache is not None:
+            return self._output_format_cache
+
+        payload = config_loader.load_yaml("output_formats/default_output_format.yaml")
+        if not isinstance(payload, dict):
+            self._output_format_cache = {}
+            return self._output_format_cache
+
+        content = payload.get("content", {})
+        formats = content.get("formats", {}) if isinstance(content, dict) else {}
+        self._output_format_cache = {
+            "name": payload.get("name", DEFAULT_OUTPUT_FORMAT_NAME),
+            "formats": formats if isinstance(formats, dict) else {},
+        }
+        return self._output_format_cache
+
+    def _apply_text_output_format(self, summary: str) -> str:
+        """Apply default text template to summary when configured."""
+        if not summary:
+            return summary
+        output_format = self._load_default_output_format()
+        formats = output_format.get("formats", {})
+        text_format = formats.get("text", {}) if isinstance(formats, dict) else {}
+        template = text_format.get("template") if isinstance(text_format, dict) else None
+        if isinstance(template, str) and "{summary}" in template:
+            return template.replace("{summary}", summary).strip()
+        return summary
+
     async def _execute_present(self, stage_input: StageInput) -> Dict[str, Any]:
         """Execute the present stage."""
         # Get plan_output from params (as model_dump dict)
@@ -1200,6 +1239,9 @@ class StageExecutor:
 
         # Prepare presentation blocks based on plan
         blocks = []
+        output_format_name = self._load_default_output_format().get(
+            "name", DEFAULT_OUTPUT_FORMAT_NAME
+        )
 
         plan_kind = (
             plan_output.get("kind")
@@ -1245,6 +1287,7 @@ class StageExecutor:
                 self.logger.info(
                     "📊 [PRESENT] Using LLM-composed answer from compose stage"
                 )
+                llm_summary = self._apply_text_output_format(llm_summary)
 
                 # Add LLM summary as the first block
                 blocks.append(
@@ -1353,6 +1396,7 @@ class StageExecutor:
                     "references": [],
                     "summary": llm_summary,
                     "presented_at": time.time(),
+                    "output_format": output_format_name,
                 }
                 return result
             # ===== END NEW =====
@@ -1364,6 +1408,7 @@ class StageExecutor:
                 else None
             )
             if llm_summary:
+                llm_summary = self._apply_text_output_format(llm_summary)
                 blocks.append(
                     {
                         "type": "markdown",
@@ -1499,6 +1544,7 @@ class StageExecutor:
         # If no blocks were created and no summary was provided,
         # create a default answer block from the question
         summary_text = composed_result.get("llm_summary") or self._generate_summary(composed_result)
+        summary_text = self._apply_text_output_format(summary_text)
         if not blocks and summary_text:
             # Create a text block with the summary as the answer
             blocks.append({
@@ -1512,6 +1558,7 @@ class StageExecutor:
             "references": composed_result.get("references", []),
             "summary": summary_text,
             "presented_at": time.time(),
+            "output_format": output_format_name,
         }
 
         # Add baseline comparison information if in test mode
@@ -1864,7 +1911,7 @@ class StageExecutor:
                 total_count = result.get("total_count", 0)
                 data = result.get("data", [])
 
-                lines.append(f"   - Source: Document Search")
+                lines.append("   - Source: Document Search")
                 lines.append(f"   - Total Results: {total_count}")
 
                 if total_count > 0 and data:
@@ -2044,15 +2091,51 @@ class StageExecutor:
 
         return "\n".join(lines)
 
+    def _resolve_query_execution_tool_name(self) -> str:
+        """Resolve runtime tool name used for Query Asset execution tracing."""
+        try:
+            registry = get_tool_registry()
+            if registry.is_registered("direct_query"):
+                return "direct_query"
+            candidate = registry.find_tool_by_capability("database_query")
+            if candidate:
+                return getattr(candidate, "tool_name", "database_query")
+        except Exception:
+            pass
+        return "query_asset_executor"
+
+    def _resolve_runtime_tool_name(
+        self,
+        preferred_name: str,
+        capability_hints: List[str] | None = None,
+        type_hints: List[str] | None = None,
+    ) -> str:
+        """Resolve executable tool name from runtime registry."""
+        try:
+            registry = get_tool_registry()
+            if registry.is_registered(preferred_name):
+                return preferred_name
+            for capability in capability_hints or []:
+                candidate = registry.find_tool_by_capability(capability)
+                if candidate:
+                    return getattr(candidate, "tool_name", preferred_name)
+            for tool_type in type_hints or []:
+                candidates = registry.find_tools_by_type(tool_type)
+                if candidates:
+                    return getattr(candidates[0], "tool_name", preferred_name)
+        except Exception:
+            pass
+        return preferred_name
+
     def _load_compose_prompt_templates(self) -> Dict[str, str]:
         """Load compose prompt templates from asset registry."""
         try:
-            prompt_data = load_prompt_asset("ci", "compose", "ci_compose_summary")
+            prompt_data = load_prompt_asset("ops", "compose", "ops_compose_summary")
             if not prompt_data or "templates" not in prompt_data:
                 logging.warning(
                     "Compose prompt templates not found in asset registry, falling back to file"
                 )
-                prompt_data = config_loader.load_yaml("prompts/ci/compose.yaml")
+                prompt_data = config_loader.load_yaml("prompts/ops/compose.yaml")
                 if not prompt_data or "templates" not in prompt_data:
                     return {}
             templates = prompt_data.get("templates", {})
@@ -2063,7 +2146,7 @@ class StageExecutor:
             logging.warning(
                 f"Failed to load compose prompt from asset registry: {exc}, falling back to file"
             )
-            prompt_data = config_loader.load_yaml("prompts/ci/compose.yaml")
+            prompt_data = config_loader.load_yaml("prompts/ops/compose.yaml")
             if not prompt_data or "templates" not in prompt_data:
                 return {}
             templates = prompt_data.get("templates", {})
@@ -2456,9 +2539,10 @@ class StageExecutor:
                             first_value = first_row
 
                     # Format result as execution_result - include full rows for proper composition
+                    query_tool_name = self._resolve_query_execution_tool_name()
                     result = {
                         "mode": "query_asset",
-                        "tool": "direct_query",
+                        "tool": query_tool_name,
                         "asset_name": asset.name,
                         "summary": f"Executed {asset.name}: {len(rows)} rows",
                         "rows_count": len(rows),

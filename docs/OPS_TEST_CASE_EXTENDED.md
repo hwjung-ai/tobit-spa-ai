@@ -1,6 +1,7 @@
-# 📋 OPS 확장 테스트 케이스 (60개)
+# 📋 OPS 확장 테스트 케이스 (75개)
 
-**생성일**: 2026-02-17
+**생성일**: 2026-02-17  
+**업데이트**: 2026-02-17 (다단계 쿼리 15개 추가)  
 **기준**: 실제 Database에 존재하는 데이터를 기반으로 한 다양한 유형의 질의
 
 ---
@@ -17,7 +18,8 @@
 | 이력 조회 | History of, What happened | 39-44 |
 | 특정 대상 | For ERP System, For specific CI | 45-50 |
 | 비교/순위 | Top, Most, Best | 51-55 |
-| 복합 질의 | Multiple conditions | 56-60 |
+| **다단계 쿼리** | **Multi-step (LOOKUP→GRAPH, etc.)** | **56-70** |
+| 복합 질의 | Multiple conditions | 71-75 |
 
 ---
 
@@ -273,25 +275,139 @@
 
 ---
 
-## I. 복합 질의 (56-60)
+## I. 다단계 쿼리 (56-70) - NEW
 
-### Test 56: 시스템 전체 요약
+**다단계 쿼리**: 여러 단계의 실행이 필요한 질의들 (첫 번째 결과 → 두 번째 조회)
+
+### Test 56: CI 조회 후 그래프 확장
+**질의**: Find ERP System and show all its related CIs.
+**다단계 흐름**: 
+1. LOOKUP: ERP System 조회 (ci_id 획득)
+2. GRAPH EXPAND: 해당 CI의 관계 그래프 확장
+**예상 답변**: ERP System과 연결된 CI 목록 (ERP Server 01, ERP OS 01, ERP WAS 01 등)
+
+### Test 57: 이벤트 조회 후 CI 상세
+**질의**: Which CI had the most recent event and what is its status?
+**다단계 흐름**:
+1. EVENT: 가장 최근 이벤트 조회 (ci_id 획득)
+2. CI LOOKUP: 해당 CI의 상세 정보 조회
+**예상 답변**: 가장 최근 이벤트가 발생한 CI의 이름과 상태
+
+### Test 58: 메트릭 최대값 CI 조회 후 이력
+**질의**: Which CI has the highest CPU usage and what is its recent work history?
+**다단계 흐름**:
+1. METRIC: CPU 사용률이 가장 높은 CI 조회
+2. HISTORY: 해당 CI의 작업 이력 조회
+**예상 답변**: 최대 CPU 사용률 CI 이름과 최근 작업 이력
+
+### Test 59: CI 조회 후 문서 검색
+**질의**: Find the ERP System and show me related documents.
+**다단계 흐름**:
+1. LOOKUP: ERP System 조회
+2. DOCUMENT: ERP 관련 문서 검색
+**예상 답변**: ERP System 정보 + 관련 문서 목록
+
+### Test 60: 그래프 확장 후 메트릭 조회
+**질의**: Show me the ERP System's components and their CPU metrics.
+**다단계 흐름**:
+1. GRAPH EXPAND: ERP System의 구성 요소 조회
+2. METRIC: 각 구성 요소의 CPU 메트릭 조회
+**예상 답변**: ERP System 구성 요소별 CPU 사용률
+
+### Test 61: 이벤트 그룹별 Top CI 조회
+**질의**: Which CIs have the most security alerts and what are their statuses?
+**다단계 흐름**:
+1. AGGREGATE: security_alert 이벤트가 가장 많은 CI 그룹화
+2. LOOKUP: Top CI들의 상세 정보
+**예상 답변**: 보안 알림이 가장 많은 CI 목록과 상태
+
+### Test 62: CI 유형별 분포 후 상세
+**질의**: Show me the CI type distribution and list all SYSTEM type CIs.
+**다단계 흐름**:
+1. AGGREGATE: CI 유형별 분포 조회
+2. LOOKUP: SYSTEM 유형 CI 목록 조회
+**예상 답변**: 유형별 분포 + SYSTEM CI 목록 (8개)
+
+### Test 63: 작업 이력 후 CI 상태
+**질의**: Which CIs had failed work items and what are their current statuses?
+**다단계 흐름**:
+1. HISTORY: 실패한 작업 이력 조회 (ci_id 목록)
+2. LOOKUP: 해당 CI들의 현재 상태
+**예상 답변**: 작업 실패한 CI 목록과 현재 상태
+
+### Test 64: 유지보수 이력 후 CI 그래프
+**질의**: Find CIs that had reboot maintenance and show their dependency graph.
+**다단계 흐름**:
+1. HISTORY: reboot 유지보수 이력 있는 CI 조회
+2. GRAPH: 해당 CI들의 의존성 그래프
+**예상 답변**: 리부트 이력이 있는 CI와 의존 관계
+
+### Test 65: 모니터링 CI 조회 후 메트릭
+**질의**: List all monitoring status CIs and show their health metrics.
+**다단계 흐름**:
+1. LOOKUP: monitoring 상태 CI 목록
+2. METRIC: 각 CI의 health 메트릭
+**예상 답변**: 모니터링 CI 21개와 각각의 상태 메트릭
+
+### Test 66: 문서 검색 후 관련 CI
+**질의**: Find documents about Linux and show me CIs related to those documents.
+**다단계 흐름**:
+1. DOCUMENT: Linux 관련 문서 검색
+2. LOOKUP: 문서와 관련된 CI 조회
+**예상 답변**: Linux 문서 + 관련 CI 정보
+
+### Test 67: 이벤트 심각도별 Top CI
+**질의**: Which CIs have the most severity 5 events and show their details?
+**다단계 흐름**:
+1. AGGREGATE: 심각도 5 이벤트가 많은 CI 집계
+2. LOOKUP: Top CI 상세 정보
+**예상 답변**: 심각도 5 이벤트가 많은 CI와 상세 정보
+
+### Test 68: CI 검색 후 경로 분석
+**질의**: Find the path from ERP System to Database Server.
+**다단계 흐름**:
+1. LOOKUP: ERP System ci_id 조회
+2. LOOKUP: Database Server ci_id 조회
+3. GRAPH PATH: 두 CI 간 경로 분석
+**예상 답변**: ERP System → ... → Database Server 경로
+
+### Test 69: Top 작업 유형 CI 조회
+**질의**: Which CIs had the most deployment work and what are their configurations?
+**다단계 흐름**:
+1. HISTORY: deployment 작업이 많은 CI 집계
+2. LOOKUP: Top CI 구성 정보
+**예상 답변**: 배포 작업이 많은 CI와 구성 정보
+
+### Test 70: 종합 대시보드 다단계
+**질의**: Show me ERP System's overview including status, related CIs, recent events, and metrics.
+**다단계 흐름**:
+1. LOOKUP: ERP System 기본 정보
+2. GRAPH: 관련 CI 그래프
+3. HISTORY: 최근 이벤트/작업 이력
+4. METRIC: 주요 메트릭
+**예상 답변**: ERP System 종합 대시보드 (상태, 관련 CI, 이력, 메트릭)
+
+---
+
+## J. 복합 질의 (71-75)
+
+### Test 71: 시스템 전체 요약
 **질의**: Give me a summary of the overall system status.
 **예상 답변**: CI: 280 (259 active, 21 monitoring), Events: 31,243, Documents: 132, Work History: 1,731, Maintenance: 1,478
 
-### Test 57: ERP System 종합 정보
+### Test 72: ERP System 종합 정보
 **질의**: Tell me everything about ERP System including its type and status.
 **예상 답변**: Name: ERP System, Type: SYSTEM, Status: active
 
-### Test 58: 이벤트 상태 요약
+### Test 73: 이벤트 상태 요약
 **질의**: Summarize the event status by type and severity.
 **예상 답변**: Total 31,243 events across 5 types, severity distribution: 2(12,427), 1(6,310), 3(6,263), 5(3,134), 4(3,109)
 
-### Test 59: 작업 및 유지보수 요약
+### Test 74: 작업 및 유지보수 요약
 **질의**: Summarize work and maintenance activities.
 **예상 답변**: Work: 1,731 items (74.9% success), Maintenance: 1,478 items (76.1% success)
 
-### Test 60: 문서 시스템 요약
+### Test 75: 문서 시스템 요약
 **질의**: Give me a summary of the document management status.
 **예상 답변**: 132 documents (78 PDF, 54 text), categories: manual, other
 

@@ -33,14 +33,20 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
 
   const simulateMutation = useMutation({
     mutationFn: async (testEntities: string[]) => {
-      const response = await fetchApi<ResolverSimulationResult[]>(
+      const response = await fetchApi<{
+        asset_id: string;
+        test_count: number;
+        results: ResolverSimulationResult[];
+        metadata: Record<string, unknown>;
+      }>(
         `/asset-registry/resolvers/${asset.asset_id}/simulate`,
         {
           method: "POST",
           body: JSON.stringify(testEntities),
         }
       );
-      return response.data;
+      // API returns { results: [...] }, extract the results array
+      return response.data?.results || [];
     },
     onSuccess: (data) => {
       setSimulationResults(data);

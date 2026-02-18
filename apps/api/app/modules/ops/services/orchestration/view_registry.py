@@ -29,73 +29,23 @@ class ViewPolicy:
     max_hops: int | None = None
 
 
-VIEW_REGISTRY: Dict[str, ViewPolicy] = {
-    "SUMMARY": ViewPolicy(
-        name="SUMMARY",
-        description="Top-level overview of a CI with immediate key statistics.",
-        default_depth=1,
-        max_depth=1,
-        direction_default=Direction.BOTH,
-        output_defaults=["overviews", "counts"],
-    ),
-    "COMPOSITION": ViewPolicy(
-        name="COMPOSITION",
-        description="System/component composition that highlights parent/child links.",
-        default_depth=2,
-        max_depth=3,
-        direction_default=Direction.OUT,
-        output_defaults=["hierarchy", "children"],
-    ),
-    "DEPENDENCY": ViewPolicy(
-        name="DEPENDENCY",
-        description="Bidirectional dependency relationships for the selected CI.",
-        default_depth=2,
-        max_depth=3,
-        direction_default=Direction.BOTH,
-        output_defaults=["dependency_graph", "counts"],
-    ),
-    "IMPACT": ViewPolicy(
-        name="IMPACT",
-        description="Propagated impact along dependencies (assumption-based).",
-        default_depth=2,
-        max_depth=2,
-        direction_default=Direction.OUT,
-        output_defaults=["impact_summary"],
-        notes="IMPACT는 의존 기반 영향(가정)으로 정의합니다.",
-    ),
-    "PATH": ViewPolicy(
-        name="PATH",
-        description="Path discovery capped by a maximum hop limit.",
-        default_depth=3,
-        max_depth=6,
-        direction_default=Direction.BOTH,
-        output_defaults=["path_segments"],
-        max_hops=6,
-    ),
-    "NEIGHBORS": ViewPolicy(
-        name="NEIGHBORS",
-        description="Immediate neighbors for the selected CI.",
-        default_depth=1,
-        max_depth=2,
-        direction_default=Direction.BOTH,
-        output_defaults=["neighbors"],
-    ),
-}
-
-VIEW_NAMES: List[str] = list(VIEW_REGISTRY.keys())
+# System-required policy asset name (hardcoded - not configurable)
+VIEW_POLICY_NAME = "view_depth"
 
 
 def get_view_registry() -> Dict[str, ViewPolicy]:
     """
     Load view policies from asset registry.
-    Falls back to hardcoded VIEW_REGISTRY if asset not found.
+    No hardcoded fallback - views must be configured via Policy Assets.
     """
     try:
-        # Use correct policy_type "view_depth" (not "view_depth_policies")
-        policy_asset = load_policy_asset("view_depth")
+        policy_asset = load_policy_asset(VIEW_POLICY_NAME)
         if not policy_asset:
-            logger.warning("view_depth policy asset not found, using hardcoded VIEW_REGISTRY")
-            return VIEW_REGISTRY
+            logger.error(
+                f"View policy asset '{VIEW_POLICY_NAME}' not found. "
+                "Please create a policy asset with policy_type='view_depth' and content.views defined."
+            )
+            return {}
 
         # Support two data structures:
         # 1. New structure: content.views (direct)
@@ -107,8 +57,11 @@ def get_view_registry() -> Dict[str, ViewPolicy]:
             views_config = content.get("limits", {}).get("views", {})
 
         if not views_config:
-            logger.warning("No views in policy asset, using hardcoded VIEW_REGISTRY")
-            return VIEW_REGISTRY
+            logger.error(
+                f"No views found in policy asset '{VIEW_POLICY_NAME}'. "
+                "Please define content.views in your policy asset."
+            )
+            return {}
 
         # Build registry from asset
         registry = {}
@@ -134,15 +87,14 @@ def get_view_registry() -> Dict[str, ViewPolicy]:
                 continue
 
         if not registry:
-            logger.warning("Failed to parse any views from asset, using hardcoded VIEW_REGISTRY")
-            return VIEW_REGISTRY
+            logger.error(f"Failed to parse any views from asset '{VIEW_POLICY_NAME}'")
 
         logger.info(f"Loaded {len(registry)} view policies from asset registry")
         return registry
 
     except Exception as e:
-        logger.error(f"Failed to load view_depth_policies asset: {e}, using hardcoded VIEW_REGISTRY")
-        return VIEW_REGISTRY
+        logger.error(f"Failed to load view policy asset '{VIEW_POLICY_NAME}': {e}")
+        return {}
 
 
 # Cached registry

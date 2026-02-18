@@ -14,26 +14,29 @@ from neo4j import Driver
 
 from app.modules.asset_registry.loader import (
     load_policy_asset,
-    load_query_asset,
     load_source_asset,
 )
 from app.modules.ops.services.connections import ConnectionFactory
 
 logger = get_logger(__name__)
 
+# System-required policy asset name (hardcoded - not configurable)
+DISCOVERY_POLICY_NAME = "discovery_config"
+
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "neo4j_catalog.json"
-
-# Hardcoded fallback configurations - will be loaded from DB via _get_discovery_config()
-EXPECTED_CI_PROPERTIES = {"ci_id", "ci_code", "tenant_id"}
 
 # Cache for discovery config loaded from DB
 _DISCOVERY_CONFIG_CACHE: Dict[str, Any] | None = None
 
+# Default expected properties if not configured
+_DEFAULT_CI_PROPERTIES = {"ci_id", "ci_code", "tenant_id"}
+
+
 def _get_discovery_config() -> Dict[str, Any]:
     """
     Load Neo4j discovery configuration from policy asset.
-    Falls back to hardcoded constants if asset not found.
+    No hardcoded fallback - configuration must be set via Policy Assets.
 
     Returns:
         Dictionary with discovery configuration:
@@ -46,37 +49,54 @@ def _get_discovery_config() -> Dict[str, Any]:
         return _DISCOVERY_CONFIG_CACHE
 
     try:
-        policy = load_policy_asset("discovery_config")
+        policy = load_policy_asset(DISCOVERY_POLICY_NAME)
         if policy:
             content = policy.get("content", {})
             neo4j_config = content.get("neo4j", {})
             if neo4j_config:
                 _DISCOVERY_CONFIG_CACHE = {
-                    "expected_ci_properties": set(neo4j_config.get("expected_ci_properties", list(EXPECTED_CI_PROPERTIES))),
+                    "expected_ci_properties": set(neo4j_config.get("expected_ci_properties", list(_DEFAULT_CI_PROPERTIES))),
                 }
                 logger.info(f"Loaded Neo4j discovery config from DB: {len(_DISCOVERY_CONFIG_CACHE['expected_ci_properties'])} expected properties")
                 return _DISCOVERY_CONFIG_CACHE
     except Exception as e:
-        logger.warning(f"Failed to load discovery_config policy for Neo4j: {e}")
+        logger.warning(f"Failed to load '{DISCOVERY_POLICY_NAME}' policy for Neo4j: {e}")
 
-    # Fallback to hardcoded config
+    # Return default config (not hardcoded fallback - just minimal defaults)
+    logger.warning(
+        f"Discovery policy '{DISCOVERY_POLICY_NAME}' not found. "
+        f"Using minimal default properties. "
+        f"Please create a policy asset with policy_type='{DISCOVERY_POLICY_NAME}'."
+    )
     _DISCOVERY_CONFIG_CACHE = {
-        "expected_ci_properties": EXPECTED_CI_PROPERTIES,
+        "expected_ci_properties": _DEFAULT_CI_PROPERTIES,
     }
-    logger.info("Using hardcoded Neo4j discovery config (fallback)")
     return _DISCOVERY_CONFIG_CACHE
 
 
 def _load_query(name: str) -> str:
-    # Discovery queries are served from query assets in DB.
+    """Load discovery query from Policy Asset.
+
+    Discovery queries are stored in Policy Assets with policy_type from DISCOVERY_POLICY_NAME.
+    The policy content should have a 'queries' dict mapping query names to query strings.
+    """
     query_name = Path(name).stem
-    asset, _ = load_query_asset("discovery", query_name)
-    query = None
-    if asset:
-        query = asset.get("cypher") or asset.get("sql")
-    if not query:
-        raise ValueError(f"Neo4j catalog query '{name}' not found in Asset Registry")
-    return query
+    config = _get_discovery_config()
+
+    # Try to get query from discovery policy
+    policy = load_policy_asset(DISCOVERY_POLICY_NAME)
+    if policy:
+        content = policy.get("content", {})
+        queries = content.get("queries", {})
+        query = queries.get(query_name) or queries.get(name)
+        if query:
+            return query
+
+    raise ValueError(
+        f"Discovery query '{query_name}' not found. "
+        f"Please add it to policy asset '{DISCOVERY_POLICY_NAME}' "
+        f"under content.queries.{query_name}"
+    )
 
 
 def _mask_sensitive(value: str | None) -> str | None:
