@@ -1380,12 +1380,15 @@ def get_resolver_asset(session: Session, asset_id: str) -> ResolverAsset | None:
 
         rule_type = rule_data.get("rule_type", "alias_mapping")
 
+        # Extract the actual rule-specific data (nested in "rule_data" key)
+        inner_rule_data = rule_data.get("rule_data", rule_data)
+
         if rule_type == "alias_mapping":
-            rule_data_obj = AliasMapping(**rule_data)
+            rule_data_obj = AliasMapping(**inner_rule_data)
         elif rule_type == "pattern_rule":
-            rule_data_obj = PatternRule(**rule_data)
+            rule_data_obj = PatternRule(**inner_rule_data)
         elif rule_type == "transformation":
-            rule_data_obj = TransformationRule(**rule_data)
+            rule_data_obj = TransformationRule(**inner_rule_data)
         else:
             rule_data_obj = rule_data
 
@@ -1395,7 +1398,7 @@ def get_resolver_asset(session: Session, asset_id: str) -> ResolverAsset | None:
             description=rule_data.get("description"),
             is_active=rule_data.get("is_active", True),
             priority=rule_data.get("priority", 0),
-            metadata=rule_data.get("metadata", {}),
+            extra_metadata=rule_data.get("extra_metadata", {}),
             rule_data=rule_data_obj,
         )
         rules.append(rule)
@@ -1514,7 +1517,7 @@ def simulate_resolver_configuration(
         results.append(result)
 
     return {
-        "asset_id": str(asset.asset_id),
+        "asset_id": asset_id,
         "test_count": len(test_entities),
         "results": results,
         "metadata": {
