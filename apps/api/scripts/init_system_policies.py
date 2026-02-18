@@ -97,13 +97,17 @@ DISCOVERY_CONFIG_DATA = {
     "description": "CI discovery configuration (applied at Execute stage)",
     "policy_type": "discovery_config",
     "scope": "ops",
-    "limits": {
+    # Use 'content' field, not 'limits' - code expects policy.get("content", {})
+    "content": {
         "neo4j": {
-            "enabled": True,
+            "rel_types": ["COMPOSED_OF", "DEPENDS_ON", "RUNS_ON", "DEPLOYED_ON", "USES", "PROTECTED_BY", "CONNECTED_TO"],
+            "target_labels": ["CI"],
+            "expected_ci_properties": ["ci_id", "ci_code", "tenant_id"],
         },
-        "postgresql": {
-            "enabled": True,
-        }
+        "postgres": {
+            "target_tables": ["ci", "ci_ext"],
+            "agg_columns": ["ci_type", "ci_subtype", "ci_category", "status", "location", "owner"],
+        },
     },
 }
 
@@ -140,6 +144,7 @@ def init_system_policies():
                 policy_type=policy_type,
                 scope=policy_data.get("scope"),
                 limits=policy_data.get("limits"),
+                content=policy_data.get("content"),  # For discovery_config
                 status="published",
                 is_system=True,  # Cannot be deleted or renamed
                 tenant_id="default",  # Use default tenant so it's visible in UI

@@ -124,6 +124,9 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 if (formData.limits.trim()) {
                     payload.limits = JSON.parse(formData.limits);
                 }
+                if (formData.content.trim()) {
+                    payload.content = JSON.parse(formData.content);
+                }
             } else if (asset.asset_type === "query") {
                 payload.query_sql = formData.query_sql || null;
                 payload.query_cypher = formData.query_cypher || null;
@@ -373,16 +376,31 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 )}
 
                 {asset.asset_type === "policy" && (
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-foreground">Limits (JSON)</label>
-                        <textarea
-                            value={formData.limits}
-                            onChange={(e) => setFormData({ ...formData, limits: e.target.value })}
-                            disabled={!isDraft}
-                            rows={12}
-                            placeholder="{}"
-                            className="w-full px-4 py-2 border rounded-lg bg-surface-base text-foreground border-variant font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
-                        />
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2 text-foreground">Limits (JSON)</label>
+                            <textarea
+                                value={formData.limits}
+                                onChange={(e) => setFormData({ ...formData, limits: e.target.value })}
+                                disabled={!isDraft}
+                                rows={8}
+                                placeholder="{}"
+                                className="w-full px-4 py-2 border rounded-lg bg-surface-base text-foreground border-variant font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            />
+                            <p className="text-xs mt-1 text-muted-foreground">Used by plan_budget, view_depth policies</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2 text-foreground">Content (JSON)</label>
+                            <textarea
+                                value={formData.content}
+                                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                disabled={!isDraft}
+                                rows={8}
+                                placeholder="{}"
+                                className="w-full px-4 py-2 border rounded-lg bg-surface-base text-foreground border-variant font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            />
+                            <p className="text-xs mt-1 text-muted-foreground">Used by discovery_config policy</p>
+                        </div>
                     </div>
                 )}
 
