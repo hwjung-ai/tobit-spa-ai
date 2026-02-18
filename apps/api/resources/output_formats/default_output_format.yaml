@@ -1,0 +1,65 @@
+name: default_output_format
+description: "기본 출력 포맷 (테이블, 리스트, 그래프 등)"
+version: 1
+scope: default
+tags:
+  system: true
+content:
+  # 출력 타입별 포맷 정의
+  formats:
+    table:
+      template: |
+        {title}
+
+        {table}
+
+        {footer}
+      wrap_code: false
+
+    list:
+      template: |
+        {title}
+
+        {items}
+
+        {footer}
+      wrap_code: false
+
+    graph:
+      template: |
+        {title}
+
+        ```
+        {ascii_graph}
+        ```
+
+        {legend}
+        {summary}
+      wrap_code: true
+
+    metric:
+      template: |
+        {title} ({time_range})
+
+        {table}
+
+        metric: {metric_name}, agg: {aggregation}
+      wrap_code: false
+
+    text:
+      template: |
+        {summary}
+      wrap_code: false
+
+  # 공통 메타데이터 포맷
+  metadata_format: |
+    필터: {filters}
+    시간 범위: {time_range}
+    데이터 소스: {sources}
+
+  # 에러 포맷
+  error_format: |
+    ⚠️ {error_message}
+
+    원인: {error_reason}
+    해결 방법: {error_solution}
