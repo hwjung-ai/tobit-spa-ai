@@ -12,7 +12,72 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 from schemas import AnswerBlock, MarkdownBlock, TableBlock
 
+from app.modules.ops.services.orchestration.tools.base import (
+    ToolContext,
+    get_tool_registry,
+)
+from app.modules.ops.services.orchestration.tools.executor import get_tool_executor
+from app.modules.ops.services.orchestration.tools.registry_init import initialize_tools
+
 logger = logging.getLogger(__name__)
+
+
+def _extract_explicit_tool_name(kwargs: dict) -> str | None:
+    for key in ("tool_name", "selected_tool", "selected_tool_name", "tool_asset_name"):
+        value = kwargs.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    tool_selection = kwargs.get("tool_selection")
+    if isinstance(tool_selection, dict):
+        name = tool_selection.get("name") or tool_selection.get("tool_name")
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+    return None
+
+
+def _resolve_tool_name(
+    explicit_tool_name: str | None,
+    capability_hints: list[str],
+    type_hints: list[str] | None = None,
+) -> str | None:
+    """Resolve tool name from explicit selection or registry capabilities."""
+    initialize_tools()
+    registry = get_tool_registry()
+
+    if explicit_tool_name and registry.is_registered(explicit_tool_name):
+        return explicit_tool_name
+
+    for capability in capability_hints:
+        candidate = registry.find_tool_by_capability(capability)
+        if candidate:
+            return getattr(candidate, "tool_name", None)
+
+    for tool_type in type_hints or []:
+        matches = registry.find_tools_by_type(tool_type)
+        if matches:
+            return getattr(matches[0], "tool_name", None)
+
+    return None
+
+
+def _execute_tool(
+    tool_name: str,
+    params: dict,
+    tenant_id: Optional[str],
+    user_id: str = "system",
+) -> dict:
+    """Execute resolved tool through orchestration tool executor."""
+    context = ToolContext(
+        tenant_id=tenant_id or "default",
+        user_id=user_id,
+        metadata={"source": "ops_config_executor"},
+    )
+    result = get_tool_executor().execute(tool_name, context, params)
+    return {
+        "success": bool(result.success),
+        "data": result.data,
+        "error": result.error,
+    }
 
 
 class ExecutorResult(BaseModel):
@@ -43,17 +108,19 @@ def run_config(
     blocks = []
 
     try:
-        # Import tool asset executor
-        from app.modules.asset_registry.tool_executor import execute_tool_asset
-
-        # Look for CI lookup tool
-        tool_name = "ci_detail_lookup"
+        tool_name = _resolve_tool_name(
+            explicit_tool_name=_extract_explicit_tool_name(kwargs),
+            capability_hints=["ci_lookup", "ci_search", "config_lookup"],
+            type_hints=["database_query", "api_query"],
+        )
+        if not tool_name:
+            raise ValueError("No configured tool found for config mode")
 
         # Execute the tool
-        result = execute_tool_asset(
+        result = _execute_tool(
             tool_name=tool_name,
             params={"query": question, "tenant_id": tenant_id},
-            session=session,
+            tenant_id=tenant_id,
         )
 
         if result.get("success"):
@@ -99,9 +166,6 @@ def run_config(
                 content=f"⚠️ Unable to retrieve CI data: {error_msg}\n\nPlease check data source configuration.",
             ))
 
-    except ImportError:
-        logger.warning("Tool asset executor not available, using fallback")
-        blocks.append(_get_config_fallback(question))
     except Exception as e:
         logger.exception(f"Config executor error: {e}")
         blocks.append(MarkdownBlock(
@@ -163,20 +227,24 @@ def run_metric(
     blocks = []
 
     try:
-        from app.modules.asset_registry.tool_executor import execute_tool_asset
         from app.modules.sim.services.metric_loader import load_baseline_kpis
 
-        # Try metric tool asset first
-        tool_name = "sim_metric_timeseries_query"
+        tool_name = _resolve_tool_name(
+            explicit_tool_name=_extract_explicit_tool_name(kwargs),
+            capability_hints=["metric_query", "metric_aggregate"],
+            type_hints=["database_query", "api_query"],
+        )
+        if not tool_name:
+            raise ValueError("No configured tool found for metric mode")
 
-        result = execute_tool_asset(
+        result = _execute_tool(
             tool_name=tool_name,
             params={
                 "query": question,
                 "tenant_id": tenant_id,
                 "time_range": kwargs.get("time_range", "last_24h"),
             },
-            session=session,
+            tenant_id=tenant_id,
         )
 
         if result.get("success"):
@@ -227,9 +295,6 @@ def run_metric(
         else:
             blocks.append(_get_metric_fallback(question))
 
-    except ImportError:
-        logger.warning("Metric tools not available, using fallback")
-        blocks.append(_get_metric_fallback(question))
     except Exception as e:
         logger.exception(f"Metric executor error: {e}")
         blocks.append(MarkdownBlock(
@@ -293,11 +358,15 @@ def run_hist(
     blocks = []
 
     try:
-        from app.modules.asset_registry.tool_executor import execute_tool_asset
+        tool_name = _resolve_tool_name(
+            explicit_tool_name=_extract_explicit_tool_name(kwargs),
+            capability_hints=["history", "history_search", "event_search"],
+            type_hints=["database_query", "api_query"],
+        )
+        if not tool_name:
+            raise ValueError("No configured tool found for history mode")
 
-        tool_name = "history_combined_union"
-
-        result = execute_tool_asset(
+        result = _execute_tool(
             tool_name=tool_name,
             params={
                 "query": question,
@@ -305,7 +374,7 @@ def run_hist(
                 "time_range": kwargs.get("time_range", "last_7d"),
                 "limit": kwargs.get("limit", 100),
             },
-            session=session,
+            tenant_id=tenant_id,
         )
 
         if result.get("success"):
@@ -338,9 +407,6 @@ def run_hist(
         else:
             blocks.append(_get_hist_fallback(question))
 
-    except ImportError:
-        logger.warning("History tools not available, using fallback")
-        blocks.append(_get_hist_fallback(question))
     except Exception as e:
         logger.exception(f"History executor error: {e}")
         blocks.append(MarkdownBlock(
@@ -400,11 +466,15 @@ def run_graph(
     blocks = []
 
     try:
-        from app.modules.asset_registry.tool_executor import execute_tool_asset
+        tool_name = _resolve_tool_name(
+            explicit_tool_name=_extract_explicit_tool_name(kwargs),
+            capability_hints=["graph_expand", "graph_query", "graph_topology"],
+            type_hints=["graph_query"],
+        )
+        if not tool_name:
+            raise ValueError("No configured tool found for graph mode")
 
-        tool_name = "graph_query"
-
-        result = execute_tool_asset(
+        result = _execute_tool(
             tool_name=tool_name,
             params={
                 "query": question,
@@ -412,7 +482,7 @@ def run_graph(
                 "depth": kwargs.get("depth", 2),
                 "max_nodes": kwargs.get("max_nodes", 100),
             },
-            session=session,
+            tenant_id=tenant_id,
         )
 
         if result.get("success"):
@@ -461,9 +531,6 @@ def run_graph(
         else:
             blocks.append(_get_graph_fallback(question))
 
-    except ImportError:
-        logger.warning("Graph tools not available, using fallback")
-        blocks.append(_get_graph_fallback(question))
     except Exception as e:
         logger.exception(f"Graph executor error: {e}")
         blocks.append(MarkdownBlock(

@@ -202,7 +202,9 @@ def get_allowed_rel_types(
     view_key = view.upper()
     registry = get_view_registry()
     if view_key not in registry:
-        raise ValueError(f"Unknown view '{view}'")
+        # Unknown view: return all discovered rel types as fallback (non-graph queries)
+        logger.debug(f"View '{view}' not in registry, returning discovered rel types as fallback")
+        return _normalized_discovered(discovered)
     # Use lazy-loaded view relation mapping
     view_mapping = _ensure_view_relation_mapping()
     mapped_rel_types = view_mapping.get(view_key, [])
@@ -225,7 +227,11 @@ def clamp_depth(view: str, requested: int | None = None) -> int:
     view_key = view.upper()
     policy = get_view_policy(view_key)
     if not policy:
-        raise ValueError(f"Unknown view '{view}'")
+        # Unknown view: use safe defaults (non-graph queries use SUMMARY as default view)
+        logger.debug(f"View '{view}' not in registry, using default depth=2")
+        depth = requested if requested is not None else 2
+        depth = max(1, depth)
+        return min(depth, 3)
     depth = requested if requested is not None else policy.default_depth
     depth = max(1, depth)
     return min(depth, policy.max_depth)

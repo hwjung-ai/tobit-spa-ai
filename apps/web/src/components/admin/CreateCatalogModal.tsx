@@ -144,7 +144,7 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
             )}
             {!sourcesLoading && !sourcesError && publishedSources.length === 0 && (
               <p className="mt-2 text-xs text-yellow-300">
-                No published sources found. Publish a source first in Admin assets.
+                No published sources found. Publish a source first in Admin Catalogs &gt; Sources.
               </p>
             )}
             <p className="mt-2 text-xs text-muted-foreground">

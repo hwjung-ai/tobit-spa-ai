@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import platform
 import sys
 from datetime import datetime
@@ -10,13 +9,14 @@ from typing import Any, Dict
 
 from core.config import get_settings
 from core.logging import get_logger
-from neo4j import Driver
 
-from app.modules.asset_registry.loader import (
-    load_policy_asset,
-    load_source_asset,
+from app.modules.asset_registry.loader import load_policy_asset
+from app.modules.ops.services.orchestration.tools.base import (
+    ToolContext,
+    get_tool_registry,
 )
-from app.modules.ops.services.connections import ConnectionFactory
+from app.modules.ops.services.orchestration.tools.executor import get_tool_executor
+from app.modules.ops.services.orchestration.tools.registry_init import initialize_tools
 
 logger = get_logger(__name__)
 
@@ -37,12 +37,6 @@ def _get_discovery_config() -> Dict[str, Any]:
     """
     Load Neo4j discovery configuration from policy asset.
     No hardcoded fallback - configuration must be set via Policy Assets.
-
-    Returns:
-        Dictionary with discovery configuration:
-        {
-            "expected_ci_properties": {...}
-        }
     """
     global _DISCOVERY_CONFIG_CACHE
     if _DISCOVERY_CONFIG_CACHE is not None:
@@ -55,56 +49,26 @@ def _get_discovery_config() -> Dict[str, Any]:
             neo4j_config = content.get("neo4j", {})
             if neo4j_config:
                 _DISCOVERY_CONFIG_CACHE = {
-                    "expected_ci_properties": set(neo4j_config.get("expected_ci_properties", list(_DEFAULT_CI_PROPERTIES))),
+                    "expected_ci_properties": set(
+                        neo4j_config.get(
+                            "expected_ci_properties", list(_DEFAULT_CI_PROPERTIES)
+                        )
+                    ),
                 }
-                logger.info(f"Loaded Neo4j discovery config from DB: {len(_DISCOVERY_CONFIG_CACHE['expected_ci_properties'])} expected properties")
+                logger.info(
+                    "Loaded Neo4j discovery config from DB: %s expected properties",
+                    len(_DISCOVERY_CONFIG_CACHE["expected_ci_properties"]),
+                )
                 return _DISCOVERY_CONFIG_CACHE
     except Exception as e:
         logger.warning(f"Failed to load '{DISCOVERY_POLICY_NAME}' policy for Neo4j: {e}")
 
-    # Return default config (not hardcoded fallback - just minimal defaults)
     logger.warning(
-        f"Discovery policy '{DISCOVERY_POLICY_NAME}' not found. "
-        f"Using minimal default properties. "
-        f"Please create a policy asset with policy_type='{DISCOVERY_POLICY_NAME}'."
+        "Discovery policy '%s' not found. Using minimal default properties.",
+        DISCOVERY_POLICY_NAME,
     )
-    _DISCOVERY_CONFIG_CACHE = {
-        "expected_ci_properties": _DEFAULT_CI_PROPERTIES,
-    }
+    _DISCOVERY_CONFIG_CACHE = {"expected_ci_properties": _DEFAULT_CI_PROPERTIES}
     return _DISCOVERY_CONFIG_CACHE
-
-
-def _load_query(name: str) -> str:
-    """Load discovery query from Policy Asset.
-
-    Discovery queries are stored in Policy Assets with policy_type from DISCOVERY_POLICY_NAME.
-    The policy content should have a 'queries' dict mapping query names to query strings.
-    """
-    query_name = Path(name).stem
-    config = _get_discovery_config()
-
-    # Try to get query from discovery policy
-    policy = load_policy_asset(DISCOVERY_POLICY_NAME)
-    if policy:
-        content = policy.get("content", {})
-        queries = content.get("queries", {})
-        query = queries.get(query_name) or queries.get(name)
-        if query:
-            return query
-
-    raise ValueError(
-        f"Discovery query '{query_name}' not found. "
-        f"Please add it to policy asset '{DISCOVERY_POLICY_NAME}' "
-        f"under content.queries.{query_name}"
-    )
-
-
-def _mask_sensitive(value: str | None) -> str | None:
-    if not value:
-        return None
-    if len(value) <= 4:
-        return "****"
-    return f"{value[:2]}***{value[-2:]}"
 
 
 def _exit_error(message: str) -> None:
@@ -112,76 +76,104 @@ def _exit_error(message: str) -> None:
     sys.exit(1)
 
 
-def _build_environment_context() -> dict[str, str | None]:
+def _build_environment_context(tool_name: str) -> dict[str, str | None]:
     return {
         "python_version": platform.python_version(),
         "platform": platform.platform(),
         "cwd": str(Path.cwd()),
-        "user": os.environ.get("USERNAME") or os.environ.get("USER"),
-        "neo4j_uri": _mask_sensitive(os.environ.get("NEO4J_URI")),  # For backward compatibility
-        "source_asset": "primary_neo4j (from DB)",  # New: indicate source from DB
+        "tool_asset": tool_name,
+        "execution_mode": "tool_orchestration",
     }
 
 
-def _fetch_relationship_types(driver: Driver) -> list[str]:
-    query = _load_query("relationship_types.cypher")
-    with driver.session() as session:
-        return session.execute_read(
-            lambda tx: [record["relationshipType"] for record in tx.run(query)]
-        )
+def _resolve_graph_tool_name() -> str:
+    initialize_tools()
+    registry = get_tool_registry()
+
+    for capability in ("graph_expand", "graph_query", "graph_topology"):
+        candidate = registry.find_tool_by_capability(capability)
+        if candidate:
+            return getattr(candidate, "tool_name")
+
+    matches = registry.find_tools_by_type("graph_query")
+    if matches:
+        return getattr(matches[0], "tool_name")
+
+    raise ValueError("No graph tool found in registry for Neo4j catalog discovery")
 
 
-def _fetch_relationship_counts(driver: Driver) -> list[dict[str, object]]:
-    query = _load_query("relationship_counts.cypher")
-    with driver.session() as session:
-        result = session.execute_read(lambda tx: tx.run(query).data())
-        return [{"rel_type": row["rel_type"], "count": row["cnt"]} for row in result]
+def _execute_graph_tool(tool_name: str) -> dict[str, Any]:
+    settings = get_settings()
+    tenant_id = getattr(settings, "default_tenant_id", None) or "default"
+    context = ToolContext(
+        tenant_id=tenant_id,
+        user_id="system",
+        metadata={"source": "neo4j_catalog_discovery"},
+    )
+    result = get_tool_executor().execute(
+        tool_name,
+        context,
+        {
+            "tenant_id": tenant_id,
+            "limit": 2000,
+            "ci_ids": [],
+        },
+    )
+    if not result.success:
+        raise ValueError(result.error or f"Tool execution failed: {tool_name}")
+    if not isinstance(result.data, dict):
+        raise ValueError(f"Unexpected tool response type from {tool_name}")
+    return result.data
 
 
-def _fetch_labels(driver: Driver) -> list[str]:
-    query = _load_query("labels.cypher")
-    with driver.session() as session:
-        return session.execute_read(
-            lambda tx: [record["label"] for record in tx.run(query)]
-        )
-
-
-def _fetch_ci_properties(driver: Driver) -> tuple[list[str], list[str]]:
-    # Load discovery config
+def _build_catalog(tool_data: dict[str, Any], tool_name: str) -> dict[str, object]:
     discovery_config = _get_discovery_config()
     expected_properties = discovery_config["expected_ci_properties"]
 
-    query = _load_query("ci_properties.cypher")
-    with driver.session() as session:
-        result = session.execute_read(lambda tx: tx.run(query).data())
-    ci_props: list[str] = []
-    for row in result:
-        node_type = row.get("nodeType")
-        property_name = row.get("propertyName")
-        if isinstance(node_type, str) and ":CI" in node_type and property_name:
-            if property_name not in ci_props:
-                ci_props.append(property_name)
-    missing = [prop for prop in expected_properties if prop not in ci_props]
+    edges = tool_data.get("edges", []) if isinstance(tool_data.get("edges"), list) else []
+    nodes = tool_data.get("nodes", []) if isinstance(tool_data.get("nodes"), list) else []
+
+    rel_counts: dict[str, int] = {}
+    for edge in edges:
+        if not isinstance(edge, dict):
+            continue
+        rel_type = edge.get("relation") or edge.get("type") or edge.get("label")
+        rel_type_str = str(rel_type).strip() if rel_type is not None else ""
+        if not rel_type_str:
+            continue
+        rel_counts[rel_type_str] = rel_counts.get(rel_type_str, 0) + 1
+
+    relationship_types = sorted(rel_counts.keys())
+    relationship_type_counts = [
+        {"rel_type": rel_type, "count": rel_counts[rel_type]}
+        for rel_type in relationship_types
+    ]
+
+    labels_set: set[str] = set()
+    ci_props_set: set[str] = set()
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        node_type = node.get("type")
+        if node_type:
+            labels_set.add(str(node_type))
+        ci_props_set.update(str(k) for k in node.keys())
+
+    ci_node_properties = sorted(ci_props_set)
+    missing = [prop for prop in expected_properties if prop not in ci_props_set]
     warnings: list[str] = []
     if missing:
         warnings.append(f"Missing expected CI properties: {', '.join(missing)}")
-    return ci_props, warnings
 
-
-def _build_catalog(driver: Driver) -> dict[str, object]:
-    rel_types = _fetch_relationship_types(driver)
-    rel_type_counts = _fetch_relationship_counts(driver)
-    labels = _fetch_labels(driver)
-    ci_props, warnings = _fetch_ci_properties(driver)
     return {
-        "relationship_types": rel_types,
-        "relationship_type_counts": rel_type_counts,
-        "labels": labels,
-        "ci_node_properties": ci_props,
+        "relationship_types": relationship_types,
+        "relationship_type_counts": relationship_type_counts,
+        "labels": sorted(labels_set),
+        "ci_node_properties": ci_node_properties,
         "meta": {
             "generated_at": datetime.now(get_settings().timezone_offset).isoformat(),
             "warnings": warnings,
-            "environment": _build_environment_context(),
+            "environment": _build_environment_context(tool_name),
         },
     }
 
@@ -193,30 +185,15 @@ def _write_catalog(payload: dict[str, object]) -> None:
 
 
 def main() -> None:
-    """
-    Generate Neo4j catalog using connection from source asset.
-
-    Uses primary_neo4j source asset from database instead of environment variables.
-    """
-    # Load source asset from DB
-    source_asset = load_source_asset("primary_neo4j")
-    if not source_asset:
-        _exit_error("Source asset 'primary_neo4j' not found. Ensure it exists in Asset Registry.")
-        return
-
+    """Generate Neo4j catalog through graph tool orchestration."""
     try:
-        # Create connection using ConnectionFactory
-        connection = ConnectionFactory.create(source_asset)
-        driver = connection.driver  # Neo4jConnection exposes driver
-
-        catalog = _build_catalog(driver)
+        tool_name = _resolve_graph_tool_name()
+        tool_data = _execute_graph_tool(tool_name)
+        catalog = _build_catalog(tool_data, tool_name)
         _write_catalog(catalog)
-        print(f"Wrote Neo4j catalog to {OUTPUT_PATH}")
+        print(f"Wrote Neo4j catalog to {OUTPUT_PATH} via tool '{tool_name}'")
     except Exception as exc:
         _exit_error(str(exc))
-    finally:
-        if 'driver' in locals() and driver:
-            driver.close()
 
 
 if __name__ == "__main__":

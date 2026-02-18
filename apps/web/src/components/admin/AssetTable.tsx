@@ -79,7 +79,7 @@ export default function AssetTable({
                 {params.value}
               </Link>
               {isSystem && (
-                <span className="inline-flex rounded border border-amber-500/50 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                <span className="inline-flex h-5 items-center rounded-md border border-amber-500/50 bg-amber-500/10 px-2 text-tiny font-bold uppercase tracking-wider leading-none whitespace-nowrap text-amber-600 dark:text-amber-400">
                   System
                 </span>
               )}
@@ -97,6 +97,27 @@ export default function AssetTable({
           return (
             <span className="inline-flex rounded-md border border-variant bg-surface-elevated px-2 py-0.5 text-tiny font-bold uppercase tracking-wider text-muted-foreground">
               {type}
+            </span>
+          );
+        },
+      },
+      {
+        headerName: "System",
+        field: "is_system",
+        width: 110,
+        valueGetter: (params) => Boolean(params.data?.is_system),
+        cellRenderer: (params: ICellRendererParams<Asset>) => {
+          const isSystem = Boolean(params.value);
+          return (
+            <span
+              className={cn(
+                "inline-flex h-5 items-center rounded-md px-2 text-tiny font-bold uppercase tracking-wider leading-none whitespace-nowrap",
+                isSystem
+                  ? "border border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  : "border border-variant bg-surface-elevated text-muted-foreground",
+              )}
+            >
+              {isSystem ? "Yes" : "No"}
             </span>
           );
         },

@@ -38,6 +38,20 @@ from .source_models import (
 )
 from .validators import validate_asset
 
+_ADMIN_SYSTEM_ASSET_TYPES = {"prompt", "mapping", "policy", "query", "resolver"}
+_NON_SYSTEM_PROMPT_NAMES = {"ops_all", "tool_selector"}
+
+
+def _should_mark_system_asset(asset_type: str, name: str) -> bool:
+    """Return default is_system flag for Admin Asset types."""
+    normalized_type = (asset_type or "").strip().lower()
+    normalized_name = (name or "").strip()
+    if normalized_type not in _ADMIN_SYSTEM_ASSET_TYPES:
+        return False
+    if normalized_type == "prompt" and normalized_name in _NON_SYSTEM_PROMPT_NAMES:
+        return False
+    return True
+
 
 def list_assets(
     session: Session,
@@ -98,6 +112,7 @@ def create_asset(
 ) -> TbAssetRegistry:
     """Create new asset in draft status"""
     resolved_tenant_id = normalize_tenant_id(tenant_id or DEFAULT_TENANT_ID)
+    is_system = _should_mark_system_asset(asset_type, name)
     asset = TbAssetRegistry(
         asset_type=asset_type,
         name=name,
@@ -130,6 +145,7 @@ def create_asset(
         tool_output_schema=tool_output_schema,
         # Common fields
         tags=tags,
+        is_system=is_system,
         tenant_id=resolved_tenant_id,
         # Metadata
         created_by=created_by,

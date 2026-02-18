@@ -93,6 +93,8 @@
   - 서비스 자동 초기값: `/api/sim/services` 조회 후 데이터 존재 서비스 우선 선택
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
+  - `source` 자산은 Assets 목록에서 제외하고 `Admin > Catalogs > Sources` 탭에서 관리
+  - Admin Assets 기본 정책: `source`를 제외한 자산은 `is_system=true`로 관리하며, `is_system=true` 자산은 이름 변경/삭제/언퍼블리시가 금지됨 (`prompt` 중 `ops_all`, `tool_selector`는 예외로 non-system)
   - Source Asset은 `environment/scope` 입력/응답 필드를 사용하지 않으며, Source 연결 설정은 `name/description/source_type/connection/tags`만 관리
   - Catalog Scan API (`POST /asset-registry/catalogs/{asset_id}/scan`)는 JSON body `{ "schema_names": string[] | null, "include_row_counts": boolean }` 계약을 사용
   - Catalog Schema Discovery 실패는 브라우저 `alert()` 대신 Admin 표준 에러 UI(ValidationAlert + Toast)로 노출

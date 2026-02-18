@@ -10,9 +10,9 @@ import StatusFilterButtons from "../../../components/admin/StatusFilterButtons";
 
 // Define types for select options
 // Note: "query" type removed - use Tools instead
-type AssetType = "all" | "prompt" | "mapping" | "policy" | "source" | "resolver";
+type AssetType = "all" | "prompt" | "mapping" | "policy" | "resolver";
 type AssetStatus = "all" | "draft" | "published";
-const EXCLUDED_ASSET_TYPES = new Set(["tool", "screen", "catalog"]);
+const EXCLUDED_ASSET_TYPES = new Set(["tool", "screen", "catalog", "source"]);
 
 export default function AssetsPageContent() {
     const router = useRouter();
@@ -27,7 +27,7 @@ export default function AssetsPageContent() {
     const statusParam = searchParams.get("status") as AssetStatus | null;
 
     const initialTypeFilter = useMemo(() => {
-        if (typeParam && ["all", "prompt", "mapping", "policy", "source", "resolver"].includes(typeParam)) {
+        if (typeParam && ["all", "prompt", "mapping", "policy", "resolver"].includes(typeParam)) {
             return typeParam;
         }
         return "all";
@@ -96,8 +96,7 @@ export default function AssetsPageContent() {
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === "all" || value === "prompt" || value === "mapping" ||
-                                    value === "policy" ||
-                                    value === "source" || value === "resolver") {
+                                    value === "policy" || value === "resolver") {
                                     handleTypeFilterChange(value as AssetType);
                                 }
                             }}
@@ -107,7 +106,6 @@ export default function AssetsPageContent() {
                             <option value="prompt" className="bg-surface-elevated text-foreground">Prompts</option>
                             <option value="mapping" className="bg-surface-elevated text-foreground">Mappings</option>
                             <option value="policy" className="bg-surface-elevated text-foreground">Policies</option>
-                            <option value="source" className="bg-surface-elevated text-foreground">Sources</option>
                             <option value="resolver" className="bg-surface-elevated text-foreground">Resolvers</option>
                         </select>
                     </div>

@@ -208,12 +208,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/data/sources",
-        destination: "/admin/assets?type=source",
+        destination: "/admin/catalogs?tab=sources",
         permanent: true,
       },
       {
         source: "/data/catalog",
-        destination: "/admin/assets?type=schema",
+        destination: "/admin/catalogs?tab=catalogs",
         permanent: true,
       },
       {

@@ -1,49 +1,49 @@
 {
-  "timestamp": "2026-02-17T23:14:52.619704",
+  "timestamp": "2026-02-19T01:07:29.838158",
   "total": 60,
-  "passed": 10,
-  "failed": 50,
-  "success_rate": 16.7,
+  "passed": 26,
+  "failed": 34,
+  "success_rate": 43.3,
   "categories": {
     "count": {
-      "passed": 5,
-      "failed": 19
+      "passed": 9,
+      "failed": 15
     },
     "value": {
       "passed": 3,
       "failed": 3
     },
     "distribution": {
-      "passed": 2,
-      "failed": 1
+      "passed": 3,
+      "failed": 0
     },
     "percentage": {
       "passed": 0,
       "failed": 2
     },
     "recent": {
-      "passed": 0,
-      "failed": 4
+      "passed": 1,
+      "failed": 3
     },
     "status": {
-      "passed": 0,
-      "failed": 5
-    },
-    "history": {
-      "passed": 0,
+      "passed": 3,
       "failed": 2
     },
+    "history": {
+      "passed": 1,
+      "failed": 1
+    },
     "specific": {
-      "passed": 0,
-      "failed": 4
+      "passed": 2,
+      "failed": 2
     },
     "rank": {
-      "passed": 0,
-      "failed": 5
+      "passed": 3,
+      "failed": 2
     },
     "complex": {
-      "passed": 0,
-      "failed": 5
+      "passed": 1,
+      "failed": 4
     }
   },
   "results": [
@@ -52,11 +52,11 @@
       "query": "What is the total number of CIs in the system?",
       "category": "count",
       "expected": "280",
-      "timestamp": "2026-02-17T23:02:04.115231",
+      "timestamp": "2026-02-19T00:45:53.654801",
       "success": true,
-      "response_text": "시스템의 총 CI 수는 **280개**입니다. 유형별로는 **SW 197개**, **HW 75개**, **SYSTEM 8개**로 확인되며, 총계와 각 유형 수가 일치합니다. 다만 그래프 시각화는 Neo4j 소스 자산이 없어 실패했고, 히스토리 결과는 비어 있습니다.",
+      "response_text": "시스템의 구성(CI) 총 수는 **5개**입니다. 주 요 결과(CI_DETAIL/PRIMARY)에서 5개 항목이 확인되며, 예시로 MES Server 06, APM Server 04, Analytics App Report 01-1 등이 포함됩니다. 다만 요약 섹션에 \"Found 0 items\"로 표시되어 데이터 간 불일치가 있습니다. 또한 AGGREGATE 결과의 **Total: 280**은 구성 수와 직접적 연관이 아닐 수 있습니다.",
       "reason": "Found: 280",
-      "response_time_ms": 13953,
+      "response_time_ms": 21609,
       "status_code": 200
     },
     {
@@ -64,11 +64,11 @@
       "query": "How many CIs are currently active?",
       "category": "count",
       "expected": "259",
-      "timestamp": "2026-02-17T23:02:18.069975",
-      "success": true,
-      "response_text": "현재 활성 CIs는 **259대**이며, 총 CIs는 **280대**입니다. 상태별로는 **active 259대**, **monitoring 21대**로 구분되며 활성 비율은 약 **92.5%**입니다. 유형별 합계는 **SW 197대**, **HW 75대**, **SYSTEM 8대**로 나타납니다. 다만 그래프 시각화는 Neo4j 소스 누락으로 확인이 불가했습니다.",
-      "reason": "Found: 259",
-      "response_time_ms": 23875,
+      "timestamp": "2026-02-19T00:46:15.266559",
+      "success": false,
+      "response_text": "다음과 같습니다:\n\n- 현재 활성 상태인 구성은 총 **2개**입니다.\n- 활성 구성: **APM Server 04**(ci_code srv-apm-04) 및 **Analytics App Report 01-1**(ci_code app-analytics-report-01-1)\n- 비활성/모니터링 상태: **MES Server 06**(ci_code srv-mes-06) — 상태가 monitoring으로 표시됩니다.",
+      "reason": "Expected '259' not found",
+      "response_time_ms": 24802,
       "status_code": 200
     },
     {
@@ -76,11 +76,11 @@
       "query": "How many CIs are in monitoring status?",
       "category": "count",
       "expected": "21",
-      "timestamp": "2026-02-17T23:02:41.946151",
+      "timestamp": "2026-02-19T00:46:40.070957",
       "success": false,
-      "response_text": "모니터링 상태인 CI는 **1개**로 확인됩니다. 해당 항목은 MES Server 06(srv-mes-06, HW)이며, 나머지 두 항목은 APM Server 04 HW와 Analytics App Report 01-1 SW로 상태는 active입니다. AGGREGATE는 유형별 총계만 제공되고, 전체 요약에 ‘Found 0 items’로 표시된 점은 그래프/히스토리 로드 이슈로 보입니다.",
+      "response_text": "- Monitoring 상태인 구성은 **1건**입니다. 해당 구성은 MES Server 06 (ci_code: srv-mes-06, HW)입니다.\n- 총 조회된 구성은 **5건**이며, 화면에 표시된 다른 항목들은 주로 active 상태로 보입니다.\n- 주의: 요약 섹션에 \"Found 0 items\"로 나와 데이터에 불일치가 있어 해석 시 참고하시기 바랍니다.",
       "reason": "Expected '21' not found",
-      "response_time_ms": 29027,
+      "response_time_ms": 24216,
       "status_code": 200
     },
     {
@@ -88,11 +88,11 @@
       "query": "How many software CIs are there?",
       "category": "count",
       "expected": "197",
-      "timestamp": "2026-02-17T23:03:10.975462",
-      "success": true,
-      "response_text": "소프트웨어 CIs는 총 **197개**입니다. 전체 CI는 **280개**이며, 유형별로 **SW 197**, **HW 75**, **SYSTEM 8**로 분류됩니다. 그래프 시각화에서 Neo4j 소스 누락으로 그래프 결과를 불러오지 못했지만, 소프트웨어 CIs 수치는 위와 같이 확인됩니다.",
-      "reason": "Found: 197",
-      "response_time_ms": 19358,
+      "timestamp": "2026-02-19T00:47:04.289521",
+      "success": false,
+      "response_text": "다음과 같이 요약됩니다.\n\n- 소프트웨어 구성(SW)은 **1건**으로 확인됩니다.\n- 전체 구성은 **5건**이며, HW가 **2건**, SW가 **1건**으로 보입니다(나머지는 메타데이터로 추정).\n- Summary에 \"Found 0 items\"가 표시되는 등 데이터 간 불일치가 있어 주의가 필요합니다. 각 구성을 보면 CPU 지표는 대략 **max 60.50%**, **avg 40.83%** 수준입니다.",
+      "reason": "Expected '197' not found",
+      "response_time_ms": 25319,
       "status_code": 200
     },
     {
@@ -100,11 +100,11 @@
       "query": "How many hardware CIs are there?",
       "category": "count",
       "expected": "75",
-      "timestamp": "2026-02-17T23:03:30.336320",
-      "success": true,
-      "response_text": "하드웨어 CIs의 수는 **75개**로 확인됩니다. 전체 자산은 **280개**이며, 구분은 **SW 197개**, **HW 75개**, **SYSTEM 8개**로 분포합니다. 다만 그래프 시각화에서 Neo4j 소스 로드 실패가 있어 그래프 결과가 비정상일 수 있지만, HW CIs 수치는 위 집계로 확인됩니다.",
-      "reason": "Found: 75",
-      "response_time_ms": 23005,
+      "timestamp": "2026-02-19T00:47:29.613346",
+      "success": false,
+      "response_text": "하드웨어 구성은 총 **2개**입니다. \n- MES Server 06 (ci_code: srv-mes-06) — 상태: monitoring, 최대 CPU 사용도 **60.50%**, 평균 CPU 사용도 **40.83%**. \n- APM Server 04 (ci_code: srv-apm-04) — 상태: active, 최대 CPU 사용도 **60.50%**, 평균 CPU 사용도 **40.83%**. \n참고로 Analytics App Report 01-1은 소프트웨어(SW)로 분류되어 하드웨어가 아닙니다.",
+      "reason": "Expected '75' not found",
+      "response_time_ms": 17548,
       "status_code": 200
     },
     {
@@ -112,11 +112,11 @@
       "query": "How many events are recorded in total?",
       "category": "count",
       "expected": "31243",
-      "timestamp": "2026-02-17T23:03:53.343380",
+      "timestamp": "2026-02-19T00:47:47.163325",
       "success": true,
-      "response_text": "총 기록된 이벤트의 수는 **31,243건**입니다. 세부 분류는 각각 **6,291**(threshold_alarm), **6,286**(security_alert), **6,267**(health_check), **6,225**(status_change), **6,174**(deployment)로 구성됩니다. HISTORY는 비어 있고 GRAPH는 Neo4j 원천 자원을 찾지 못해 그래프가 표시되지 않았습니다. 또한 요약에 \"Found 0 items\"로 표기된 점은 데이터 불일치를 시사하므로 주의가 필요합니다.",
+      "response_text": "총 이벤트 수는 **31,243건**으로 집계되었습니다.  \nPRIMARY 결과에서 **5건**의 항목이 조회되었고 History/Graph는 데이터가 없습니다.  \n요약에 **“Found 0 items”**로 표시되나, 실제 이벤트 수는 Aggregate의 총계값인 **31,243건**이 맞습니다.",
       "reason": "Found formatted: 31,243",
-      "response_time_ms": 19089,
+      "response_time_ms": 17823,
       "status_code": 200
     },
     {
@@ -124,11 +124,11 @@
       "query": "How many documents are stored in the system?",
       "category": "count",
       "expected": "132",
-      "timestamp": "2026-02-17T23:04:12.434287",
-      "success": false,
-      "response_text": "시스템에 저장된 문서는 총 **280개**입니다. 유형별 분포는 **SW 197개**, **HW 75개**, **SYSTEM 8개**로 구분됩니다. 다만 그래프 시각화는 Neo4j 소스 누락으로 표시되지 않았고, 히스토리는 데이터가 비어 있습니다.",
-      "reason": "Expected '132' not found",
-      "response_time_ms": 20062,
+      "timestamp": "2026-02-19T00:48:04.987954",
+      "success": true,
+      "response_text": "데이터를 종합하면 문서 수에 대한 일관성에 문제가 있습니다. PRIMARY 결과는 **5건**의 항목을 반환하고, AGGREGATE 결과는 총계로 **132건**을 보여 주지만, Summary에는 **Found 0 items**라고 표시되어 있어 불일치가 발생합니다. HISTORY 및 GRAPH 결과는 비어 있습니다. 현재로서는 신뢰 가능한 문서 수를 AGGREGATE의 **132건**으로 보는 것이 합리적이며, 쿼리 로직과 데이터 소스를 재확인해 일관성을 확보하는 것이 좋습니다.",
+      "reason": "Found: 132",
+      "response_time_ms": 18250,
       "status_code": 200
     },
     {
@@ -136,11 +136,11 @@
       "query": "How many work history entries exist?",
       "category": "count",
       "expected": "1731",
-      "timestamp": "2026-02-17T23:04:32.498461",
-      "success": false,
-      "response_text": "요청하신 작업 이력(historical) 엔트리는 총 **10건**으로 확인됩니다. HISTORY 섹션은 비어 있어 추가 이력은 확인되지 않았고, 그래프 소스(Neo4j) 접근 오류로 일부 데이터 수집이 실패한 것으로 보입니다. 현재 관찰 가능한 이력은 10건이며, 소스 문제를 해결하면 HISTORY 데이터가 보강될 수 있습니다.",
-      "reason": "Expected '1731' not found",
-      "response_time_ms": 20398,
+      "timestamp": "2026-02-19T00:48:23.239807",
+      "success": true,
+      "response_text": "요청하신 작업 이력은 현재 **0건**으로 확인됩니다. HISTORY 및 GRAPH 결과는 모두 비어 있고 요약에도 0건으로 표시됩니다. 다만 AGGREGATE 결과의 총합은 **1731**로 나타나 데이터 간 불일치가 있어, 데이터 소스나 쿼리 구성을 재확인할 필요가 있습니다.",
+      "reason": "Found: 1731",
+      "response_time_ms": 19654,
       "status_code": 200
     },
     {
@@ -148,23 +148,23 @@
       "query": "How many maintenance activities have been performed?",
       "category": "count",
       "expected": "1478",
-      "timestamp": "2026-02-17T23:04:52.898852",
+      "timestamp": "2026-02-19T00:48:42.894914",
       "success": false,
-      "response_text": "다음 기간에 수행된 유지보수 활동은 총 **10건**입니다.\n\n유지보수 유형 분포: **capacity 4건**, **reboot 2건**, **inspection 3건**, **patch 1건**으로 나타났습니다. 결과적으로 **9건은 success**, 하나의 건은 **degraded** 상태로 기록되었습니다(대부분 자동화 작업으로 실행됨).",
+      "response_text": "수행된 유지보수 활동은 총 **5건**으로 확인됩니다.  \nPrimary Result에는 5건의 행이 반환되며, 각 행은 특정 CI의 유지보수 활동을 나타냅니다.  \n참고로 요약 메타데이터는 **0건**으로 표기되었으나, 상세 결과 기준으로는 실제로 **5건**의 활동이 존재합니다.",
       "reason": "Expected '1478' not found",
-      "response_time_ms": 21900,
+      "response_time_ms": 20967,
       "status_code": 200
     },
     {
       "id": 10,
       "query": "How many audit log entries are there?",
       "category": "count",
-      "expected": "733",
-      "timestamp": "2026-02-17T23:05:14.801126",
+      "expected": "743",
+      "timestamp": "2026-02-19T00:49:03.863897",
       "success": false,
-      "response_text": "요청하신 감사 로그 항목 수는 **0개**입니다. 요약 결과에 \"Found 0 items\"로 명시되어 있으며, HISTORY는 비어 있고 GRAPH는 Neo4j 소스 자산 누락으로 그래프 생성에 실패했습니다. 참고로 PRIMARY/AGGREGATE 결과는 다른 CI 항목과 집계 정보를 보여주지만 이번 조회에서 감사 로그 엔트리는 발견되지 않았습니다.",
-      "reason": "Expected '733' not found",
-      "response_time_ms": 15715,
+      "response_text": "결과 요약: 감사 로그 항목 수를 정확히 파악할 수 없었습니다. tb_audit_log에서 **tenant_id 열이 존재하지 않는다는 UndefinedColumn 오류**로 집계 쿼리가 실패했습니다. 먼저 테이블 스키마를 확인해 실제 열 이름을 확인하거나, 필터를 제거하고 전체 로그 수를 조회해 보세요. 예시 쿼리: SELECT COUNT(*) AS count FROM tb_audit_log;",
+      "reason": "Expected '743' not found",
+      "response_time_ms": 24818,
       "status_code": 200
     },
     {
@@ -172,11 +172,11 @@
       "query": "What is the size of the largest document?",
       "category": "value",
       "expected": "8080776",
-      "timestamp": "2026-02-17T23:05:30.517226",
+      "timestamp": "2026-02-19T00:49:28.683928",
       "success": false,
-      "response_text": "이번 조회에서는 최대 문서의 크기를 결정할 수 없습니다. 원인으로는 **지원되지 않는 도구 유형: document_search**로 검색이 실패했고, 발견된 항목은 **0개**입니다. 따라서 크기 정보를 얻지 못했습니다. 해결을 위해서는 지원되는 도구로 재시도하거나 도구 구성을 확인해 주세요.",
+      "response_text": "현재 결과에서 문서의 최대 크기(size) 정보는 제공되지 않습니다. 전체 문서 수는 **132**개로 집계되었지만 각 문서의 크기 값은 반환되지 않았습니다. HISTORY와 GRAPH 결과는 비어 있으며, PRIMARY 결과는 5건의 항목만 확인됩니다. 따라서 최대 문서 크기를 판단하려면 크기 정보를 포함하도록 쿼리를 재실행해야 합니다.",
       "reason": "Expected '8080776' not found",
-      "response_time_ms": 13457,
+      "response_time_ms": 16068,
       "status_code": 200
     },
     {
@@ -184,11 +184,11 @@
       "query": "What is the name of the largest document in the system?",
       "category": "value",
       "expected": "레드햇리눅스7",
-      "timestamp": "2026-02-17T23:05:43.975654",
+      "timestamp": "2026-02-19T00:49:44.753985",
       "success": false,
-      "response_text": "요청하신 Largest document의 이름은 현재 데이터에서 확인할 수 없습니다. 실행 결과에 따르면 문서 항목은 **0건**으로 나와 Largest document를 식별할 수 없고, 반환된 행은 구성 항목(CI) 정보에 불과합니다. 또한 GRAPH 결과에서 **Neo4j 소스 자산 not found: default_neo4j** 오류가 있어 데이터 소스 연결 이슈가 있습니다. 문서 데이터를 정확히 확인하려면 Neo4j 소스의 접근성을 해결한 후 문서를 대상으로 재쿼리해 주세요.",
+      "response_text": "현재 문서 검색 결과는 **총 0건**으로 나타나므로 시스템에서 가장 큰 문서의 이름을 확인할 수 없습니다. 문서가 존재하지 않거나 검색 조건으로 인해 결과가 비어 있을 수 있습니다. 필요 시 검색 조건을 재확인하고 재시도해 주세요.",
       "reason": "Expected '레드햇리눅스7' not found",
-      "response_time_ms": 27670,
+      "response_time_ms": 14808,
       "status_code": 200
     },
     {
@@ -196,11 +196,11 @@
       "query": "How many PDF documents are there?",
       "category": "count",
       "expected": "78",
-      "timestamp": "2026-02-17T23:06:11.647341",
+      "timestamp": "2026-02-19T00:49:59.563946",
       "success": false,
-      "response_text": "실행 결과는 'Unsupported tool type: document_search' 오류로 인해 PDF 문서 수를 확정할 수 없었습니다. 요약에는 **0개**의 아이템이 발견되었다고 표시되지만, 이는 도구 지원 문제로 인한 비정상적 결과일 수 있습니다. 확정된 수치를 원하시면 지원되는 도구로 재실행하거나 쿼리 방식을 수정해 주세요.",
+      "response_text": "요청하신 PDF 문서 수를 확인한 결과, PDF 문서는 발견되지 않았습니다. 최종 요약에 따라 PDF 문서 수는 **0건**으로 표시됩니다. 다만 Primary 목록은 **5개**의 CI 항목(HW/SW)으로 구성되어 있으며, 이는 PDF와 무관한 항목들입니다. 추가로 Aggregate/History/Graph 결과에서도 PDF 관련 항목은 확인되지 않았습니다.",
       "reason": "Expected '78' not found",
-      "response_time_ms": 18908,
+      "response_time_ms": 18279,
       "status_code": 200
     },
     {
@@ -208,11 +208,11 @@
       "query": "How many plain text documents are there?",
       "category": "count",
       "expected": "54",
-      "timestamp": "2026-02-17T23:06:30.556097",
+      "timestamp": "2026-02-19T00:50:17.844808",
       "success": false,
-      "response_text": "결과 요약:\n\n- Plain text 문서는 조회 결과에서 **0개**로 확인됩니다.\n- 실행에선 **5건의 CI 항목**이 반환되었으나 이는 plain text 문서와 무관한 자산 정보(HW/SW)입니다.\n- AGGREGATE 합계는 **총 280건**이며, 유형별로 **SW 197건, HW 75건, SYSTEM 8건**으로 나뉩니다.\n- 그래프(Graph) 결과는 **Neo4j 소스 자산 not found: default_neo4j** 오류로 실패했습니다.",
+      "response_text": "요청하신 평문 텍스트 문서 수를 확인한 결과, 데이터에서 평문 문서에 해당하는 항목은 발견되지 않았습니다. 조회 주요 항목은 HW/SW CI로 구성된 **5건**이었지만 문서 유형과는 무관합니다. 집계 결과에서도 평문 문서 수는 **0건**으로 나타나며, HISTORY/GRAPH 결과도 비어 있습니다. 따라서 현재 평문 텍스트 문서는 총 **0건**입니다.",
       "reason": "Expected '54' not found",
-      "response_time_ms": 23365,
+      "response_time_ms": 16281,
       "status_code": 200
     },
     {
@@ -220,11 +220,11 @@
       "query": "What is the most common event type?",
       "category": "value",
       "expected": "threshold_alarm",
-      "timestamp": "2026-02-17T23:06:53.923514",
+      "timestamp": "2026-02-19T00:50:34.127182",
       "success": true,
-      "response_text": "가장 흔한 이벤트 유형은 **threshold_alarm**이며, 총 발생 건수는 **6291건**으로 집계되었습니다.  \n히스토리 데이터는 비어 있고 그래프 시각화는 **Neo4j 소스 자산 not found**로 불가했습니다.  \n샘플 PRIMARY 결과의 아이템 3건은 대체로 상태가 **monitoring/active**이며, 평균 CPU 사용량은 약 **40.83%**로 유사한 경향을 보입니다.",
+      "response_text": "다음과 같이 요약합니다:\n\n- 가장 일반적인 이벤트 유형은 **threshold_alarm**이며 건수는 **6291건**으로 최다입니다.\n- 히스토리와 그래프 데이터는 비어 있고, 원시 결과에는 CPU 사용량 정보를 포함한 3개의 CI가 표시됩니다.\n- 다만 요약에 **\"Found 0 items\"**로 표기된 부분은 모순되므로, 실제로는 6291건의 threshold_alarm이 존재하는 것이 맞습니다.",
       "reason": "Found: threshold_alarm",
-      "response_time_ms": 21552,
+      "response_time_ms": 19600,
       "status_code": 200
     },
     {
@@ -232,11 +232,11 @@
       "query": "What is the most common CI type?",
       "category": "value",
       "expected": "SW",
-      "timestamp": "2026-02-17T23:07:15.476790",
+      "timestamp": "2026-02-19T00:50:53.728700",
       "success": true,
-      "response_text": "다음 중 가장 일반적인 CI 유형은 **SW**(소프트웨어)로, 총 **197건**으로 확인됩니다.  \n프라이머리 결과에는 HW와 SW가 혼재해 보이나, 집계 결과상 **SW**가 압도적으로 많습니다.  \n다만 그래프 소스 부재로 시각화가 실패했고, 전체 요약은 0건으로 표기되어 데이터 신뢰성에 주의가 필요합니다.",
+      "response_text": "가장 일반적인 구성 유형은 **SW**입니다. AGGREGATE 결과에 따르면 전체 197건 중 **197건**이 ci_type=SW로 분류되어 SW가 가장 흔한 구성 유형임을 확인할 수 있습니다. 샘플 3건의 상세 결과에는 HW가 2건, SW가 1건으로 보이지만, 전체 집계와 상충되므로 데이터 범위나 필터 차이에 따른 차이가 있을 수 있습니다. 데이터 간의 불일 가능성에 유의해 추가 검토를 권합니다.",
       "reason": "Found: SW",
-      "response_time_ms": 26859,
+      "response_time_ms": 22402,
       "status_code": 200
     },
     {
@@ -244,11 +244,11 @@
       "query": "How many metrics are defined?",
       "category": "count",
       "expected": "120",
-      "timestamp": "2026-02-17T23:07:42.337460",
+      "timestamp": "2026-02-19T00:51:16.132409",
       "success": false,
-      "response_text": "정의된 메트릭 수는 **0개**입니다. METRIC 결과가 비어 있어 메트릭 정의 항목이 없음을 확인했습니다.\n\n참고로 PRIMARY 결과에서 **5**개의 CI가 식별되었고, AGGREGATE는 총 **280**건이며 세부 분포는 SW **197**, HW **75**, SYSTEM **8**입니다.\n\nGRAPH 단계에서 Neo4j 소스 자산 'default_neo4j'를 찾지 못해 시각화가 실패했습니다.",
+      "response_text": "정의된 메트릭 수는 PRIMARY 결과의 카운트 기준으로 **5개**입니다(총 5개 행). 표시된 항목은 현재 3건이 보이며, 총 5건이 존재하는 것으로 보이나 요약에서 누락되거나 불일치가 의심됩니다. CPU 관련 메트릭은 각 항목에서 최대 CPU 사용치가 약 **60.50%**, 평균 CPU 사용치가 약 **40.83%**로 유사한 패턴을 보입니다. 그러나 Summary에 **“Found 0 items”**로 표기되어 있어 데이터의 정합성에 혼선이 있으므로 원인 확인이 필요합니다.",
       "reason": "Expected '120' not found",
-      "response_time_ms": 16891,
+      "response_time_ms": 21987,
       "status_code": 200
     },
     {
@@ -256,11 +256,11 @@
       "query": "How many metric data points are recorded?",
       "category": "count",
       "expected": "10800000",
-      "timestamp": "2026-02-17T23:07:59.230526",
-      "success": false,
-      "response_text": "메트릭 데이터 포인트 수는 **0개**로 기록되었습니다(METRIC 결과가 비어 있고 최종 요약도 “Found 0 items”로 표시됩니다).\n\n참고로 프라이머리 결과는 **5개 항목**이 반환되었고, AGGREGATE 결과의 총합은 **280**개 데이터 포인트이며 구분은 **SW 197**, **HW 75**, **SYSTEM 8**입니다.\n\n다만 GRAPH 결과에서 \"Neo4j source asset not found: default_neo4j\" 오류가 발생해 그래프 데이터에 접근할 수 없습니다.",
-      "reason": "Expected '10800000' not found",
-      "response_time_ms": 22262,
+      "timestamp": "2026-02-19T00:51:38.121829",
+      "success": true,
+      "response_text": "메트릭 데이터 포인트 수는 0개로 기록되었습니다. METRIC 결과가 비어 있으며 Summary에 \"Found 0 items\"로 명시되어 있습니다. 다만 AGGREGATE 결과에서 총합 **10,800,000**이 보고되어 있어, 이는 메트릭 포인트 수가 아니라 다른 집계 값일 가능성이 있습니다. 메트릭 데이터 포인트의 실제 수를 확정하려면 METRIC 세부 구성을 다시 확인해 주세요.",
+      "reason": "Found formatted: 10,800,000",
+      "response_time_ms": 20313,
       "status_code": 200
     },
     {
@@ -268,11 +268,11 @@
       "query": "What document categories exist?",
       "category": "value",
       "expected": "manual",
-      "timestamp": "2026-02-17T23:08:21.494159",
+      "timestamp": "2026-02-19T00:51:58.436435",
       "success": false,
-      "response_text": "다음 결과를 요약합니다.\n\n- 사용된 도구 유형(document_search)이 현재 지원되지 않아 검색에 실패했습니다.  \n- 결과로는 항목이 **0개** 발견되었습니다.  \n- 이로 인해 현재 문서 카테고리 목록을 제공할 수 없습니다.  \n- 권장 조치: 지원되는 도구를 사용하거나 시스템 관리자에게 문서 검색 기능 활성화를 요청해 주시기 바랍니다.",
+      "response_text": "문서 검색 결과의 Total Results는 **0**건으로 확인되어 현재 문서 카테고리는 존재하지 않는 것으로 보입니다. 반면 Aggregate 결과에는 **132**의 총합이 표시되나 이는 문서 카테고리와 직접 연결된 항목은 아닐 가능성이 큽니다. 데이터 간 차이가 있어 인덱스 구분이나 검색 범위 설정을 재확인하고 필요 시 조정하는 것을 권장합니다.",
       "reason": "Expected 'manual' not found",
-      "response_time_ms": 9553,
+      "response_time_ms": 18592,
       "status_code": 200
     },
     {
@@ -280,11 +280,11 @@
       "query": "What is the most common work type?",
       "category": "value",
       "expected": "audit",
-      "timestamp": "2026-02-17T23:08:31.048470",
+      "timestamp": "2026-02-19T00:52:17.031456",
       "success": true,
-      "response_text": "주어진 실행 결과에서 가장 일반적인 작업 유형은 **audit**이며, 해당 유형은 **1건**으로 확인됩니다. 즉, 이 조회의 집계 기준상 유일한 작업 유형도 **audit**입니다. 다만 그래프 결과에서 **Neo4j source asset not found: default_neo4j** 오류가 발생했고, Summary가 **Found 0 items**로 표시되어 목록과 집계 간에 불일치가 있습니다.",
+      "response_text": "가장 흔한 work_type은 **audit**이며, 총 **455건**으로 확인됩니다. 일부 개별 항목은 HW와 SW로 구분되지만, 전체적으로 audit가 지배적입니다. 히스토리/그래프 결과는 비어 있고, 요약의 “Found 0 items” 표시는 UI 이슈로 보입니다.",
       "reason": "Found: audit",
-      "response_time_ms": 19280,
+      "response_time_ms": 23320,
       "status_code": 200
     },
     {
@@ -292,11 +292,11 @@
       "query": "Show me the distribution of CI types.",
       "category": "distribution",
       "expected": "197",
-      "timestamp": "2026-02-17T23:08:50.330468",
-      "success": false,
-      "response_text": "다음은 CI 유형 분포의 핵심 결과입니다. SW가 CI 유형 분포의 주를 차지하며 HW보다 우세합니다. 전체를 13개 그룹으로 집계한 결과 총 280건이 분포하고 있으며, SW 서브타입별로는 **app 70건**, **was 43건**, **os 43건**, **web 22건**으로 확인되고, HW 서브타입인 **server 22건**도 확인됩니다. 다만 나머지 **8개 그룹**의 구체적 분포는 제시되지 않아 전체 분포를 완전히 확정하기는 어렵습니다. 또한 그래프 시각화는 Neo4j 소스 asset 미발견으로 실패했습니다.",
-      "reason": "Expected '197' not found",
-      "response_time_ms": 31068,
+      "timestamp": "2026-02-19T00:52:40.354625",
+      "success": true,
+      "response_text": "다음은 구성 타입의 분포 요약입니다.\n\n- 총 분포: **총 280건** 중 **SW 197건**, **HW 75건**, **SYSTEM 8건**.\n- 비율: **SW 약 70.4%**, **HW 약 26.8%**, **SYSTEM 약 2.9%**.\n- 관찰 포인트: SW가 대다수를 차지하고 HW와 SYSTEM의 비중은 상대적으로 작음. 상세 목록 예시로는 **HW 2건**과 **SW 1건**이 포함되어 있습니다.",
+      "reason": "Found: 197",
+      "response_time_ms": 19839,
       "status_code": 200
     },
     {
@@ -304,11 +304,11 @@
       "query": "What is the distribution of event types?",
       "category": "distribution",
       "expected": "6291",
-      "timestamp": "2026-02-17T23:09:21.400539",
+      "timestamp": "2026-02-19T00:53:00.195599",
       "success": true,
-      "response_text": "사건 유형 분포는 총 **31,243건**이며, 5개 유형으로 나뉩니다.  \n세부 분포는 **threshold_alarm: 6,291건**, **security_alert: 6,286건**, **health_check: 6,267건**, **status_change: 6,225건**, **deployment: 6,174건**으로 거의 균등합니다.  \n각 유형은 전체의 약 **19.75%–20.16%**를 차지합니다.  \n참고로 그래프 렌더링은 Neo4j 소스 자산 누락으로 불가했습니다.",
+      "response_text": "이벤트 유형 분포는 총 **31,243건**으로 확인됩니다. 유형별로는 **threshold_alarm 6,291건**, **security_alert 6,286건**, **health_check 6,267건**, **status_change 6,225건**, **deployment 6,174건**으로 구성됩니다. 전체적으로 유형 간 차이가 작아 균형적으로 분포하며, 특정 유형으로의 집중이나 뚜렷한 이상 패턴은 보이지 않습니다.",
       "reason": "Found formatted: 6,291",
-      "response_time_ms": 19446,
+      "response_time_ms": 16680,
       "status_code": 200
     },
     {
@@ -316,11 +316,11 @@
       "query": "Show the distribution of CI statuses.",
       "category": "distribution",
       "expected": "259",
-      "timestamp": "2026-02-17T23:09:40.847552",
+      "timestamp": "2026-02-19T00:53:16.877672",
       "success": true,
-      "response_text": "CI 상태 분포는 전체 280건 중 **active 259건**, **monitoring 21건**으로 거의 대부분 활성 상태입니다. 현재 상세 목록은 5건에 불과하여 집계 총합과 큰 차이가 있어 데이터 소스 간 불일치 가능성이 있습니다. 그래프 렌더링은 **Neo4j 소스 자산 미발견**으로 실패했고, 실행 요약에 \"Found 0 items\"로 표시됩니다.",
+      "response_text": "다음과 같이 구성(status) 분포를 요약합니다.\n\n- 전체 구성 항목 수: **280건** 중 두 가지 상태(active, monitoring)만 관찰됩니다. \n- 상태 분포: **active 259건**(약 92.5%), **monitoring 21건**(약 7.5%)으로 나타나며, 다른 상태는 보이지 않습니다. \n- 샘플 상세에서 확인된 항목들 중에는 **active**가 다수이고, **monitoring**은 소수로 확인됩니다(샘플 3건 중 2건 active, 1건 monitoring).\n- 필요 시 더 많은 항목이나 기간별 추세를 추가로 분석해 드리겠습니다.",
       "reason": "Found: 259",
-      "response_time_ms": 24676,
+      "response_time_ms": 20220,
       "status_code": 200
     },
     {
@@ -328,11 +328,11 @@
       "query": "What percentage of work items succeeded?",
       "category": "percentage",
       "expected": "74.9",
-      "timestamp": "2026-02-17T23:10:05.525221",
+      "timestamp": "2026-02-19T00:53:37.100057",
       "success": false,
-      "response_text": "결과 요약: 총 **2건**의 작업 중 모두 **성공**으로 판정되어 성공률은 **100%**입니다(2/2).\n\n세부적으로는: SCADA App Scheduler 02-1의 audit 작업은 **127분** 소요되어 성공했고, CMDB Server 06의 upgrade 작업은 **72분** 소요되어 성공했습니다.\n\n참고로 그래프 시각화는 데이터 소스인 Neo4j를 찾지 못해 로드되지 않았습니다.",
+      "response_text": "주어진 데이터에서 **succeeded(성공) 상태**에 해당하는 항목이 없으므로 성공 비율은 **0%**입니다. 상세 결과에는 **5개 항목**이 표시되지만 요약에선 **Found 0 items**로 모순되어 데이터 표기에 불일치가 있습니다. 정확한 비율을 얻으려면 성공 상태 정의를 명확히 하거나, 성공 상태를 포함한 로그를 재조회해 주세요.",
       "reason": "Expected '74.9' not found",
-      "response_time_ms": 28031,
+      "response_time_ms": 19763,
       "status_code": 200
     },
     {
@@ -340,11 +340,11 @@
       "query": "What is the success rate of maintenance activities?",
       "category": "percentage",
       "expected": "76.1",
-      "timestamp": "2026-02-17T23:10:33.558239",
+      "timestamp": "2026-02-19T00:53:56.866434",
       "success": false,
-      "response_text": "질의 결과에서 유지보수 활동은 총 **1건** 확인되었고, 그 중 **1건**이 성공으로 기록되어 성공률은 **100%**입니다. 해당 유지보수는 유형이 **capacity**이고, SECOPS Network 02에서 2026-01-01 08:05:52 ~ 09:13:52에 수행되었으며 소요시간은 **68분**, 수행자 **secops-team**입니다. 다만 그래프 시각화는 Neo4j 소스 누락으로 불가했고, HISTORY는 데이터가 비어 있습니다.",
+      "response_text": "현재 제공된 쿼리 데이터에서 유지보수 활동의 성공률을 직접 산출할 지표는 확인되지 않습니다.  \nPRIMARY 결과로 5개의 CI가 조회되었고, 상태는 **monitoring**(1건) 및 **active**(2건)이며 유형은 HW/SW 혼합, 평균 CPU 사용량은 약 **40.83%**로 보입니다.  \nAGGREGATE의 총합은 **1478**이지만 이는 유지보수 성공률과 직접적 연관이 없어 보이며, HISTORY 및 GRAPH도 비어 있어 시간 기반 분석이 불가능합니다.  \n따라서 현재 데이터로는 유지보수 성공률에 대한 확정적인 결론을 내리기 어렵습니다.",
       "reason": "Expected '76.1' not found",
-      "response_time_ms": 25832,
+      "response_time_ms": 26035,
       "status_code": 200
     },
     {
@@ -352,420 +352,420 @@
       "query": "What was the most recent event?",
       "category": "recent",
       "expected": "status_change",
-      "timestamp": "2026-02-17T23:10:59.391595",
+      "timestamp": "2026-02-19T00:54:22.903544",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 8707,
-      "status_code": 500
+      "response_text": "다음 조회 결과, 가장 최근 이벤트를 찾지 못했습니다(0건 반환).  \n데이터 집계에는 총 **31,243건**이 존재하지만, 이번 질의와 매칭되는 항목은 없었습니다.  \n원하는 기간이나 필터를 구체화해서 재조회해 주시면 다시 확인해 드리겠습니다.",
+      "reason": "Expected 'status_change' not found",
+      "response_time_ms": 14426,
+      "status_code": 200
     },
     {
       "id": 27,
       "query": "What type of event occurred most recently?",
       "category": "recent",
       "expected": "status_change",
-      "timestamp": "2026-02-17T23:11:08.099510",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 6086,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:54:37.330887",
+      "success": true,
+      "response_text": "데이터만으로는 가장 최근에 발생한 이벤트 타입을 판단할 수 없습니다. HISTORY 결과가 비어 있고 타임스탬프 정보가 제공되지 않아 최근성 정보를 확인할 수 없기 때문입니다.\n\n다만 AGGREGATE 결과를 통해 이벤트 타입별 총 발생 건수를 확인할 수 있습니다. 총 건수는 **31,243건**이며, 가장 많은 건수는 **threshold_alarm**으로 **6,291건**이고 이어 **security_alert** **6,286건**, **health_check** **6,267건**, **status_change** **6,225건**, **deployment** **6,174건** 순입니다.\n\n가장 최근 이벤트를 확인하려면 HISTORY를 채워 주시거나 최근 이벤트 로그를 타임스탬프와 함께 조회해 주세요.",
+      "reason": "Found: status_change",
+      "response_time_ms": 29642,
+      "status_code": 200
     },
     {
       "id": 28,
       "query": "How many events occurred in the last 24 hours?",
       "category": "count",
       "expected": "0",
-      "timestamp": "2026-02-17T23:11:14.186270",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3559,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:55:06.974250",
+      "success": true,
+      "response_text": "지난 24시간 동안 발생한 이벤트는 총 **6,291건**이며, 유형은 **threshold_alarm**으로 집계되었습니다. 주요 CI로는 5건의 항목이 조회되었고, 예시로 **MES Server 06**, **APM Server 04**, **Analytics App Report 01-1**이 포함됩니다. 히스토리(HISTORY) 및 그래프(GRAPH) 데이터는 이번 조회에서 비어 있습니다.",
+      "reason": "Found: 0",
+      "response_time_ms": 25556,
+      "status_code": 200
     },
     {
       "id": 29,
       "query": "How many events occurred today?",
       "category": "count",
       "expected": "0",
-      "timestamp": "2026-02-17T23:11:17.746188",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 5339,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:55:32.531935",
+      "success": true,
+      "response_text": "오늘 발생한 총 이벤트 수는 **31,243건**입니다. 유형별로는 **threshold_alarm 6,291건**, **security_alert 6,286건**, **health_check 6,267건**, **status_change 6,225건**, **deployment 6,174건**으로 고르게 분포합니다. 이러한 분포는 각 유형 간 차이가 작아 특정 유형으로의 편중이 없음을 시사합니다. 참고로 요약 항목에 \"Found 0 items\"로 표기되나, AGGREGATE 결과의 총계가 존재하므로 이를 기준으로 판단하는 것이 좋습니다.",
+      "reason": "Found: 0",
+      "response_time_ms": 20761,
+      "status_code": 200
     },
     {
       "id": 30,
       "query": "How many metric values were recorded today?",
       "category": "count",
       "expected": "0",
-      "timestamp": "2026-02-17T23:11:23.086142",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 7690,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:55:53.294627",
+      "success": true,
+      "response_text": "오늘 기록된 메트릭 값은 **0개**입니다. METRIC Result와 HISTORY Result가 비어 있으며, 요약에서도 항목 수가 0으로 표시됩니다. 참고로 PRIMARY Result의 5개 항목은 메트릭 값이 아닌 CI 목록으로 보이며, 메트릭 수집 범위나 시간 설정을 재확인해 주시기 바랍니다.",
+      "reason": "Found: 0",
+      "response_time_ms": 20852,
+      "status_code": 200
     },
     {
       "id": 31,
       "query": "What was the second most recent event type?",
       "category": "recent",
       "expected": "deployment",
-      "timestamp": "2026-02-17T23:11:30.776331",
+      "timestamp": "2026-02-19T00:56:14.149711",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 6389,
-      "status_code": 500
+      "response_text": "- 해당 조회로 두 번째로 최근 이벤트 유형을 식별할 수 있는 데이터가 없어 결과를 도출할 수 없습니다.  \n- 요약 결과에서 **Found 0 items**로 표시되었으나, 집계 결과에는 총 **31,243**개의 행이 제시되어 자료 상태가 모순됩니다.  \n- 쿼리 형식이나 데이터 소스를 확인한 뒤 재실행해 주세요.",
+      "reason": "Expected 'deployment' not found",
+      "response_time_ms": 16360,
+      "status_code": 200
     },
     {
       "id": 32,
       "query": "When did the most recent security alert occur?",
       "category": "recent",
       "expected": "2026-01-01",
-      "timestamp": "2026-02-17T23:11:37.166129",
+      "timestamp": "2026-02-19T00:56:30.511033",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 5929,
-      "status_code": 500
+      "response_text": "다음 실행 결과에서 보안 경고(Security alert) 항목은 발견되지 않았고 HISTORY/GRAPH도 비어 있습니다. 요약에 따르면 보안 경고 항목은 **0건**으로 표시됩니다. 따라서 가장 최근의 보안 경고 발생 시점을 특정할 수 없습니다. 보안 경고를 확인하려면 쿼리를 보안 경고로 필터링하거나 이력 데이터를 포함하도록 시간 범위를 확장해 주세요.",
+      "reason": "Expected '2026-01-01' not found",
+      "response_time_ms": 26135,
+      "status_code": 200
     },
     {
       "id": 33,
       "query": "What is the status of ERP System?",
       "category": "status",
       "expected": "active",
-      "timestamp": "2026-02-17T23:11:43.096120",
+      "timestamp": "2026-02-19T00:56:56.648167",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 6088,
-      "status_code": 500
+      "response_text": "ERP 시스템의 현재 상태 요약은 다음과 같습니다.\n\n- 구성요소(총 3개): **2개 활성**, **1개 모니터링**으로 전반적으로 양호하나 모니터링 중인 구성요소에 대한 주의가 필요합니다.\n- 상세 상태: MES Server 06 HW는 **모니터링**, APM Server 04 HW는 **활성**, Analytics App Report 01-1 SW는 **활성**입니다.\n- 주의점: Summary에 \"Found 0 items\"로 표시되는 불일치가 있어 데이터 소스의 일관성 확인이 필요합니다.",
+      "reason": "Expected 'active' not found",
+      "response_time_ms": 27813,
+      "status_code": 200
     },
     {
       "id": 34,
       "query": "What is the current status of ERP Server 01?",
       "category": "status",
       "expected": "monitoring",
-      "timestamp": "2026-02-17T23:11:49.185150",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 4749,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:57:24.467532",
+      "success": true,
+      "response_text": "ERP Server 01에 해당하는 항목이 현재 조회 결과에 없어서 상태를 확인할 수 없습니다.\n\n현재 결과에는 다른 항목들만 포함되어 있습니다: **MES Server 06**(ci_code srv-mes-06, 상태: **monitoring**), **APM Server 04**(ci_code srv-apm-04, 상태: **active**), **Analytics App Report 01-1**(상태: **active**).\n\nHISTORY/GRAPH 데이터가 비어 있거나 매칭되지 않아 추가적인 상태 판단은 어렵습니다.\n\nERP Server 01의 정확한 코드 확인이나 ERP 계열 전체에 대한 재조회로 조회를 확장해 주시기 바랍니다.",
+      "reason": "Found: monitoring",
+      "response_time_ms": 22137,
+      "status_code": 200
     },
     {
       "id": 35,
       "query": "Which CIs are in monitoring status?",
       "category": "status",
       "expected": "ERP Server",
-      "timestamp": "2026-02-17T23:11:53.935155",
+      "timestamp": "2026-02-19T00:57:46.606075",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 8119,
-      "status_code": 500
+      "response_text": "다음 구성들 중 현재 모니터링 상태는 오직 한 곳뿐입니다.\n\n- MES Server 06 (CI 코드: srv-mes-06, HW) — 상태: monitoring, 최대 CPU 사용량 **60.4997%**, 평균 CPU 사용량 **40.8341%**.\n\n나머지 두 구성은 각각 APM Server 04(srv-apm-04)와 Analytics App Report 01-1(app-analytics-report-01-1)로 현재 상태는 active입니다.",
+      "reason": "Expected 'ERP Server' not found",
+      "response_time_ms": 21154,
+      "status_code": 200
     },
     {
       "id": 36,
       "query": "Are there any inactive CIs?",
       "category": "status",
       "expected": "no",
-      "timestamp": "2026-02-17T23:12:02.055027",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 6660,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:58:07.761549",
+      "success": true,
+      "response_text": "활성화되지 않은 구성은 확인되지 않았습니다. 조회된 5건 중 상태는 **monitoring** 1건과 **active** 2건으로 나타나며, inactive 상태는 보이지 않습니다. 다만 요약 항목의 \"Found 0 items\" 표기에 모순이 있어 데이터 정합성에 의문이 있습니다. 정확한 확인을 원하시면 inactive 상태를 필터링해 다시 조회해 주세요.",
+      "reason": "Found negation for 'no'",
+      "response_time_ms": 21811,
+      "status_code": 200
     },
     {
       "id": 37,
       "query": "How many documents are successfully processed?",
       "category": "count",
-      "expected": "132",
-      "timestamp": "2026-02-17T23:12:08.715187",
+      "expected": "79",
+      "timestamp": "2026-02-19T00:58:29.574276",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 8939,
-      "status_code": 500
+      "response_text": "다음 조회에서 성공적으로 처리된 문서 수는 **0건**입니다. 요약에 **Found 0 items**로 명시되어 있으며 HISTORY 및 GRAPH 결과도 비어 있습니다. 참고로 PRIMARY 결과는 5건의 CI 정보를 반환하지만 이는 문서 처리 성공 여부와 직접적인 관련은 없습니다.",
+      "reason": "Expected '79' not found",
+      "response_time_ms": 19909,
+      "status_code": 200
     },
     {
       "id": 38,
       "query": "Are there any documents that failed to process?",
       "category": "status",
       "expected": "no",
-      "timestamp": "2026-02-17T23:12:17.655076",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 4969,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:58:49.485550",
+      "success": true,
+      "response_text": "문서 처리에 실패한 항목은 발견되지 않았습니다. DOCUMENT 검색의 Total Results는 **0**이며, Summary도 \"Found 0 items\"로 표시됩니다. 따라서 실패한 문서는 현재로 없음을 확인했습니다.",
+      "reason": "Found negation for 'no'",
+      "response_time_ms": 11998,
+      "status_code": 200
     },
     {
       "id": 39,
       "query": "What types of work have been performed?",
       "category": "history",
       "expected": "audit",
-      "timestamp": "2026-02-17T23:12:22.624855",
+      "timestamp": "2026-02-19T00:59:01.486143",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3359,
-      "status_code": 500
+      "response_text": "다음 실행 결과만으로는 어떤 유형의 작업이 수행되었는지 직접 파악할 수 없습니다. 주 요약에선 \"Found 0 items\"로 항목을 찾지 못했다고 나오지만, AGGREGATE 결과에선 \"Total: **280**\"으로 표기되어 있어 데이터 간 모순이 있습니다. 이로 인해 수행된 작업 유형을 확정하기 어렵습니다.\n\n권장 조치: 데이터 소스와 쿼리 필터를 재확인하고, 일관된 집계 정의를 적용한 뒤 재실행해 결과를 재확인하세요.",
+      "reason": "Expected 'audit' not found",
+      "response_time_ms": 16502,
+      "status_code": 200
     },
     {
       "id": 40,
       "query": "What types of maintenance have been performed?",
       "category": "history",
       "expected": "capacity",
-      "timestamp": "2026-02-17T23:12:25.984781",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 5650,
-      "status_code": 500
+      "timestamp": "2026-02-19T00:59:17.989834",
+      "success": true,
+      "response_text": "주어진 조회에서 확인된 유지보수 유형은 모두 **capacity**입니다.  \n총 3건의 레코드가 있으며, 각 건은 **Routine maintenance**로 기록되고 수행 주체와 소요 시간은 다릅니다( durations: 48, 68, 215분).  \n전체 건수는 **1478**건으로 집계되지만, 현재 데이터에선 유형별 상세 분해가 제공되지 않습니다.  \n히스토리와 그래프 결과는 비어 있습니다.",
+      "reason": "Found: capacity",
+      "response_time_ms": 16455,
+      "status_code": 200
     },
     {
       "id": 41,
       "query": "How many deployment work items have been executed?",
       "category": "count",
       "expected": "420",
-      "timestamp": "2026-02-17T23:12:31.634870",
+      "timestamp": "2026-02-19T00:59:34.447056",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 8459,
-      "status_code": 500
+      "response_text": "배포 작업으로 실행된 건수는 PRIMARY 결과 기준 **5건**입니다(목록은 5건 중 일부가 표시되어 있습니다). 또한 AGGREGATE 결과에서 **총 1731건**이 제시되나, 이는 다른 차원의 메트릭일 수 있어 배포 작업 항목과 바로 동일한 카운트로 간주하기 어려울 수 있습니다. HISTORY와 GRAPH 결과는 데이터가 없어 현재 이력이나 시각화 정보는 확인되지 않습니다. 필요 시 기간/필터를 알려주시면 일치하는 카운트를 재확인해 드리겠습니다.",
+      "reason": "Expected '420' not found",
+      "response_time_ms": 21770,
+      "status_code": 200
     },
     {
       "id": 42,
       "query": "How many work items completed successfully?",
       "category": "count",
       "expected": "1297",
-      "timestamp": "2026-02-17T23:12:40.094852",
+      "timestamp": "2026-02-19T00:59:56.218631",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 8110,
-      "status_code": 500
+      "response_text": "요청하신 “완료 성공” 워크 아이템 수를 확인한 결과, 명시적으로 **completed** 상태인 항목이 없어 총 **0개**로 판단됩니다. 현재 5건의 항목이 목록에 있지만 모두 상태가 **monitoring** 또는 **active**로만 표기되어 있어 완료 여부를 확인할 수 없습니다. AGGREGATE의 총합은 **1731**건으로 보이나 이는 완료 여부와 무관한 지표일 가능성이 높고, HISTORY/GRAPH 결과는 비어 있습니다. 요약에 표시된 **“Found 0 items”**는 데이터와 모순되므로 추가 확인이 필요합니다.",
+      "reason": "Expected '1297' not found",
+      "response_time_ms": 24281,
+      "status_code": 200
     },
     {
       "id": 43,
       "query": "How many work items resulted in degraded status?",
       "category": "count",
       "expected": "434",
-      "timestamp": "2026-02-17T23:12:48.205058",
+      "timestamp": "2026-02-19T01:00:20.501982",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 7036,
-      "status_code": 500
+      "response_text": "결과에서 degraded 상태인 워크 아이템은 **0건**입니다.  \n상위 5건의 항목 중 확인된 상태는 모니터링과 활성이며, degraded 항목은 포함되지 않았습니다.  \nHISTORY 및 GRAPH 결과는 비어 있어 추가로 degraded 정보를 파악할 수 없습니다.",
+      "reason": "Expected '434' not found",
+      "response_time_ms": 24178,
+      "status_code": 200
     },
     {
       "id": 44,
       "query": "How many reboot maintenance activities have been done?",
       "category": "count",
       "expected": "347",
-      "timestamp": "2026-02-17T23:12:55.241571",
+      "timestamp": "2026-02-19T01:00:44.682806",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3459,
-      "status_code": 500
+      "response_text": "재부팅 유지보수 활동의 건수는 현재 조회 결과에서 명확히 확인되지 않습니다.\n\n- PRIMARY 결과: 총 **5건**의 CI 항목이 반환되었으나 이는 재부팅 이벤트가 아닌 서버/애플리케이션 상태 정보입니다.\n- AGGREGATE 결과: 총 **1478**건으로 보이나 재부팅 이벤트와 직접 연결된 값으로 보이지 않습니다.\n\n재부팅 유지보수 건수를 정확히 파악하려면 재부팅 이벤트를 기록하는 로그/테이블을 별도로 쿼리해 필터링해야 합니다(예: 이벤트 타입이 reboot인 기록).",
+      "reason": "Expected '347' not found",
+      "response_time_ms": 27277,
+      "status_code": 200
     },
     {
       "id": 45,
       "query": "Tell me about ERP System.",
       "category": "specific",
       "expected": "SYSTEM",
-      "timestamp": "2026-02-17T23:12:58.701509",
+      "timestamp": "2026-02-19T01:01:11.962051",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 7450,
-      "status_code": 500
+      "response_text": "다음과 같이 ERP 시스템 조회 결과를 요약합니다.\n\n- ERP에 해당하는 구성 항목은 총 **0건**으로 확인되어, ERP 항목은 발견되지 않았습니다.\n- 다만 반환 데이터에 MES Server 06, APM Server 04, Analytics App Report 01-1 등 **5건의 항목**이 포함되며, 이들 CPU 사용률은 최대 약 **60.50%**, 평균 약 **40.83%**로 비슷한 수준입니다.\n- 집계 결과로 총합계가 **280**으로 표시되나, ERP 항목과의 직접 연결은 확인되지 않습니다. 히스토리(HISTORY) 및 그래프(GRAPH) 데이터는 비어 있습니다.",
+      "reason": "Expected 'SYSTEM' not found",
+      "response_time_ms": 28943,
+      "status_code": 200
     },
     {
       "id": 46,
       "query": "What can you tell me about ERP Server 01?",
       "category": "specific",
       "expected": "ERP Server 01",
-      "timestamp": "2026-02-17T23:13:06.151719",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 6909,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:01:40.906213",
+      "success": true,
+      "response_text": "ERP Server 01에 대한 직접 항목은 이번 조회에서 발견되지 않았습니다. 대신 MES Server 06(HW, monitoring), APM Server 04(HW, active), Analytics App Report 01-1(SW, active) 항목이 확인되었으며 이들의 평균 CPU 사용은 약 **40.83%**, 최대치 약 **60.50%**로 나타났습니다. 전체 데이터 집계는 **280**건이지만 ERP Server 01의 존재 여부는 확정되지 않으므로 코드명/대상을 재확인하고 재검색을 권장합니다. HISTORY/GRAPH 데이터는 현재 비어 있습니다.",
+      "reason": "Found: ERP Server 01",
+      "response_time_ms": 24999,
+      "status_code": 200
     },
     {
       "id": 47,
       "query": "List all CIs related to ERP.",
       "category": "specific",
       "expected": "ERP",
-      "timestamp": "2026-02-17T23:13:13.061574",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3420,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:02:05.906749",
+      "success": true,
+      "response_text": "ERP 관련 구성 조회 결과는 총 **3건**의 구성 항목이 확인되었습니다.\n\n- MES Server 06 (HW, 상태: monitoring, max CPU **60.50%**, avg CPU **40.83%**)\n- APM Server 04 (HW, 상태: active, max CPU **60.50%**, avg CPU **40.83%**)\n- Analytics App Report 01-1 (SW, 상태: active, max CPU **60.50%**, avg CPU **40.83%**)\n\n전체 항목의 CPU 사용치가 비슷한 패턴을 보이며, ERP와의 직접 매핑 태그는 보이지 않아 ERP 관련 추가 필터가 필요합니다.",
+      "reason": "Found: ERP",
+      "response_time_ms": 28656,
+      "status_code": 200
     },
     {
       "id": 48,
       "query": "Find documents about Linux.",
       "category": "specific",
       "expected": "레드햇리눅스",
-      "timestamp": "2026-02-17T23:13:16.481742",
+      "timestamp": "2026-02-19T01:02:34.565044",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 5909,
-      "status_code": 500
+      "response_text": "요청하신 Linux 관련 문서 검색 결과를 요약합니다.\n\n- 문서 검색 결과는 총 **0건**으로 발견되지 않았습니다.  \n- 다만 구성 항목 5건 중 예시로 **MES Server 06**, **APM Server 04**, **Analytics App Report 01-1**이 확인되며, 각 항목의 최대 CPU는 **60.50%**, 평균 CPU는 **40.83%** 수준입니다.  \n- 집계 총합은 **132**이며, HISTORY/GRAPH 결과는 비어 있습니다.\n\nLinux 관련 문서가 조회되지 않았으니, 검색 키워드를 다르게 구성하거나 파일/콘텐츠 형식 필터를 조정해 보시길 권합니다.",
+      "reason": "Expected '레드햇리눅스' not found",
+      "response_time_ms": 31445,
+      "status_code": 200
     },
     {
       "id": 49,
       "query": "How many events have severity level 5?",
       "category": "count",
       "expected": "3134",
-      "timestamp": "2026-02-17T23:13:22.391481",
+      "timestamp": "2026-02-19T01:03:06.012807",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 4045,
-      "status_code": 500
+      "response_text": "질의 실행 결과에서 severity 필드가 제공되지 않아 severity 5인 이벤트를 직접 확인할 수 없습니다. PRIMARY 결과는 **5건**의 항목을 나열하지만 severity 정보가 없고, Summary도 **Found 0 items**로 표시되어 severity 5 이벤트가 없음을 시사합니다. 따라서 severity 5인 이벤트 수는 **0건**입니다. 필요 시 severity를 명확히 필터링하도록 쿼리를 재구성해 드리겠습니다.",
+      "reason": "Expected '3134' not found",
+      "response_time_ms": 18635,
+      "status_code": 200
     },
     {
       "id": 50,
       "query": "How many events have severity level 1?",
       "category": "count",
       "expected": "6310",
-      "timestamp": "2026-02-17T23:13:26.437364",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 5330,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:03:24.650077",
+      "success": true,
+      "response_text": "현재 실행 결과에는 심각도(severity) 레벨 정보가 포함되어 있지 않아, 심각도 1인 이벤트 수를 확인할 수 없습니다.  \nAGGREGATE 결과는 전체 이벤트 수가 **6310**건이며, 유형별로 **threshold_alarm** 1298, **security_alert** 1287, **deployment** 1269, **health_check** 1265, **status_change** 1191로 분포만 제시합니다(심각도 매핑은 보이지 않음).  \n따라서 심각도 1인 이벤트 수를 확인하려면 severity 필드를 포함하도록 쿼리를 재작성해 주시기 바랍니다.",
+      "reason": "Found: 6310",
+      "response_time_ms": 18216,
+      "status_code": 200
     },
     {
       "id": 51,
       "query": "Which event type occurs most frequently?",
       "category": "rank",
       "expected": "threshold_alarm",
-      "timestamp": "2026-02-17T23:13:31.767492",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3029,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:03:42.867409",
+      "success": true,
+      "response_text": "가장 자주 발생한 이벤트 유형은 **threshold_alarm**이며, 총 발생 건수는 **6,291건**입니다. 현재 조회에서 이 유형이 유일하게 나타나고 있으며, HISTORY 및 GRAPH 결과는 비어 있습니다.",
+      "reason": "Found: threshold_alarm",
+      "response_time_ms": 13922,
+      "status_code": 200
     },
     {
       "id": 52,
       "query": "What are the top 3 most common event types?",
       "category": "rank",
       "expected": "threshold_alarm",
-      "timestamp": "2026-02-17T23:13:34.797403",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 5060,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:03:56.791153",
+      "success": true,
+      "response_text": "상위 3개 이벤트 유형은 다음과 같습니다.\n- threshold_alarm — **6,291건**\n- security_alert — **6,286건**\n- health_check — **6,267건**\n\n이 세 가지가 합쳐 전체 **18,844건**의 이벤트를 차지하며, 세 유형 간 차이는 5건에서 19건으로 매우 비슷한 분포를 보입니다.",
+      "reason": "Found: threshold_alarm",
+      "response_time_ms": 18755,
+      "status_code": 200
     },
     {
       "id": 53,
       "query": "Which maintenance type has the highest success rate?",
       "category": "rank",
       "expected": "success",
-      "timestamp": "2026-02-17T23:13:39.857839",
+      "timestamp": "2026-02-19T01:04:15.548299",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 6819,
-      "status_code": 500
+      "response_text": "다음 실행 결과만으로는 어떤 유지보수 유형의 성공률이 가장 높은지 판단할 수 없습니다.\n\n- HISTORY 및 GRAPH 결과가 비어 있습니다.\n- AGGREGATE 결과는 maint_type=capacity로 **총 384건**이 보고되나, 이는 성공률이 아닌 유지보수 유형 분포에 불과합니다.\n\n성공률 지표를 포함하도록 쿼리를 재실행해 주시기 바랍니다.",
+      "reason": "Expected 'success' not found",
+      "response_time_ms": 22408,
+      "status_code": 200
     },
     {
       "id": 54,
       "query": "Which work type is most common?",
       "category": "rank",
       "expected": "audit",
-      "timestamp": "2026-02-17T23:13:46.677638",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 11069,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:04:37.959354",
+      "success": true,
+      "response_text": "- 가장 흔한 work type은 **audit**이며, 전체 합계는 **455건**으로 확인됩니다.  \n- 현재 조회된 5개 항목 중 HW가 2건, SW가 1건으로 보이지만, 전체 데이터 기준으로는 **audit**이 압도적으로 가장 많습니다.  \n- 요약하면, 샘플과 관계없이 전체 데이터에서는 **audit**가 가장 일반적인 work type입니다.",
+      "reason": "Found: audit",
+      "response_time_ms": 16144,
+      "status_code": 200
     },
     {
       "id": 55,
       "query": "Rank event counts by severity level.",
       "category": "rank",
       "expected": "12427",
-      "timestamp": "2026-02-17T23:13:57.747654",
+      "timestamp": "2026-02-19T01:04:54.105879",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3665,
-      "status_code": 500
+      "response_text": "요청하신 “심각도별 이벤트 건수 순위”에 필요한 심각도(severity) 분류 데이터가 결과에 포함되어 있지 않아 순위를 산출할 수 없습니다. AGGREGATE의 총합은 **31,243건**으로 표시되나, 심각도별 세부 분류는 제공되지 않았습니다. 또한 PRIMARY에는 CPU 사용 현황에 관한 항목 5건이 나타나고 HISTORY와 GRAPH는 비어 있습니다. 데이터 간 불일치 가능성이 있어 심각도 기반 랭킹을 확정하려면 Severity 필드가 포함된 원본 로그가 필요합니다.",
+      "reason": "Expected '12427' not found",
+      "response_time_ms": 19147,
+      "status_code": 200
     },
     {
       "id": 56,
       "query": "Give me a summary of the overall system status.",
       "category": "complex",
       "expected": "280",
-      "timestamp": "2026-02-17T23:14:01.413768",
-      "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 24409,
-      "status_code": 500
+      "timestamp": "2026-02-19T01:05:13.255313",
+      "success": true,
+      "response_text": "요약: PRIMARY 결과에서 총 5개 항목 중 3개만 표시되었으며, 데이터 누락 가능성이 있습니다. 표시된 항목은 MES Server 06(HW, monitoring, max CPU **60.50%**, avg **40.83%**), APM Server 04(HW, active, max CPU **60.50%**, avg **40.83%**), Analytics App Report 01-1(SW, active, max CPU **60.50%**, avg **40.83%**)입니다. AGGREGATE에선 총 부하 **280** 중 **SW active 197**, **HW active 54**, **HW monitoring 21**, **SYSTEM active 8**로 구성되어 대다수가 활성 상태입니다. History/Graph 데이터가 비어 있어 시계열 추세를 파악할 수 없으며, 전반적으로 큰 문제는 보이지 않지만 데이터 일관성 확인이 필요합니다.",
+      "reason": "Found: 280",
+      "response_time_ms": 30001,
+      "status_code": 200
     },
     {
       "id": 57,
       "query": "Tell me everything about ERP System including its type and status.",
       "category": "complex",
       "expected": "ERP System",
-      "timestamp": "2026-02-17T23:14:25.823449",
+      "timestamp": "2026-02-19T01:05:43.258112",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 11845,
-      "status_code": 500
+      "response_text": "ERP 시스템 관련 구성 항목은 현재 확인된 항목으로 최소 3건이며, 유형은 **HW**(서버) 2건과 **SW**(Analytics App) 1건, 상태는 각각 **monitoring**(MES Server 06)과 **active**(APM Server 04, Analytics App Report 01-1)로 나타납니다. CPU 활용도는 최대 **60.5%**, 평균 약 **40.83%**로 일관된 수치를 보입니다. Aggregate 결과에서 총합이 **Total: 280**으로 표기되나 상세 분해가 비어 있어 불완전합니다. 데이터에 불일치가 있어 재확인 및 보강이 필요합니다.",
+      "reason": "Expected 'ERP System' not found",
+      "response_time_ms": 21647,
+      "status_code": 200
     },
     {
       "id": 58,
       "query": "Summarize the event status by type and severity.",
       "category": "complex",
       "expected": "31243",
-      "timestamp": "2026-02-17T23:14:37.669319",
+      "timestamp": "2026-02-19T01:06:04.906968",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 3559,
-      "status_code": 500
+      "response_text": "AGGREGATE 결과에 따르면 총 이벤트는 **18,853건**이며, 그룹은 **10개**로 분류됩니다.\n\n상위 5개 그룹은 모두 severity **2**이고, 건수는 각각 **2,515**(deployment), **2,506**(threshold_alarm), **2,499**(status_change), **2,480**(health_check), **2,427**(security_alert)입니다.\n\n나머지 5개 그룹의 상세 분포는 제공되지 않았고, 히스토리와 그래프 데이터도 비어 있어 현재로서는 동향 분석이 불가합니다.",
+      "reason": "Expected '31243' not found",
+      "response_time_ms": 38231,
+      "status_code": 200
     },
     {
       "id": 59,
       "query": "Summarize work and maintenance activities.",
       "category": "complex",
       "expected": "1731",
-      "timestamp": "2026-02-17T23:14:41.229231",
+      "timestamp": "2026-02-19T01:06:43.140933",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 4130,
-      "status_code": 500
+      "response_text": "다음 기간의 작업/유지보수 기록에서 총 **30건**의 기록이 확인되었고, 그 중 두 건의 유지보수(용량: **215분**, 시작 08:02, 종료 11:37; 재부팅: **183분**, 시작 07:31, 종료 10:34)와 한 건의 감사 워크플로우(**127분**, 시작 07:08, 종료 09:15)가 모두 **성공**으로 완료되었습니다. AGGREGATE 결과는 전체적으로 **1478**개의 항목을 포함하며 1개 행으로 요약됩니다. HISTORY 및 GRAPH 결과는 비어 있으며, 요약 화면의 “Found 0 items” 표기는 상세 결과와 상충하는 점에 주의가 필요합니다.",
+      "reason": "Expected '1731' not found",
+      "response_time_ms": 31319,
+      "status_code": 200
     },
     {
       "id": 60,
       "query": "Give me a summary of the document management status.",
       "category": "complex",
       "expected": "132",
-      "timestamp": "2026-02-17T23:14:45.359371",
+      "timestamp": "2026-02-19T01:07:14.464310",
       "success": false,
-      "response_text": "",
-      "reason": "HTTP 500",
-      "response_time_ms": 7259,
-      "status_code": 500
+      "response_text": "다음과 같이 요약합니다:\n\n- 실행 결과는 HTTP 422 에러로 조회에 실패했고, 본문에 필요한 **\"query\"** 필드가 누락되었습니다.\n- 입력은 **keywords**: [\"document management\",\"status\"], **filters**: [], **limit**: 5였으나 유효한 요청으로 처리되지 않았습니다.\n- 결과로는 **항목 0개**가 반환되었습니다.\n- 해결 제안: 본문에 필요한 **\"query\"** 필드를 포함하고, 예를 들어 **\"query\": \"document management status\"**와 같이 검색어를 명시한 뒤 재시도해 주십시오.",
+      "reason": "Expected '132' not found",
+      "response_time_ms": 15372,
+      "status_code": 200
     }
   ]
 }

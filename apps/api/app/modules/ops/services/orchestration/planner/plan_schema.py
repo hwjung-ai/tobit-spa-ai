@@ -126,7 +126,16 @@ class AggregateSpec(BaseModel):
     group_by: List[str] = Field(default_factory=lambda: [])
     metrics: List[str] = Field(default_factory=lambda: [])
     filters: List[FilterSpec] = Field(default_factory=lambda: [])
-    scope: Literal["s1", "ci", "graph", "event"] = "s1"
+    scope: Literal[
+        "s1", "ci", "graph",
+        "event", "event_log",
+        "work", "work_history",
+        "maintenance", "maintenance_history",
+        "work_and_maintenance",
+        "metric", "metric_value",
+        "document",
+        "audit", "audit_log",
+    ] = "s1"
     top_n: int = 10
     tool_type: str = Field(
         default="ci_aggregate",

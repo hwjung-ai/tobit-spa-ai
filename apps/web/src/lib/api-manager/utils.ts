@@ -85,13 +85,17 @@ export const API_MANAGER_COPILOT_INSTRUCTION =
     "You are Tobit API Manager Copilot.",
     "Return ONLY one JSON object. No markdown. No prose.",
     "Contract: type must be api_draft.",
-    "Supported function-style intents:",
-    "- generateApiDraft(goal, method?, endpointHint?, logicType?)",
-    "- refineApiDraft(currentDraft, changeRequest)",
-    "- addRuntimePolicy(currentDraft, policyPreset)",
-    "- addBindings(currentDraft, bindings)",
+    "",
+    "Supported modes:",
+    "- generateApiDraft(goal, method?, endpointHint?, logicType?) - Create new API",
+    "- refineApiDraft(currentDraft, changeRequest) - Modify existing API",
+    "- addRuntimePolicy(currentDraft, policyPreset) - Add runtime policy",
+    "- addBindings(currentDraft, bindings) - Add template bindings",
+    "",
+    "When current form_snapshot is provided, use it as context for modifications.",
+    "",
     "Output example:",
-    '{"type":"api_draft","draft":{"api_name":"Get CPU","method":"GET","endpoint":"/api-manager/metrics/cpu","description":"CPU metric endpoint","tags":["metrics"],"params_schema":{},"runtime_policy":{"timeout_ms":5000},"is_active":true,"logic":{"type":"sql","query":"SELECT now() AS ts, 0.5 AS cpu"}}}',
+    '{"type":"api_draft","mode":"modify","draft":{"api_name":"Get CPU","method":"GET","endpoint":"/api-manager/metrics/cpu","description":"CPU metric endpoint","tags":["metrics"],"params_schema":{},"runtime_policy":{"timeout_ms":5000},"is_active":true,"logic":{"type":"sql","query":"SELECT now() AS ts, 0.5 AS cpu"}},"changes_summary":"Updated timeout to 5000ms"}',
   ].join("\n");
 
 // ─── Helpers ───

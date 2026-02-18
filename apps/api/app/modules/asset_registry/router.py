@@ -363,6 +363,7 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "description": asset.description,
         "version": asset.version,
         "status": asset.status,
+        "is_system": bool(asset.is_system),
         "scope": asset.scope,
         "engine": asset.engine,
         "template": asset.template,

@@ -14,6 +14,7 @@ import ScreenEditorErrors from "./common/ScreenEditorErrors";
 import Toast from "@/components/admin/Toast";
 import PublishGateModal from "./publish/PublishGateModal";
 import { useConfirm } from "@/hooks/use-confirm";
+import type { ScreenCopilotResponse } from "@/lib/ui-screen/use-screen-copilot";
 
 const SCREEN_COPILOT_INSTRUCTION = `You are Tobit Screen Schema V1 Copilot.
 You must generate JSON Patch (RFC 6902) operations to modify an existing screen.
@@ -127,6 +128,13 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const [justPublished, setJustPublished] = useState(false);
   const [authCheckDone, setAuthCheckDone] = useState(false);
   const [confirmDialog, ConfirmDialogComponent] = useConfirm();
+
+  // AI response metadata for enhanced display
+  const [aiResponseMeta, setAiResponseMeta] = useState<{
+    explanation?: string;
+    confidence?: number;
+    suggestions?: string[];
+  } | null>(null);
 
   // Resizable panel state (right copilot panel)
   const [rightPanelWidth, setRightPanelWidth] = useState(320);
@@ -268,6 +276,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     (text: string) => {
       const candidates = [stripCodeFences(text), text];
       let patchArray: unknown[] | null = null;
+      let responseMeta: { explanation?: string; confidence?: number; suggestions?: string[] } = {};
 
       for (const candidate of candidates) {
         const direct = tryParseJson(candidate);
@@ -281,6 +290,11 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           Array.isArray((direct as { patch?: unknown }).patch)
         ) {
           patchArray = (direct as { patch: unknown[] }).patch;
+          // Extract additional metadata if present
+          const directObj = direct as { explanation?: string; confidence?: number; suggestions?: string[] };
+          if (directObj.explanation) responseMeta.explanation = directObj.explanation;
+          if (typeof directObj.confidence === "number") responseMeta.confidence = directObj.confidence;
+          if (Array.isArray(directObj.suggestions)) responseMeta.suggestions = directObj.suggestions;
           break;
         }
 
@@ -296,6 +310,11 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             Array.isArray((parsed as { patch?: unknown }).patch)
           ) {
             patchArray = (parsed as { patch: unknown[] }).patch;
+            // Extract additional metadata if present
+            const parsedObj = parsed as { explanation?: string; confidence?: number; suggestions?: string[] };
+            if (parsedObj.explanation) responseMeta.explanation = parsedObj.explanation;
+            if (typeof parsedObj.confidence === "number") responseMeta.confidence = parsedObj.confidence;
+            if (Array.isArray(parsedObj.suggestions)) responseMeta.suggestions = parsedObj.suggestions;
             break;
           }
         }
@@ -320,6 +339,11 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           type: "error",
         });
         return;
+      }
+
+      // Store AI response metadata for enhanced display
+      if (responseMeta.explanation || responseMeta.confidence !== undefined || responseMeta.suggestions) {
+        setAiResponseMeta(responseMeta);
       }
 
       editorState.setProposedPatch(JSON.stringify(patchArray));
@@ -545,6 +569,45 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
               inputPlaceholder="Describe changes to apply..."
             />
           </div>
+          {/* AI Response Enhanced Display */}
+          {aiResponseMeta && (
+            <div className="space-y-2 border-t px-4 py-3">
+              {aiResponseMeta.explanation && (
+                <div className="rounded-lg bg-emerald-950/30 border border-emerald-800 p-3">
+                  <p className="text-xs font-medium text-emerald-400">AI Explanation</p>
+                  <p className="text-xs text-emerald-300 mt-1">{aiResponseMeta.explanation}</p>
+                </div>
+              )}
+              {aiResponseMeta.confidence !== undefined && aiResponseMeta.confidence > 0 && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-gray-400">Confidence:</span>
+                  <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        aiResponseMeta.confidence >= 0.8
+                          ? "bg-emerald-500"
+                          : aiResponseMeta.confidence >= 0.5
+                            ? "bg-amber-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{ width: `${aiResponseMeta.confidence * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-gray-300">{Math.round(aiResponseMeta.confidence * 100)}%</span>
+                </div>
+              )}
+              {aiResponseMeta.suggestions && aiResponseMeta.suggestions.length > 0 && (
+                <div className="text-xs text-gray-400">
+                  <p className="font-medium">Suggestions:</p>
+                  <ul className="list-disc list-inside mt-1">
+                    {aiResponseMeta.suggestions.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           {editorState.proposedPatch && (
             <div className="border-t px-4 py-3 space-y-2">
               {proposedPatchSummary.length > 0 && (
@@ -564,6 +627,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                     try {
                       editorState.applyProposedPatch();
                       setToast({ message: "Patch applied to draft", type: "success" });
+                      setAiResponseMeta(null);
                     } catch (err) {
                       setToast({
                         message: err instanceof Error ? err.message : "Failed to apply patch",
@@ -577,7 +641,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => editorState.discardProposal()}
+                  onClick={() => {
+                    editorState.discardProposal();
+                    setAiResponseMeta(null);
+                  }}
                   className="draft-panel-button flex-1"
                 >
                   Discard

@@ -651,7 +651,7 @@ class OpsOrchestratorRunner:
         preferred_name: str,
         capability_hints: Sequence[str] | None = None,
         type_hints: Sequence[str] | None = None,
-    ) -> str:
+    ) -> str | None:
         """Resolve tool asset name from runtime registry."""
         try:
             registry = get_tool_registry()
@@ -661,18 +661,18 @@ class OpsOrchestratorRunner:
             for capability in capability_hints or []:
                 candidate = registry.find_tool_by_capability(capability)
                 if candidate:
-                    return getattr(candidate, "tool_name", preferred_name)
+                    return getattr(candidate, "tool_name", None)
 
             for tool_type in type_hints or []:
                 matches = registry.find_tools_by_type(tool_type)
                 if matches:
-                    return getattr(matches[0], "tool_name", preferred_name)
+                    return getattr(matches[0], "tool_name", None)
         except Exception as exc:
             self.logger.warning(
                 "tool_asset_name_resolution_failed",
                 extra={"preferred": preferred_name, "error": str(exc)},
             )
-        return preferred_name
+        return None
 
     def _build_metric_blocks_from_data(
         self,
@@ -4206,6 +4206,11 @@ class OpsOrchestratorRunner:
             capability_hints=("metric_query", "metric_aggregate"),
             type_hints=("metric_query", "database_query"),
         )
+        if not metric_tool_name:
+            error_msg = "No compatible metric tool registered for metric scope"
+            metric_trace.update({"status": "error", "error": error_msg})
+            self._log_metric_blocks_return([text_block(error_msg, title="Metric query")])
+            return [text_block(error_msg, title="Metric query")]
         result = await self._execute_tool_asset_async(metric_tool_name, metric_params)
 
         if not result.get("success"):
@@ -4269,6 +4274,10 @@ class OpsOrchestratorRunner:
             capability_hints=("ci_aggregate", "metric_aggregate"),
             type_hints=("database_query",),
         )
+        if not aggregation_tool_name:
+            error_msg = "No compatible aggregation tool registered for graph metric scope"
+            metric_trace.update({"status": "error", "error": error_msg})
+            return [text_block(error_msg, title="Graph metric aggregation")]
         result = await self._execute_tool_asset_async(aggregation_tool_name, agg_params)
 
         if not result.get("success"):
@@ -4563,9 +4572,17 @@ class OpsOrchestratorRunner:
             "source": history_spec.source or "all",
         }
 
-        result = await self._execute_tool_asset_async(
-            "work_history_query", history_params
+        history_tool_name = self._resolve_tool_asset_name(
+            "work_history_query",
+            capability_hints=("history", "history_search", "event_search"),
+            type_hints=("database_query", "api_query"),
         )
+        if not history_tool_name:
+            error_msg = "No compatible history tool registered for history scope"
+            history_trace.update({"status": "error", "error": error_msg})
+            return [text_block(error_msg, title="History")]
+
+        result = await self._execute_tool_asset_async(history_tool_name, history_params)
 
         if not result.get("success"):
             error_msg = result.get("error", "Failed to retrieve history data")
@@ -4610,7 +4627,7 @@ class OpsOrchestratorRunner:
         # Get node IDs from graph
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
 
-        # Execute history_combined_union Tool Asset for multiple CIs
+        # Execute history tool asset for multiple CIs
         hist_params = {
             "tenant_id": self.tenant_id,
             "ci_ids": node_ids,
@@ -4618,8 +4635,17 @@ class OpsOrchestratorRunner:
             "source": history_spec.source or "all",
         }
 
+        history_tool_name = self._resolve_tool_asset_name(
+            "history_combined_union",
+            capability_hints=["history", "incident", "event"],
+            type_hints=["sql_query", "api_query"],
+        )
+        if not history_tool_name:
+            error_msg = "No compatible history tool registered for graph history scope"
+            history_trace.update({"status": "error", "error": error_msg})
+            return [text_block(error_msg, title="Graph History")]
         result = await self._execute_tool_asset_async(
-            "history_combined_union", hist_params
+            history_tool_name, hist_params
         )
 
         if not result.get("success"):

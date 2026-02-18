@@ -98,6 +98,69 @@ class DependencyAnalyzer:
         # Build mapping of plan tools to their capabilities
         plan_tools = self._map_plan_tools_with_capabilities(plan)
 
+        # ── Question-based aggregate injection ──────────────────────────────
+        # LLM sometimes omits aggregate spec for count/distribution queries.
+        # We detect these patterns and inject aggregate if not already present.
+        question_lower = self.question.lower() if self.question else ""
+
+        # Determine if we need to force-inject aggregate based on question
+        _needs_aggregate = False
+        _forced_scope = None
+
+        # Count/total queries for any data source
+        if any(kw in question_lower for kw in [
+            "how many", "total number", "count", "number of",
+            "how much", "how often",
+        ]):
+            _needs_aggregate = True
+            # Determine scope from question
+            if any(kw in question_lower for kw in ["document", "pdf", "plain text", "text file", "manual"]):
+                _forced_scope = "document"
+            elif any(kw in question_lower for kw in ["event", "severity", "alert", "alarm"]):
+                _forced_scope = "event"
+            elif any(kw in question_lower for kw in ["work history", "work item", "deployment", "work type"]):
+                _forced_scope = "work"
+            elif any(kw in question_lower for kw in ["maintenance", "reboot", "maint"]):
+                _forced_scope = "maintenance"
+            elif any(kw in question_lower for kw in ["audit log", "audit"]):
+                _forced_scope = "audit"
+            elif any(kw in question_lower for kw in ["metric", "data point"]):
+                _forced_scope = "metric"
+            else:
+                _forced_scope = "ci"  # default: CI count
+
+        # Distribution/percentage queries
+        elif any(kw in question_lower for kw in [
+            "distribution", "breakdown", "percentage", "percent", "ratio",
+            "success rate", "failure rate", "most common", "most frequent",
+            "rank", "top ", "which type", "what type",
+        ]):
+            _needs_aggregate = True
+            if any(kw in question_lower for kw in ["event", "severity"]):
+                _forced_scope = "event"
+            elif any(kw in question_lower for kw in ["work", "deployment"]):
+                _forced_scope = "work"
+            elif any(kw in question_lower for kw in ["maintenance", "maint"]):
+                _forced_scope = "maintenance"
+            elif any(kw in question_lower for kw in ["document", "pdf"]):
+                _forced_scope = "document"
+            elif any(kw in question_lower for kw in ["ci type", "ci status", "hardware", "software"]):
+                _forced_scope = "ci"
+            else:
+                _forced_scope = "ci"
+
+        # Summary queries
+        elif any(kw in question_lower for kw in ["summary", "summarize", "overview", "status of"]):
+            _needs_aggregate = True
+            if any(kw in question_lower for kw in ["event"]):
+                _forced_scope = "event"
+            elif any(kw in question_lower for kw in ["work", "maintenance"]):
+                _forced_scope = "work"
+            elif any(kw in question_lower for kw in ["document"]):
+                _forced_scope = "document"
+            else:
+                _forced_scope = "ci"
+
         # Select tools based on Plan specs - if spec exists in Plan, execute it
         # NO hardcoded _should_execute_* logic - trust the Planner's decision
 
@@ -106,11 +169,30 @@ class DependencyAnalyzer:
             deps.append(ToolDependency(tool_id="primary", depends_on=[]))
             self.logger.info("dependency.selected.primary")
 
-        # Aggregate: execute if spec exists
+        # Aggregate: execute if spec exists OR if question requires it
         if "aggregate" in plan_tools:
             agg_deps = ["primary"] if any(d.tool_id == "primary" for d in deps) else []
             deps.append(ToolDependency(tool_id="aggregate", depends_on=agg_deps))
             self.logger.info("dependency.selected.aggregate")
+        elif _needs_aggregate:
+            # Force-inject aggregate spec into plan
+            from app.modules.ops.services.orchestration.planner.plan_schema import AggregateSpec
+            if not plan.aggregate or plan.aggregate.scope == "s1":
+                # Create a new aggregate spec with the forced scope
+                plan.aggregate = AggregateSpec(
+                    scope=_forced_scope or "ci",
+                    group_by=[],
+                    metrics=[],
+                    filters=[],
+                    top_n=10,
+                    tool_type="AggregateDbQueryTool",
+                )
+            agg_deps = ["primary"] if any(d.tool_id == "primary" for d in deps) else []
+            deps.append(ToolDependency(tool_id="aggregate", depends_on=agg_deps))
+            self.logger.info(
+                "dependency.force_injected.aggregate",
+                extra={"scope": _forced_scope, "question": question_lower[:80]}
+            )
 
         # Metric: execute if spec exists
         if "metric" in plan_tools:
@@ -165,8 +247,14 @@ class DependencyAnalyzer:
 
         for tool_id, spec in spec_map.items():
             if spec:
-                # Get tool_type from spec
-                tool_type = getattr(spec, 'tool_type', None)
+                # Get tool_type from spec (handle both Pydantic models and dicts)
+                if isinstance(spec, dict):
+                    tool_type = spec.get('tool_type', None)
+                else:
+                    tool_type = getattr(spec, 'tool_type', None)
+                # For document (dict), use a default tool_type if not set
+                if not tool_type and tool_id == "document":
+                    tool_type = "document_search"
                 if tool_type:
                     # Query tool registry for tags/capabilities
                     if self.tool_registry:
@@ -674,16 +762,32 @@ class ToolOrchestrator:
         # Handle document spec (dict type) first, before trying getattr
         if tool_id == "document":
             tool_type = spec_obj.get('tool_type', 'unknown') if isinstance(spec_obj, dict) else getattr(spec_obj, 'tool_type', 'unknown')
+            # LLM이 keywords 필드로 생성하는 경우 query로 변환
+            query = spec_obj.get("query", "") if isinstance(spec_obj, dict) else getattr(spec_obj, 'query', '')
+            if not query:
+                keywords = spec_obj.get("keywords", []) if isinstance(spec_obj, dict) else getattr(spec_obj, 'keywords', [])
+                if isinstance(keywords, list) and keywords:
+                    query = " ".join(str(k) for k in keywords)
+                elif isinstance(keywords, str) and keywords:
+                    query = keywords
+            # Fallback: if query is still empty, use a generic search term
+            if not query:
+                query = "document"
+                logger.warning("tool_orchestration.document_query_empty_fallback")
+            logger.info(
+                "tool_orchestration.document_query_resolved",
+                extra={"query": query[:100] if query else "", "had_keywords": not spec_obj.get("query") if isinstance(spec_obj, dict) else False}
+            )
             return {
                 "tool_type": tool_type,
                 "params": {
-                    "query": spec_obj.get("query", ""),
-                    "search_type": spec_obj.get("search_type", "hybrid"),
-                    "top_k": spec_obj.get("top_k", 10),
-                    "min_relevance": spec_obj.get("min_relevance", 0.01),
-                    "date_from": spec_obj.get("date_from"),
-                    "date_to": spec_obj.get("date_to"),
-                    "document_types": spec_obj.get("document_types"),
+                    "query": query,
+                    "search_type": spec_obj.get("search_type", "hybrid") if isinstance(spec_obj, dict) else "hybrid",
+                    "top_k": spec_obj.get("top_k", 10) if isinstance(spec_obj, dict) else 10,
+                    "min_relevance": spec_obj.get("min_relevance", 0.01) if isinstance(spec_obj, dict) else 0.01,
+                    "date_from": spec_obj.get("date_from") if isinstance(spec_obj, dict) else None,
+                    "date_to": spec_obj.get("date_to") if isinstance(spec_obj, dict) else None,
+                    "document_types": spec_obj.get("document_types") if isinstance(spec_obj, dict) else None,
                     "tenant_id": self.context.tenant_id,
                 }
             }
@@ -709,15 +813,151 @@ class ToolOrchestrator:
                 }
             }
         elif tool_id == "aggregate":
+            import re as _re
+            scope = spec_obj.scope
+            # All known scopes → route to AggregateDbQueryTool
+            # AggregateDbQueryTool handles: ci, event, work, maintenance, metric, document, audit
+            known_scopes = {
+                "ci", "s1", "graph",
+                "event", "event_log",
+                "work", "work_history",
+                "maintenance", "maintenance_history",
+                "work_and_maintenance",
+                "metric", "metric_value",
+                "document",
+                "audit", "audit_log",
+            }
+            # Also check group_by for any known fields
+            all_known_fields = {
+                "ci_type", "ci_subtype", "ci_category", "status", "location", "owner",
+                "event_type", "severity", "source",
+                "work_type", "maint_type", "result", "impact_level",
+                "category", "format", "action", "resource_type",
+                # aliases
+                "type", "subtype",
+            }
+            group_by = spec_obj.group_by or []
+            has_known_group = any(f in all_known_fields for f in group_by)
+
+            if scope in known_scopes or has_known_group or scope is None:
+                effective_tool_type = "AggregateDbQueryTool"
+            else:
+                effective_tool_type = tool_type
+
+            # ── Question-based scope auto-correction ──────────────────────────
+            # LLM sometimes generates wrong scope (e.g. scope=ci for document queries).
+            # We override scope based on question keywords when the LLM-generated scope
+            # is ambiguous (ci/s1/None) or clearly wrong.
+            question_lower = self.question.lower() if self.question else ""
+            original_scope = scope
+
+            # Document-related keywords → force scope=document
+            if any(kw in question_lower for kw in [
+                "document", "pdf", "text file", "manual", "file format",
+                "how many files", "how many documents", "number of documents",
+                "number of files", "plain text",
+            ]):
+                scope = "document"
+
+            # Event/severity keywords → force scope=event
+            elif any(kw in question_lower for kw in [
+                "event", "severity", "alert", "alarm", "threshold_alarm",
+                "threshold alarm", "how many events", "number of events",
+            ]):
+                scope = "event"
+
+            # Work history keywords → force scope=work
+            elif any(kw in question_lower for kw in [
+                "work history", "work item", "deployment", "work type",
+                "how many work", "number of work",
+            ]):
+                scope = "work"
+
+            # Maintenance keywords → force scope=maintenance
+            elif any(kw in question_lower for kw in [
+                "maintenance", "reboot", "maint",
+                "how many maintenance", "number of maintenance",
+            ]):
+                scope = "maintenance"
+
+            # Audit log keywords → force scope=audit
+            elif any(kw in question_lower for kw in [
+                "audit log", "audit", "how many audit", "number of audit",
+            ]):
+                scope = "audit"
+
+            # Metric keywords → force scope=metric
+            elif any(kw in question_lower for kw in [
+                "metric", "metric value", "data point",
+                "how many metric", "number of metric",
+            ]):
+                scope = "metric"
+
+            if scope != original_scope:
+                logger.info(
+                    "tool_orchestration.aggregate_scope_corrected",
+                    extra={"original": original_scope, "corrected": scope, "question": question_lower[:80]},
+                )
+
+            # ── Question-based filters auto-extraction ────────────────────────
+            # Supplement LLM-generated filters with filters inferred from question text.
+            extra_filters = list(spec_obj.filters or [])
+
+            def _has_filter(field: str) -> bool:
+                return any(
+                    (f.get("field") == field if isinstance(f, dict) else getattr(f, "field", None) == field)
+                    for f in extra_filters
+                )
+
+            # Severity filter: "severity level N" or "severity N"
+            sev_match = _re.search(r'severity\s+(?:level\s+)?(\d+)', question_lower)
+            if sev_match and not _has_filter("severity"):
+                extra_filters.append({"field": "severity", "op": "=", "value": int(sev_match.group(1))})
+                logger.info("tool_orchestration.filter_injected.severity", extra={"value": sev_match.group(1)})
+
+            # CI status filter: "active" / "monitoring" (only for ci/s1 scope)
+            if scope in ("ci", "s1") or (scope is None and original_scope in ("ci", "s1", None)):
+                if "active" in question_lower and not _has_filter("status"):
+                    extra_filters.append({"field": "status", "op": "=", "value": "active"})
+                    logger.info("tool_orchestration.filter_injected.status_active")
+                elif "monitoring" in question_lower and not _has_filter("status"):
+                    extra_filters.append({"field": "status", "op": "=", "value": "monitoring"})
+                    logger.info("tool_orchestration.filter_injected.status_monitoring")
+
+            # Document format filter (only for document scope)
+            if scope == "document":
+                if "pdf" in question_lower and not _has_filter("format"):
+                    extra_filters.append({"field": "format", "op": "=", "value": "pdf"})
+                    logger.info("tool_orchestration.filter_injected.format_pdf")
+                elif ("plain text" in question_lower or "text file" in question_lower) and not _has_filter("format"):
+                    extra_filters.append({"field": "format", "op": "=", "value": "txt"})
+                    logger.info("tool_orchestration.filter_injected.format_txt")
+
+            # Event type filter: "threshold_alarm" / "threshold alarm"
+            if scope in ("event", "event_log"):
+                if ("threshold_alarm" in question_lower or "threshold alarm" in question_lower) and not _has_filter("event_type"):
+                    extra_filters.append({"field": "event_type", "op": "=", "value": "threshold_alarm"})
+                    logger.info("tool_orchestration.filter_injected.event_type_threshold_alarm")
+
+            logger.info(
+                "tool_orchestration.aggregate_routing",
+                extra={
+                    "scope": scope,
+                    "group_by": group_by,
+                    "tool_type": effective_tool_type,
+                    "has_known_group": has_known_group,
+                    "filters_count": len(extra_filters),
+                }
+            )
             return {
-                "tool_type": tool_type,
+                "tool_type": effective_tool_type,
                 "params": {
-                    "group_by": spec_obj.group_by,
+                    "group_by": group_by,
                     "metrics": spec_obj.metrics,
-                    "filters": spec_obj.filters,
+                    "filters": extra_filters,
                     "top_n": spec_obj.top_n,
                     "limit": spec_obj.top_n or 10,  # Map top_n to limit for query template
-                    "scope": spec_obj.scope,
+                    "scope": scope,
                     "tenant_id": self.context.tenant_id,  # Add tenant_id for query template
                 }
             }

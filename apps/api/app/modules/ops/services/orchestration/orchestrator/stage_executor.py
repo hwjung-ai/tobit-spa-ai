@@ -555,41 +555,46 @@ class StageExecutor:
                                         capability_hints=["database_query"],
                                         type_hints=["database_query"],
                                     )
-                                    detail_result = (
-                                        await self.tool_executor.execute_tool(
-                                            tool_type=detail_tool_name,
-                                            params={"sql": sql},
-                                            context=tool_context,
+                                    if not detail_tool_name:
+                                        self.logger.warning(
+                                            "execute_stage.ci_detail_tool_unresolved"
                                         )
-                                    )
-                                    detail_payload = (
-                                        detail_result.get("data")
-                                        if isinstance(detail_result, dict)
-                                        and "data" in detail_result
-                                        else detail_result
-                                    )
-                                    detail_rows = []
-                                    raw_rows = (
-                                        detail_payload.get("rows", [])
-                                        if isinstance(detail_payload, dict)
-                                        else []
-                                    )
-                                    for row in raw_rows:
-                                        if hasattr(row, "_mapping"):
-                                            detail_rows.append(dict(row._mapping))
-                                        elif isinstance(row, dict):
-                                            detail_rows.append(row)
-                                        else:
-                                            detail_rows.append({"value": str(row)})
-                                    results.append(
-                                        {
-                                            "tool_name": "ci_detail",
-                                            "mode": "ci_detail",
-                                            "success": True,
-                                            "data": {"rows": detail_rows},
-                                            "rows": detail_rows,
-                                        }
-                                    )
+                                    else:
+                                        detail_result = (
+                                            await self.tool_executor.execute_tool(
+                                                tool_type=detail_tool_name,
+                                                params={"sql": sql},
+                                                context=tool_context,
+                                            )
+                                        )
+                                        detail_payload = (
+                                            detail_result.get("data")
+                                            if isinstance(detail_result, dict)
+                                            and "data" in detail_result
+                                            else detail_result
+                                        )
+                                        detail_rows = []
+                                        raw_rows = (
+                                            detail_payload.get("rows", [])
+                                            if isinstance(detail_payload, dict)
+                                            else []
+                                        )
+                                        for row in raw_rows:
+                                            if hasattr(row, "_mapping"):
+                                                detail_rows.append(dict(row._mapping))
+                                            elif isinstance(row, dict):
+                                                detail_rows.append(row)
+                                            else:
+                                                detail_rows.append({"value": str(row)})
+                                        results.append(
+                                            {
+                                                "tool_name": "ci_detail",
+                                                "mode": "ci_detail",
+                                                "success": True,
+                                                "data": {"rows": detail_rows},
+                                                "rows": detail_rows,
+                                            }
+                                        )
                                 except Exception as e:
                                     self.logger.warning(
                                         "execute_stage.ci_detail_failed",
@@ -2091,7 +2096,7 @@ class StageExecutor:
 
         return "\n".join(lines)
 
-    def _resolve_query_execution_tool_name(self) -> str:
+    def _resolve_query_execution_tool_name(self) -> str | None:
         """Resolve runtime tool name used for Query Asset execution tracing."""
         try:
             registry = get_tool_registry()
@@ -2099,17 +2104,17 @@ class StageExecutor:
                 return "direct_query"
             candidate = registry.find_tool_by_capability("database_query")
             if candidate:
-                return getattr(candidate, "tool_name", "database_query")
+                return getattr(candidate, "tool_name", None)
         except Exception:
             pass
-        return "query_asset_executor"
+        return None
 
     def _resolve_runtime_tool_name(
         self,
         preferred_name: str,
         capability_hints: List[str] | None = None,
         type_hints: List[str] | None = None,
-    ) -> str:
+    ) -> str | None:
         """Resolve executable tool name from runtime registry."""
         try:
             registry = get_tool_registry()
@@ -2118,14 +2123,14 @@ class StageExecutor:
             for capability in capability_hints or []:
                 candidate = registry.find_tool_by_capability(capability)
                 if candidate:
-                    return getattr(candidate, "tool_name", preferred_name)
+                    return getattr(candidate, "tool_name", None)
             for tool_type in type_hints or []:
                 candidates = registry.find_tools_by_type(tool_type)
                 if candidates:
-                    return getattr(candidates[0], "tool_name", preferred_name)
+                    return getattr(candidates[0], "tool_name", None)
         except Exception:
             pass
-        return preferred_name
+        return None
 
     def _load_compose_prompt_templates(self) -> Dict[str, str]:
         """Load compose prompt templates from asset registry."""

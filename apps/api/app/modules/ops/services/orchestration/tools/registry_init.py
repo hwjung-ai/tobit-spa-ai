@@ -44,6 +44,17 @@ def initialize_tools() -> None:
         except Exception as e:
             logger.warning(f"Failed to register DirectQueryTool: {e}")
 
+        # Register AggregateDbQueryTool for aggregate queries on operational tables
+        try:
+            from app.modules.ops.services.orchestration.tools.aggregate_db_query_tool import (
+                AggregateDbQueryTool,
+            )
+            aggregate_db_query_tool = AggregateDbQueryTool()
+            registry.register_dynamic(aggregate_db_query_tool)
+            logger.info("Registered AggregateDbQueryTool for aggregate DB queries")
+        except Exception as e:
+            logger.warning(f"Failed to register AggregateDbQueryTool: {e}")
+
         try:
             tool_assets = load_all_published_tools()
         except Exception as e:

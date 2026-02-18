@@ -13,8 +13,12 @@ from app.modules.auth.models import TbUser
 
 from .api_copilot_schemas import ApiCopilotRequest
 from .api_copilot_service import get_api_copilot_service
+from .cep_copilot_schemas import CepCopilotRequest
+from .cep_copilot_service import get_cep_copilot_service
 from .schemas import ScreenCopilotRequest
 from .service import get_screen_copilot_service
+from .sim_copilot_schemas import SimCopilotRequest
+from .sim_copilot_service import get_sim_copilot_service
 
 logger = logging.getLogger(__name__)
 
@@ -207,4 +211,122 @@ async def validate_api_draft(
         logger.error(f"API validation error: {e}", exc_info=True)
         return ResponseEnvelope.error(
             message=f"Validation failed: {str(e)}", error_code="VALIDATION_ERROR"
+        )
+
+
+@router.post("/cep-copilot", response_model=ResponseEnvelope)
+async def generate_cep_rule(
+    request: CepCopilotRequest,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+) -> ResponseEnvelope:
+    """
+    Generate or modify CEP rules using AI.
+
+    Takes a CEP rule specification and natural language prompt,
+    returns a generated or modified CEP rule with explanations.
+
+    Requires authentication.
+    """
+    try:
+        service = get_cep_copilot_service()
+        response = await service.generate_rule(
+            request=request,
+            trace_id=str(_uuid.uuid4()),
+            user_id=str(current_user.id) if current_user else None,
+        )
+
+        # Validate draft if present
+        if response.rule_draft:
+            errors, warnings = service.validate_rule_draft(response.rule_draft)
+            if errors:
+                logger.warning(f"CEP rule draft validation errors: {errors}")
+                response.suggestions = response.suggestions + [
+                    f"Error: {e}" for e in errors
+                ]
+            if warnings:
+                response.warnings = response.warnings + warnings
+
+        return ResponseEnvelope.success(
+            data=response.model_dump(),
+            message=response.explanation or "CEP rule generated successfully",
+        )
+
+    except Exception as e:
+        logger.error(f"CEP copilot error: {e}", exc_info=True)
+        return ResponseEnvelope.error(
+            message=f"Failed to generate CEP rule: {str(e)}", error_code="AI_SERVICE_ERROR"
+        )
+
+
+@router.post("/cep-copilot/validate", response_model=ResponseEnvelope)
+async def validate_cep_rule(
+    request: CepCopilotRequest,
+    current_user: TbUser = Depends(get_current_user),
+) -> ResponseEnvelope:
+    """
+    Validate a CEP rule draft without generating modifications.
+
+    Returns validation result and suggestions for improvement.
+    """
+    try:
+        service = get_cep_copilot_service()
+
+        # Validate draft
+        errors, warnings = service.validate_rule_draft(request.rule_spec)
+
+        return ResponseEnvelope.success(
+            data={
+                "valid": len(errors) == 0,
+                "errors": errors,
+                "warnings": warnings,
+                "suggestions": [
+                    "Fix these errors" if errors else "CEP rule draft looks good!"
+                ],
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"CEP validation error: {e}", exc_info=True)
+        return ResponseEnvelope.error(
+            message=f"Validation failed: {str(e)}", error_code="VALIDATION_ERROR"
+        )
+
+
+@router.post("/sim-copilot", response_model=ResponseEnvelope)
+async def sim_copilot(
+    request: SimCopilotRequest,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+) -> ResponseEnvelope:
+    """
+    Generate simulation parameters or analyze results using AI.
+
+    Takes a natural language prompt and optionally current parameters or results,
+    returns simulation configuration or analysis based on the mode.
+
+    Modes:
+    - draft: Generate simulation parameters from natural language
+    - analyze: Analyze simulation results and provide insights
+
+    Requires authentication.
+    """
+    try:
+        service = get_sim_copilot_service()
+        response = await service.generate_response(
+            request=request,
+            trace_id=str(_uuid.uuid4()),
+            user_id=str(current_user.id) if current_user else None,
+        )
+
+        return ResponseEnvelope.success(
+            data=response.model_dump(),
+            message=response.explanation or "SIM copilot response generated",
+        )
+
+    except Exception as e:
+        logger.error(f"SIM copilot error: {e}", exc_info=True)
+        return ResponseEnvelope.error(
+            message=f"Failed to process SIM request: {str(e)}",
+            error_code="AI_SERVICE_ERROR"
         )

@@ -118,6 +118,20 @@ interface SimDraftEnvelope {
   draft: Partial<SimDraftPayload>;
 }
 
+interface SimAnalysisPayload {
+  summary: string;
+  key_findings: string[];
+  anomalies: string[];
+  comparison_with_baseline: string;
+  recommendations: string[];
+  confidence_assessment: string;
+}
+
+interface SimAnalysisEnvelope {
+  type: "sim_analysis";
+  analysis: SimAnalysisPayload;
+}
+
 const assumptionMeta: Record<
   string,
   {
@@ -157,14 +171,33 @@ const strategyMeta: Record<Strategy, { title: string; desc: string; badge: strin
 };
 
 const SIM_COPILOT_INSTRUCTION = [
-  "You are Tobit SIM Workspace AI Copilot.",
-  'Output must be a single JSON object: {"type":"sim_draft","draft":{...}}.',
-  "draft may include: question, scenario_type, strategy, horizon, service, assumptions.",
-  "scenario_type must be one of: what_if, stress_test, capacity.",
-  "strategy must be one of: rule, stat, ml, dl.",
-  "assumptions may include traffic_change_pct, cpu_change_pct, memory_change_pct.",
+  "You are Tobit SIM Workspace AI Copilot with TWO modes.",
+  "",
+  "MODE 1: DRAFT - When user wants to create/modify simulation parameters",
+  'Output: {"type":"sim_draft","draft":{question,scenario_type,strategy,horizon,service,assumptions}}',
+  "",
+  "MODE 2: ANALYSIS - When user asks about results, wants explanation, or insights",
+  'Output: {"type":"sim_analysis","analysis":{',
+  '  "summary": "Brief summary of results",',
+  '  "key_findings": ["finding1", "finding2"],',
+  '  "anomalies": ["anomaly1 if any"],',
+  '  "comparison_with_baseline": "description of changes",',
+  '  "recommendations": ["rec1", "rec2"],',
+  '  "confidence_assessment": "high/medium/low"',
+  '}}',
+  "",
+  "Draft fields:",
+  "- question: string",
+  "- scenario_type: what_if | stress_test | capacity",
+  "- strategy: rule | stat | ml | dl",
+  "- horizon: string (e.g., 7d, 30d)",
+  "- service: string",
+  "- assumptions: {traffic_change_pct, cpu_change_pct, memory_change_pct}",
+  "",
+  "When latest_kpis and latest_summary are provided in context, use them for analysis mode.",
+  "Always respond in the same language as the user.",
   "No markdown or code fences in final response.",
-].join(" ");
+].join("\n");
 
 const formatKpiLabel = (value: string) =>
   value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -219,6 +252,38 @@ const parseSimDraft = (
   return { ok: false, error: "type=sim_draft 객체를 찾지 못했습니다." };
 };
 
+const parseSimAnalysis = (
+  text: string,
+): { ok: boolean; analysis?: SimAnalysisPayload; error?: string } => {
+  const candidates = [stripCodeFences(text), text];
+
+  for (const candidate of candidates) {
+    const parsedItems: unknown[] = [];
+    const direct = tryParseJson(candidate);
+    if (direct !== null) parsedItems.push(direct);
+    for (const extracted of extractJsonCandidates(candidate)) {
+      const value = tryParseJson(extracted);
+      if (value !== null) parsedItems.push(value);
+    }
+
+    for (const parsed of parsedItems) {
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+      const typed = parsed as Partial<SimAnalysisEnvelope>;
+      if (typed.type !== "sim_analysis") continue;
+      if (
+        !typed.analysis ||
+        typeof typed.analysis !== "object" ||
+        Array.isArray(typed.analysis)
+      ) {
+        return { ok: false, error: "sim_analysis의 analysis 객체가 필요합니다." };
+      }
+      return { ok: true, analysis: typed.analysis as SimAnalysisPayload };
+    }
+  }
+
+  return { ok: false, error: "type=sim_analysis 객체를 찾지 못했습니다." };
+};
+
 export default function SimPage() {
   const [templates, setTemplates] = useState<SimulationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -246,6 +311,7 @@ export default function SimPage() {
   const [lastParseStatus, setLastParseStatus] = useState<"idle" | "success" | "fail">("idle");
   const [lastParseError, setLastParseError] = useState<string | null>(null);
   const [lastAssistantRaw, setLastAssistantRaw] = useState<string>("");
+  const [analysisResult, setAnalysisResult] = useState<SimAnalysisPayload | null>(null);
 
   // Resizable panel state
   const [leftPanelWidth, setLeftPanelWidth] = useState(380);
@@ -568,22 +634,38 @@ export default function SimPage() {
 
   const processAssistantDraft = (messageText: string, isComplete: boolean) => {
     setLastAssistantRaw(messageText);
-    const result = parseSimDraft(messageText);
-    setLastParseStatus(result.ok ? "success" : "fail");
-    setLastParseError(result.error ?? null);
 
-    if (result.ok && result.draft) {
+    // First try to parse as sim_analysis
+    const analysisResult = parseSimAnalysis(messageText);
+    if (analysisResult.ok && analysisResult.analysis) {
+      if (isComplete) {
+        recordCopilotMetric("sim-workspace", "parse_success");
+        setAnalysisResult(analysisResult.analysis);
+        setLastParseStatus("success");
+        setLastParseError(null);
+        setDraftStatus("idle");
+        setDraftNotes("AI 분석 결과가 도착했습니다.");
+      }
+      return;
+    }
+
+    // Then try to parse as sim_draft
+    const draftResult = parseSimDraft(messageText);
+    setLastParseStatus(draftResult.ok ? "success" : "fail");
+    setLastParseError(draftResult.error ?? null);
+
+    if (draftResult.ok && draftResult.draft) {
       if (isComplete) {
         recordCopilotMetric("sim-workspace", "parse_success");
       }
-      setSimDraft(result.draft);
+      setSimDraft(draftResult.draft);
       setDraftStatus("draft_ready");
       setDraftNotes("SIM 드래프트가 준비되었습니다. Apply로 좌측 입력에 반영하세요.");
       return;
     }
 
     if (isComplete) {
-      recordCopilotMetric("sim-workspace", "parse_failure", result.error ?? null);
+      recordCopilotMetric("sim-workspace", "parse_failure", draftResult.error ?? null);
       setSimDraft(null);
       setDraftStatus("error");
       setDraftNotes("SIM 드래프트를 해석할 수 없습니다.");
@@ -1150,6 +1232,7 @@ export default function SimPage() {
                 }
                 onUserMessage={() => {
                   setSimDraft(null);
+                  setAnalysisResult(null);
                   setDraftStatus("idle");
                   setDraftNotes(null);
                   setLastParseStatus("idle");
@@ -1158,6 +1241,85 @@ export default function SimPage() {
                 }}
                 inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
               />
+              {analysisResult && (
+                <div className="space-y-3 br-card p-3 text-sm bg-surface-elevated">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                      AI Analysis
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisResult(null)}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <p className="font-medium text-foreground">{analysisResult.summary}</p>
+
+                  {analysisResult.key_findings.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Key Findings:</p>
+                      <ul className="list-disc list-inside text-xs text-foreground">
+                        {analysisResult.key_findings.map((finding, index) => (
+                          <li key={index}>{finding}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {analysisResult.anomalies.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                        Anomalies:
+                      </p>
+                      <ul className="list-disc list-inside text-xs text-amber-600 dark:text-amber-400">
+                        {analysisResult.anomalies.map((anomaly, index) => (
+                          <li key={index}>{anomaly}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {analysisResult.comparison_with_baseline && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Comparison with Baseline:
+                      </p>
+                      <p className="text-xs text-foreground">
+                        {analysisResult.comparison_with_baseline}
+                      </p>
+                    </div>
+                  )}
+
+                  {analysisResult.recommendations.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Recommendations:</p>
+                      <ul className="list-disc list-inside text-xs text-foreground">
+                        {analysisResult.recommendations.map((rec, index) => (
+                          <li key={index}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Confidence:</span>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        analysisResult.confidence_assessment === "high"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : analysisResult.confidence_assessment === "medium"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-rose-600 dark:text-rose-400",
+                      )}
+                    >
+                      {analysisResult.confidence_assessment.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3 br-card p-3 text-sm bg-surface-elevated">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-wider text-muted-standard">

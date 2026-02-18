@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { fetchApi } from "@/lib/adminUtils";
 import Toast from "./Toast";
+import StatusBadge from "./StatusBadge";
 import { useConfirm } from "@/hooks/use-confirm";
 
 interface CatalogAsset {
@@ -92,12 +93,14 @@ export default function CatalogTable({
                 <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                   <span>Tables: {getTableCount(catalog)}</span>
                   <span>•</span>
+                  <StatusBadge status={catalog.status} />
+                  <span>•</span>
                   <span className={cn(
                     "px-2 py-0.5 rounded bg-surface-overlay text-muted-foreground",
                     getScanStatus(catalog) === "completed" && "bg-green-900/50 text-green-400",
                     getScanStatus(catalog) === "scanning" && "bg-yellow-900/50 text-yellow-400"
                   )}>
-                    {getScanStatus(catalog)}
+                    scan:{getScanStatus(catalog)}
                   </span>
                 </div>
               </div>

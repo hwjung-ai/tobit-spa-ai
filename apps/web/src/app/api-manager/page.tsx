@@ -60,6 +60,7 @@ import {
 } from "../../lib/api-manager/utils";
 import { recordCopilotMetric } from "../../lib/copilot/metrics";
 import type { ResponseEnvelope } from "../../lib/apiClientTypes";
+import { ApiTourLauncher } from "../../components/api-manager/ApiTourLauncher";
 
 /* Types and utilities imported from lib/api-manager */
 
@@ -154,6 +155,12 @@ export default function ApiManagerPage() {
   const [logicHistory, setLogicHistory] = useState<string[]>([""]);
   const [logicHistoryIndex, setLogicHistoryIndex] = useState(0);
   const [logicType, setLogicType] = useState<LogicType>("sql");
+  const [preservedLogic, setPreservedLogic] = useState<{
+    sql?: string;
+    http?: HttpSpec;
+    python?: string;
+    workflow?: string;
+  }>({});
   const [scriptLanguage, setScriptLanguage] = useState<"python" | "javascript">("python");
   const [paramSchemaText, setParamSchemaText] = useState("{}");
   const [runtimePolicyText, setRuntimePolicyText] = useState("{}");
@@ -1156,6 +1163,101 @@ export default function ApiManagerPage() {
     setLogicHistoryIndex(0);
   }, [buildDraftFromForm]);
 
+  const handleDuplicateApi = useCallback(() => {
+    if (!selectedApi) return;
+
+    // Set form fields from the selected API with "(Copy)" suffix
+    setDefinitionDraft({
+      api_name: `${selectedApi.api_name} (Copy)`,
+      method: selectedApi.method,
+      endpoint: selectedApi.endpoint,
+      description: selectedApi.description ?? "",
+      tags: (selectedApi.tags || []).join(", "),
+      is_active: selectedApi.is_active,
+      created_by: "",
+    });
+    setLogicBody(selectedApi.logic_body);
+    setLogicType(selectedApi.logic_type);
+
+    if (selectedApi.logic_type === "http") {
+      try {
+        const spec = JSON.parse(selectedApi.logic_body || "{}");
+        setHttpSpec({
+          url: spec.url || "",
+          method: normalizeHttpMethod(spec.method),
+          headers: JSON.stringify(spec.headers || {}, null, 2),
+          body: JSON.stringify(spec.body || {}, null, 2),
+          params: JSON.stringify(spec.params || {}, null, 2),
+        });
+      } catch {
+        setHttpSpec({ url: "", method: "GET", headers: "{}", body: "{}", params: "{}" });
+      }
+    }
+
+    setParamSchemaText(formatJson(selectedApi.param_schema));
+    setRuntimePolicyText(formatJson(selectedApi.runtime_policy));
+    const specLanguage = (selectedApi.logic_spec?.language ?? "") as string;
+    setScriptLanguage(specLanguage === "javascript" ? "javascript" : "python");
+
+    // Clear selection to indicate this is a new API
+    setSelectedId(null);
+    setDraftApi(null);
+    setDraftStatus("idle");
+    setActiveTab(DEFAULT_TAB);
+    setStatusMessage("API duplicated. Modify and save as new API.");
+    setExecutionResult(null);
+    setTestError(null);
+    setShowJsonResult(false);
+    setFormBaselineSnapshot(null);
+    setAppliedDraftSnapshot(null);
+    setLogicHistory([selectedApi.logic_body ?? ""]);
+    setLogicHistoryIndex(0);
+  }, [selectedApi]);
+
+  const handleLogicTypeChange = useCallback(
+    (newType: LogicType) => {
+      if (newType === logicType) return;
+
+      // Preserve current logic before switching
+      setPreservedLogic((prev) => {
+        const updated = { ...prev };
+        if (logicType === "sql") {
+          updated.sql = logicBody;
+        } else if (logicType === "http") {
+          updated.http = httpSpec;
+        } else if (logicType === "python") {
+          updated.python = logicBody;
+        } else if (logicType === "workflow") {
+          updated.workflow = logicBody;
+        }
+        return updated;
+      });
+
+      setLogicType(newType);
+
+      // Restore preserved logic if exists
+      if (newType === "sql" && preservedLogic.sql) {
+        setLogicBody(preservedLogic.sql);
+      } else if (newType === "http" && preservedLogic.http) {
+        setHttpSpec(preservedLogic.http);
+        setLogicBody(JSON.stringify(preservedLogic.http));
+      } else if (newType === "python" && preservedLogic.python) {
+        setLogicBody(preservedLogic.python);
+      } else if (newType === "workflow" && preservedLogic.workflow) {
+        setLogicBody(preservedLogic.workflow);
+      } else {
+        // Clear if no preserved logic
+        if (newType === "http") {
+          setHttpSpec({ url: "", method: "GET", headers: "{}", body: "{}", params: "{}" });
+          setLogicBody("{}");
+        } else {
+          setLogicBody("");
+        }
+      }
+    },
+    [logicType, logicBody, httpSpec, preservedLogic],
+  );
+
   const handleLogicUndo = useCallback(() => {
     if (logicHistoryIndex <= 0) {
       editorUndoRedoRef.current?.trigger("toolbar", "undo", null);
@@ -1740,7 +1842,7 @@ export default function ApiManagerPage() {
                 {(["sql", "workflow", "python", "script", "http"] as LogicType[]).map((type) => (
                   <button
                     key={type}
-                    onClick={() => setLogicType(type)}
+                    onClick={() => handleLogicTypeChange(type)}
                     disabled={!!selectedId}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""} ${
                       logicType === type
@@ -2051,11 +2153,12 @@ export default function ApiManagerPage() {
 
   const centerTop = (
     <div className="space-y-4">
-      <div className="flex gap-3">
+      <div className="flex gap-3" data-testid="api-tabs">
         {tabOptions.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            data-testid={`tab-${tab.id}`}
             className={cn("panel-tab", activeTab === tab.id ? "panel-tab-active" : "panel-tab-inactive")}
           >
             {tab.label}
@@ -2099,10 +2202,13 @@ export default function ApiManagerPage() {
   );
 
   const leftPane = (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="api-list">
       <div className="flex items-center justify-between">
         <h3 className="left-panel-title">API 목록</h3>
-        <div className="flex gap-2 text-xs uppercase tracking-wider">
+        <div
+          className="flex gap-2 text-xs uppercase tracking-wider"
+          data-testid="api-scope-selector"
+        >
           {(["custom"] as ScopeType[])
             .concat(enableSystemApis ? (["system"] as ScopeType[]) : [])
             .map((item) => (
@@ -2442,15 +2548,24 @@ export default function ApiManagerPage() {
           </div>
         </>
       )}
-      <button
-        onClick={handleNew}
-        className={`w-full rounded-2xl border px-3 py-2 text-xs uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated ${
-          scope === "system" ? " cursor-not-allowed" : ""
-        }`}
-        disabled={scope === "system"}
-      >
-        New API
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={handleDuplicateApi}
+          disabled={!selectedApi || scope === "system"}
+          className={`flex-1 rounded-2xl border px-3 py-2 text-xs uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          Duplicate
+        </button>
+        <button
+          onClick={handleNew}
+          className={`flex-1 rounded-2xl border px-3 py-2 text-xs uppercase tracking-wider transition border-variant bg-surface-elevated text-foreground hover:bg-slate-200 dark:border-variant dark:bg-surface-base dark:text-muted-foreground dark:hover:bg-surface-elevated ${
+            scope === "system" ? " cursor-not-allowed" : ""
+          }`}
+          disabled={scope === "system"}
+        >
+          New API
+        </button>
+      </div>
     </div>
   );
 
@@ -2519,6 +2634,11 @@ export default function ApiManagerPage() {
             method: selectedApi.method,
             endpoint: selectedApi.endpoint,
             logic_type: selectedApi.logic_type,
+            logic_body: selectedApi.logic_body,
+            param_schema: selectedApi.param_schema,
+            runtime_policy: selectedApi.runtime_policy,
+            description: selectedApi.description,
+            tags: selectedApi.tags,
           }
         : null,
       draft_status: draftStatus,
@@ -2528,22 +2648,28 @@ export default function ApiManagerPage() {
         method: definitionDraft.method,
         endpoint: definitionDraft.endpoint,
         logic_type: logicType,
+        logic_body: logicType === "sql" ? logicBody : httpSpec ? JSON.stringify(httpSpec) : "",
+        param_schema: safeParseJson(paramSchemaText),
+        runtime_policy: safeParseJson(runtimePolicyText),
       },
     }),
     [
-      activeTab,
-      definitionDraft.api_name,
-      definitionDraft.endpoint,
-      definitionDraft.method,
-      draftStatus,
-      logicType,
       selectedApi,
+      draftStatus,
+      activeTab,
+      definitionDraft,
+      logicType,
+      logicBody,
+      httpSpec,
+      paramSchemaText,
+      runtimePolicyText,
     ],
   );
 
   const rightPane = (
-    <DraftAssistantPanel
-      instructionPrompt={API_MANAGER_COPILOT_INSTRUCTION}
+    <div data-testid="api-copilot-panel">
+      <DraftAssistantPanel
+        instructionPrompt={API_MANAGER_COPILOT_INSTRUCTION}
       scenarioFunctions={API_MANAGER_SCENARIO_FUNCTIONS}
       builderContext={copilotBuilderContext}
       onAssistantMessage={handleAssistantMessage}
@@ -2581,13 +2707,15 @@ export default function ApiManagerPage() {
       onApplyDraft={handleApplyDraft}
       onSaveLocalDraft={handleSaveLocalDraft}
     />
+    </div>
   );
 
   return (
-    <div className="api-manager-theme">
+    <div className="api-manager-theme" data-testid="api-manager-container">
       <PageHeader
         title="API Manager"
         description="OPS와 오케스트레이션 도구에서 사용하는 실행형 API를 정의하고 관리하는 빌더 화면입니다."
+        actions={<ApiTourLauncher fullTourText="Tour" quickTourText="Quick" />}
       />
       <main className="min-h-[calc(100vh-96px)] py-6">
         <BuilderShell

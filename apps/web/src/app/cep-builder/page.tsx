@@ -40,6 +40,7 @@ import {
   CEP_COPILOT_EXAMPLE_PROMPTS,
 } from "../../lib/cep-builder/utils";
 import { recordCopilotMetric } from "../../lib/copilot/metrics";
+import { CepTourLauncher } from "../../components/cep-builder/CepTourLauncher";
 
 export default function CepBuilderPage() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
@@ -629,6 +630,98 @@ export default function CepBuilderPage() {
     setAppliedDraftSnapshot(null);
   }, []);
 
+  const handleDuplicateRule = useCallback(() => {
+    if (!selectedRule) return;
+
+    // Set form fields from the selected rule with "(Copy)" suffix
+    setRuleName(`${selectedRule.rule_name} (Copy)`);
+    setRuleDescription(
+      typeof (selectedRule.action_spec as Record<string, unknown>)?.description === "string"
+        ? String((selectedRule.action_spec as Record<string, unknown>).description)
+        : "",
+    );
+    setTriggerType(selectedRule.trigger_type as TriggerType);
+    setTriggerSpecText(JSON.stringify(selectedRule.trigger_spec ?? {}, null, 2));
+    setActionSpecText(JSON.stringify(selectedRule.action_spec ?? {}, null, 2));
+    setIsActive(selectedRule.is_active);
+
+    // Clear selection to indicate this is a new rule
+    setSelectedId(null);
+    setActiveTab("definition");
+    setStatusMessage("Rule duplicated. Modify and save as new rule.");
+    setStatusError(null);
+    setSimulateResult(null);
+    setTriggerResult(null);
+    setFormBaselineSnapshot(null);
+    setAppliedDraftSnapshot(null);
+
+    // Sync form builder state from trigger_spec
+    const triggerSpec = selectedRule.trigger_spec as Record<string, unknown>;
+    if (triggerSpec.conditions && Array.isArray(triggerSpec.conditions)) {
+      const conditions = (triggerSpec.conditions as Record<string, unknown>[]).map((c) => ({
+        id: (c.id as string) || `cond-${Math.random().toString(36).substr(2, 9)}`,
+        field: (c.field as string) || "",
+        op: (c.op as string) || "==",
+        value: String(c.value ?? ""),
+      }));
+      setFormConditions(conditions);
+      setFormConditionLogic((triggerSpec.logic as "AND" | "OR" | "NOT") || "AND");
+    } else {
+      setFormConditions([]);
+      setFormConditionLogic("AND");
+    }
+
+    if (triggerSpec.window_config) {
+      setFormWindowConfig(triggerSpec.window_config as Record<string, unknown>);
+    } else {
+      setFormWindowConfig({});
+    }
+
+    if (triggerSpec.aggregation && typeof triggerSpec.aggregation === "object") {
+      setFormAggregations([
+        {
+          ...(triggerSpec.aggregation as Record<string, unknown>),
+          id:
+            ((triggerSpec.aggregation as Record<string, unknown>).id as string) ||
+            `agg-${Math.random().toString(36).substr(2, 9)}`,
+        },
+      ]);
+    } else {
+      setFormAggregations([]);
+    }
+
+    if (triggerSpec.enrichments && Array.isArray(triggerSpec.enrichments)) {
+      setFormEnrichments(
+        (triggerSpec.enrichments as Record<string, unknown>[]).map((e) => ({
+          ...e,
+          id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`,
+        })),
+      );
+    } else {
+      setFormEnrichments([]);
+    }
+
+    const actionSpec = selectedRule.action_spec as Record<string, unknown>;
+    if (actionSpec.type === "multi_action" && Array.isArray(actionSpec.actions)) {
+      setFormActions(
+        (actionSpec.actions as Record<string, unknown>[]).map((a) => ({
+          ...a,
+          id: (a.id as string) || `action-${Math.random().toString(36).substr(2, 9)}`,
+          type: (a.type as Action["type"]) || "webhook",
+        })) as Action[],
+      );
+    } else if (actionSpec && Object.keys(actionSpec).length > 0) {
+      setFormActions([
+        {
+          ...actionSpec,
+          id: actionSpec.id || `action-${Math.random().toString(36).substr(2, 9)}`,
+        } as unknown as Action,
+      ]);
+    } else {
+      setFormActions([]);
+    }
+  }, [selectedRule]);
+
   const handleSimulate = async () => {
     if (!selectedRule?.rule_id) {
       setStatusError("Select a rule first.");
@@ -939,6 +1032,7 @@ export default function CepBuilderPage() {
       />
 
       <TriggerSection
+        data-testid="cep-trigger-section"
         triggerType={triggerType}
         triggerSpec={(() => {
           try {
@@ -955,6 +1049,7 @@ export default function CepBuilderPage() {
       />
 
       <ConditionsSection
+        data-testid="cep-conditions-section"
         conditions={formConditions}
         logic={formConditionLogic}
         onConditionsChange={setFormConditions}
@@ -975,7 +1070,11 @@ export default function CepBuilderPage() {
 
       <EnrichmentSection enrichments={formEnrichments} onEnrichmentsChange={setFormEnrichments} />
 
-      <ActionsSection actions={formActions} onActionsChange={setFormActions} />
+      <ActionsSection
+        data-testid="cep-actions-section"
+        actions={formActions}
+        onActionsChange={setFormActions}
+      />
 
       <div className="cep-builder-status-box p-4">
         <div className="flex items-center justify-between cursor-pointer p-2 br-section bg-surface-base">
@@ -1030,7 +1129,7 @@ export default function CepBuilderPage() {
   );
 
   const testContent = (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="cep-test-section">
       <p className="text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
         Action endpoint:&nbsp;
         <span className="font-mono text-tiny text-muted-foreground dark:text-muted-foreground">
@@ -1102,7 +1201,7 @@ export default function CepBuilderPage() {
   );
 
   const centerTop = (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="cep-tabs">
       <div className="flex gap-3">
         {tabOptions.map((tab) => (
           <button
@@ -1189,15 +1288,24 @@ export default function CepBuilderPage() {
   );
 
   const leftPane = (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="cep-rule-list">
       <div className="flex items-center justify-between">
         <p className="left-panel-title">CEP rules</p>
-        <button
-          onClick={handleNew}
-          className="text-tiny uppercase tracking-wider underline text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground"
-        >
-          New
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDuplicateRule}
+            disabled={!selectedRule}
+            className="text-tiny uppercase tracking-wider underline text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Duplicate
+          </button>
+          <button
+            onClick={handleNew}
+            className="text-tiny uppercase tracking-wider underline text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground"
+          >
+            New
+          </button>
+        </div>
       </div>
       <input
         value={searchTerm}
@@ -1311,6 +1419,10 @@ export default function CepBuilderPage() {
             rule_id: selectedRule.rule_id,
             rule_name: selectedRule.rule_name,
             trigger_type: selectedRule.trigger_type,
+            trigger_spec: selectedRule.trigger_spec,
+            action_spec: selectedRule.action_spec,
+            is_active: selectedRule.is_active,
+            description: selectedRule.description,
           }
         : null,
       draft_status: draftStatus,
@@ -1318,13 +1430,36 @@ export default function CepBuilderPage() {
       current_form: {
         rule_name: ruleName,
         trigger_type: triggerType,
+        trigger_spec: triggerSpecText,
+        conditions: formConditions,
+        windowing: formWindowConfig,
+        aggregation: formAggregations,
+        actions: formActions,
+        enrichments: formEnrichments,
       },
+      selected_condition_id: null,
+      selected_action_id: null,
     }),
-    [activeTab, draftStatus, ruleName, selectedRule, triggerType],
+    [
+      selectedRule,
+      draftStatus,
+      activeTab,
+      ruleName,
+      triggerType,
+      triggerSpecText,
+      formConditions,
+      formWindowConfig,
+      formAggregations,
+      formActions,
+      formEnrichments,
+    ],
   );
 
   const rightPane = (
-    <div className="flex flex-col h-full space-y-4 overflow-y-auto pr-1 custom-scrollbar">
+    <div
+      className="flex flex-col h-full space-y-4 overflow-y-auto pr-1 custom-scrollbar"
+      data-testid="cep-copilot-panel"
+    >
       <BuilderCopilotPanel
         builderSlug="cep-builder"
         instructionPrompt={COPILOT_INSTRUCTION}
@@ -1522,10 +1657,14 @@ export default function CepBuilderPage() {
   );
 
   return (
-    <div className="page-cep-builder min-h-screen bg-surface-elevated text-slate-900 dark:bg-surface-base dark:text-slate-50">
+    <div
+      className="page-cep-builder min-h-screen bg-surface-elevated text-slate-900 dark:bg-surface-base dark:text-slate-50"
+      data-testid="cep-builder-container"
+    >
       <PageHeader
         title="Event Rule Maker"
         description="런타임 API와 연동되는 CEP 이벤트 규칙을 정의하고, 시뮬레이션하며, 트리거합니다."
+        actions={<CepTourLauncher fullTourText="Tour" quickTourText="Quick" />}
       />
       <main className="min-h-[calc(100vh-96px)] py-6">
         <BuilderShell
