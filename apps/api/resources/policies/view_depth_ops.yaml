@@ -1,4 +1,4 @@
-name: view_depth_ops
+name: view_depth
 description: "Depth constraints for OPS graph views"
 policy_type: view_depth
 scope: ops

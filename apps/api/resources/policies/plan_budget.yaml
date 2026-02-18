@@ -1,4 +1,4 @@
-name: plan_budget_default
+name: plan_budget
 description: "Default budget constraints for plan execution"
 policy_type: plan_budget
 scope: ci
