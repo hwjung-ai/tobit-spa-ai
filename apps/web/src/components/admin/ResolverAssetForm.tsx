@@ -4,7 +4,6 @@ import type React from "react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
@@ -15,12 +14,6 @@ import type {
   ResolverSimulationRequest,
   ResolverSimulationResult,
 } from "../../types/asset-registry";
-
-const RULE_TYPE_LABELS: Record<string, string> = {
-  alias_mapping: "Alias Mapping",
-  pattern_rule: "Pattern Rule",
-  transformation: "Transformation",
-};
 
 interface ResolverAssetFormProps {
   asset: ResolverAssetResponse;
@@ -97,46 +90,16 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
         </Card>
       </div>
 
-      {asset.description && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs">Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {asset.description}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {config.rules && config.rules.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs">Rules</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {config.rules.map((rule, index) => (
-              <div key={index} className="flex items-center justify-between rounded border border-border p-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{rule.name}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {RULE_TYPE_LABELS[rule.rule_type]}
-                  </Badge>
-                  {!rule.is_active && (
-                    <Badge variant="secondary" className="text-xs">
-                      Inactive
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-muted-foreground">
-                  Priority: {rule.priority}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs">Config (JSON)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs bg-surface-elevated p-3 rounded overflow-auto max-h-80 font-mono text-muted-foreground border border-border">
+            {JSON.stringify(config, null, 2)}
+          </pre>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">
@@ -194,13 +157,8 @@ export default function ResolverAssetForm({ asset }: ResolverAssetFormProps) {
                       </div>
                     )}
                     {result.matched_rules.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">Matched Rules:</div>
-                        {result.matched_rules.map((rule, i) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {rule}
-                          </Badge>
-                        ))}
+                      <div className="text-xs text-muted-foreground">
+                        Matched: {result.matched_rules.join(", ")}
                       </div>
                     )}
                   </div>
