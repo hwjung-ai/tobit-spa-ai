@@ -1,7 +1,35 @@
 name: default_resolver
-description: "Default resolver rules (env fallback)"
+description: "Default resolver rules for common entity mappings"
 default_namespace: default
-rules: []
+rules:
+  - rule_type: alias_mapping
+    name: "디비 → DB"
+    description: "디비를 DB로 변환"
+    is_active: true
+    priority: 1
+    rule_data:
+      source_entity: "디비"
+      target_entity: "DB"
+
+  - rule_type: alias_mapping
+    name: "와스 → WAS"
+    description: "와스를 WAS로 변환"
+    is_active: true
+    priority: 2
+    rule_data:
+      source_entity: "와스"
+      target_entity: "WAS"
+
+  - rule_type: alias_mapping
+    name: "CI → 구성"
+    description: "CI를 구성으로 변환"
+    is_active: true
+    priority: 3
+    rule_data:
+      source_entity: "CI"
+      target_entity: "구성"
+
 scope: default
 tags:
-  env_fallback: true
+  system: true
+is_system: true

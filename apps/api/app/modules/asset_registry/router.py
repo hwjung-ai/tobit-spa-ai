@@ -1489,6 +1489,45 @@ def list_resolvers(
         resolver_assets = []
         for asset in assets:
             content = asset.content or {}
+
+            # Build rules from content
+            rules_data = content.get("rules", [])
+            rules = []
+            for rule_data in rules_data:
+                from .resolver_models import (
+                    AliasMapping,
+                    PatternRule,
+                    ResolverRule,
+                    ResolverType,
+                    TransformationRule,
+                )
+
+                rule_type = rule_data.get("rule_type", "alias_mapping")
+
+                # Extract the actual rule-specific data (nested in "rule_data" key)
+                # or use top-level fields as fallback for legacy format
+                inner_rule_data = rule_data.get("rule_data", rule_data)
+
+                if rule_type == "alias_mapping":
+                    rule_data_obj = AliasMapping(**inner_rule_data)
+                elif rule_type == "pattern_rule":
+                    rule_data_obj = PatternRule(**inner_rule_data)
+                elif rule_type == "transformation":
+                    rule_data_obj = TransformationRule(**inner_rule_data)
+                else:
+                    rule_data_obj = rule_data
+
+                rule = ResolverRule(
+                    rule_type=ResolverType(rule_type),
+                    name=rule_data.get("name", ""),
+                    description=rule_data.get("description"),
+                    is_active=rule_data.get("is_active", True),
+                    priority=rule_data.get("priority", 0),
+                    extra_metadata=rule_data.get("extra_metadata", {}),
+                    rule_data=rule_data_obj,
+                )
+                rules.append(rule)
+
             resolver_assets.append(
                 ResolverAssetResponse(
                     asset_id=str(asset.asset_id),
@@ -1500,7 +1539,7 @@ def list_resolvers(
                     config=ResolverConfig(
                         name=asset.name,
                         description=asset.description,
-                        rules=[],  # Simplified for now
+                        rules=rules,
                         default_namespace=content.get("default_namespace"),
                         tags=asset.tags,
                         version=asset.version,
@@ -1890,6 +1929,43 @@ def publish_tool(
         return ResponseEnvelope.success(
             data=_to_tool_dict(asset),
             message="Tool asset published successfully",
+        )
+
+
+@router.post("/tools/{asset_id}/unpublish", response_model=ResponseEnvelope)
+def unpublish_tool(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Unpublish tool asset (rollback published tool to draft)."""
+    from app.modules.auth.models import UserRole
+
+    if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tool 언발행 권한이 없습니다 (Admin/Manager만 가능)",
+        )
+
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+        if not asset or asset.asset_type != "tool":
+            raise HTTPException(status_code=404, detail="Tool not found")
+
+        if asset.status != "published":
+            raise HTTPException(
+                status_code=400,
+                detail="Only published tools can be unpublished",
+            )
+
+        asset.status = "draft"
+        asset.updated_at = datetime.now()
+        session.add(asset)
+        session.commit()
+        session.refresh(asset)
+
+        return ResponseEnvelope.success(
+            data=_to_tool_dict(asset),
+            message="Tool asset unpublished successfully",
         )
 
 
