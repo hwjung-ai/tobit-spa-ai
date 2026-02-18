@@ -153,6 +153,16 @@ def update_asset(
     if asset.status == "published":
         raise ValueError("Cannot update published asset")
 
+    # Prevent name/policy_type changes for system assets
+    if asset.is_system:
+        protected_fields = ["name", "policy_type", "asset_type"]
+        for field in protected_fields:
+            if field in updates and updates[field] != getattr(asset, field):
+                raise ValueError(
+                    f"Cannot change '{field}' of system asset '{asset.policy_type or asset.name}'. "
+                    "System asset identifiers are protected."
+                )
+
     if not updates:
         return asset
 
@@ -535,6 +545,13 @@ def delete_asset(
     if asset.status != "draft":
         raise ValueError("Only draft assets can be deleted")
 
+    # Prevent deletion of system assets
+    if asset.is_system:
+        raise ValueError(
+            f"Cannot delete system asset '{asset.policy_type or asset.name}'. "
+            "System assets are required for core functionality."
+        )
+
     # Delete version history first
     histories = session.exec(
         select(TbAssetVersionHistory).where(
@@ -557,6 +574,13 @@ def unpublish_asset(
     """Unpublish asset (change status to draft)"""
     if asset.status != "published":
         raise ValueError("Only published assets can be unpublished")
+
+    # Prevent unpublishing of system assets
+    if asset.is_system:
+        raise ValueError(
+            f"Cannot unpublish system asset '{asset.policy_type or asset.name}'. "
+            "System assets must remain published."
+        )
 
     # Get trace info from context
     context = get_request_context()

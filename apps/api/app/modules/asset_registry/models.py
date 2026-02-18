@@ -96,6 +96,13 @@ class TbAssetRegistry(SQLModel, table=True):
         default=None, sa_column=Column(JSONB, nullable=True)
     )
 
+    # System asset flag (cannot be deleted or renamed)
+    is_system: bool = Field(
+        default=False,
+        sa_column=Column(Integer, nullable=False, server_default=text("0")),
+        description="System-required asset that cannot be deleted or renamed",
+    )
+
     # API Manager linkage (for tools imported from API Manager)
     linked_from_api_id: uuid.UUID | None = Field(
         default=None,

@@ -91,6 +91,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
     };
 
     const isDraft = asset.status === "draft";
+    const isSystem = asset.is_system || false;
 
     const handleSaveDraft = async () => {
         if (!isDraft) {
@@ -226,12 +227,19 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 <h2 className="text-lg font-semibold mb-4 text-foreground">Basic Info</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-2 text-foreground">Name</label>
+                        <label className="block text-sm font-medium mb-2 text-foreground">
+                            Name
+                            {isSystem && (
+                                <span className="ml-2 inline-flex rounded border border-amber-500/50 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                                    System
+                                </span>
+                            )}
+                        </label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            disabled={!isDraft}
+                            disabled={!isDraft || isSystem}
                             className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors bg-surface-base text-foreground border-variant"
                         />
                     </div>
@@ -606,8 +614,9 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                     <>
                         <button
                             onClick={handleDelete}
-                            disabled={isSaving}
-                            className="px-6 py-2 bg-rose-950/20 text-rose-500 hover:bg-rose-950/40 border border-rose-800/50 rounded-lg transition-colors font-medium mr-auto"
+                            disabled={isSaving || isSystem}
+                            title={isSystem ? "System assets cannot be deleted" : ""}
+                            className="px-6 py-2 bg-rose-950/20 text-rose-500 hover:bg-rose-950/40 border border-rose-800/50 rounded-lg transition-colors font-medium mr-auto disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Delete Draft
                         </button>
@@ -631,8 +640,9 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                     <>
                         <button
                             onClick={handleUnpublish}
-                            disabled={isRollingBack}
-                            className="px-6 py-2 bg-amber-950/20 text-amber-500 hover:bg-amber-950/40 border border-amber-800/50 rounded-lg transition-colors font-medium"
+                            disabled={isRollingBack || isSystem}
+                            title={isSystem ? "System assets must remain published" : ""}
+                            className="px-6 py-2 bg-amber-950/20 text-amber-500 hover:bg-amber-950/40 border border-amber-800/50 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isRollingBack ? "Rolling back..." : "Rollback to Draft"}
                         </button>

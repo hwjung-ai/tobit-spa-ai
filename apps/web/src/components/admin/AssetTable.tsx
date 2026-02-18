@@ -69,13 +69,21 @@ export default function AssetTable({
         minWidth: 200,
         cellRenderer: (params: ICellRendererParams<Asset>) => {
           if (!params.data) return null;
+          const isSystem = params.data.is_system;
           return (
-            <Link
-              href={buildDetailUrl(params.data.asset_id, params.data.asset_type)}
-              className="font-medium text-sky-600 transition-colors hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
-            >
-              {params.value}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href={buildDetailUrl(params.data.asset_id, params.data.asset_type)}
+                className="font-medium text-sky-600 transition-colors hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
+              >
+                {params.value}
+              </Link>
+              {isSystem && (
+                <span className="inline-flex rounded border border-amber-500/50 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  System
+                </span>
+              )}
+            </div>
           );
         },
       },

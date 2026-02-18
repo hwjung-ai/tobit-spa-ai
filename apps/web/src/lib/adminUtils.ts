@@ -16,6 +16,7 @@ export interface Asset {
   description: string | null;
   version: number;
   status: "draft" | "published";
+  is_system?: boolean;  // System assets cannot be deleted or renamed
   screen_id?: string | null;
   tags?: Record<string, unknown> | null;
 
