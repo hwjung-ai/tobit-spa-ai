@@ -142,7 +142,7 @@ def init_system_policies():
                 limits=policy_data.get("limits"),
                 status="published",
                 is_system=True,  # Cannot be deleted or renamed
-                tenant_id="system",
+                tenant_id="default",  # Use default tenant so it's visible in UI
             )
 
             session.add(policy)

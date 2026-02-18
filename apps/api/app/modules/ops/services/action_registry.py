@@ -11,6 +11,7 @@ All handlers follow this signature:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import ipaddress
 from typing import Any, Callable, Dict
 from urllib.parse import urlparse
@@ -294,15 +295,29 @@ async def handle_list_maintenance_filtered(
         raise ValueError("source_ref is required")
 
     try:
-        # Use Tool Registry to find maintenance history tool by capability
+        # Derive capability from function name (execute_xxx -> xxx)
+        capability = inspect.currentframe().f_code.co_name.replace("execute_", "")
+
+        # Use Tool Registry to find tool by capability
         registry = get_tool_registry()
-        tool = registry.find_tool_by_capability("maintenance_history")
+        tool = registry.find_tool_by_capability(capability)
 
         if not tool:
-            raise ValueError(
-                "No maintenance history tool found in Tool Registry. "
-                "Please create a Tool with name containing 'maintenance_history' "
-                "or with tool_config.capabilities including 'maintenance_history'."
+            # Tool not configured - return graceful empty response
+            logger.info(
+                f"Tool for '{capability}' not configured. "
+                f"To enable this feature, create a Tool with "
+                f"name containing '{capability}' or tool_config.capabilities=['{capability}']."
+            )
+            return ExecutorResult(
+                blocks=[
+                    {
+                        "type": "text",
+                        "content": f"'{capability}' 기능이 구성되지 않았습니다.\n\n"
+                                    "이 기능을 사용하려면 관리자에게 문의하세요.",
+                    }
+                ],
+                summary={"total": 0, "message": f"{capability} not configured"},
             )
 
         # Create tool context
