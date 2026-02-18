@@ -19,14 +19,14 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sqlmodel import Session, select
+from sqlmodel import select
 
-from core.db_pg import sync_engine
+from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
 
 
 # System Policy Types (fixed, cannot be changed without code modification)
-SYSTEM_POLICY_TYPES = ["plan_budget", "view_depth"]
+SYSTEM_POLICY_TYPES = ["plan_budget", "view_depth", "discovery_config"]
 
 # Policy data
 PLAN_BUDGET_DATA = {
@@ -92,10 +92,26 @@ VIEW_DEPTH_DATA = {
 }
 
 
+DISCOVERY_CONFIG_DATA = {
+    "name": "discovery_config",
+    "description": "CI discovery configuration (applied at Execute stage)",
+    "policy_type": "discovery_config",
+    "scope": "ops",
+    "limits": {
+        "neo4j": {
+            "enabled": True,
+        },
+        "postgresql": {
+            "enabled": True,
+        }
+    },
+}
+
+
 def init_system_policies():
     """Initialize system-required policy assets."""
-    with Session(sync_engine) as session:
-        policies_to_create = [PLAN_BUDGET_DATA, VIEW_DEPTH_DATA]
+    with get_session_context() as session:
+        policies_to_create = [PLAN_BUDGET_DATA, VIEW_DEPTH_DATA, DISCOVERY_CONFIG_DATA]
 
         for policy_data in policies_to_create:
             policy_type = policy_data["policy_type"]
@@ -136,6 +152,7 @@ def init_system_policies():
         print("\n✓ System policies initialized!")
         print("  - plan_budget: Execution limits (Validate stage)")
         print("  - view_depth: View depth policies (Execute stage)")
+        print("  - discovery_config: CI discovery configuration (Execute stage)")
 
 
 if __name__ == "__main__":
