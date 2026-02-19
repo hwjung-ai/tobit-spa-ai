@@ -469,16 +469,16 @@ class OpsOrchestratorRunner:
         instead of reading from stage context. Used for stage-specific asset tracking.
 
         Args:
-            assets: Dictionary with keys like 'prompt', 'queries', 'screens', etc.
+            assets: Dictionary with keys like 'prompt', 'tools', 'screens', etc.
 
         Returns:
             Dict[str, str] where:
-            - Key: asset_type (e.g., "prompt", "schema", "mapping", "query:name", "screen:id")
+            - Key: asset_type (e.g., "prompt", "catalog", "mapping", "tool:name", "screen:id")
             - Value: User-friendly display name like "asset_name (v1)" or "fallback"
         """
         applied: Dict[str, str] = {}
 
-        for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
+        for key in ("prompt", "policy", "mapping", "source", "schema", "catalog", "resolver"):
             info = assets.get(key)
             if not info:
                 continue
@@ -488,6 +488,22 @@ class OpsOrchestratorRunner:
             if override:
                 # Override can be a direct string value
                 applied[key] = str(override)
+
+        # Handle tools array
+        for entry in assets.get("tools", []) or []:
+            if not entry:
+                continue
+            name = entry.get("name") or entry.get("tool_name") or entry.get("asset_id") or "tool"
+            version = entry.get("version")
+            if version is not None:
+                display_name = f"{name} (v{version})"
+            else:
+                display_name = name
+            applied[f"tool:{name}"] = display_name
+            override_key = f"tool:{name}"
+            override = self.asset_overrides.get(override_key)
+            if override:
+                applied[f"tool:{name}"] = str(override)
 
         for entry in assets.get("queries", []) or []:
             if not entry:

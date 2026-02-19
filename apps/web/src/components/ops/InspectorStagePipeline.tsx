@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle, Clock, Star, FileText, Shield, Map, Database, Layers, Sliders, Search, X, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Star, FileText, Shield, Map, Database, Layers, Sliders, Wrench, X, Info, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StageStatus as StageStatusType, StageSnapshot as StageSnapshotType } from "@/lib/apiClientTypes";
 
@@ -12,9 +12,9 @@ interface AppliedAssets {
   policy?: string | null;
   mapping?: string | null;
   source?: string | null;
-  schema?: string | null;
+  catalog?: string | null;
   resolver?: string | null;
-  query?: string | null;
+  tool?: string | null;
   [key: string]: string | null | undefined;
 }
 
@@ -47,10 +47,10 @@ const STATUS_STYLES: Record<StageStatusType, { badge: string; icon: React.ReactE
 const ASSET_CONFIG: Record<string, { icon: React.ReactElement; color: string; label: string }> = {
   prompt: { icon: <Star className="h-3 w-3" />, color: "text-sky-400", label: "Prompt" },
   policy: { icon: <Shield className="h-3 w-3" />, color: "text-emerald-400", label: "Policy" },
-  query: { icon: <Search className="h-3 w-3" />, color: "text-purple-400", label: "Query" },
+  tool: { icon: <Wrench className="h-3 w-3" />, color: "text-purple-400", label: "Tool" },
   mapping: { icon: <Map className="h-3 w-3" />, color: "text-amber-400", label: "Mapping" },
   source: { icon: <Database className="h-3 w-3" />, color: "text-foreground", label: "Source" },
-  schema: { icon: <Layers className="h-3 w-3" />, color: "text-fuchsia-300", label: "Schema" },
+  catalog: { icon: <FolderOpen className="h-3 w-3" />, color: "text-fuchsia-300", label: "Catalog" },
   resolver: { icon: <Sliders className="h-3 w-3" />, color: "text-orange-300", label: "Resolver" },
 };
 

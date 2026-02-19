@@ -8,6 +8,7 @@ from core.db import get_session_context
 from sqlmodel import select
 
 from app.modules.inspector.asset_context import (
+    track_catalog_asset,
     track_mapping_asset,
     track_policy_asset,
     track_prompt_asset,
@@ -15,6 +16,7 @@ from app.modules.inspector.asset_context import (
     track_resolver_asset,
     track_schema_asset,
     track_source_asset,
+    track_tool_asset,
 )
 from app.shared import config_loader
 

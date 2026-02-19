@@ -55,7 +55,7 @@ def resolve_applied_assets_from_assets(
     asset_overrides = asset_overrides or {}
     applied: Dict[str, str] = {}
 
-    for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
+    for key in ("prompt", "policy", "mapping", "source", "schema", "catalog", "resolver"):
         info = assets.get(key)
         if not info:
             continue
@@ -65,6 +65,22 @@ def resolve_applied_assets_from_assets(
         if override:
             # Override can be a direct string value
             applied[key] = str(override)
+
+    # Handle tools array
+    for entry in assets.get("tools", []) or []:
+        if not entry:
+            continue
+        name = entry.get("name") or entry.get("tool_name") or entry.get("asset_id") or "tool"
+        version = entry.get("version")
+        if version is not None:
+            display_name = f"{name} (v{version})"
+        else:
+            display_name = name
+        applied[f"tool:{name}"] = display_name
+        override_key = f"tool:{name}"
+        override = asset_overrides.get(override_key)
+        if override:
+            applied[f"tool:{name}"] = str(override)
 
     for entry in assets.get("queries", []) or []:
         if not entry:

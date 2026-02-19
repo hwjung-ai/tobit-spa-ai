@@ -38,6 +38,9 @@ def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
         # Backward compatibility for clients still reading `schema`.
         "schema": _summarize_asset(catalog_or_schema),
         "resolver": _summarize_asset(state.get("resolver")),
+        "tools": [
+            _summarize_asset(entry) for entry in state.get("tools", []) if entry
+        ],
         "queries": [
             _summarize_asset(entry) for entry in state.get("queries", []) if entry
         ],
@@ -64,6 +67,14 @@ def _compute_asset_versions(state: dict[str, Any]) -> List[str]:
             versions.append(
                 f"{catalog_or_schema.get('name')}@{catalog_or_schema.get('source')}"
             )
+    for entry in state.get("tools", []):
+        if not entry:
+            continue
+        asset_id = entry.get("asset_id")
+        if asset_id:
+            versions.append(asset_id)
+        else:
+            versions.append(f"{entry.get('name')}@{entry.get('source', 'tool')}")
     for entry in state.get("queries", []):
         if not entry:
             continue
@@ -140,6 +151,11 @@ def _compute_fallbacks(state: dict[str, Any]) -> Dict[str, bool]:
         # Backward compatibility for clients still reading `schema`.
         "schema": _is_external(catalog_or_schema),
         "resolver": _is_external(state.get("resolver")),
+        "tool": any(
+            entry.get("source") != "asset_registry"
+            for entry in state.get("tools", [])
+            if entry
+        ),
         "query": any(
             entry.get("source") != "asset_registry"
             for entry in state.get("queries", [])

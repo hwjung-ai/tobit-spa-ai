@@ -21,9 +21,11 @@ def _initial_context() -> Dict[str, Any]:
         "mapping": None,
         "source": None,
         "schema": None,
+        "catalog": None,
         "resolver": None,
-        "queries": [],
-        "screens": [],
+        "tools": [],
+        "queries": [],  # Deprecated - kept for backward compatibility
+        "screens": [],  # Deprecated - kept for backward compatibility
     }
 
 
@@ -49,7 +51,9 @@ def get_tracked_assets() -> Dict[str, Any]:
         "mapping": context.get("mapping"),
         "source": context.get("source"),
         "schema": context.get("schema"),
+        "catalog": context.get("catalog"),
         "resolver": context.get("resolver"),
+        "tools": list(context.get("tools", [])),
         "queries": list(context.get("queries", [])),
         "screens": list(context.get("screens", [])),
     }
@@ -107,6 +111,22 @@ def track_screen_asset(info: AssetInfo) -> None:
     _ASSET_CONTEXT.set(context)
 
 
+def track_tool_asset(info: AssetInfo) -> None:
+    """Track a tool asset that was used during execution."""
+    context = _ensure_context()
+    tools = list(context.get("tools", []))
+    tools.append(info)
+    context["tools"] = tools
+    _ASSET_CONTEXT.set(context)
+
+
+def track_catalog_asset(info: AssetInfo) -> None:
+    """Track a catalog asset that was used during execution."""
+    context = _ensure_context()
+    context["catalog"] = info
+    _ASSET_CONTEXT.set(context)
+
+
 def begin_stage_asset_tracking() -> None:
     """Reset asset tracking for a new stage.
 
@@ -132,7 +152,9 @@ def end_stage_asset_tracking() -> Dict[str, Any]:
         "mapping": stage_context.get("mapping"),
         "source": stage_context.get("source"),
         "schema": stage_context.get("schema"),
+        "catalog": stage_context.get("catalog"),
         "resolver": stage_context.get("resolver"),
+        "tools": list(stage_context.get("tools", [])),
         "queries": list(stage_context.get("queries", [])),
         "screens": list(stage_context.get("screens", [])),
     }
@@ -155,7 +177,9 @@ def get_stage_assets() -> Dict[str, Any]:
         "mapping": stage_context.get("mapping"),
         "source": stage_context.get("source"),
         "schema": stage_context.get("schema"),
+        "catalog": stage_context.get("catalog"),
         "resolver": stage_context.get("resolver"),
+        "tools": list(stage_context.get("tools", [])),
         "queries": list(stage_context.get("queries", [])),
         "screens": list(stage_context.get("screens", [])),
     }
@@ -251,3 +275,27 @@ def track_screen_asset_to_stage(info: AssetInfo) -> None:
     _STAGE_ASSET_CONTEXT.set(stage_context)
     # Also track globally
     track_screen_asset(info)
+
+
+def track_tool_asset_to_stage(info: AssetInfo) -> None:
+    """Track tool asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    tools = list(stage_context.get("tools", []))
+    tools.append(info)
+    stage_context["tools"] = tools
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_tool_asset(info)
+
+
+def track_catalog_asset_to_stage(info: AssetInfo) -> None:
+    """Track catalog asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["catalog"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_catalog_asset(info)

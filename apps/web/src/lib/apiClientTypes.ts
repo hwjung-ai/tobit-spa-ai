@@ -353,6 +353,34 @@ export interface ExecutionTraceDetail {
       screen_id?: string | null;
       status?: string | null;
     } | null;
+    source?: {
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+      scope?: string | null;
+      engine?: string | null;
+    } | null;
+    catalog?: {
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+      scope?: string | null;
+    } | null;
+    resolver?: {
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+    } | null;
+    tools?: Array<{
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+      tool_name?: string | null;
+    } | null>;
     queries?: Array<{
       asset_id: string | null;
       name: string | null;

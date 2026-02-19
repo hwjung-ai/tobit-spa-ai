@@ -1081,57 +1081,53 @@ function InspectorContent() {
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.mapping ?? null)}
                       </div>
+                      <div
+                        className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
+                      >
+                        <p
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
+                        >
+                          Source
+                        </p>
+                        {renderAppliedAsset(traceDetail.applied_assets?.source ?? null)}
+                      </div>
+                      <div
+                        className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
+                      >
+                        <p
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
+                        >
+                          Catalog
+                        </p>
+                        {renderAppliedAsset(traceDetail.applied_assets?.catalog ?? null)}
+                      </div>
                       <div className="md:col-span-2 space-y-2">
                         <p
                           className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
-                          Queries
+                          Tools
                         </p>
-                        {traceDetail.applied_assets?.queries?.length ? (
+                        {traceDetail.applied_assets?.tools?.length ? (
                           <ul className="space-y-2">
-                            {traceDetail.applied_assets.queries.map(
-                              (query: {
+                            {traceDetail.applied_assets.tools.map(
+                              (tool: {
                                 asset_id: string | null;
                                 name: string | null;
                                 source: string | null;
+                                version?: number | null;
                               }) => (
                                 <li
-                                  key={query.asset_id || `${query.name}-${query.source}`}
+                                  key={tool.asset_id || `${tool.name}-${tool.source}`}
                                   className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-surface-elevated"
                                 >
-                                  {query.name || "query"} · {query.source} ·{" "}
-                                  {query.asset_id ?? "seed"}
+                                  {tool.name || "tool"} · {tool.source ?? "asset_registry"} · v{tool.version ?? "?"}
                                 </li>
                               ),
                             )}
                           </ul>
                         ) : (
                           <p className="text-xs text-muted-foreground">
-                            Query asset 없음
-                          </p>
-                        )}
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <p
-                          className="text-xs uppercase tracking-wider text-muted-foreground"
-                        >
-                          Screens
-                        </p>
-                        {traceDetail.applied_assets?.screens?.length ? (
-                          <ul className="space-y-2">
-                            {traceDetail.applied_assets.screens.map((screen) => (
-                              <li
-                                key={screen.asset_id || `${screen.screen_id}-${screen.status}`}
-                                className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-surface-elevated"
-                              >
-                                {screen.screen_id || "screen"} · {screen.status ?? "unknown"} ·{" "}
-                                {screen.version ?? "?"}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">
-                            Screen asset 없음
+                            Tool asset 없음
                           </p>
                         )}
                       </div>
