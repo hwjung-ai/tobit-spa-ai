@@ -476,7 +476,8 @@ def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] 
                 "scope": asset.scope,
                 "tags": asset.tags,
             }
-            track_schema_asset(
+            # Track catalog asset for inspector
+            track_catalog_asset(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -506,7 +507,8 @@ def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] 
         catalog_data["source"] = "file_fallback"
         catalog_data["asset_id"] = None
         catalog_data["version"] = None
-        track_schema_asset(
+        # Track catalog asset for inspector (fallback)
+        track_catalog_asset(
             {
                 "asset_id": None,
                 "name": name,
@@ -656,7 +658,7 @@ def load_tool_asset(
         if asset is None:
             return None
 
-        return {
+        tool_info = {
             "asset_id": str(asset.asset_id),
             "name": asset.name,
             "description": asset.description,
@@ -669,6 +671,17 @@ def load_tool_asset(
             "status": asset.status,
             "source": "asset_registry",
         }
+
+        # Track tool asset for inspector
+        track_tool_asset({
+            "asset_id": str(asset.asset_id),
+            "name": asset.name,
+            "tool_type": asset.tool_type,
+            "version": asset.version,
+            "source": "asset_registry",
+        })
+
+        return tool_info
 
 
 def load_all_published_tools() -> list[dict[str, Any]]:
