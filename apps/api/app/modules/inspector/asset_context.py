@@ -17,15 +17,15 @@ _STAGE_ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar(
 def _initial_context() -> Dict[str, Any]:
     return {
         "prompt": None,
+        "prompts": [],
         "policy": None,
+        "policies": [],
         "mapping": None,
+        "mappings": [],
         "source": None,
-        "schema": None,
         "catalog": None,
         "resolver": None,
         "tools": [],
-        "queries": [],  # Deprecated - kept for backward compatibility
-        "screens": [],  # Deprecated - kept for backward compatibility
     }
 
 
@@ -47,45 +47,48 @@ def get_tracked_assets() -> Dict[str, Any]:
     context = _ensure_context()
     return {
         "prompt": context.get("prompt"),
+        "prompts": list(context.get("prompts", [])),
         "policy": context.get("policy"),
+        "policies": list(context.get("policies", [])),
         "mapping": context.get("mapping"),
+        "mappings": list(context.get("mappings", [])),
         "source": context.get("source"),
-        "schema": context.get("schema"),
         "catalog": context.get("catalog"),
         "resolver": context.get("resolver"),
         "tools": list(context.get("tools", [])),
-        "queries": list(context.get("queries", [])),
-        "screens": list(context.get("screens", [])),
     }
 
 
 def track_prompt_asset(info: AssetInfo) -> None:
     context = _ensure_context()
     context["prompt"] = info
+    prompts = list(context.get("prompts", []))
+    prompts.append(info)
+    context["prompts"] = prompts
     _ASSET_CONTEXT.set(context)
 
 
 def track_policy_asset(info: AssetInfo) -> None:
     context = _ensure_context()
     context["policy"] = info
+    policies = list(context.get("policies", []))
+    policies.append(info)
+    context["policies"] = policies
     _ASSET_CONTEXT.set(context)
 
 
 def track_mapping_asset(info: AssetInfo) -> None:
     context = _ensure_context()
     context["mapping"] = info
+    mappings = list(context.get("mappings", []))
+    mappings.append(info)
+    context["mappings"] = mappings
     _ASSET_CONTEXT.set(context)
 
 
 def track_source_asset(info: AssetInfo) -> None:
     context = _ensure_context()
     context["source"] = info
-    _ASSET_CONTEXT.set(context)
-
-
-def track_schema_asset(info: AssetInfo) -> None:
-    context = _ensure_context()
-    context["schema"] = info
     _ASSET_CONTEXT.set(context)
 
 
@@ -96,19 +99,13 @@ def track_resolver_asset(info: AssetInfo) -> None:
 
 
 def track_query_asset(info: AssetInfo) -> None:
-    context = _ensure_context()
-    queries = list(context.get("queries", []))
-    queries.append(info)
-    context["queries"] = queries
-    _ASSET_CONTEXT.set(context)
+    # Deprecated: query assets are no longer tracked in Inspector.
+    return None
 
 
 def track_screen_asset(info: AssetInfo) -> None:
-    context = _ensure_context()
-    screens = list(context.get("screens", []))
-    screens.append(info)
-    context["screens"] = screens
-    _ASSET_CONTEXT.set(context)
+    # Deprecated: screen assets are no longer tracked in Inspector.
+    return None
 
 
 def track_tool_asset(info: AssetInfo) -> None:
@@ -148,15 +145,15 @@ def end_stage_asset_tracking() -> Dict[str, Any]:
     # Copy stage assets to return
     stage_assets = {
         "prompt": stage_context.get("prompt"),
+        "prompts": list(stage_context.get("prompts", [])),
         "policy": stage_context.get("policy"),
+        "policies": list(stage_context.get("policies", [])),
         "mapping": stage_context.get("mapping"),
+        "mappings": list(stage_context.get("mappings", [])),
         "source": stage_context.get("source"),
-        "schema": stage_context.get("schema"),
         "catalog": stage_context.get("catalog"),
         "resolver": stage_context.get("resolver"),
         "tools": list(stage_context.get("tools", [])),
-        "queries": list(stage_context.get("queries", [])),
-        "screens": list(stage_context.get("screens", [])),
     }
 
     # Reset stage context
@@ -173,15 +170,15 @@ def get_stage_assets() -> Dict[str, Any]:
 
     return {
         "prompt": stage_context.get("prompt"),
+        "prompts": list(stage_context.get("prompts", [])),
         "policy": stage_context.get("policy"),
+        "policies": list(stage_context.get("policies", [])),
         "mapping": stage_context.get("mapping"),
+        "mappings": list(stage_context.get("mappings", [])),
         "source": stage_context.get("source"),
-        "schema": stage_context.get("schema"),
         "catalog": stage_context.get("catalog"),
         "resolver": stage_context.get("resolver"),
         "tools": list(stage_context.get("tools", [])),
-        "queries": list(stage_context.get("queries", [])),
-        "screens": list(stage_context.get("screens", [])),
     }
 
 
@@ -191,6 +188,9 @@ def track_prompt_asset_to_stage(info: AssetInfo) -> None:
     if stage_context is None:
         stage_context = _initial_context()
     stage_context["prompt"] = info
+    prompts = list(stage_context.get("prompts", []))
+    prompts.append(info)
+    stage_context["prompts"] = prompts
     _STAGE_ASSET_CONTEXT.set(stage_context)
     # Also track globally
     track_prompt_asset(info)
@@ -202,6 +202,9 @@ def track_policy_asset_to_stage(info: AssetInfo) -> None:
     if stage_context is None:
         stage_context = _initial_context()
     stage_context["policy"] = info
+    policies = list(stage_context.get("policies", []))
+    policies.append(info)
+    stage_context["policies"] = policies
     _STAGE_ASSET_CONTEXT.set(stage_context)
     # Also track globally
     track_policy_asset(info)
@@ -213,6 +216,9 @@ def track_mapping_asset_to_stage(info: AssetInfo) -> None:
     if stage_context is None:
         stage_context = _initial_context()
     stage_context["mapping"] = info
+    mappings = list(stage_context.get("mappings", []))
+    mappings.append(info)
+    stage_context["mappings"] = mappings
     _STAGE_ASSET_CONTEXT.set(stage_context)
     # Also track globally
     track_mapping_asset(info)
@@ -229,17 +235,6 @@ def track_source_asset_to_stage(info: AssetInfo) -> None:
     track_source_asset(info)
 
 
-def track_schema_asset_to_stage(info: AssetInfo) -> None:
-    """Track schema asset to stage context (in addition to global context)."""
-    stage_context = _STAGE_ASSET_CONTEXT.get()
-    if stage_context is None:
-        stage_context = _initial_context()
-    stage_context["schema"] = info
-    _STAGE_ASSET_CONTEXT.set(stage_context)
-    # Also track globally
-    track_schema_asset(info)
-
-
 def track_resolver_asset_to_stage(info: AssetInfo) -> None:
     """Track resolver asset to stage context (in addition to global context)."""
     stage_context = _STAGE_ASSET_CONTEXT.get()
@@ -252,29 +247,13 @@ def track_resolver_asset_to_stage(info: AssetInfo) -> None:
 
 
 def track_query_asset_to_stage(info: AssetInfo) -> None:
-    """Track query asset to stage context (in addition to global context)."""
-    stage_context = _STAGE_ASSET_CONTEXT.get()
-    if stage_context is None:
-        stage_context = _initial_context()
-    queries = list(stage_context.get("queries", []))
-    queries.append(info)
-    stage_context["queries"] = queries
-    _STAGE_ASSET_CONTEXT.set(stage_context)
-    # Also track globally
-    track_query_asset(info)
+    """Deprecated: query assets are no longer tracked in Inspector."""
+    return None
 
 
 def track_screen_asset_to_stage(info: AssetInfo) -> None:
-    """Track screen asset to stage context (in addition to global context)."""
-    stage_context = _STAGE_ASSET_CONTEXT.get()
-    if stage_context is None:
-        stage_context = _initial_context()
-    screens = list(stage_context.get("screens", []))
-    screens.append(info)
-    stage_context["screens"] = screens
-    _STAGE_ASSET_CONTEXT.set(stage_context)
-    # Also track globally
-    track_screen_asset(info)
+    """Deprecated: screen assets are no longer tracked in Inspector."""
+    return None
 
 
 def track_tool_asset_to_stage(info: AssetInfo) -> None:

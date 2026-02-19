@@ -20,6 +20,7 @@ from app.modules.inspector.schemas import (
     TraceSummary,
     UIRenderPayload,
 )
+from app.modules.inspector.service import normalize_trace_for_inspector
 
 router = APIRouter(prefix="/inspector", tags=["inspector"])
 
@@ -140,7 +141,9 @@ def get_trace(
     if not trace:
         raise HTTPException(status_code=404, detail=f"Trace {trace_id} not found")
     audit_logs = get_audit_logs_by_trace(session, trace_id)
-    trace_data = ExecutionTraceRead.model_validate(trace.model_dump())
+    trace_data = ExecutionTraceRead.model_validate(
+        normalize_trace_for_inspector(session, trace)
+    )
     return ResponseEnvelope.success(
         data={
             "trace": trace_data.model_dump(),

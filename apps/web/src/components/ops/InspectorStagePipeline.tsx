@@ -8,14 +8,14 @@ import type { StageStatus as StageStatusType, StageSnapshot as StageSnapshotType
 export type StageStatus = StageStatusType;
 
 interface AppliedAssets {
-  prompt?: string | null;
-  policy?: string | null;
-  mapping?: string | null;
-  source?: string | null;
-  catalog?: string | null;
-  resolver?: string | null;
-  tool?: string | null;
-  [key: string]: string | null | undefined;
+  prompt?: unknown;
+  policy?: unknown;
+  mapping?: unknown;
+  source?: unknown;
+  catalog?: unknown;
+  resolver?: unknown;
+  tool?: unknown;
+  [key: string]: unknown;
 }
 
 interface AssetDetail {
@@ -63,7 +63,12 @@ function getAssetName(assetId: string, assetNames?: Record<string, { name: strin
   if (assetInfo?.name) {
     return assetInfo.name;
   }
-  // 이름이 없으면 UUID의 앞부분 표시
+  // If it's not a UUID-like value, treat it as a readable name.
+  const isUuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(baseId);
+  if (!isUuidLike) {
+    return baseId;
+  }
+  // Fallback for unresolved UUID assets.
   return baseId.slice(0, 8);
 }
 
@@ -73,29 +78,60 @@ function getAssetVersion(value: string): string | null {
   return versionMatch ? (versionMatch[1] || versionMatch[2]) : null;
 }
 
+function normalizeAssetValue(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const entry = value as { asset_id?: unknown; name?: unknown; version?: unknown };
+  const assetId = typeof entry.asset_id === "string" ? entry.asset_id : null;
+  const name = typeof entry.name === "string" ? entry.name : null;
+  const version =
+    typeof entry.version === "number" || typeof entry.version === "string"
+      ? String(entry.version)
+      : null;
+  if (assetId && version) return `${assetId}:v${version}`;
+  if (assetId) return assetId;
+  if (name && version) return `${name}:v${version}`;
+  if (name) return name;
+  return null;
+}
+
 // Asset Card Component (세로 표시, 클릭 가능)
 interface AssetCardProps {
   type: string;
-  value: string;
+  value: unknown;
   assetNames?: Record<string, { name: string; version?: string }>;
   onClick: (detail: AssetDetail) => void;
 }
 
 function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
-  const config = ASSET_CONFIG[type] || { icon: <FileText className="h-3 w-3" />, color: "text-muted-foreground", label: type };
-  const displayName = getAssetName(value, assetNames);
-  const version = getAssetVersion(value);
-  const baseId = value.replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
+  // Extract base type for compound keys like "tool:ci_lookup"
+  const baseType = type.includes(':') ? type.split(':')[0] : type;
+  const subLabel = type.includes(':') ? type.split(':')[1] : null;
+
+  const config = ASSET_CONFIG[baseType] || { icon: <FileText className="h-3 w-3" />, color: "text-muted-foreground", label: baseType };
+  const normalizedValue = normalizeAssetValue(value);
+  if (!normalizedValue) return null;
+
+  const displayName = getAssetName(normalizedValue, assetNames);
+  const version = getAssetVersion(normalizedValue);
+  const baseId = normalizedValue.replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
 
   const handleClick = () => {
     onClick({
       id: baseId,
-      type,
+      type: baseType, // Use base type (e.g., "tool" instead of "tool:ci_lookup")
       name: displayName,
       version: version || "unknown",
-      fullId: value,
+      fullId: normalizedValue,
     });
   };
+
+  // Display label: show subLabel if present (e.g., "ci_lookup" for "tool:ci_lookup")
+  const displayLabel = subLabel ? `${config.label}:${subLabel}` : config.label;
 
   return (
     <div
@@ -104,10 +140,10 @@ function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
         "w-full flex items-center gap-2 px-2 py-2 rounded-md text-left cursor-pointer transition-all group",
         "bg-surface-overlay border-variant"
       )}
-      title={`${config.label}: ${value}`}
+      title={`${displayLabel}: ${normalizedValue}`}
     >
       <span className={config.color}>{config.icon}</span>
-      <span className="text-tiny capitalize min-w-[50px] text-muted-foreground">{config.label}:</span>
+      <span className="text-tiny capitalize min-w-[50px] text-muted-foreground">{displayLabel}:</span>
       <span className="text-tiny font-medium truncate flex-1 text-foreground">{displayName}</span>
       <span className="text-xs text-muted-foreground">{version ? `v${version}` : ""}</span>
       <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
@@ -122,10 +158,20 @@ interface AppliedAssetsListProps {
   onAssetClick: (detail: AssetDetail) => void;
 }
 
+// Deprecated asset keys that should not be displayed
+const DEPRECATED_ASSET_KEYS = ['queries', 'screens', 'query', 'screen'];
+
 function AppliedAssetsList({ appliedAssets, assetNames, onAssetClick }: AppliedAssetsListProps) {
   if (!appliedAssets) return null;
 
-  const assets = Object.entries(appliedAssets).filter(([, value]) => value != null);
+  // Filter out null values and deprecated keys
+  const assets = Object.entries(appliedAssets).filter(
+    ([type, value]) =>
+      value != null &&
+      !DEPRECATED_ASSET_KEYS.includes(type) &&
+      !type.startsWith('query:') &&
+      !type.startsWith('screen:')
+  );
 
   if (assets.length === 0) return null;
 
@@ -135,7 +181,7 @@ function AppliedAssetsList({ appliedAssets, assetNames, onAssetClick }: AppliedA
         <AssetCard
           key={type}
           type={type}
-          value={value as string}
+          value={value}
           assetNames={assetNames}
           onClick={onAssetClick}
         />

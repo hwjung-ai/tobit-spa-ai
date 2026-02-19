@@ -461,7 +461,7 @@ class OpsOrchestratorRunner:
         return name
 
     def _resolve_applied_assets_from_assets(
-        self, assets: Dict[str, Any]
+        self, assets: Dict[str, Any], stage: str | None = None
     ) -> Dict[str, str]:
         """Resolve applied assets from pre-computed assets dictionary.
 
@@ -478,7 +478,7 @@ class OpsOrchestratorRunner:
         """
         applied: Dict[str, str] = {}
 
-        for key in ("prompt", "policy", "mapping", "source", "schema", "catalog", "resolver"):
+        for key in ("prompt", "policy", "mapping", "source", "catalog", "resolver"):
             info = assets.get(key)
             if not info:
                 continue
@@ -488,6 +488,40 @@ class OpsOrchestratorRunner:
             if override:
                 # Override can be a direct string value
                 applied[key] = str(override)
+
+        def _is_same_asset(a: Any, b: Any) -> bool:
+            if not isinstance(a, dict) or not isinstance(b, dict):
+                return False
+            return (
+                a.get("name") == b.get("name")
+                and a.get("version") == b.get("version")
+                and a.get("asset_id") == b.get("asset_id")
+            )
+
+        # Track all prompt/policy/mapping entries with explicit keys for full visibility.
+        for entry in assets.get("prompts", []) or []:
+            if not entry:
+                continue
+            if _is_same_asset(entry, assets.get("prompt")):
+                continue
+            name = entry.get("name") or "prompt"
+            if stage and not self._is_prompt_for_stage(str(name), stage):
+                continue
+            applied[f"prompt:{name}"] = self._format_asset_display(entry)
+        for entry in assets.get("policies", []) or []:
+            if not entry:
+                continue
+            if _is_same_asset(entry, assets.get("policy")):
+                continue
+            name = entry.get("name") or entry.get("policy_type") or "policy"
+            applied[f"policy:{name}"] = self._format_asset_display(entry)
+        for entry in assets.get("mappings", []) or []:
+            if not entry:
+                continue
+            if _is_same_asset(entry, assets.get("mapping")):
+                continue
+            name = entry.get("name") or entry.get("mapping_type") or "mapping"
+            applied[f"mapping:{name}"] = self._format_asset_display(entry)
 
         # Handle tools array
         for entry in assets.get("tools", []) or []:
@@ -538,15 +572,15 @@ class OpsOrchestratorRunner:
 
         return applied
 
-    def _resolve_applied_assets(self) -> Dict[str, str]:
+    def _resolve_applied_assets(self, stage: str | None = None) -> Dict[str, str]:
         """Resolve applied assets with user-friendly display format.
 
         Returns Dict[str, str] where:
-        - Key: asset_type (e.g., "prompt", "schema", "mapping")
+        - Key: asset_type (e.g., "prompt", "catalog", "mapping")
         - Value: User-friendly display name like "asset_name (v1)" or "fallback"
         """
         assets = get_stage_assets()
-        return self._resolve_applied_assets_from_assets(assets)
+        return self._resolve_applied_assets_from_assets(assets, stage=stage)
 
     def _log_metric_blocks_return(self, blocks: List[Block]) -> None:
         types = [
@@ -584,7 +618,7 @@ class OpsOrchestratorRunner:
         Raises:
             ValueError: If tool is not registered
         """
-        from app.modules.inspector.asset_context import track_tool_asset
+        from app.modules.inspector.asset_context import track_tool_asset_to_stage
 
         # Add tenant_id to params if not present
         if "tenant_id" not in params:
@@ -603,7 +637,7 @@ class OpsOrchestratorRunner:
         )
 
         # Track tool asset for inspector before execution
-        track_tool_asset({
+        track_tool_asset_to_stage({
             "name": tool_name,
             "tool_name": tool_name,
             "source": "asset_registry",
@@ -5486,11 +5520,10 @@ class OpsOrchestratorRunner:
 
         try:
             # route_plan stage
-            begin_stage_asset_tracking()
             route_start = perf_counter()
-
-            # Route stage doesn't use assets, capture empty assets
-            route_assets = end_stage_asset_tracking()
+            # Planner prompt is loaded before stage tracking reset.
+            route_assets = get_stage_assets()
+            begin_stage_asset_tracking()
 
             route_input = self._build_stage_input(
                 "route_plan",
@@ -6252,14 +6285,13 @@ class OpsOrchestratorRunner:
         context = get_request_context()
         trace_id = context.get("trace_id") or context.get("request_id")
 
-        # Use provided stage_assets if available, otherwise get from stage context
+        # Strict mode: show assets actually tracked for this stage.
         if stage_assets is not None:
-            applied_assets = self._resolve_applied_assets_from_assets(stage_assets)
+            applied_assets = self._resolve_applied_assets_from_assets(
+                stage_assets, stage=stage
+            )
         else:
-            # Stage-specific asset distribution
-            # Based on typical usage patterns across stages
-            all_assets = self._resolve_applied_assets()
-            applied_assets = self._distribute_stage_assets(stage, all_assets)
+            applied_assets = self._resolve_applied_assets(stage=stage)
 
         return StageInput(
             stage=stage,
@@ -6273,41 +6305,6 @@ class OpsOrchestratorRunner:
             prev_output=prev_output,
             trace_id=trace_id,
         )
-
-    def _distribute_stage_assets(
-        self, stage: str, all_assets: Dict[str, str]
-    ) -> Dict[str, str]:
-        """Distribute global assets to stage-specific assets based on usage patterns.
-
-        Each stage typically uses specific asset types:
-        - route_plan: {} (no assets, just planning)
-        - validate: policy, prompt (validation)
-        - execute: queries, source, schema (data retrieval)
-        - compose: prompt, mapping, resolver (result composition)
-        - present: prompt (final presentation)
-        """
-        stage_asset_map = {
-            "route_plan": [],  # routing doesn't use assets
-            "validate": ["policy", "prompt"],  # validation uses policy and prompt
-            "execute": ["queries", "source", "schema"],  # execution uses data sources
-            "compose": [
-                "prompt",
-                "mapping",
-                "resolver",
-            ],  # composition uses prompt and resolver
-            "present": ["prompt"],  # presentation uses prompt
-        }
-
-        # Get the relevant asset types for this stage
-        relevant_types = stage_asset_map.get(stage, [])
-
-        # Filter all_assets to only include relevant types
-        stage_assets = {}
-        for asset_type in relevant_types:
-            if asset_type in all_assets:
-                stage_assets[asset_type] = all_assets[asset_type]
-
-        return stage_assets
 
     async def _present_stage_async(self, plan_output: PlanOutput) -> Dict[str, Any]:
         """Handle present stage for direct answers."""

@@ -18,7 +18,7 @@ from core.logging import get_logger
 
 from app.llm.client import get_llm_client
 from app.modules.asset_registry.crud import get_asset
-from app.modules.asset_registry.loader import load_prompt_asset
+from app.modules.asset_registry.loader import load_mapping_asset, load_prompt_asset
 from app.modules.ops.schemas import (
     ExecutionContext,
     StageDiagnostics,
@@ -1199,19 +1199,22 @@ class StageExecutor:
         return self._sanitize_json_value(composed_result)
 
     def _load_default_output_format(self) -> Dict[str, Any]:
-        """Load default output format definition from resources."""
+        """Load default output format definition from Mapping Asset."""
         if self._output_format_cache is not None:
             return self._output_format_cache
 
-        payload = config_loader.load_yaml("output_formats/default_output_format.yaml")
-        if not isinstance(payload, dict):
-            self._output_format_cache = {}
+        mapping_payload, _ = load_mapping_asset(DEFAULT_OUTPUT_FORMAT_NAME)
+        if not isinstance(mapping_payload, dict):
+            self.logger.warning(
+                "default_output_format mapping asset not found",
+                extra={"mapping_name": DEFAULT_OUTPUT_FORMAT_NAME},
+            )
+            self._output_format_cache = {"name": DEFAULT_OUTPUT_FORMAT_NAME, "formats": {}}
             return self._output_format_cache
 
-        content = payload.get("content", {})
-        formats = content.get("formats", {}) if isinstance(content, dict) else {}
+        formats = mapping_payload.get("formats", {})
         self._output_format_cache = {
-            "name": payload.get("name", DEFAULT_OUTPUT_FORMAT_NAME),
+            "name": DEFAULT_OUTPUT_FORMAT_NAME,
             "formats": formats if isinstance(formats, dict) else {},
         }
         return self._output_format_cache

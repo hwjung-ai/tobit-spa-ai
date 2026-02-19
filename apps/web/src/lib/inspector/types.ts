@@ -54,13 +54,14 @@ export const createPlaceholderTraceDetail = (traceId: string): ExecutionTraceDet
   applied_assets: {
     prompt: null,
     policy: null,
+    policies: [],
     mapping: null,
+    mappings: [],
     source: null,
     catalog: null,
     resolver: null,
+    prompts: [],
     tools: [],
-    queries: [],  // Deprecated
-    screens: [],  // Deprecated
   },
   asset_versions: [],
   fallbacks: {},

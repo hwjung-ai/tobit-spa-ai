@@ -49,13 +49,13 @@ def resolve_applied_assets_from_assets(
 
     Returns:
         Dict[str, str] where:
-        - Key: asset_type (e.g., "prompt", "schema", "mapping", "query:name", "screen:id")
+        - Key: asset_type (e.g., "prompt", "catalog", "mapping", "query:name", "screen:id")
         - Value: User-friendly display name like "asset_name (v1)" or "fallback"
     """
     asset_overrides = asset_overrides or {}
     applied: Dict[str, str] = {}
 
-    for key in ("prompt", "policy", "mapping", "source", "schema", "catalog", "resolver"):
+    for key in ("prompt", "policy", "mapping", "source", "catalog", "resolver"):
         info = assets.get(key)
         if not info:
             continue
@@ -126,7 +126,7 @@ def resolve_applied_assets(asset_overrides: Dict[str, str] | None = None) -> Dic
 
     Returns:
         Dict[str, str] where:
-        - Key: asset_type (e.g., "prompt", "schema", "mapping")
+        - Key: asset_type (e.g., "prompt", "catalog", "mapping")
         - Value: User-friendly display name like "asset_name (v1)" or "fallback"
     """
     assets = get_stage_assets()

@@ -341,6 +341,19 @@ export interface ExecutionTraceDetail {
       screen_id?: string | null;
       status?: string | null;
     } | null;
+    policies?: Array<{
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+      scope?: string | null;
+      engine?: string | null;
+      policy_type?: string | null;
+      mapping_type?: string | null;
+      screen_id?: string | null;
+      status?: string | null;
+      tool_name?: string | null;
+    } | null>;
     mapping?: {
       asset_id: string | null;
       name: string | null;
@@ -353,6 +366,19 @@ export interface ExecutionTraceDetail {
       screen_id?: string | null;
       status?: string | null;
     } | null;
+    mappings?: Array<{
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+      scope?: string | null;
+      engine?: string | null;
+      policy_type?: string | null;
+      mapping_type?: string | null;
+      screen_id?: string | null;
+      status?: string | null;
+      tool_name?: string | null;
+    } | null>;
     source?: {
       asset_id: string | null;
       name: string | null;
@@ -374,36 +400,25 @@ export interface ExecutionTraceDetail {
       version: number | null;
       source: string | null;
     } | null;
+    prompts?: Array<{
+      asset_id: string | null;
+      name: string | null;
+      version: number | null;
+      source: string | null;
+      scope?: string | null;
+      engine?: string | null;
+      policy_type?: string | null;
+      mapping_type?: string | null;
+      screen_id?: string | null;
+      status?: string | null;
+      tool_name?: string | null;
+    } | null>;
     tools?: Array<{
       asset_id: string | null;
       name: string | null;
       version: number | null;
       source: string | null;
       tool_name?: string | null;
-    } | null>;
-    queries?: Array<{
-      asset_id: string | null;
-      name: string | null;
-      version: number | null;
-      source: string | null;
-      scope?: string | null;
-      engine?: string | null;
-      policy_type?: string | null;
-      mapping_type?: string | null;
-      screen_id?: string | null;
-      status?: string | null;
-    } | null>;
-    screens?: Array<{
-      asset_id: string | null;
-      name: string | null;
-      version: number | null;
-      source: string | null;
-      scope?: string | null;
-      engine?: string | null;
-      policy_type?: string | null;
-      mapping_type?: string | null;
-      screen_id?: string | null;
-      status?: string | null;
     } | null>;
   } | null;
   asset_versions: string[] | null;

@@ -8,15 +8,14 @@ from core.db import get_session_context
 from sqlmodel import select
 
 from app.modules.inspector.asset_context import (
-    track_catalog_asset,
-    track_mapping_asset,
-    track_policy_asset,
-    track_prompt_asset,
+    track_catalog_asset_to_stage,
+    track_mapping_asset_to_stage,
+    track_policy_asset_to_stage,
+    track_prompt_asset_to_stage,
     track_query_asset,
-    track_resolver_asset,
-    track_schema_asset,
-    track_source_asset,
-    track_tool_asset,
+    track_resolver_asset_to_stage,
+    track_source_asset_to_stage,
+    track_tool_asset_to_stage,
 )
 from app.shared import config_loader
 
@@ -90,7 +89,7 @@ def load_prompt_asset(
                 "params": params,
                 "source": "asset_registry",
             }
-            track_prompt_asset(
+            track_prompt_asset_to_stage(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -123,7 +122,7 @@ def load_prompt_asset(
         fallback_payload["asset_id"] = None
         fallback_payload["version"] = None
         fallback_payload["name"] = name
-        track_prompt_asset(
+        track_prompt_asset_to_stage(
             {
                 "asset_id": None,
                 "name": name,
@@ -178,7 +177,7 @@ def load_mapping_asset(
                 f"Loaded mapping from asset registry: {asset.name} (v{asset.version})"
             )
             metadata_str = f"asset_registry:{asset.name}:v{asset.version}"
-            track_mapping_asset(
+            track_mapping_asset_to_stage(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -252,7 +251,7 @@ def load_policy_asset(
                     "policy_type": policy_type,
                 }
             }
-            track_policy_asset(
+            track_policy_asset_to_stage(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -385,7 +384,7 @@ def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] |
                 "scope": asset.scope,
                 "tags": asset.tags,
             }
-            track_source_asset(
+            track_source_asset_to_stage(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -415,7 +414,7 @@ def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] |
         source_data["source"] = "file_fallback"
         source_data["asset_id"] = None
         source_data["version"] = None
-        track_source_asset(
+        track_source_asset_to_stage(
             {
                 "asset_id": None,
                 "name": name,
@@ -477,7 +476,7 @@ def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] 
                 "tags": asset.tags,
             }
             # Track catalog asset for inspector
-            track_catalog_asset(
+            track_catalog_asset_to_stage(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -508,7 +507,7 @@ def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] 
         catalog_data["asset_id"] = None
         catalog_data["version"] = None
         # Track catalog asset for inspector (fallback)
-        track_catalog_asset(
+        track_catalog_asset_to_stage(
             {
                 "asset_id": None,
                 "name": name,
@@ -568,7 +567,7 @@ def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any]
                 "scope": asset.scope,
                 "tags": asset.tags,
             }
-            track_resolver_asset(
+            track_resolver_asset_to_stage(
                 {
                     "asset_id": str(asset.asset_id),
                     "name": asset.name,
@@ -598,7 +597,7 @@ def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any]
         resolver_data["source"] = "file_fallback"
         resolver_data["asset_id"] = None
         resolver_data["version"] = None
-        track_resolver_asset(
+        track_resolver_asset_to_stage(
             {
                 "asset_id": None,
                 "name": name,
@@ -673,7 +672,7 @@ def load_tool_asset(
         }
 
         # Track tool asset for inspector
-        track_tool_asset({
+        track_tool_asset_to_stage({
             "asset_id": str(asset.asset_id),
             "name": asset.name,
             "tool_type": asset.tool_type,

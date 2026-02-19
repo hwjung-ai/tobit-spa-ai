@@ -411,9 +411,8 @@ function InspectorContent() {
     }
     return (
       <div className="space-y-1 text-xs text-muted-foreground">
-        {asset.name && <p>{asset.name}</p>}
         <p className="font-mono text-sm text-foreground">
-          {asset.asset_id || `${asset.name || "asset"}@${asset.source || "fallback"}`}
+          {asset.name || (asset.asset_id ? resolveAssetDisplayName(asset.asset_id) : "asset")}
           {asset.version ? ` · v${asset.version}` : ""}
         </p>
         {asset.source && (
@@ -425,15 +424,44 @@ function InspectorContent() {
     );
   };
 
-  const highlightFallbacks = (fallbacks: Record<string, boolean> | null | undefined) => {
+  const highlightFallbacks = (
+    fallbacks: Record<string, boolean> | null | undefined,
+    appliedAssets?: ExecutionTraceDetail["applied_assets"] | null,
+  ) => {
     if (!fallbacks) return null;
+    const hasAssetByKey = (key: string): boolean => {
+      if (!appliedAssets) return false;
+      if (key === "prompt") {
+        return Boolean(appliedAssets.prompt) || Boolean(appliedAssets.prompts?.length);
+      }
+      if (key === "policy") {
+        return Boolean(appliedAssets.policy) || Boolean(appliedAssets.policies?.length);
+      }
+      if (key === "mapping") {
+        return Boolean(appliedAssets.mapping) || Boolean(appliedAssets.mappings?.length);
+      }
+      if (key === "tool") {
+        return Boolean(appliedAssets.tools?.length);
+      }
+      if (key === "catalog") {
+        return Boolean(appliedAssets.catalog);
+      }
+      if (key === "source" || key === "resolver") {
+        return Boolean(appliedAssets[key]);
+      }
+      return false;
+    };
     const entries = Object.entries(fallbacks).filter(([key]) => {
       // Prefer catalog label when both keys exist.
-      if (key === "schema" && Object.prototype.hasOwnProperty.call(fallbacks, "catalog")) {
+      if (["query", "queries", "screen", "screens"].includes(key)) {
+        return false;
+      }
+      if (!hasAssetByKey(key)) {
         return false;
       }
       return true;
     });
+    if (entries.length === 0) return null;
     return (
       <div className="flex gap-2 flex-wrap text-sm">
         {entries.map(([key, value]) => (
@@ -446,7 +474,7 @@ function InspectorContent() {
                 : "border-emerald-500/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
             )}
           >
-            {key === "schema" ? "catalog" : key}: {value ? "fallback" : "asset"}
+            {key}: {value ? "fallback" : "asset"}
           </span>
         ))}
       </div>
@@ -487,7 +515,7 @@ function InspectorContent() {
     });
   }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
 
-  // availableAssets를 assetNames 형식으로 변환
+  // availableAssets + traceDetail.applied_assets를 assetNames 형식으로 변환
   const assetNames = useMemo(() => {
     const names: Record<string, { name: string; version?: string }> = {};
     Object.entries(availableAssets).forEach(([, assetList]) => {
@@ -498,8 +526,40 @@ function InspectorContent() {
         };
       });
     });
+    const applied = traceDetail?.applied_assets;
+    if (applied) {
+      const singletonKeys: Array<"prompt" | "policy" | "mapping" | "source" | "catalog" | "resolver"> =
+        ["prompt", "policy", "mapping", "source", "catalog", "resolver"];
+      singletonKeys.forEach((key) => {
+        const value = applied[key];
+        if (!value || typeof value !== "object") return;
+        const asset = value as { asset_id?: unknown; name?: unknown; version?: unknown };
+        if (typeof asset.asset_id === "string" && typeof asset.name === "string") {
+          names[asset.asset_id] = {
+            name: asset.name,
+            version:
+              typeof asset.version === "string" || typeof asset.version === "number"
+                ? String(asset.version)
+                : undefined,
+          };
+        }
+      });
+      (applied.tools ?? []).forEach((tool) => {
+        if (!tool || typeof tool !== "object") return;
+        const entry = tool as { asset_id?: unknown; name?: unknown; version?: unknown };
+        if (typeof entry.asset_id === "string" && typeof entry.name === "string") {
+          names[entry.asset_id] = {
+            name: entry.name,
+            version:
+              typeof entry.version === "string" || typeof entry.version === "number"
+                ? String(entry.version)
+                : undefined,
+          };
+        }
+      });
+    }
     return names;
-  }, [availableAssets]);
+  }, [availableAssets, traceDetail?.applied_assets]);
 
   const resolveAssetDisplayName = useCallback(
     (value: string): string => {
@@ -522,6 +582,95 @@ function InspectorContent() {
       return raw;
     },
     [assetNames],
+  );
+
+  const formatStageAssetChipValue = useCallback(
+    (value: unknown): string => {
+      if (value == null) return "-";
+      if (typeof value === "string") {
+        return resolveAssetDisplayName(value);
+      }
+      if (typeof value !== "object") {
+        return String(value);
+      }
+
+      const entry = value as {
+        asset_id?: unknown;
+        name?: unknown;
+        tool_name?: unknown;
+        version?: unknown;
+      };
+      const name =
+        typeof entry.name === "string" && entry.name.trim()
+          ? entry.name.trim()
+          : typeof entry.tool_name === "string" && entry.tool_name.trim()
+            ? entry.tool_name.trim()
+            : null;
+      const version =
+        typeof entry.version === "string" || typeof entry.version === "number"
+          ? String(entry.version)
+          : null;
+
+      if (name && version) return `${name} v${version}`;
+      if (name) return name;
+
+      if (typeof entry.asset_id === "string" && entry.asset_id.trim()) {
+        return resolveAssetDisplayName(
+          version ? `${entry.asset_id}:v${version}` : entry.asset_id,
+        );
+      }
+
+      return "-";
+    },
+    [resolveAssetDisplayName],
+  );
+
+  const renderAssetNameList = useCallback(
+    (
+      entries:
+        | Array<{
+            asset_id: string | null;
+            name: string | null;
+            version: number | null;
+          } | null>
+        | undefined,
+      primary?: AssetSummary | null,
+    ) => {
+      const primaryName = primary?.name ?? null;
+      const primaryVersion = primary?.version ?? null;
+      const deduped = (entries ?? [])
+        .filter((entry): entry is { asset_id: string | null; name: string | null; version: number | null } => Boolean(entry))
+        .filter(
+          (entry, index, arr) =>
+            arr.findIndex(
+              (target) =>
+                target?.name === entry?.name && target?.version === entry?.version,
+            ) === index,
+        );
+      const filtered = deduped.filter(
+        (entry) =>
+          !(
+            primaryName &&
+            entry.name === primaryName &&
+            (primaryVersion == null || entry.version === primaryVersion)
+          ),
+      );
+      if (filtered.length === 0) return null;
+      return (
+        <div className="mt-2 space-y-1">
+          {filtered.map((entry) => (
+            <p
+              key={`${entry.asset_id ?? entry.name ?? "asset"}-${entry.version ?? "?"}`}
+              className="text-xs text-muted-foreground"
+            >
+              {entry.name || (entry.asset_id ? resolveAssetDisplayName(entry.asset_id) : "asset")}
+              {entry.version ? ` · v${entry.version}` : ""}
+            </p>
+          ))}
+        </div>
+      );
+    },
+    [resolveAssetDisplayName],
   );
 
   const loadOverrideAssets = useCallback(async () => {
@@ -590,7 +739,6 @@ function InspectorContent() {
             question: traceDetail.question,
             asset_overrides: overrideMap,
             source_asset: overrideMap.source,
-            schema_asset: overrideMap.schema,
             resolver_asset: overrideMap.resolver,
           }),
         });
@@ -1048,7 +1196,7 @@ function InspectorContent() {
                       >
                         Applied Assets
                       </p>
-                      {highlightFallbacks(traceDetail.fallbacks)}
+                      {highlightFallbacks(traceDetail.fallbacks, traceDetail.applied_assets)}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div
@@ -1060,6 +1208,10 @@ function InspectorContent() {
                           Prompt
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.prompt ?? null)}
+                        {renderAssetNameList(
+                          traceDetail.applied_assets?.prompts,
+                          traceDetail.applied_assets?.prompt ?? null,
+                        )}
                       </div>
                       <div
                         className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
@@ -1070,6 +1222,10 @@ function InspectorContent() {
                           Policy
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.policy ?? null)}
+                        {renderAssetNameList(
+                          traceDetail.applied_assets?.policies,
+                          traceDetail.applied_assets?.policy ?? null,
+                        )}
                       </div>
                       <div
                         className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
@@ -1080,6 +1236,10 @@ function InspectorContent() {
                           Mapping
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.mapping ?? null)}
+                        {renderAssetNameList(
+                          traceDetail.applied_assets?.mappings,
+                          traceDetail.applied_assets?.mapping ?? null,
+                        )}
                       </div>
                       <div
                         className="rounded-xl border border-border px-4 py-3 bg-surface-elevated"
@@ -1108,23 +1268,21 @@ function InspectorContent() {
                           Tools
                         </p>
                         {traceDetail.applied_assets?.tools?.length ? (
-                          <ul className="space-y-2">
-                            {traceDetail.applied_assets.tools.map(
-                              (tool: {
-                                asset_id: string | null;
-                                name: string | null;
-                                source: string | null;
-                                version?: number | null;
-                              }) => (
-                                <li
-                                  key={tool.asset_id || `${tool.name}-${tool.source}`}
-                                  className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-surface-elevated"
+                          <div className="flex flex-wrap gap-2">
+                            {traceDetail.applied_assets.tools.map((tool) => {
+                              if (!tool) return null;
+                              const name = tool.name || tool.tool_name || "tool";
+                              return (
+                                <span
+                                  key={tool.asset_id || `${name}-${tool.source}-${tool.version ?? "?"}`}
+                                  className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-2 py-1 text-xs text-foreground"
                                 >
-                                  {tool.name || "tool"} · {tool.source ?? "asset_registry"} · v{tool.version ?? "?"}
-                                </li>
-                              ),
-                            )}
-                          </ul>
+                                  {name}
+                                  {tool.version ? ` · v${tool.version}` : ""}
+                                </span>
+                              );
+                            })}
+                          </div>
                         ) : (
                           <p className="text-xs text-muted-foreground">
                             Tool asset 없음
@@ -1339,8 +1497,9 @@ function InspectorContent() {
                                     .filter(([type]) => {
                                       // Prefer catalog label when both keys exist.
                                       if (
-                                        type === "schema" &&
-                                        Object.prototype.hasOwnProperty.call(appliedAssets, "catalog")
+                                        ["query", "queries", "screen", "screens"].includes(type) ||
+                                        type.startsWith("query:") ||
+                                        type.startsWith("screen:")
                                       ) {
                                         return false;
                                       }
@@ -1369,10 +1528,6 @@ function InspectorContent() {
                                         icon: "📊",
                                         color: "text-fuchsia-700 dark:text-fuchsia-300",
                                       },
-                                      schema: {
-                                        icon: "📊",
-                                        color: "text-fuchsia-700 dark:text-fuchsia-300",
-                                      },
                                       resolver: {
                                         icon: "🔧",
                                         color: "text-orange-700 dark:text-orange-300",
@@ -1386,9 +1541,7 @@ function InspectorContent() {
                                       color: "text-muted-foreground",
                                     };
 
-                                    const displayValue = String(value)
-                                      .replace(/:v\d+$/, "")
-                                      .replace(/@[^:]+$/, "");
+                                    const displayValue = formatStageAssetChipValue(value);
 
                                     return (
                                       <div
@@ -1403,7 +1556,7 @@ function InspectorContent() {
                                         <span
                                           className=" capitalize"
                                         >
-                                          {type === "schema" ? "catalog" : type}:
+                                          {type}:
                                         </span>
                                         <span className={cn("font-mono", config.color)}>
                                           {displayValue}
