@@ -932,90 +932,6 @@ export default function OpsPage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-[0.45] flex-col rounded-3xl border p-3 bg-surface-base dark:border-border">
-                <div className="mb-2 space-y-0.5">
-                  <p className="left-panel-title">Run OPS query</p>
-                  <p className="text-xs text-muted-standard">
-                    mode를 선택하고 질문을 작성한 뒤 실행하세요.
-                  </p>
-                </div>
-                <div className="mt-2 flex gap-1 flex-nowrap">
-                  {UI_MODES.map((modeEntry) => (
-                    <button
-                      key={modeEntry.id}
-                      onClick={() => handleModeSelection(modeEntry.id)}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-surface-elevated",
-                        uiMode === modeEntry.id
-                          ? "bg-primary border-primary text-white hover:bg-sky-500 dark:hover:bg-sky-600"
-                          : "border text-foreground dark:border-border",
-                      )}
-                    >
-                      {modeEntry.label}
-                    </button>
-                  ))}
-                </div>
-                <label className="mt-3 text-sm uppercase tracking-wider text-muted-standard">
-                  Question
-                  <textarea
-                    rows={4}
-                    value={question}
-                    onChange={(event) => setQuestion(event.target.value)}
-                    className="mt-2 w-full resize-none rounded-2xl border px-3 py-2 text-sm outline-none focus:border-primary tracking-normal input-container"
-                    placeholder="예: 최근 배포 중단 이유 알려줘"
-                  />
-                </label>
-                <div className="mt-2 rounded-2xl border p-2 border-border">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-standard">
-                    Asset Context (Optional)
-                  </p>
-                  <div className="mt-2 grid grid-cols-1 gap-2">
-                    <input
-                      value={assetContext.source_asset}
-                      onChange={(event) =>
-                        setAssetContext((prev) => ({
-                          ...prev,
-                          source_asset: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
-                      placeholder="source_asset (e.g. primary_postgres_ops)"
-                    />
-                    <input
-                      value={assetContext.schema_asset}
-                      onChange={(event) =>
-                        setAssetContext((prev) => ({
-                          ...prev,
-                          schema_asset: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
-                      placeholder="schema_asset (e.g. primary_postgres_catalog)"
-                    />
-                    <input
-                      value={assetContext.resolver_asset}
-                      onChange={(event) =>
-                        setAssetContext((prev) => ({
-                          ...prev,
-                          resolver_asset: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
-                      placeholder="resolver_asset (optional)"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-col gap-2">
-                  <button
-                    onClick={runQuery}
-                    className="btn-primary"
-                    disabled={isRunning || !question.trim()}
-                  >
-                    {isRunning ? <span className="animate-pulse">Running…</span> : "메시지 전송"}
-                  </button>
-                  {statusMessage ? null : null}
-                </div>
-              </div>
             </div>
 
             {/* Left Resize Handle */}
@@ -1197,6 +1113,95 @@ export default function OpsPage() {
                 )}
               </div>
             </section>
+
+            {shouldShowSidebar && (
+              <aside className="ml-3 h-[80vh] w-[360px] flex-shrink-0">
+                <div className="flex h-full flex-col rounded-3xl border p-3 bg-surface-base dark:border-border">
+                  <div className="mb-2 space-y-0.5">
+                    <p className="left-panel-title">Run OPS query</p>
+                    <p className="text-xs text-muted-standard">
+                      mode를 선택하고 질문을 작성한 뒤 실행하세요.
+                    </p>
+                  </div>
+                  <div className="mt-2 flex gap-1 flex-nowrap">
+                    {UI_MODES.map((modeEntry) => (
+                      <button
+                        key={modeEntry.id}
+                        onClick={() => handleModeSelection(modeEntry.id)}
+                        className={cn(
+                          "rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-surface-elevated dark:hover:bg-surface-elevated",
+                          uiMode === modeEntry.id
+                            ? "bg-primary border-primary text-white hover:bg-sky-500 dark:hover:bg-sky-600"
+                            : "border text-foreground dark:border-border",
+                        )}
+                      >
+                        {modeEntry.label}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="mt-3 text-sm uppercase tracking-wider text-muted-standard">
+                    Question
+                    <textarea
+                      rows={4}
+                      value={question}
+                      onChange={(event) => setQuestion(event.target.value)}
+                      className="mt-2 w-full resize-none rounded-2xl border px-3 py-2 text-sm outline-none focus:border-primary tracking-normal input-container"
+                      placeholder="예: 최근 배포 중단 이유 알려줘"
+                    />
+                  </label>
+                  <div className="mt-2 rounded-2xl border p-2 border-border">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-standard">
+                      Asset Context (Optional)
+                    </p>
+                    <div className="mt-2 grid grid-cols-1 gap-2">
+                      <input
+                        value={assetContext.source_asset}
+                        onChange={(event) =>
+                          setAssetContext((prev) => ({
+                            ...prev,
+                            source_asset: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
+                        placeholder="source_asset (e.g. primary_postgres_ops)"
+                      />
+                      <input
+                        value={assetContext.schema_asset}
+                        onChange={(event) =>
+                          setAssetContext((prev) => ({
+                            ...prev,
+                            schema_asset: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
+                        placeholder="schema_asset (e.g. primary_postgres_catalog)"
+                      />
+                      <input
+                        value={assetContext.resolver_asset}
+                        onChange={(event) =>
+                          setAssetContext((prev) => ({
+                            ...prev,
+                            resolver_asset: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-lg border px-2 py-1 text-xs outline-none focus:border-primary input-container"
+                        placeholder="resolver_asset (optional)"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-col gap-2">
+                    <button
+                      onClick={runQuery}
+                      className="btn-primary"
+                      disabled={isRunning || !question.trim()}
+                    >
+                      {isRunning ? <span className="animate-pulse">Running…</span> : "메시지 전송"}
+                    </button>
+                    {statusMessage ? null : null}
+                  </div>
+                </div>
+              </aside>
+            )}
           </div>
         </div>
       </main>
