@@ -14,7 +14,6 @@ import ScreenEditorErrors from "./common/ScreenEditorErrors";
 import Toast from "@/components/admin/Toast";
 import PublishGateModal from "./publish/PublishGateModal";
 import { useConfirm } from "@/hooks/use-confirm";
-import type { ScreenCopilotResponse } from "@/lib/ui-screen/use-screen-copilot";
 
 const SCREEN_COPILOT_INSTRUCTION = `You are Tobit Screen Schema V1 Copilot.
 You must generate JSON Patch (RFC 6902) operations to modify an existing screen.
@@ -276,7 +275,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     (text: string) => {
       const candidates = [stripCodeFences(text), text];
       let patchArray: unknown[] | null = null;
-      let responseMeta: { explanation?: string; confidence?: number; suggestions?: string[] } = {};
+      const responseMeta: { explanation?: string; confidence?: number; suggestions?: string[] } = {};
 
       for (const candidate of candidates) {
         const direct = tryParseJson(candidate);
