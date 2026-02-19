@@ -1088,7 +1088,7 @@ class OpsOrchestratorRunner:
 
     def _sanitize_ci_keywords(self, keywords: Sequence[str]) -> List[str]:
         # Import functions locally to avoid circular dependency
-        from app.modules.ops.services.orchestration.mappings.compat import (
+        from app.modules.ops.services.orchestration.mappings.accessors import (
             _get_agg_keywords,
             _get_history_keywords,
             _get_list_keywords,

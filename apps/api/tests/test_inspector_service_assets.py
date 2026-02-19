@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from sqlmodel import Session
-
 from app.modules.inspector.models import TbExecutionTrace
 from app.modules.inspector.service import (
     _build_applied_assets,
     _compute_fallbacks,
     normalize_trace_for_inspector,
 )
+from sqlmodel import Session
 
 
 def test_build_applied_assets_keeps_catalog_only() -> None:

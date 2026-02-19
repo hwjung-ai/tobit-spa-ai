@@ -98,16 +98,6 @@ def track_resolver_asset(info: AssetInfo) -> None:
     _ASSET_CONTEXT.set(context)
 
 
-def track_query_asset(info: AssetInfo) -> None:
-    # Deprecated: query assets are no longer tracked in Inspector.
-    return None
-
-
-def track_screen_asset(info: AssetInfo) -> None:
-    # Deprecated: screen assets are no longer tracked in Inspector.
-    return None
-
-
 def track_tool_asset(info: AssetInfo) -> None:
     """Track a tool asset that was used during execution."""
     context = _ensure_context()
@@ -244,16 +234,6 @@ def track_resolver_asset_to_stage(info: AssetInfo) -> None:
     _STAGE_ASSET_CONTEXT.set(stage_context)
     # Also track globally
     track_resolver_asset(info)
-
-
-def track_query_asset_to_stage(info: AssetInfo) -> None:
-    """Deprecated: query assets are no longer tracked in Inspector."""
-    return None
-
-
-def track_screen_asset_to_stage(info: AssetInfo) -> None:
-    """Deprecated: screen assets are no longer tracked in Inspector."""
-    return None
 
 
 def track_tool_asset_to_stage(info: AssetInfo) -> None:

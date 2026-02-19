@@ -10,7 +10,7 @@ from core.logging import get_logger
 
 from app.llm.client import get_llm_client
 from app.modules.asset_registry.loader import load_prompt_asset
-from app.modules.ops.services.orchestration.mappings.compat import (
+from app.modules.ops.services.orchestration.mappings.accessors import (
     _get_agg_keywords,
     _get_auto_keywords,
     _get_auto_view_preferences,

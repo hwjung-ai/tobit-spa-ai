@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from core.config import get_settings
 from core.db import get_session_context
 from sqlmodel import select
 
@@ -12,22 +11,15 @@ from app.modules.inspector.asset_context import (
     track_mapping_asset_to_stage,
     track_policy_asset_to_stage,
     track_prompt_asset_to_stage,
-    track_query_asset,
     track_resolver_asset_to_stage,
     track_source_asset_to_stage,
     track_tool_asset_to_stage,
 )
-from app.shared import config_loader
 
 from .models import TbAssetRegistry
 from .source_models import coerce_source_connection, coerce_source_type
 
 logger = logging.getLogger(__name__)
-
-def _is_real_mode() -> bool:
-    """Check if running in real mode (no fallback allowed)."""
-    settings = get_settings()
-    return settings.ops_mode == "real"
 
 
 def _extract_catalog_source_ref(content: dict[str, Any]) -> str | None:
@@ -45,9 +37,7 @@ def load_prompt_asset(
     scope: str, engine: str, name: str, version: int | None = None
 ) -> dict[str, Any] | None:
     """
-    Load prompt asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. File from resources/prompts/
+    Load prompt asset from Asset Registry (DB only).
 
     Args:
         scope: Prompt scope (e.g., "ci")
@@ -101,41 +91,10 @@ def load_prompt_asset(
             )
             return payload
 
-    # Fallback to file (only in test/dev mode)
-    if _is_real_mode():
-        raise ValueError(
-            f"[REAL MODE] Prompt asset not found in Asset Registry: {name} "
-            f"(scope={scope}, engine={engine}). "
-            f"Asset must be published to Asset Registry (DB) in real mode. "
-            f"Please create and publish the asset in Admin → Assets."
-        )
-
-    file_path = f"prompts/{scope}/{engine}.yaml"
-    prompt_data = config_loader.load_yaml(file_path)
-
-    if prompt_data:
-        logger.warning(
-            f"Using fallback file for prompt '{name}': resources/{file_path}"
-        )
-        fallback_payload = dict(prompt_data)
-        fallback_payload["source"] = "file_fallback"
-        fallback_payload["asset_id"] = None
-        fallback_payload["version"] = None
-        fallback_payload["name"] = name
-        track_prompt_asset_to_stage(
-            {
-                "asset_id": None,
-                "name": name,
-                "version": None,
-                "source": "file_fallback",
-                "scope": scope,
-                "engine": engine,
-            }
-        )
-        return fallback_payload
-
-    logger.warning(f"Prompt asset not found: {name} (scope={scope}, engine={engine})")
-    return None
+    raise ValueError(
+        f"Prompt asset not found in Asset Registry: {name} "
+        f"(scope={scope}, engine={engine}, version={version or 'published'})"
+    )
 
 
 def load_mapping_asset(
@@ -302,15 +261,6 @@ def load_query_asset(
         if asset:
             logger.info(f"Loaded query from asset registry: {name} (v{asset.version})")
             asset_identifier = f"{str(asset.asset_id)}:v{asset.version}"
-            track_query_asset(
-                {
-                    "asset_id": asset_identifier,
-                    "name": name,
-                    "scope": scope,
-                    "source": "asset_registry",
-                    "version": asset.version,
-                }
-            )
             return (
                 {
                     "sql": asset.query_sql,
@@ -324,26 +274,15 @@ def load_query_asset(
                 asset_identifier,
             )
 
-    if _is_real_mode():
-        raise ValueError(
-            f"[REAL MODE] Query asset not found in Asset Registry: {name} (scope={scope}). "
-            f"Asset must be published to Asset Registry (DB) in real mode. "
-            f"Please create and publish the asset in Admin → Assets."
-        )
-
-    logger.warning(
-        "Query asset not found in Asset Registry (dev mode): %s (scope=%s)",
-        name,
-        scope,
+    raise ValueError(
+        "Query asset not found in Asset Registry: "
+        f"{name} (scope={scope}, version={version or 'published'})"
     )
-    return None, None
 
 
 def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
-    Load source asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. Config file from config/sources/
+    Load source asset from Asset Registry (DB only).
 
     Args:
         name: Name of source asset
@@ -396,43 +335,15 @@ def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] |
 
             return payload
 
-    # Fallback to config file
-    config_file = f"sources/{name}.yaml"
-    source_config = config_loader.load_yaml(config_file)
-
-    if source_config:
-        # Fallback to file (only in test/dev mode)
-        if _is_real_mode():
-            raise ValueError(
-                f"[REAL MODE] Source asset not found in Asset Registry: {name}. "
-                f"Asset must be published to Asset Registry (DB) in real mode. "
-                f"Please create and publish the asset in Admin → Assets."
-            )
-
-        logger.warning(f"Using config file for source '{name}': {config_file}")
-        source_data = dict(source_config)
-        source_data["source"] = "file_fallback"
-        source_data["asset_id"] = None
-        source_data["version"] = None
-        track_source_asset_to_stage(
-            {
-                "asset_id": None,
-                "name": name,
-                "version": None,
-                "source": "file_fallback",
-            }
-        )
-        return source_data
-
-    logger.warning(f"Source asset not found: {name}")
-    return None
+    raise ValueError(
+        f"Source asset not found in Asset Registry: {name} "
+        f"(version={version or 'published'})"
+    )
 
 
 def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
-    Load catalog asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. Config file from config/catalogs/
+    Load catalog asset from Asset Registry (DB only).
 
     Args:
         name: Name of catalog asset
@@ -488,45 +399,15 @@ def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] 
 
             return payload
 
-    # Fallback to config file
-    config_file = f"catalogs/{name}.yaml"
-    catalog_config = config_loader.load_yaml(config_file)
-
-    if catalog_config:
-        # Fallback to file (only in test/dev mode)
-        if _is_real_mode():
-            raise ValueError(
-                f"[REAL MODE] Catalog asset not found in Asset Registry: {name}. "
-                f"Asset must be published to Asset Registry (DB) in real mode. "
-                f"Please create and publish the asset in Admin → Assets."
-            )
-
-        logger.warning(f"Using config file for catalog '{name}': {config_file}")
-        catalog_data = dict(catalog_config)
-        catalog_data["source"] = "file_fallback"
-        catalog_data["asset_id"] = None
-        catalog_data["version"] = None
-        # Track catalog asset for inspector (fallback)
-        track_catalog_asset_to_stage(
-            {
-                "asset_id": None,
-                "name": name,
-                "version": None,
-                "source": "file_fallback",
-            }
-        )
-        return catalog_data
-
-    logger.warning(f"Catalog asset not found: {name}")
-    return None
+    raise ValueError(
+        f"Catalog asset not found in Asset Registry: {name} "
+        f"(version={version or 'published'})"
+    )
 
 
-# Backward compatibility alias
 def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
-    Load resolver asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. Config file from config/resolvers/
+    Load resolver asset from Asset Registry (DB only).
 
     Args:
         name: Name of resolver asset
@@ -579,36 +460,10 @@ def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any]
 
             return payload
 
-    # Fallback to config file
-    config_file = f"resolvers/{name}.yaml"
-    resolver_config = config_loader.load_yaml(config_file)
-
-    if resolver_config:
-        # Fallback to file (only in test/dev mode)
-        if _is_real_mode():
-            raise ValueError(
-                f"[REAL MODE] Resolver asset not found in Asset Registry: {name}. "
-                f"Asset must be published to Asset Registry (DB) in real mode. "
-                f"Please create and publish the asset in Admin → Assets."
-            )
-
-        logger.warning(f"Using config file for resolver {name}: {config_file}")
-        resolver_data = dict(resolver_config)
-        resolver_data["source"] = "file_fallback"
-        resolver_data["asset_id"] = None
-        resolver_data["version"] = None
-        track_resolver_asset_to_stage(
-            {
-                "asset_id": None,
-                "name": name,
-                "version": None,
-                "source": "file_fallback",
-            }
-        )
-        return resolver_data
-
-    logger.warning(f"Resolver asset not found: {name}")
-    return None
+    raise ValueError(
+        f"Resolver asset not found in Asset Registry: {name} "
+        f"(version={version or 'published'})"
+    )
 def load_tool_asset(
     name_or_id: str,
     version: int | None = None,
