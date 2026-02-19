@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle, Clock, Star, FileText, Shield, Map, Database, Layers, Sliders, Wrench, X, Info, FolderOpen } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Star, FileText, Shield, Map, Database, Sliders, Wrench, X, Info, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StageStatus as StageStatusType, StageSnapshot as StageSnapshotType } from "@/lib/apiClientTypes";
 
