@@ -584,6 +584,8 @@ class OpsOrchestratorRunner:
         Raises:
             ValueError: If tool is not registered
         """
+        from app.modules.inspector.asset_context import track_tool_asset
+
         # Add tenant_id to params if not present
         if "tenant_id" not in params:
             params["tenant_id"] = self.tenant_id
@@ -599,6 +601,13 @@ class OpsOrchestratorRunner:
                 "param_keys": list(params.keys()),
             },
         )
+
+        # Track tool asset for inspector before execution
+        track_tool_asset({
+            "name": tool_name,
+            "tool_name": tool_name,
+            "source": "asset_registry",
+        })
 
         try:
             # Execute the tool
