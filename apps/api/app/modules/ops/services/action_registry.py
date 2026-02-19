@@ -22,7 +22,10 @@ from core.db_pg import get_pg_connection
 from core.logging import get_logger
 from sqlalchemy.orm import Session
 
-from app.modules.ops.services.orchestration.tools.base import ToolContext, get_tool_registry
+from app.modules.ops.services.orchestration.tools.base import (
+    ToolContext,
+    get_tool_registry,
+)
 
 logger = get_logger(__name__)
 

@@ -15,9 +15,9 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from core.logging import get_logger
-from app.modules.asset_registry.models import TbAssetRegistry
 
 logger = get_logger(__name__)
 

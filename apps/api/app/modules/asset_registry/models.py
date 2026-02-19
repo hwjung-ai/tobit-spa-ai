@@ -158,18 +158,6 @@ class TbAssetRegistry(SQLModel, table=True):
         ),
     )
 
-    # Alias property for backward compatibility
-    @property
-    def screen_schema(self) -> dict[str, Any] | None:
-        """Alias for schema_json for backward compatibility."""
-        return self.schema_json
-
-    @screen_schema.setter
-    def screen_schema(self, value: dict[str, Any] | None) -> None:
-        """Alias for schema_json for backward compatibility."""
-        self.schema_json = value
-
-
 class TbAssetVersionHistory(SQLModel, table=True):
     __tablename__ = "tb_asset_version_history"
     __table_args__ = ({"extend_existing": True},)

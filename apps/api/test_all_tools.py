@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test all published tools and report results."""
+
 import requests
-import json
 
 BASE_URL = "http://localhost:8000"
 

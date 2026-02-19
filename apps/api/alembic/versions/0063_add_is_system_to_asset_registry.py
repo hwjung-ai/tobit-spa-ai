@@ -8,9 +8,8 @@ System assets cannot be deleted or renamed:
 - Policies: plan_budget, view_depth, discovery_config
 - Mappings: graph_relation, graph_relation_allowlist
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0063"

@@ -120,11 +120,6 @@ JSON 응답:"""
             # First try tool_catalog_ref (newly connected catalogs)
             catalog_ref = tool_asset.get("tool_catalog_ref")
 
-            # Fallback to old schema_ref in tool_config for backward compatibility
-            if not catalog_ref:
-                tool_config = tool_asset.get("tool_config", {})
-                catalog_ref = tool_config.get("schema_ref")
-
             if not catalog_ref:
                 return None
 

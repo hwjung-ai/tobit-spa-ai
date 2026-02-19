@@ -325,7 +325,7 @@ class AggregateDbQueryTool(BaseTool):
             order_clause = ""
 
         # Build WHERE clause
-        where_conditions = [f"tenant_id = %s"]
+        where_conditions = ["tenant_id = %s"]
         params.append(tenant_id)
 
         # Add deleted_at filter for CI table
@@ -354,7 +354,7 @@ class AggregateDbQueryTool(BaseTool):
 
         # Build LIMIT clause (only for group_by queries, not simple COUNT)
         if valid_group_by:
-            limit_clause = f"LIMIT %s"
+            limit_clause = "LIMIT %s"
             params.append(top_n)
         else:
             limit_clause = ""

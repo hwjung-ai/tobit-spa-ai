@@ -16,8 +16,8 @@ Routes:
 from fastapi import APIRouter
 
 from .actions import router as actions_router
-from .ask_stream import router as ask_stream_router
 from .ask import router as ask_router
+from .ask_stream import router as ask_stream_router
 from .query import router as query_router
 from .rca import router as rca_router
 from .regression import router as regression_router

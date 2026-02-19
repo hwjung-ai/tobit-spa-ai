@@ -176,7 +176,9 @@ class DependencyAnalyzer:
             self.logger.info("dependency.selected.aggregate")
         elif _needs_aggregate:
             # Force-inject aggregate spec into plan
-            from app.modules.ops.services.orchestration.planner.plan_schema import AggregateSpec
+            from app.modules.ops.services.orchestration.planner.plan_schema import (
+                AggregateSpec,
+            )
             if not plan.aggregate or plan.aggregate.scope == "s1":
                 # Create a new aggregate spec with the forced scope
                 plan.aggregate = AggregateSpec(

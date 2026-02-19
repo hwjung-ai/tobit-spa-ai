@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, List
 
-import yaml
 from core.config import get_settings
 from core.logging import get_logger
 
@@ -61,8 +60,6 @@ def _get_static_view_names() -> set[str]:
     """Get view names that use static relation types (loaded from view registry)."""
     global _STATIC_VIEW_NAMES_CACHE
     if _STATIC_VIEW_NAMES_CACHE is None:
-        # Views that don't need dynamic discovery - configured via view registry
-        registry = get_view_registry()
         # Default static views if not in registry
         _STATIC_VIEW_NAMES_CACHE = {"COMPOSITION", "DEPENDENCY", "IMPACT", "PATH"}
         # Could be extended from registry if needed
@@ -73,8 +70,6 @@ def _get_summary_neighbors_views() -> set[str]:
     """Get view names that use summary/neighbors allowlist (loaded from view registry)."""
     global _SUMMARY_NEIGHBORS_VIEWS_CACHE
     if _SUMMARY_NEIGHBORS_VIEWS_CACHE is None:
-        # Views that use summary_neighbors_allowlist for relation filtering
-        registry = get_view_registry()
         # Default views if not in registry
         _SUMMARY_NEIGHBORS_VIEWS_CACHE = {"SUMMARY", "NEIGHBORS"}
         # Could be extended from registry if needed

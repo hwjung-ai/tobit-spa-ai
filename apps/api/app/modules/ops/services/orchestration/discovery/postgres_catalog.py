@@ -6,7 +6,7 @@ import platform
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from psycopg import Connection
 
@@ -52,7 +52,7 @@ def _get_discovery_config() -> Dict[str, Any]:
                     "queries": pg_config.get("queries", {}),
                 }
                 return _DISCOVERY_CONFIG_CACHE
-    except Exception as e:
+    except Exception:
         pass  # Fall through to defaults
 
     _DISCOVERY_CONFIG_CACHE = {

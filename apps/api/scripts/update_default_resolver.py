@@ -16,11 +16,9 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sqlmodel import select
-
-from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
-
+from core.db import get_session_context
+from sqlmodel import select
 
 DEFAULT_RESOLVER_CONTENT = {
     "name": "default_resolver",

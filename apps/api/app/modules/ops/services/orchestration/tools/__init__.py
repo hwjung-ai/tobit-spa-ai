@@ -5,6 +5,7 @@ from .base import (
     ToolContext,
     ToolRegistry,
     ToolResult,
+    ToolType,
     get_tool_registry,
     register_tool,
 )
@@ -14,9 +15,6 @@ from .executor import (
     ToolExecutor,
     get_tool_executor,
 )
-
-# Type alias for backward compatibility
-ToolType = str
 
 __all__ = [
     "BaseTool",

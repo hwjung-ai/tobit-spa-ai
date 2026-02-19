@@ -1,7 +1,7 @@
 """SIM Copilot Service - LLM integration for simulation assistance."""
 
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 from core.db import get_session_context
 

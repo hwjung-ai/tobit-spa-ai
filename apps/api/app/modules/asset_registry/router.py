@@ -157,7 +157,7 @@ def create_screen_asset_impl(
             asset_id=asset.asset_id,
             version=asset.version,
             snapshot={
-                "schema_json": asset.screen_schema,
+                "schema_json": asset.schema_json,
                 "name": asset.name,
                 "description": asset.description,
             },
@@ -175,7 +175,7 @@ def create_screen_asset_impl(
                     description=asset.description,
                     version=asset.version,
                     status=asset.status,
-                    screen_schema=asset.screen_schema,
+                    screen_schema=asset.schema_json,
                     tags=asset.tags,
                     created_by=asset.created_by,
                     published_by=asset.published_by,
@@ -397,8 +397,6 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         from .resolver_models import (
             AliasMapping,
             PatternRule,
-            ResolverRule,
-            ResolverType,
             TransformationRule,
         )
 
@@ -702,7 +700,7 @@ def update_asset(
                     raise HTTPException(status_code=400, detail="screen_schema.components is required")
                 if not isinstance(schema.get("components"), list):
                     raise HTTPException(status_code=400, detail="screen_schema.components must be an array")
-                asset.screen_schema = payload.screen_schema
+                asset.schema_json = payload.screen_schema
 
         asset.updated_at = datetime.now()
         session.add(asset)
@@ -726,7 +724,7 @@ def update_asset(
             "query_params": asset.query_params,
             "query_metadata": asset.query_metadata,
             "screen_id": asset.screen_id,
-            "screen_schema": asset.screen_schema,
+            "screen_schema": asset.schema_json,
             "tags": asset.tags,
             "created_by": asset.created_by,
             "published_by": asset.published_by,
@@ -826,7 +824,7 @@ def publish_asset(
             asset_id=asset.asset_id,
             version=asset.version,
             snapshot={
-                "schema_json": asset.screen_schema,
+                "schema_json": asset.schema_json,
                 "name": asset.name,
                 "description": asset.description,
             },
@@ -917,7 +915,7 @@ def rollback_asset(
             raise HTTPException(status_code=404, detail="target version not found")
         # create new published version by copying snapshot
         asset.version = (asset.version or 0) + 1
-        asset.screen_schema = hist.snapshot.get("schema_json")
+        asset.schema_json = hist.snapshot.get("schema_json")
         asset.status = "published"
         asset.published_by = published_by
         asset.published_at = datetime.now()
@@ -1553,9 +1551,10 @@ def list_resolvers(
 
                 rule_type = rule_data.get("rule_type", "alias_mapping")
 
-                # Extract the actual rule-specific data (nested in "rule_data" key)
-                # or use top-level fields as fallback for legacy format
-                inner_rule_data = rule_data.get("rule_data", rule_data)
+                # Extract the rule-specific nested payload only.
+                inner_rule_data = rule_data.get("rule_data")
+                if not isinstance(inner_rule_data, dict):
+                    inner_rule_data = {}
 
                 if rule_type == "alias_mapping":
                     rule_data_obj = AliasMapping(**inner_rule_data)

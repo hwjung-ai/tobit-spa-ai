@@ -94,7 +94,7 @@ class TestScreenAsset:
         asset = AssetCreate(**create_data)
         assert asset.asset_type == "screen"
         assert asset.screen_id == "device_detail_v1"
-        assert asset.screen_schema is not None
+        assert asset.schema_json is not None
 
     def test_screen_asset_read_schema(self):
         """Verify screen asset read schema"""
@@ -121,7 +121,7 @@ class TestScreenAsset:
         asset = AssetRead(**read_data)
         assert asset.asset_type == "screen"
         assert asset.status == "published"
-        assert asset.screen_schema is not None
+        assert asset.schema_json is not None
 
     def test_screen_asset_with_tags(self):
         """Verify tags field in screen asset"""

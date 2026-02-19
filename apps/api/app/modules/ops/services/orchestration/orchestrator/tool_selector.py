@@ -14,9 +14,8 @@ from typing import Dict, List, Tuple
 from core.logging import get_logger
 
 from app.modules.ops.services.orchestration.planner.plan_schema import (
-    Intent,
     INTENT_CAPABILITY_MAP,
-    ToolCapability,
+    Intent,
 )
 from app.modules.ops.services.orchestration.tools.base import get_tool_registry
 

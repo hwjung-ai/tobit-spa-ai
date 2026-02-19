@@ -23,14 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_catalog_source_ref(content: dict[str, Any]) -> str | None:
-    """Extract source_ref from catalog payload with backward compatibility."""
+    """Extract source_ref from catalog payload."""
     catalog_data = content.get("catalog", {}) if isinstance(content, dict) else {}
     if isinstance(catalog_data, dict):
         nested_source_ref = catalog_data.get("source_ref")
         if nested_source_ref:
             return str(nested_source_ref)
-    top_level_source_ref = content.get("source_ref") if isinstance(content, dict) else None
-    return str(top_level_source_ref) if top_level_source_ref else None
+    return None
 
 
 def load_prompt_asset(
