@@ -76,7 +76,36 @@ class MappingRegistry:
             self._cache[mapping_name] = data
             return data
 
+        # Lazy-load from Asset Registry when registry wasn't pre-initialized.
+        loaded = self._load_from_asset_registry(mapping_name)
+        if loaded is not None:
+            self._cache[mapping_name] = loaded
+            return loaded
+
         raise KeyError(f"Mapping not found: {mapping_name}")
+
+    def _load_from_asset_registry(self, mapping_name: str) -> Any | None:
+        """Attempt to load a mapping asset by name from DB and register it."""
+        try:
+            from app.modules.asset_registry.loader import load_mapping_asset
+
+            mapping_data, _ = load_mapping_asset(mapping_name)
+            if mapping_data is None:
+                return None
+            self.register_mapping(
+                mapping_name,
+                mapping_data,
+                source="asset_registry(lazy)",
+            )
+            logger.info("Lazy-loaded mapping from Asset Registry: %s", mapping_name)
+            return mapping_data
+        except Exception as exc:
+            logger.warning(
+                "Failed lazy-loading mapping '%s' from Asset Registry: %s",
+                mapping_name,
+                exc,
+            )
+            return None
 
     def clear_cache(self, mapping_name: Optional[str] = None) -> None:
         """Clear cache for a specific mapping or all mappings."""

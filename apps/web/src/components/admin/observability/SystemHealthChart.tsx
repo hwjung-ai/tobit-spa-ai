@@ -24,7 +24,9 @@ export default function SystemHealthChart() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch("/cep/stats/summary");
+        const response = await authenticatedFetch<{ data?: { stats?: SystemStats } }>(
+          "/cep/stats/summary"
+        );
 
         if (!response?.data?.stats) {
           throw new Error("Invalid response format");

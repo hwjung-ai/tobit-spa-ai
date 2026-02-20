@@ -225,19 +225,21 @@ export const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEn
   const normalizedResponse = normalizeHistoryResponse(response);
   if (!normalizedResponse) return null;
   const envelope: AnswerEnvelope | CiAnswerPayload = normalizedResponse;
-  let blocks = (envelope as AnswerEnvelope).blocks ?? (envelope as CiAnswerPayload).blocks;
+  let blocks = ((envelope as AnswerEnvelope).blocks ??
+    (envelope as CiAnswerPayload).blocks) as ApiAnswerBlock[] | undefined;
 
   // Fix document URLs: replace old /documents/ URLs with /api/documents/
   if (blocks && Array.isArray(blocks)) {
-    blocks = blocks.map((block: Record<string, unknown>) => {
+    blocks = blocks.map((block) => {
       if (block?.type === "references" && Array.isArray(block.items)) {
         return {
           ...block,
           items: (block.items as Array<Record<string, unknown>>).map((item) => {
-            if (item?.url && item.url.includes("/documents/") && !item.url.includes("/api/documents/")) {
+            const url = typeof item?.url === "string" ? item.url : null;
+            if (url && url.includes("/documents/") && !url.includes("/api/documents/")) {
               return {
                 ...item,
-                url: item.url.replace("/documents/", "/api/documents/"),
+                url: url.replace("/documents/", "/api/documents/"),
               };
             }
             return item;
@@ -245,7 +247,7 @@ export const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEn
         };
       }
       return block;
-    });
+    }) as ApiAnswerBlock[];
   }
 
   if (!blocks || !Array.isArray(blocks)) return null;

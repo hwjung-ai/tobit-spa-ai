@@ -11,20 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 MAPPING_NAMES: list[str] = [
-    "metric_aliases",
-    "agg_keywords",
-    "series_keywords",
-    "history_keywords",
-    "list_keywords",
-    "table_hints",
-    "cep_keywords",
-    "graph_scope_keywords",
-    "auto_keywords",
-    "filterable_fields",
-    "ci_code_patterns",
-    "graph_view_keywords",
-    "auto_view_preferences",
-    "output_type_priorities",
+    "planner_keywords",
+    "planner_defaults",
     "graph_relation",
     "graph_relation_allowlist",
     "default_output_format",
@@ -45,8 +33,6 @@ def _load_mapping_from_db(mapping_name: str):
         metadata,
     )
     return mapping_data
-
-
 def initialize_mappings() -> None:
     """Initialize and register all required mappings from Asset Registry."""
     from .registry import get_mapping_registry

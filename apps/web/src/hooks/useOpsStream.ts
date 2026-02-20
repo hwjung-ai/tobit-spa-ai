@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { authenticatedFetch } from "@/lib/apiClient";
+import { getAuthHeaders } from "@/lib/apiClient";
 
 /**
  * OPS Stream Request
@@ -112,40 +112,6 @@ export function useOpsStream(handlers: OpsSSEHandlers): UseOpsStreamReturn {
     setIsLoading(false);
   }, []);
 
-  const parseSSEEvent = useCallback(
-    (eventType: string, data: string) => {
-      try {
-        const parsed = JSON.parse(data);
-
-        switch (eventType as OpsSSEEventType) {
-          case "progress":
-            handlers.onProgress?.(parsed);
-            break;
-          case "tool_start":
-            handlers.onToolStart?.(parsed);
-            break;
-          case "tool_complete":
-            handlers.onToolComplete?.(parsed);
-            break;
-          case "block":
-            handlers.onBlock?.(parsed);
-            break;
-          case "complete":
-            handlers.onComplete?.(parsed);
-            break;
-          case "error":
-            handlers.onError?.(parsed);
-            break;
-          default:
-            console.warn(`Unknown SSE event type: ${eventType}`);
-        }
-      } catch (err) {
-        console.error("Failed to parse SSE event:", err);
-      }
-    },
-    [handlers]
-  );
-
   const stream = useCallback(
     async (request: OpsStreamRequest) => {
       // Abort any existing stream
@@ -156,11 +122,54 @@ export function useOpsStream(handlers: OpsSSEHandlers): UseOpsStreamReturn {
 
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
+      let receivedCompleteEvent = false;
+      let streamErrorMessage: string | null = null;
+      let currentEventType = "";
+      let currentData = "";
+
+      const parseSSEEvent = (eventType: string, data: string) => {
+        try {
+          const parsed = JSON.parse(data);
+
+          switch (eventType as OpsSSEEventType) {
+            case "progress":
+              handlers.onProgress?.(parsed);
+              break;
+            case "tool_start":
+              handlers.onToolStart?.(parsed);
+              break;
+            case "tool_complete":
+              handlers.onToolComplete?.(parsed);
+              break;
+            case "block":
+              handlers.onBlock?.(parsed);
+              break;
+            case "complete":
+              receivedCompleteEvent = true;
+              handlers.onComplete?.(parsed);
+              break;
+            case "error":
+              streamErrorMessage =
+                typeof parsed?.message === "string" ? parsed.message : "SSE stream error";
+              handlers.onError?.(parsed);
+              break;
+            default:
+              console.warn(`Unknown SSE event type: ${eventType}`);
+          }
+        } catch (err) {
+          console.error("Failed to parse SSE event:", err);
+        }
+      };
 
       try {
-        const response = await authenticatedFetch("/api/ops/ask/stream", {
+        // Build URL - use relative path for Next.js proxy or full URL
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        const url = baseUrl ? `${baseUrl.replace(/\/+$/, "")}/ops/ask/stream` : "/ops/ask/stream";
+        
+        const response = await fetch(url, {
           method: "POST",
           headers: {
+            ...getAuthHeaders(),
             "Content-Type": "application/json",
             Accept: "text/event-stream",
           },
@@ -183,6 +192,28 @@ export function useOpsStream(handlers: OpsSSEHandlers): UseOpsStreamReturn {
         const decoder = new TextDecoder();
         let buffer = "";
 
+        const processLines = (lines: string[]) => {
+          for (const line of lines) {
+            if (line.startsWith("event: ")) {
+              currentEventType = line.slice(7).trim();
+              continue;
+            }
+            if (line.startsWith("data: ")) {
+              // Support multi-line SSE data payloads
+              const dataLine = line.slice(6);
+              currentData = currentData ? `${currentData}\n${dataLine}` : dataLine;
+              continue;
+            }
+            if (line === "") {
+              if (currentEventType && currentData) {
+                parseSSEEvent(currentEventType, currentData);
+              }
+              currentEventType = "";
+              currentData = "";
+            }
+          }
+        };
+
         while (true) {
           const { done, value } = await reader.read();
 
@@ -192,44 +223,27 @@ export function useOpsStream(handlers: OpsSSEHandlers): UseOpsStreamReturn {
 
           buffer += decoder.decode(value, { stream: true });
 
-          // Process complete events
+          // Process complete lines; keep incomplete tail in buffer
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-          let currentEventType = "";
-          let currentData = "";
-
-          for (const line of lines) {
-            if (line.startsWith("event: ")) {
-              currentEventType = line.slice(7).trim();
-            } else if (line.startsWith("data: ")) {
-              currentData = line.slice(6);
-            } else if (line === "" && currentEventType && currentData) {
-              // Empty line signals end of event
-              parseSSEEvent(currentEventType, currentData);
-              currentEventType = "";
-              currentData = "";
-            }
-          }
+          buffer = lines.pop() || "";
+          processLines(lines);
         }
 
-        // Process any remaining data
-        if (buffer.trim()) {
-          const lines = buffer.split("\n");
-          let currentEventType = "";
-          let currentData = "";
+        // Flush remaining buffered tail and parse last event even without trailing blank line.
+        if (buffer) {
+          processLines(buffer.split("\n"));
+        }
+        if (currentEventType && currentData) {
+          parseSSEEvent(currentEventType, currentData);
+          currentEventType = "";
+          currentData = "";
+        }
 
-          for (const line of lines) {
-            if (line.startsWith("event: ")) {
-              currentEventType = line.slice(7).trim();
-            } else if (line.startsWith("data: ")) {
-              currentData = line.slice(6);
-            } else if (line === "" && currentEventType && currentData) {
-              parseSSEEvent(currentEventType, currentData);
-              currentEventType = "";
-              currentData = "";
-            }
-          }
+        if (streamErrorMessage) {
+          throw new Error(streamErrorMessage);
+        }
+        if (!receivedCompleteEvent) {
+          throw new Error("SSE stream ended before completion event");
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
@@ -250,7 +264,7 @@ export function useOpsStream(handlers: OpsSSEHandlers): UseOpsStreamReturn {
         abortControllerRef.current = null;
       }
     },
-    [abort, parseSSEEvent, handlers]
+    [abort, handlers]
   );
 
   return {

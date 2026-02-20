@@ -36,6 +36,18 @@ interface Alert {
   timestamp: string;
 }
 
+interface HealthResponse {
+  data?: { health?: SystemHealth };
+}
+
+interface MetricsResponse {
+  data?: { metrics?: SystemMetric[] };
+}
+
+interface AlertsResponse {
+  data?: { alerts?: Alert[] };
+}
+
 export default function SystemDashboard() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [metrics, setMetrics] = useState<SystemMetric[]>([]);
@@ -54,9 +66,9 @@ export default function SystemDashboard() {
       setLoading(true);
 
       const [healthRes, metricsRes, alertsRes] = await Promise.all([
-        authenticatedFetch("/admin/system/health"),
-        authenticatedFetch("/admin/system/metrics?limit=24"),
-        authenticatedFetch("/admin/system/alerts?limit=10"),
+        authenticatedFetch<HealthResponse>("/admin/system/health"),
+        authenticatedFetch<MetricsResponse>("/admin/system/metrics?limit=24"),
+        authenticatedFetch<AlertsResponse>("/admin/system/alerts?limit=10"),
       ]);
 
       if (healthRes?.data?.health) {

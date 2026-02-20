@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter
 from typing import Any, Dict, Iterable, List, Set, Tuple
 
@@ -79,6 +80,20 @@ SERVER_FILTER_KEYWORDS = {
     "nodes",
     "인스턴스",
     "instance",
+}
+
+DOCUMENT_QUERY_KEYWORDS = {
+    "manual",
+    "document",
+    "docs",
+    "매뉴얼",
+    "문서",
+    "가이드",
+    "guide",
+    "명령어",
+    "option",
+    "options",
+    "옵션",
 }
 
 # 정규식 패턴 (코드 구조상 필수적, 유지)
@@ -459,7 +474,6 @@ CI_IDENTIFIER_PATTERN = re.compile(
 # =============================================
 # Mapping Asset 로드 함수로 대체 (동적 로딩)
 # =============================================
-# _get_ci_code_patterns() - CI 코드 패턴
 # _get_graph_view_keyword_map() - 그래프 뷰 키워드
 # _get_graph_view_default_depth() - 기본 깊이
 # _get_auto_view_preferences() - 자동 뷰 선택
@@ -655,6 +669,39 @@ def create_plan(
             "question": normalized[:100],
         })
         plan.mode = _determine_mode(normalized)
+
+    # Heuristic fallback for document/manual questions.
+    # Applied before LLM payload parsing so this path still works when planner LLM fails.
+    if _is_document_query(normalized):
+        plan.intent = Intent.DOCUMENT
+        plan.view = View.SUMMARY
+        plan.mode_hint = "document"
+        plan.document = {
+            "enabled": True,
+            "query": normalized,
+            "search_type": "hybrid",
+            "top_k": 10,
+            "min_relevance": 0.5,
+            "tool_type": "document_search",
+        }
+        plan.primary = plan.primary.model_copy(
+            update={"keywords": [], "filters": [], "tool_type": "ci_lookup"}
+        )
+        plan.secondary = plan.secondary.model_copy(
+            update={"keywords": [], "filters": [], "tool_type": "ci_lookup"}
+        )
+        plan.aggregate = plan.aggregate.model_copy(
+            update={"group_by": [], "metrics": [], "filters": []}
+        )
+        plan.output = plan.output.model_copy(
+            update={"blocks": ["text", "table"], "primary": "text"}
+        )
+        elapsed_ms = int((perf_counter() - start) * 1000)
+        logger.info(
+            "ci.planner.document_heuristic_applied",
+            extra={"elapsed_ms": elapsed_ms, "query": normalized[:120]},
+        )
+        return plan
     llm_payload = None
     graph_force = _is_graph_force_query(normalized)
     try:
@@ -1333,6 +1380,38 @@ def _determine_mode(text: str):
     return PlanMode.CI
 
 
+def _is_document_query(text: str) -> bool:
+    normalized = text.lower()
+    return any(keyword in normalized for keyword in DOCUMENT_QUERY_KEYWORDS)
+
+
+def _apply_document_query_override(plan: Plan, question: str) -> Plan:
+    """Force document-only execution shape for explicit manual/document queries."""
+    normalized = question.strip()
+    plan.intent = Intent.DOCUMENT
+    plan.view = View.SUMMARY
+    plan.mode_hint = "document"
+    plan.document = {
+        "enabled": True,
+        "query": normalized,
+        "search_type": "hybrid",
+        "top_k": 10,
+        "min_relevance": 0.5,
+        "tool_type": "document_search",
+    }
+    plan.primary = plan.primary.model_copy(
+        update={"keywords": [], "filters": [], "tool_type": "ci_lookup"}
+    )
+    plan.secondary = plan.secondary.model_copy(
+        update={"keywords": [], "filters": [], "tool_type": "ci_lookup"}
+    )
+    plan.aggregate = plan.aggregate.model_copy(
+        update={"group_by": [], "metrics": [], "filters": []}
+    )
+    plan.output = plan.output.model_copy(update={"blocks": ["text", "table"], "primary": "text"})
+    return plan
+
+
 def create_plan_output(
     question: str,
     schema_context: dict[str, Any] | None = None,
@@ -1453,9 +1532,22 @@ def create_plan_output(
     # Otherwise, use LLM-driven planning with dynamic tool selection
     # This replaces the old keyword-based create_plan()
     import asyncio
+
+    def _run_plan_llm_query_sync(query: str) -> PlanOutput:
+        """Run async plan_llm_query safely from both sync and async contexts."""
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(plan_llm_query(query, source_ref=None))
+
+        # Already in an event loop (e.g., FastAPI async route): run in dedicated thread.
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(asyncio.run, plan_llm_query(query, source_ref=None))
+            return future.result()
+
     try:
         # Call LLM-driven planning which includes tool selection
-        plan_output = asyncio.run(plan_llm_query(normalized, source_ref=None))
+        plan_output = _run_plan_llm_query_sync(normalized)
 
         # Extract plan from PlanOutput
         if plan_output.kind == PlanOutputKind.PLAN and plan_output.plan:
@@ -1488,6 +1580,10 @@ def create_plan_output(
     end = perf_counter()
     elapsed_ms = int((end - start) * 1000)
     logger.info("ci.planner.plan_created", extra={"elapsed_ms": elapsed_ms})
+
+    if _is_document_query(normalized):
+        plan = _apply_document_query_override(plan, normalized)
+        logger.info("ci.planner.document_override_applied", extra={"elapsed_ms": elapsed_ms})
 
     return PlanOutput(
         kind=PlanOutputKind.PLAN,
@@ -1752,6 +1848,52 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             extra={
                 "query": document_spec.get("query", ""),
                 "document_spec_enabled": True,
+            }
+        )
+
+    def _looks_like_document_tool(tool_type: str | None) -> bool:
+        value = str(tool_type or "").lower()
+        if not value:
+            return False
+        return value == str(document_tool_name).lower() or "document" in value
+
+    # If LLM mapped document search into primary/secondary slots, normalize into document spec.
+    if plan.primary and _looks_like_document_tool(plan.primary.tool_type):
+        doc_query = " ".join(plan.primary.keywords or []).strip() or normalized
+        if not isinstance(plan.document, dict):
+            plan.document = {
+                "enabled": True,
+                "query": doc_query,
+                "search_type": "hybrid",
+                "top_k": 10,
+                "min_relevance": 0.5,
+                "tool_type": document_tool_name,
+            }
+        else:
+            if not plan.document.get("query"):
+                plan.document["query"] = doc_query
+            plan.document["enabled"] = True
+            plan.document["tool_type"] = document_tool_name
+
+        # Keep primary slot for CI lookup only; clear accidental document payload.
+        plan.primary = plan.primary.model_copy(
+            update={
+                "keywords": [],
+                "filters": [],
+                "tool_type": _resolve_tool_type(
+                    valid_tool_types, ["ci_lookup", "ci_search", "database_query"]
+                ),
+            }
+        )
+
+    if plan.secondary and _looks_like_document_tool(plan.secondary.tool_type):
+        plan.secondary = plan.secondary.model_copy(
+            update={
+                "keywords": [],
+                "filters": [],
+                "tool_type": _resolve_tool_type(
+                    valid_tool_types, ["ci_lookup", "ci_search", "database_query"]
+                ),
             }
         )
 

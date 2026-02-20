@@ -36,10 +36,8 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
     try {
       // fetchApi returns ResponseEnvelope, so access .data for the actual payload
       // Backend returns ResponseEnvelope.success(data={settings: {...}})
-      const settingsData = await fetchApi<{ settings: Record<string, unknown> }>('/admin/settings');
       const categoriesData = await fetchApi<{ categories: Record<string, Setting[]> }>('/admin/settings/categories');
 
-      setSettings(settingsData.data?.settings || {});
       setCategories(categoriesData.data?.categories || {});
     } catch (error) {
       console.error('Failed to fetch settings:', error);

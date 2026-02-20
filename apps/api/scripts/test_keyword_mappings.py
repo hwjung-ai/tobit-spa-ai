@@ -138,8 +138,8 @@ def main():
     print("\n🔟 filterable_fields")
     try:
         data = _get_filterable_fields()
-        tag_keys = data.get("tag_keys", set())
-        attr_keys = data.get("attr_keys", set())
+        tag_keys = data.get("tag_filter_keys", set())
+        attr_keys = data.get("attr_filter_keys", set())
         print(f"   ✅ Loaded: {len(tag_keys)} tag keys, {len(attr_keys)} attr keys")
         tests.append(("filterable_fields", True))
     except Exception as e:

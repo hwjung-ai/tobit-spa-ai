@@ -37,7 +37,7 @@ export default function AlertChannelStatus() {
     const fetchChannels = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch("/cep/channels/status");
+        const response = await authenticatedFetch<{ data?: { channels?: ChannelStatus[] } }>("/cep/channels/status");
         setChannels(response.data?.channels || []);
         setError(null);
       } catch (err) {

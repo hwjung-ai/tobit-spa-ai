@@ -18,6 +18,7 @@ from core.config import get_settings
 from core.db import get_session_context
 from core.logging import get_logger
 from fastapi import APIRouter, Depends, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 from models.history import QueryHistory
 from pydantic import BaseModel
@@ -79,7 +80,7 @@ class StreamCompleteEvent(BaseModel):
 def _sse_event(event_type: str, data: dict[str, Any]) -> str:
     """Format data as SSE event."""
     import json
-    return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+    return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False, default=str)}\n\n"
 
 
 @router.post("/ask/stream")
@@ -253,6 +254,7 @@ async def ask_ops_stream(
                     normalized_question,
                     schema_context=schema_payload,
                     source_context=source_payload,
+                    mode=payload.mode or "all",
                 )
                 end_span(planner_span, links={"plan_path": "plan.raw"})
             except Exception as e:
@@ -350,7 +352,7 @@ async def ask_ops_stream(
                     )
                     runner._flow_spans_enabled = True
                     runner._runner_span_id = runner_span
-                    result = runner.run(plan_output)
+                    result = await runner.run_async(plan_output)
                     
                     # Send tool execution events
                     tool_calls = result.get("trace", {}).get("tool_calls", [])
@@ -459,12 +461,16 @@ async def ask_ops_stream(
                         question=payload.question,
                         status=trace_status,
                         duration_ms=int(elapsed),
-                        request_payload=request_payload,
-                        plan_raw=trace_payload.get("plan_raw") if trace_payload else None,
-                        plan_validated=trace_payload.get("plan_validated") if trace_payload else None,
-                        trace_payload=trace_payload if trace_payload else {},
-                        answer_meta=meta if meta else None,
-                        blocks=envelope_blocks if envelope_blocks else None,
+                        request_payload=jsonable_encoder(request_payload),
+                        plan_raw=jsonable_encoder(
+                            trace_payload.get("plan_raw") if trace_payload else None
+                        ),
+                        plan_validated=jsonable_encoder(
+                            trace_payload.get("plan_validated") if trace_payload else None
+                        ),
+                        trace_payload=jsonable_encoder(trace_payload if trace_payload else {}),
+                        answer_meta=jsonable_encoder(meta if meta else None),
+                        blocks=jsonable_encoder(envelope_blocks if envelope_blocks else None),
                         flow_spans=flow_spans if flow_spans else None,
                     )
             except Exception as exc:
@@ -479,11 +485,12 @@ async def ask_ops_stream(
                             history_entry.status = status
                             history_entry.trace_id = active_trace_id
                             if result:
+                                encoded_result = jsonable_encoder(result)
                                 history_entry.summary = (
-                                    result.get("meta", {}).get("summary")
-                                    or result.get("meta", {}).get("answer", "")[:200]
+                                    encoded_result.get("meta", {}).get("summary")
+                                    or encoded_result.get("meta", {}).get("answer", "")[:200]
                                 )
-                                history_entry.response = result
+                                history_entry.response = encoded_result
                             session.add(history_entry)
                             session.commit()
                 except Exception as exc:

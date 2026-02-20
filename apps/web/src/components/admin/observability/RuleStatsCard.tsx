@@ -27,7 +27,9 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
     const fetchRulesPerformance = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch("/cep/rules/performance?limit=10");
+        const response = await authenticatedFetch<{ data?: { rules?: RuleStats[] } }>(
+          "/cep/rules/performance?limit=10"
+        );
         setRules(response.data?.rules || []);
         setError(null);
       } catch (err) {

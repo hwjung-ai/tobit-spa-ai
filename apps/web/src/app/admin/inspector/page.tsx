@@ -403,24 +403,13 @@ function InspectorContent() {
 
   const renderAppliedAsset = (asset: AssetSummary | null | undefined) => {
     if (!asset) {
-      return (
-        <span className="text-xs text-muted-foreground">
-          미적용
-        </span>
-      );
+      return null;
     }
     return (
-      <div className="space-y-1 text-xs text-muted-foreground">
-        <p className="font-mono text-sm text-foreground">
-          {asset.name || (asset.asset_id ? resolveAssetDisplayName(asset.asset_id) : "asset")}
-          {asset.version ? ` · v${asset.version}` : ""}
-        </p>
-        {asset.source && (
-          <p className="uppercase text-xs tracking-wider text-muted-foreground">
-            {asset.source}
-          </p>
-        )}
-      </div>
+      <p className="text-xs text-muted-foreground">
+        {asset.name || (asset.asset_id ? resolveAssetDisplayName(asset.asset_id) : "asset")}
+        {asset.version ? ` · v${asset.version}` : ""}
+      </p>
     );
   };
 
@@ -515,6 +504,13 @@ function InspectorContent() {
     });
   }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
 
+  const executeStageResult = useMemo(() => {
+    const executeStage = traceDetail?.stage_outputs?.find(
+      (entry: StageOutput) => entry.stage === "execute",
+    );
+    return (executeStage?.result as Record<string, unknown> | undefined) ?? null;
+  }, [traceDetail?.stage_outputs]);
+
   // availableAssets + traceDetail.applied_assets를 assetNames 형식으로 변환
   const assetNames = useMemo(() => {
     const names: Record<string, { name: string; version?: string }> = {};
@@ -588,7 +584,12 @@ function InspectorContent() {
     (value: unknown): string => {
       if (value == null) return "-";
       if (typeof value === "string") {
-        return resolveAssetDisplayName(value);
+        const resolved = resolveAssetDisplayName(value);
+        const duplicateWrapped = resolved.match(/^(.+)\s+\(\1\)$/);
+        if (duplicateWrapped) {
+          return duplicateWrapped[1];
+        }
+        return resolved;
       }
       if (typeof value !== "object") {
         return String(value);
@@ -672,6 +673,39 @@ function InspectorContent() {
     },
     [resolveAssetDisplayName],
   );
+
+  const executeStageToolNames = useMemo(() => {
+    const executeStageInput = traceDetail?.stage_inputs?.find(
+      (entry: StageInput) => entry.stage === "execute",
+    );
+    const applied = executeStageInput?.applied_assets as Record<string, unknown> | undefined;
+    if (!applied) return [];
+    return Object.entries(applied)
+      .filter(([key]) => key.startsWith("tool:"))
+      .map(([, value]) => {
+        const rendered = formatStageAssetChipValue(value);
+        return rendered === "-" ? null : rendered;
+      })
+      .filter((name): name is string => Boolean(name));
+  }, [formatStageAssetChipValue, traceDetail?.stage_inputs]);
+
+  const toolDisplayList = useMemo(() => {
+    const listed = (traceDetail?.applied_assets?.tools ?? [])
+      .map((tool) => {
+        if (!tool) return null;
+        const name = tool.name || tool.tool_name;
+        if (!name) return null;
+        return {
+          name,
+          version: tool.version,
+        };
+      })
+      .filter(
+        (entry) => Boolean(entry),
+      );
+    if (listed.length > 0) return listed;
+    return executeStageToolNames.map((name) => ({ name, version: null }));
+  }, [executeStageToolNames, traceDetail?.applied_assets?.tools]);
 
   const loadOverrideAssets = useCallback(async () => {
     setAssetOverrideLoading(true);
@@ -1001,7 +1035,7 @@ function InspectorContent() {
           className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4"
         >
           <div
-            className="border border-border max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col bg-surface-elevated"
+            className="border border-border w-[96vw] max-w-[1800px] max-h-[92vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col bg-surface-elevated"
           >
             <header
               className="px-6 py-4 border-b border-border flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
@@ -1261,30 +1295,28 @@ function InspectorContent() {
                         </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.catalog ?? null)}
                       </div>
-                      <div className="md:col-span-2 space-y-2">
+                      <div
+                        className="rounded-xl border border-border px-4 py-3 bg-surface-elevated md:col-span-2"
+                      >
                         <p
                           className="text-xs uppercase tracking-wider text-muted-foreground"
                         >
                           Tools
                         </p>
-                        {traceDetail.applied_assets?.tools?.length ? (
-                          <div className="flex flex-wrap gap-2">
-                            {traceDetail.applied_assets.tools.map((tool) => {
-                              if (!tool) return null;
-                              const name = tool.name || tool.tool_name || "tool";
-                              return (
-                                <span
-                                  key={tool.asset_id || `${name}-${tool.source}-${tool.version ?? "?"}`}
-                                  className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-2 py-1 text-xs text-foreground"
-                                >
-                                  {name}
-                                  {tool.version ? ` · v${tool.version}` : ""}
-                                </span>
-                              );
-                            })}
+                        {toolDisplayList.length ? (
+                          <div className="mt-2 space-y-1">
+                            {toolDisplayList.map((tool, index) => (
+                              <p
+                                key={`${tool.name}-${tool.version ?? "?"}-${index}`}
+                                className="text-xs text-muted-foreground"
+                              >
+                                {tool.name}
+                                {tool.version ? ` · v${tool.version}` : ""}
+                              </p>
+                            ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="mt-2 text-xs text-muted-foreground">
                             Tool asset 없음
                           </p>
                         )}
@@ -2207,7 +2239,7 @@ function InspectorContent() {
                   )}
 
                   {/* Orchestration Section */}
-                  {traceDetail && <OrchestrationSection stageOutput={traceDetail} />}
+                  {executeStageResult && <OrchestrationSection stageOutput={executeStageResult} />}
 
                   <section
                     className="border rounded-2xl p-5 space-y-3 border-border bg-surface-base"

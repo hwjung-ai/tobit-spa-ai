@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { authenticatedFetch } from "@/lib/apiClient";
+import { fetchWithAuth } from "@/lib/apiClient";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -47,12 +47,7 @@ export default function PdfViewerPage() {
         setLoading(true);
         setError(null);
 
-        const response = await authenticatedFetch(`/api/documents/${documentId}/viewer`);
-
-        if (!response.ok) {
-          throw new Error(`PDF 로드 실패: ${response.statusText}`);
-        }
-
+        const response = await fetchWithAuth(`/api/documents/${documentId}/viewer`);
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         setPdfFile(url);

@@ -725,14 +725,33 @@ class StageExecutor:
             # Execute primary query
             if plan.primary and plan.primary.keywords:
                 try:
-                    primary_result = await self.tool_executor.execute_tool(
-                        tool_type=plan.primary.tool_type,
-                        params={
+                    primary_tool_type = str(plan.primary.tool_type or "")
+                    is_document_primary = "document" in primary_tool_type.lower()
+                    if is_document_primary:
+                        document_query = (
+                            str((plan.document or {}).get("query") or "").strip()
+                            if isinstance(plan.document, dict)
+                            else ""
+                        )
+                        if not document_query:
+                            document_query = " ".join(plan.primary.keywords).strip()
+                        primary_params = {
+                            "query": document_query,
+                            "top_k": 10,
+                            "search_type": "hybrid",
+                            "min_relevance": 0.5,
+                            "mode": "document",
+                        }
+                    else:
+                        primary_params = {
                             "keywords": plan.primary.keywords,
                             "filters": plan.primary.filters,
                             "limit": plan.primary.limit,
                             "mode": "primary",
-                        },
+                        }
+                    primary_result = await self.tool_executor.execute_tool(
+                        tool_type=plan.primary.tool_type,
+                        params=primary_params,
                         context=tool_context,
                     )
                     results.append(primary_result)
@@ -743,14 +762,27 @@ class StageExecutor:
             # Execute secondary query
             if plan.secondary and plan.secondary.keywords:
                 try:
-                    secondary_result = await self.tool_executor.execute_tool(
-                        tool_type=plan.secondary.tool_type,
-                        params={
+                    secondary_tool_type = str(plan.secondary.tool_type or "")
+                    is_document_secondary = "document" in secondary_tool_type.lower()
+                    if is_document_secondary:
+                        secondary_query = " ".join(plan.secondary.keywords).strip()
+                        secondary_params = {
+                            "query": secondary_query,
+                            "top_k": 10,
+                            "search_type": "hybrid",
+                            "min_relevance": 0.5,
+                            "mode": "document",
+                        }
+                    else:
+                        secondary_params = {
                             "keywords": plan.secondary.keywords,
                             "filters": plan.secondary.filters,
                             "limit": plan.secondary.limit,
                             "mode": "secondary",
-                        },
+                        }
+                    secondary_result = await self.tool_executor.execute_tool(
+                        tool_type=plan.secondary.tool_type,
+                        params=secondary_params,
                         context=tool_context,
                     )
                     results.append(secondary_result)

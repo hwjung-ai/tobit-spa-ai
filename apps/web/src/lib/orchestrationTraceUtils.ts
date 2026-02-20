@@ -28,6 +28,22 @@ export function extractOrchestrationTrace(stageOutput: Record<string, unknown>):
     }
   }
 
+  // Legacy fallback: nested base_result.execution_results
+  if (
+    stageOutput.base_result &&
+    typeof stageOutput.base_result === "object" &&
+    (stageOutput.base_result as Record<string, unknown>).execution_results &&
+    Array.isArray((stageOutput.base_result as Record<string, unknown>).execution_results)
+  ) {
+    const executionResults = (stageOutput.base_result as Record<string, unknown>)
+      .execution_results as Record<string, unknown>[];
+    for (const result of executionResults) {
+      if (result.orchestration) {
+        return constructTraceFromStepMetadata(executionResults);
+      }
+    }
+  }
+
   return null;
 }
 
@@ -40,21 +56,42 @@ function constructTraceFromStepMetadata(results: Record<string, unknown>[]): Orc
   const tools = new Set<string>();
 
   for (const result of results) {
-    if (result.orchestration) {
-      const { group_index, tool_id, tool_type, depends_on, output_mapping } = result.orchestration;
-
-      tools.add(tool_id);
-
-      if (!groups.has(group_index)) {
-        groups.set(group_index, []);
+    if (result.orchestration && typeof result.orchestration === "object") {
+      const orchestration = result.orchestration as Record<string, unknown>;
+      const groupIndex =
+        typeof orchestration.group_index === "number" ? orchestration.group_index : 0;
+      const toolId =
+        typeof orchestration.tool_id === "string" ? orchestration.tool_id : null;
+      const toolType =
+        typeof orchestration.tool_type === "string" ? orchestration.tool_type : "unknown";
+      const dependsOn = Array.isArray(orchestration.depends_on)
+        ? orchestration.depends_on.filter((v): v is string => typeof v === "string")
+        : [];
+      const rawOutputMapping =
+        orchestration.output_mapping && typeof orchestration.output_mapping === "object"
+          ? (orchestration.output_mapping as Record<string, unknown>)
+          : {};
+      const outputMapping: Record<string, string> = {};
+      for (const [key, value] of Object.entries(rawOutputMapping)) {
+        if (typeof value === "string") {
+          outputMapping[key] = value;
+        }
       }
 
-      groups.get(group_index)!.push({
-        tool_id,
-        tool_type: tool_type || 'unknown',
-        depends_on: depends_on || [],
+      if (!toolId) continue;
+
+      tools.add(toolId);
+
+      if (!groups.has(groupIndex)) {
+        groups.set(groupIndex, []);
+      }
+
+      groups.get(groupIndex)!.push({
+        tool_id: toolId,
+        tool_type: toolType,
+        depends_on: dependsOn,
         dependency_groups: [],
-        output_mapping: output_mapping || {},
+        output_mapping: outputMapping,
       });
     }
   }
@@ -124,15 +161,16 @@ function calculateDependencyGroups(
  * Validate orchestration trace structure
  */
 export function isValidOrchestrationTrace(obj: unknown): obj is OrchestrationTrace {
-  if (!obj) return false;
+  if (!obj || typeof obj !== "object") return false;
+  const candidate = obj as Record<string, unknown>;
 
   return (
-    typeof obj.strategy === 'string' &&
-    ['parallel', 'serial', 'dag'].includes(obj.strategy) &&
-    Array.isArray(obj.execution_groups) &&
-    typeof obj.total_groups === 'number' &&
-    typeof obj.total_tools === 'number' &&
-    Array.isArray(obj.tool_ids)
+    typeof candidate.strategy === 'string' &&
+    ['parallel', 'serial', 'dag'].includes(candidate.strategy) &&
+    Array.isArray(candidate.execution_groups) &&
+    typeof candidate.total_groups === 'number' &&
+    typeof candidate.total_tools === 'number' &&
+    Array.isArray(candidate.tool_ids)
   );
 }
 

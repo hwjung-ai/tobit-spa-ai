@@ -43,7 +43,9 @@ export default function ExecutionTimeline() {
     const fetchTimeline = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch(`/cep/errors/timeline?period=${period}`);
+        const response = await authenticatedFetch<{ data?: ErrorTimeline }>(
+          `/cep/errors/timeline?period=${period}`
+        );
         setTimeline(response.data || null);
         setError(null);
       } catch (err) {

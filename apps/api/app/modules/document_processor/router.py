@@ -15,6 +15,7 @@ from models.document import Document, DocumentChunk, DocumentStatus
 from models.history import QueryHistory
 from pydantic import BaseModel
 from schemas.common import ResponseEnvelope
+from services.orchestrator import OpenAIOrchestrator
 from sqlmodel import Session, select
 
 from app.modules.auth.models import TbUser
@@ -86,6 +87,9 @@ class MultiDocumentQueryRequest(BaseModel):
     min_relevance: float = 0.05
 
 
+RAG_CONTEXT_TOP_K = 5
+
+
 def _select_relevant_chunks(
     results: list[dict],
     allowed_document_ids: set[str],
@@ -109,6 +113,41 @@ def _select_relevant_chunks(
 
     # Last fallback: return top-ranked candidates from selected documents.
     return candidates[:top_k], True
+
+
+def _compose_fallback_answer(query: str, references: list[dict]) -> str:
+    if not references:
+        return "검색 결과가 없습니다."
+
+    lines = [f'질문: "{query}"', "", "문서 근거를 기반으로 요약합니다:"]
+    for index, ref in enumerate(references, 1):
+        page_info = f"{ref.get('page')}페이지" if ref.get("page") else "페이지 미확인"
+        snippet = str(ref.get("snippet", "")).strip()
+        lines.append(
+            f"{index}. {ref.get('document_title', 'Unknown Document')} ({page_info}) - {snippet}"
+        )
+    return "\n".join(lines)
+
+
+def _build_rag_prompt(query: str, references: list[dict]) -> str:
+    context_lines = []
+    for index, ref in enumerate(references, 1):
+        doc_title = ref.get("document_title", "Unknown Document")
+        page = ref.get("page")
+        page_label = f"p.{page}" if page else "p.?"
+        snippet = str(ref.get("snippet", "")).strip()
+        context_lines.append(f"[{index}] {doc_title} {page_label}: {snippet}")
+
+    context = "\n".join(context_lines)
+    return (
+        "You are a document QA assistant.\n"
+        "Answer in Korean.\n"
+        "Use only the provided context. If not enough evidence, clearly say so.\n"
+        "Cite evidence inline like [1], [2] where relevant.\n\n"
+        f"Question:\n{query}\n\n"
+        f"Context:\n{context}\n\n"
+        "Return a concise answer first, then key supporting points."
+    )
 
 
 class SearchResultResponse(BaseModel):
@@ -1741,8 +1780,11 @@ async def query_all_documents_stream(
                 yield f"event: done\ndata: {json.dumps({'meta': {'references': [], 'chunks': []}})}\n\n"
                 return
 
+            context_limit = max(1, min(top_k, RAG_CONTEXT_TOP_K))
+            context_results = filtered_results[:context_limit]
+
             # Send progress: composing
-            yield f"event: progress\ndata: {json.dumps({'stage': 'composing', 'message': f'{len(filtered_results)}개 관련 내용 발견, 응답 생성 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
+            yield f"event: progress\ndata: {json.dumps({'stage': 'composing', 'message': f'{len(context_results)}개 근거로 응답 생성 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
 
             # Build document ID to name mapping
             doc_name_map = {doc.id: doc.filename for doc in documents}
@@ -1751,7 +1793,7 @@ async def query_all_documents_stream(
             references = []
             chunk_infos = []
 
-            for row in filtered_results:
+            for row in context_results:
                 chunk_text = row["text"]
                 chunk_id = row["id"]
                 page_number = row.get("page_number")
@@ -1774,40 +1816,38 @@ async def query_all_documents_stream(
                 })
 
             # Send summary
-            yield f"event: summary\ndata: {json.dumps({'text': f'{len(documents)}개 문서에서 {len(filtered_results)}개의 관련 내용을 찾았습니다.'})}\n\n"
+            yield f"event: summary\ndata: {json.dumps({'text': f'{len(documents)}개 문서에서 {len(context_results)}개의 근거를 선택했습니다.'})}\n\n"
 
             # Send detail
-            score_val = filtered_results[0].get("score", 0.0)
-            detail_text = f'검색어: "{query}"\n검색된 문서: {len(documents)}개\n관련성: {score_val:.2f}'
+            score_val = context_results[0].get("score", 0.0)
+            detail_text = f'검색어: "{query}"\n검색된 문서: {len(documents)}개\n근거 청크: {len(context_results)}개\n관련성: {score_val:.2f}'
             if relaxed_filtering:
                 detail_text += "\n참고: 낮은 점수 구간까지 확장 검색하여 결과를 포함했습니다."
             yield f"event: detail\ndata: {json.dumps({'text': detail_text})}\n\n"
 
-            # Generate answer
-            answer_parts = [f"총 {len(documents)}개 문서에서 검색 결과입니다.\n\n"]
-
-            # Group by document
-            from collections import defaultdict
-            doc_refs = defaultdict(list)
-            for ref in references:
-                doc_refs[ref["document_id"]].append(ref)
-
-            for i, (doc_id, refs) in enumerate(doc_refs.items(), 1):
-                doc_name = refs[0]["document_title"]
-                answer_parts.append(f"## {i}. {doc_name}\n")
-                for ref in refs[:3]:  # Max 3 refs per document
-                    page_info = f"{ref['page']}페이지" if ref["page"] else "페이지 미확인"
-                    answer_parts.append(f"- ({page_info}) {ref['snippet'][:100]}...\n")
-                answer_parts.append("\n")
-
-            answer = "".join(answer_parts)
-
             # Send progress: presenting
             yield f"event: progress\ndata: {json.dumps({'stage': 'presenting', 'message': '응답 생성 중...', 'elapsed_ms': elapsed_ms()})}\n\n"
 
-            # Stream answer character by character
-            for char in answer:
-                yield f"event: answer\ndata: {json.dumps({'text': char})}\n\n"
+            # Generate LLM answer from the same references shown in the UI.
+            llm_answer_streamed = False
+            try:
+                orchestrator = OpenAIOrchestrator(get_settings())
+                rag_prompt = _build_rag_prompt(query=query, references=references)
+                async for chunk in orchestrator.stream_chat(rag_prompt):
+                    if chunk.get("type") == "answer":
+                        text = str(chunk.get("text", ""))
+                        if text:
+                            llm_answer_streamed = True
+                            yield f"event: answer\ndata: {json.dumps({'text': text})}\n\n"
+            except Exception as llm_exc:
+                logger.warning(
+                    "query-all stream LLM synthesis failed, fallback answer used: %s",
+                    llm_exc,
+                )
+
+            if not llm_answer_streamed:
+                fallback_answer = _compose_fallback_answer(query=query, references=references)
+                yield f"event: answer\ndata: {json.dumps({'text': fallback_answer})}\n\n"
 
             # Send done with references
             yield f"event: done\ndata: {json.dumps({'meta': {'references': references, 'chunks': chunk_infos, 'documents_searched': len(documents), 'total_time_ms': elapsed_ms()}})}\n\n"

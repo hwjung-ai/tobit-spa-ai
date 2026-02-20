@@ -12,8 +12,8 @@ import { type NextAction } from "./nextActions";
 import { authenticatedFetch } from "@/lib/apiClient/index";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  type ServerHistoryEntry,
   type CiAnswerPayload,
+  type ServerHistoryEntry,
   type LocalOpsHistoryEntry,
   type AnswerEnvelope,
   type ResponseEnvelope,
@@ -41,6 +41,10 @@ import {
   hydrateServerEntry,
 } from "./utils";
 
+import { useOpsStream, type OpsStreamRequest } from "@/hooks/useOpsStream";
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
   { id: "all", label: "전체", backend: "all" },
   { id: "ci", label: "구성", backend: "config" },
@@ -60,6 +64,16 @@ type OpsAssetContext = {
   resolver_asset: string;
 };
 
+type ConversationSummary = {
+  question_count?: number;
+  summary_type?: "individual" | "overall";
+  overall_summary?: string;
+  title?: string;
+  date?: string;
+  topic?: string;
+  questions_and_answers?: Array<{ question?: string; summary?: string; mode?: string }>;
+};
+
 export default function OpsPage() {
   const { isLoading: authLoading, user } = useAuth();
   const [history, setHistory] = useState<LocalOpsHistoryEntry[]>([]);
@@ -68,6 +82,47 @@ export default function OpsPage() {
   const [question, setQuestion] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  
+  // Streaming state for real-time progress
+  const [streamingStage, setStreamingStage] = useState<string>("");
+  const [streamingMessage, setStreamingMessage] = useState<string>("");
+  const [streamingElapsedMs, setStreamingElapsedMs] = useState<number>(0);
+  const [streamingCompletedStages, setStreamingCompletedStages] = useState<string[]>([]);
+  const hasStreamingProgress =
+    streamingMessage.length > 0 || streamingStage.length > 0 || streamingCompletedStages.length > 0;
+  
+  // Initialize streaming hook for SSE
+  const { stream: streamOpsQuery } = useOpsStream({
+    onProgress: (event) => {
+      setStreamingStage(event.stage);
+      setStreamingMessage(event.message);
+      setStreamingElapsedMs(event.elapsed_ms);
+      if (event.completed_stages) {
+        setStreamingCompletedStages(event.completed_stages);
+      }
+    },
+    onBlock: () => {
+      // Real-time stage status is surfaced via onProgress.
+    },
+    onComplete: (event) => {
+      setStreamingStage("complete");
+      setStreamingMessage("완료");
+      if (event?.timing?.total_ms) {
+        setStreamingElapsedMs(event.timing.total_ms);
+      }
+      setStreamingCompletedStages(
+        event?.completed_stages && event.completed_stages.length > 0
+          ? event.completed_stages
+          : ["init", "resolving", "planning", "executing", "composing", "presenting"],
+      );
+      setStatusMessage("질의 처리가 완료되었습니다.");
+    },
+    onError: (event) => {
+      setStreamingStage("error");
+      setStatusMessage(`Error: ${event.message}`);
+    },
+  });
+  
   const [assetContext, setAssetContext] = useState<OpsAssetContext>({
     source_asset: "",
     schema_asset: "",
@@ -79,7 +134,7 @@ export default function OpsPage() {
   const [traceOpen, setTraceOpen] = useState(false);
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
-  const [summaryData, setSummaryData] = useState<Record<string, unknown> | null>(null);
+  const [summaryData, setSummaryData] = useState<ConversationSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [summaryType, setSummaryType] = useState<"individual" | "overall">("individual");
@@ -120,7 +175,7 @@ export default function OpsPage() {
 
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (): Promise<LocalOpsHistoryEntry[]> => {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
@@ -136,6 +191,7 @@ export default function OpsPage() {
       if (hydrated.length === 0) {
         setHistory([]);
         setSelectedId(null);
+        return [];
       } else {
         setHistory(hydrated);
         setSelectedId((prev) =>
@@ -143,10 +199,12 @@ export default function OpsPage() {
             ? prev
             : hydrated[0].id,
         );
+        return hydrated;
       }
     } catch (error: unknown) {
       console.error("Failed to load OPS history", error);
       setHistoryError(error instanceof Error ? error.message : "Failed to load history");
+      return [];
     } finally {
       setHistoryLoading(false);
     }
@@ -326,40 +384,44 @@ export default function OpsPage() {
 
   const canFullScreen = selectedEntry?.backendMode === "graph" || meta?.route === "graph";
 
+  // Clear streaming state
+  const clearStreamingState = useCallback(() => {
+    setStreamingStage("");
+    setStreamingMessage("");
+    setStreamingElapsedMs(0);
+    setStreamingCompletedStages([]);
+  }, []);
+
   const runQuery = useCallback(async () => {
     if (!question.trim() || isRunning) {
       return;
     }
     setIsRunning(true);
     setStatusMessage(null);
+    clearStreamingState();
+    setStreamingStage("init");
+    setStreamingMessage("질의 처리 시작 중...");
+    setStreamingElapsedMs(0);
+    setStreamingCompletedStages(["init"]);
+
     const requestedMode = currentModeDefinition;
-    const payload = { mode: requestedMode.backend, question: question.trim() };
+    const questionText = question.trim();
+    const payload = { mode: requestedMode.backend, question: questionText };
     const askAssetContextPayload = Object.fromEntries(
       Object.entries(assetContext).filter(([, value]) => value.trim().length > 0),
     );
+
     try {
       if (requestedMode.id === "all") {
-        // "all" mode uses /ops/ask endpoint for orchestration
-        const response = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ask`, {
-          method: "POST",
-          body: JSON.stringify({
-            question: question.trim(),
-            ...askAssetContextPayload,
-          }),
-        });
-        const ciPayload = response?.data;
-        if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
-          throw new Error("Invalid all mode response format");
-        }
-        // Validate all mode response
-        const normalizedAnswer = normalizeHistoryResponse({
-          data: { answer: ciPayload },
-        } as ServerHistoryEntry["response"]);
-        if (normalizedAnswer && Array.isArray((normalizedAnswer as AnswerEnvelope).blocks)) {
-          // normalized answer is ready
-        } else {
-          throw new Error("Invalid all mode blocks format");
-        }
+        // "all" mode uses SSE streaming for real-time progress updates
+        const streamRequest: OpsStreamRequest = {
+          question: questionText,
+          ...(askAssetContextPayload.source_asset && { source_asset: askAssetContextPayload.source_asset }),
+          ...(askAssetContextPayload.schema_asset && { schema_asset: askAssetContextPayload.schema_asset }),
+          ...(askAssetContextPayload.resolver_asset && { resolver_asset: askAssetContextPayload.resolver_asset }),
+        };
+
+        await streamOpsQuery(streamRequest);
       } else {
         // All other modes (ci/config, metric, history, relation, document) use /ops/query
         const data = await authenticatedFetch<
@@ -403,26 +465,34 @@ export default function OpsPage() {
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
       setStatusMessage(`Error: ${normalized.message}`);
-    } finally {
-      // Refresh history from server (server writes final history entry)
-      // For "all" mode, fetch history and select the latest entry
-      await fetchHistory();
-      if (requestedMode.id === "all") {
-        // After fetching, the latest entry should be at index 0
-        // Set a small timeout to ensure state has updated
-        setTimeout(() => {
-          if (history.length > 0) {
-            setSelectedId(history[0].id);
-          }
-        }, 100);
-      } else {
-        setSelectedId(null);
-      }
-      setQuestion("");
       setIsRunning(false);
-      setIsFullScreen(false);
+      clearStreamingState();
+      return;
     }
-  }, [assetContext, currentModeDefinition, isRunning, question, fetchHistory, history]);
+
+    // Refresh history from server (server writes final history entry)
+    let refreshedHistory = await fetchHistory();
+    if (requestedMode.id === "all") {
+      const hasMatchingEntry = refreshedHistory.some((entry) => entry.question === questionText);
+      if (!hasMatchingEntry) {
+        for (let i = 0; i < 4; i += 1) {
+          await sleep(250);
+          refreshedHistory = await fetchHistory();
+          if (refreshedHistory.some((entry) => entry.question === questionText)) {
+            break;
+          }
+        }
+      }
+    }
+    const matched = refreshedHistory.find((entry) => entry.question === questionText);
+    setSelectedId(matched?.id ?? refreshedHistory[0]?.id ?? null);
+    if (requestedMode.id === "all" && refreshedHistory.length === 0) {
+      setStatusMessage("응답이 완료되었지만 이력이 아직 저장되지 않았습니다. 잠시 후 다시 시도해주세요.");
+    }
+    setQuestion("");
+    setIsRunning(false);
+    setIsFullScreen(false);
+  }, [assetContext, currentModeDefinition, isRunning, question, fetchHistory, streamOpsQuery, clearStreamingState]);
 
   // Fetch conversation summary for modal preview
   const fetchConversationSummary = useCallback(async () => {
@@ -911,7 +981,7 @@ export default function OpsPage() {
                               </p>
                               {entry.trace?.trace_id && (
                                 <p className="mt-1 text-xs font-mono line-clamp-1 text-muted-standard">
-                                  Trace: {entry.trace.trace_id}
+                                  Trace: {String(entry.trace.trace_id)}
                                 </p>
                               )}
                             </button>
@@ -1097,6 +1167,19 @@ export default function OpsPage() {
                 ) : null}
               </div>
               <div className="flex-1 overflow-y-auto">
+                {currentModeDefinition.id === "all" && hasStreamingProgress && (
+                  <div className="mb-3 rounded-3xl border p-4 bg-surface-elevated dark:border-border">
+                    <p className="text-xs uppercase tracking-wider text-muted-standard">
+                      Live Progress
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {streamingMessage || "처리 시작 중..."}
+                    </p>
+                    <p className="text-xs text-muted-standard">
+                      Stage: {streamingStage || "init"} · Elapsed: {streamingElapsedMs}ms
+                    </p>
+                  </div>
+                )}
                 {selectedEntry && Array.isArray(selectedEntry.response?.blocks) ? (
                   <BlockRenderer
                     blocks={selectedEntry.response.blocks as RendererAnswerBlock[]}
@@ -1197,6 +1280,61 @@ export default function OpsPage() {
                     >
                       {isRunning ? <span className="animate-pulse">Running…</span> : "메시지 전송"}
                     </button>
+                    
+                    {/* Streaming Progress Display */}
+                    {hasStreamingProgress && (
+                      <div className="rounded-xl border border-sky-500/30 bg-sky-950/20 p-3">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "h-2 w-2 rounded-full",
+                              isRunning ? "animate-pulse bg-sky-400" : "bg-emerald-400",
+                            )}
+                          />
+                          <span className="text-xs font-medium text-sky-300">
+                            {streamingMessage || "처리 시작 중..."}
+                          </span>
+                          <span className="ml-auto text-xs text-muted-standard">
+                            {streamingElapsedMs}ms
+                          </span>
+                        </div>
+                        {/* Progress stages visualization */}
+                        {streamingCompletedStages.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {[
+                              { key: "init", label: "초기화" },
+                              { key: "resolving", label: "질의 분석" },
+                              { key: "planning", label: "계획 수립" },
+                              { key: "validating", label: "계획 검증" },
+                              { key: "executing", label: "실행" },
+                              { key: "composing", label: "종합" },
+                              { key: "presenting", label: "응답" },
+                            ].map((stage) => {
+                              const isCompleted = streamingCompletedStages.includes(stage.key);
+                              const isCurrent = streamingStage === stage.key;
+                              return (
+                                <div
+                                  key={stage.key}
+                                  className={cn(
+                                    "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider transition",
+                                    isCompleted && isCurrent
+                                      ? "bg-sky-500 text-white"
+                                      : isCompleted
+                                        ? "bg-sky-500/30 text-sky-300"
+                                        : isCurrent
+                                          ? "animate-pulse bg-sky-500/50 text-sky-200"
+                                          : "bg-surface-elevated text-muted-standard",
+                                  )}
+                                >
+                                  {stage.label}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {statusMessage ? null : null}
                   </div>
                 </div>

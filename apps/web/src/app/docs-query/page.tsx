@@ -479,13 +479,9 @@ export default function DocsQueryPage() {
                   break;
                 case "summary":
                   console.log("[streamQuery] Summary:", parsed);
-                  finalAnswer = parsed.text;
-                  setAnswer(finalAnswer);
                   break;
                 case "detail":
                   console.log("[streamQuery] Detail:", parsed);
-                  finalAnswer += "\n\n" + parsed.text;
-                  setAnswer(finalAnswer);
                   break;
                 case "done":
                   console.log("[streamQuery] Done event:", parsed);

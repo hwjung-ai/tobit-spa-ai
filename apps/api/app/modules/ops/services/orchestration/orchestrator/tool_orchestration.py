@@ -23,6 +23,7 @@ from app.modules.ops.services.orchestration.orchestrator.chain_executor import (
 )
 from app.modules.ops.services.orchestration.planner.plan_schema import (
     ExecutionStrategy,
+    Intent,
     Plan,
     ToolDependency,
 )
@@ -249,6 +250,40 @@ class DependencyAnalyzer:
 
         for tool_id, spec in spec_map.items():
             if spec:
+                if tool_id == "primary":
+                    keywords = getattr(spec, "keywords", None)
+                    if not isinstance(keywords, list) or len(keywords) == 0:
+                        continue
+                elif tool_id == "secondary":
+                    keywords = getattr(spec, "keywords", None)
+                    if not isinstance(keywords, list) or len(keywords) == 0:
+                        continue
+                elif tool_id == "aggregate":
+                    has_aggregate_spec = bool(
+                        getattr(spec, "group_by", None)
+                        or getattr(spec, "metrics", None)
+                        or getattr(spec, "filters", None)
+                    )
+                    if not has_aggregate_spec:
+                        continue
+                elif tool_id == "graph":
+                    has_graph_spec = bool(
+                        getattr(spec, "view", None)
+                        or plan.intent in {Intent.EXPAND, Intent.PATH}
+                    )
+                    if not has_graph_spec:
+                        continue
+                elif tool_id == "metric":
+                    if not getattr(spec, "metric_name", None):
+                        continue
+                elif tool_id == "history":
+                    if not bool(getattr(spec, "enabled", False)):
+                        continue
+                elif tool_id == "document":
+                    if not isinstance(spec, dict):
+                        continue
+                    if not bool(spec.get("enabled")) or not str(spec.get("query") or "").strip():
+                        continue
                 # Get tool_type from spec (handle both Pydantic models and dicts)
                 if isinstance(spec, dict):
                     tool_type = spec.get('tool_type', None)

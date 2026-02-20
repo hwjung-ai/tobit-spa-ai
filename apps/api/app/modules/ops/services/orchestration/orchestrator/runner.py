@@ -1930,6 +1930,12 @@ class OpsOrchestratorRunner:
             plan_output = PlanOutput(kind=PlanOutputKind.PLAN, plan=self.plan)
         return asyncio.run(self._run_async_with_stages(plan_output))
 
+    async def run_async(self, plan_output: PlanOutput | None = None) -> Dict[str, Any]:
+        """Async entrypoint for callers already running inside an event loop."""
+        if plan_output is None:
+            plan_output = PlanOutput(kind=PlanOutputKind.PLAN, plan=self.plan)
+        return await self._run_async_with_stages(plan_output)
+
     async def _run_async(self) -> Dict[str, Any]:
         blocks: List[Block] = []
         answer = "CI insight ready"

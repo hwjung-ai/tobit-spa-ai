@@ -5,8 +5,43 @@ import { fetchApi } from "@/lib/adminUtils";
 import Toast from "./Toast";
 
 interface SchemaViewerPanelProps {
-  schema: Record<string, unknown>;
+  schema: {
+    asset_id: string;
+    content?: {
+      catalog?: {
+        tables?: Array<TableSchema | Record<string, unknown>>;
+      };
+    };
+  };
   onRefresh: () => void;
+}
+
+interface ColumnSchema {
+  column_name?: string;
+  data_type?: string;
+  is_primary_key?: boolean;
+  is_foreign_key?: boolean;
+  is_nullable?: boolean;
+  comment?: string;
+  default_value?: string;
+}
+
+interface TableSchema {
+  name: string;
+  enabled?: boolean;
+  row_count?: number | null;
+  comment?: string;
+  columns?: ColumnSchema[];
+}
+
+function normalizeTableSchema(table: TableSchema | Record<string, unknown>): TableSchema {
+  return {
+    name: typeof table.name === "string" ? table.name : "",
+    enabled: typeof table.enabled === "boolean" ? table.enabled : true,
+    row_count: typeof table.row_count === "number" ? table.row_count : null,
+    comment: typeof table.comment === "string" ? table.comment : undefined,
+    columns: Array.isArray(table.columns) ? (table.columns as ColumnSchema[]) : [],
+  };
 }
 
 export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPanelProps) {
@@ -14,8 +49,8 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
   const [togglingTable, setTogglingTable] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
 
-  const catalog = schema.content?.catalog || {};
-  const tables = catalog.tables || [];
+  const catalog = schema.content?.catalog ?? {};
+  const tables = catalog.tables ?? [];
 
   const toggleTableExpanded = (tableName: string) => {
     const newExpanded = new Set(expandedTables);
@@ -60,16 +95,19 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
         </div>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {tables.map((table) => (
+          {tables.map((rawTable, idx) => {
+            const table = normalizeTableSchema(rawTable);
+            return (
             <TableItem
-              key={table.name}
+              key={`${table.name}-${idx}`}
               table={table}
               isExpanded={expandedTables.has(table.name)}
               onToggleExpanded={() => toggleTableExpanded(table.name)}
               onToggleEnabled={(enabled) => handleToggleTable(table.name, enabled)}
               isTogglingEnabled={togglingTable === table.name}
             />
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -82,7 +120,7 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
 }
 
 interface TableItemProps {
-  table: Record<string, unknown>;
+  table: TableSchema;
   isExpanded: boolean;
   onToggleExpanded: () => void;
   onToggleEnabled: (enabled: boolean) => void;
@@ -97,7 +135,7 @@ function TableItem({
   isTogglingEnabled,
 }: TableItemProps) {
   const enabled = table.enabled ?? true;
-  const columns = table.columns || [];
+  const columns = table.columns ?? [];
 
   return (
     <div className="rounded-lg border border-variant overflow-hidden">
@@ -150,7 +188,7 @@ function TableItem({
             </thead>
             <tbody>
               {columns.length > 0 ? (
-                columns.map((col, idx) => (
+                columns.map((col: ColumnSchema, idx: number) => (
                   <tr key={idx} className="border-b border-variant">
                     <td className="p-1  font-mono">{col.column_name}</td>
                     <td className="p-1 ">{col.data_type}</td>

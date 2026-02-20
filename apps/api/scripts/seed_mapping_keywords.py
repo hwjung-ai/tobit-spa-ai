@@ -1,217 +1,193 @@
 #!/usr/bin/env python3
-"""
-Mapping Asset Importer
+"""Seed unified OPS planner mapping assets directly into DB."""
 
-Imports 6 mapping YAML files into the Asset Registry database.
-This script migrates hardcoded keyword sets from planner_llm.py to mapping assets.
-"""
+from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-import yaml
+from sqlmodel import select
 
-# Add project root to Python path
-project_root = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(project_root))
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from app.modules.asset_registry.crud import create_asset, publish_asset
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
-from core.logging import get_logger
 
-logger = get_logger(__name__)
+PLANNER_KEYWORDS_TEMPLATE: dict[str, Any] = {
+    "metric_aliases": {
+        "aliases": {
+            "cpu": "cpu_usage",
+            "memory": "memory_usage",
+            "disk": "disk_usage",
+            "latency": "latency",
+            "error": "error_rate",
+        },
+        "keywords": ["cpu", "memory", "disk", "latency", "error"],
+    },
+    "agg_keywords": {
+        "mappings": {
+            "avg": "avg",
+            "average": "avg",
+            "mean": "avg",
+            "sum": "sum",
+            "total": "sum",
+            "max": "max",
+            "min": "min",
+            "count": "count",
+        }
+    },
+    "series_keywords": {"keywords": ["trend", "timeseries", "series", "over time"]},
+    "history_keywords": {
+        "keywords": ["history", "event", "log", "recent"],
+        "time_map": {
+            "today": "last_24h",
+            "last day": "last_24h",
+            "last week": "last_7d",
+            "last month": "last_30d",
+            "all time": "all_time",
+        },
+    },
+    "list_keywords": {"keywords": ["list", "show", "top", "all"]},
+    "table_hints": {"keywords": ["table", "rows", "columns"]},
+    "cep_keywords": {"keywords": ["cep", "pattern", "rule"]},
+    "graph_scope_keywords": {
+        "scope_keywords": ["dependency", "impact", "neighbors", "path"],
+        "metric_keywords": ["metric", "latency", "error", "cpu", "memory"],
+    },
+    "auto_keywords": {"keywords": ["auto", "automatically"]},
+    "filterable_fields": {
+        "tag_filter_keys": ["env", "service", "team", "region", "tier"],
+        "attr_filter_keys": ["ci_type", "status", "severity", "source", "category"],
+    },
+    "graph_view_keywords": {
+        "view_keyword_map": {
+            "dependency": "DEPENDENCY",
+            "impact": "IMPACT",
+            "neighbors": "NEIGHBORS",
+            "path": "PATH",
+            "composition": "COMPOSITION",
+            "summary": "SUMMARY",
+        },
+        "default_depths": {
+            "DEPENDENCY": 2,
+            "IMPACT": 2,
+            "NEIGHBORS": 1,
+            "PATH": 2,
+            "COMPOSITION": 2,
+            "SUMMARY": 1,
+        },
+        "force_keywords": ["dependency map", "impact map", "path between"],
+    },
+    "auto_view_preferences": {
+        "preferences": [
+            {"keywords": ["dependency", "depends on"], "views": ["DEPENDENCY"]},
+            {"keywords": ["impact", "affected"], "views": ["IMPACT"]},
+            {"keywords": ["path", "route"], "views": ["PATH"]},
+            {"keywords": ["neighbors", "around"], "views": ["NEIGHBORS"]},
+        ]
+    },
+}
 
-# Mapping files to import
-MAPPING_FILES = [
-    "metric_aliases.yaml",
-    "agg_keywords.yaml",
-    "series_keywords.yaml",
-    "history_keywords.yaml",
-    "list_keywords.yaml",
-    "table_hints.yaml",
-]
-
-MAPPINGS_DIR = project_root / "apps/api/resources/mappings"
+PLANNER_DEFAULTS_TEMPLATE: dict[str, Any] = {
+    "output_type_priorities": {
+        "global_priorities": ["text", "table", "chart", "network", "number"],
+    }
+}
 
 
-def load_yaml_file(filepath: Path) -> dict:
-    """Load YAML file and return parsed content."""
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
-    except Exception as e:
-        logger.error(f"Failed to load {filepath}: {e}")
-        raise
+def _upsert_published_mapping(
+    session,
+    *,
+    name: str,
+    scope: str,
+    content: dict[str, Any],
+    description: str,
+    actor: str,
+    tenant_id: str,
+) -> None:
+    now = datetime.now()
+    current = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "mapping")
+        .where(TbAssetRegistry.name == name)
+        .where(TbAssetRegistry.status == "published")
+        .order_by(TbAssetRegistry.updated_at.desc())
+    ).first()
 
+    if current:
+        current.content = content
+        current.description = description
+        current.scope = scope
+        current.mapping_type = name
+        current.updated_at = now
+        current.published_by = actor
+        current.published_at = now
+        current.tenant_id = tenant_id
+        session.add(current)
+        session.commit()
+        print(f"Updated: {name} ({current.asset_id})")
+        return
 
-def import_mapping_asset(name: str, mapping_data: dict, session) -> dict:
-    """
-    Import a single mapping asset into the database.
-
-    Args:
-        name: Mapping asset name (e.g., "metric_aliases")
-        mapping_data: Parsed YAML content
-        session: Database session
-
-    Returns:
-        Created asset information
-    """
-    # Extract required fields
-    description = mapping_data.get("description", "")
-    mapping_type = mapping_data.get("mapping_type", name)
-    scope = mapping_data.get("scope", "ci")
-    content = mapping_data.get("content", {})
-
-    # Create the asset
-    asset = create_asset(
-        session=session,
+    row = TbAssetRegistry(
         asset_type="mapping",
         name=name,
         description=description,
-        mapping_type=mapping_type,
-        content=content,
+        version=1,
+        status="published",
         scope=scope,
-        status="draft",
-        created_by="mapping_importer_script",
+        mapping_type=name,
+        content=content,
+        is_system=True,
+        created_by=actor,
+        published_by=actor,
+        published_at=now,
+        tenant_id=tenant_id,
+        created_at=now,
+        updated_at=now,
     )
+    session.add(row)
+    session.commit()
+    print(f"Created: {name} ({row.asset_id})")
 
-    logger.info(f"Created draft mapping asset: {name} (asset_id={asset.asset_id})")
 
-    return {
-        "name": name,
-        "asset_id": str(asset.asset_id),
-        "status": "draft",
-    }
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Import mapping assets into Asset Registry"
-    )
-    parser.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes to database (insert/update assets)",
-    )
-    parser.add_argument(
-        "--publish", action="store_true", help="Publish created mapping assets"
-    )
-    parser.add_argument(
-        "--cleanup-drafts",
-        action="store_true",
-        help="Cleanup existing draft mappings before import",
-    )
-    parser.add_argument("--scope", default="ci", help="Asset scope (default: ci)")
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Dry run - show what would be done without making changes",
-    )
-
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Seed unified OPS planner mappings")
+    parser.add_argument("--actor", default="seed_mapping_keywords_script")
+    parser.add_argument("--scope", default="ops")
+    parser.add_argument("--tenant-id", default="default")
     args = parser.parse_args()
 
-    # Verify mappings directory exists
-    if not MAPPINGS_DIR.exists():
-        logger.error(f"Mappings directory not found: {MAPPINGS_DIR}")
-        sys.exit(1)
+    planner_keywords = dict(PLANNER_KEYWORDS_TEMPLATE)
+    planner_defaults = dict(PLANNER_DEFAULTS_TEMPLATE)
 
-    # Load all mapping files
-    mapping_files_data = {}
-    for mapping_file in MAPPING_FILES:
-        filepath = MAPPINGS_DIR / mapping_file
-        if not filepath.exists():
-            logger.warning(f"Mapping file not found: {filepath}")
-            continue
-
-        try:
-            data = load_yaml_file(filepath)
-            name = data.get("name", mapping_file.replace(".yaml", ""))
-            mapping_files_data[name] = data
-            logger.info(f"Loaded mapping file: {name}")
-        except Exception as e:
-            logger.error(f"Failed to load {mapping_file}: {e}")
-            continue
-
-    if not mapping_files_data:
-        logger.error("No mapping files were loaded successfully")
-        sys.exit(1)
-
-    logger.info(f"Loaded {len(mapping_files_data)} mapping files")
-
-    # Dry run - just show what would be done
-    if args.dry_run:
-        print("=== Dry Run Mode ===")
-        print(f"Would import {len(mapping_files_data)} mapping assets:")
-        for name, data in mapping_files_data.items():
-            print(f"  - {name}: {data.get('description', '')}")
-        print(
-            "\nWould apply to database:", "--apply", "publish" if args.publish else ""
-        )
-        sys.exit(0)
-
-    # Apply changes to database
-    if not args.apply:
-        logger.info("Dry run mode. Use --apply to create assets in database.")
-        print("\nUse --apply to create mapping assets in database.")
-        sys.exit(0)
-
-    # Cleanup existing draft mappings if requested
     with get_session_context() as session:
-        if args.cleanup_drafts:
-            logger.info("Cleaning up existing draft mapping assets...")
-            from app.modules.asset_registry.models import TbAssetRegistry
-            from sqlmodel import select
+        _upsert_published_mapping(
+            session,
+            name="planner_keywords",
+            scope=args.scope,
+            content=planner_keywords,
+            description="Unified planner keyword mapping for OPS orchestration",
+            actor=args.actor,
+            tenant_id=args.tenant_id,
+        )
+        _upsert_published_mapping(
+            session,
+            name="planner_defaults",
+            scope=args.scope,
+            content=planner_defaults,
+            description="Unified planner defaults mapping for OPS orchestration",
+            actor=args.actor,
+            tenant_id=args.tenant_id,
+        )
 
-            # Find existing draft mapping assets
-            existing_drafts = session.exec(
-                select(TbAssetRegistry)
-                .where(TbAssetRegistry.asset_type == "mapping")
-                .where(TbAssetRegistry.status == "draft")
-            ).all()
-
-            if existing_drafts:
-                for asset in existing_drafts:
-                    session.delete(asset)
-                logger.info(f"Deleted draft asset: {asset.name}")
-                session.commit()
-            logger.info(f"Deleted {len(existing_drafts)} existing draft mapping assets")
-
-        # Create new mapping assets
-        created_assets = []
-        for name, data in mapping_files_data.items():
-            try:
-                result = import_mapping_asset(name, data, session)
-                created_assets.append(result)
-            except Exception as e:
-                logger.error(f"Failed to import mapping {name}: {e}")
-                continue
-
-        session.commit()
-        logger.info(f"Created {len(created_assets)} mapping assets")
-
-        # Publish if requested
-        if args.publish:
-            logger.info("Publishing mapping assets...")
-            for asset_info in created_assets:
-                try:
-                    asset = session.get(TbAssetRegistry, asset_info["asset_id"])
-                    publish_asset(
-                        session, asset, published_by="mapping_importer_script"
-                    )
-                    logger.info(f"Published: {asset_info['name']}")
-                except Exception as e:
-                    logger.error(f"Failed to publish {asset_info['name']}: {e}")
-                    continue
-
-            logger.info("All mapping assets published")
-        else:
-            logger.info("Mapping assets created in draft status.")
-            print("\nMapping assets imported successfully!")
-            print(f"Created: {len(created_assets)} assets")
-            print("Status: draft")
-            print("\nUse --publish to publish all mapping assets.")
+    print("Done.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

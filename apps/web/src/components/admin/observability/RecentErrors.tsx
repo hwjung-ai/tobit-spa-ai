@@ -23,7 +23,9 @@ export default function RecentErrors() {
     const fetchErrors = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch("/cep/errors/timeline?period=24h");
+        const response = await authenticatedFetch<{ data?: { recent_errors?: Error[] } }>(
+          "/cep/errors/timeline?period=24h"
+        );
         setErrors(response.data?.recent_errors || []);
         setError(null);
       } catch (err) {

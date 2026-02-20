@@ -48,7 +48,7 @@ export default function ErrorDistribution() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch("/cep/errors/timeline?period=24h");
+        const response = await authenticatedFetch<{ data?: ErrorData }>("/cep/errors/timeline?period=24h");
         setData(response.data || null);
         setError(null);
       } catch (err) {

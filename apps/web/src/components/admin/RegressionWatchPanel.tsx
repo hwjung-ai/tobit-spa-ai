@@ -202,7 +202,7 @@ export default function RegressionWatchPanel() {
       const result = await fetchApi(`/ops/regression-runs/${runId}`, {
         method: "GET",
       });
-      setSelectedRun(result.data as RegressionRunDetail);
+      setSelectedRun(result.data as unknown as RegressionRunDetail);
       setShowRunDetail(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load run details");

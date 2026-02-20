@@ -316,11 +316,16 @@ class ToolChainExecutor:
         try:
             tool = self._get_registry().get_tool(step.tool_name)
         except ValueError:
-            return StepResult(
-                step_id=step.step_id,
-                success=False,
-                error=f"Tool not found: {step.tool_name}",
-            )
+            # Fallback: resolve by capability/type alias when step.tool_name is not a registry key.
+            resolved_tool = self._resolve_tool_fallback(step.tool_name)
+            if resolved_tool is not None:
+                tool = resolved_tool
+            else:
+                return StepResult(
+                    step_id=step.step_id,
+                    success=False,
+                    error=f"Tool not found: {step.tool_name}",
+                )
 
         # Execute with timeout
         try:
@@ -363,6 +368,34 @@ class ToolChainExecutor:
                 error=str(e),
                 execution_time_ms=int((time.time() - start_time) * 1000),
             )
+
+    def _resolve_tool_fallback(self, requested_name: str):
+        """Resolve tool instance using capability/type aliases when direct lookup fails."""
+        registry = self._get_registry()
+        normalized = requested_name.lower()
+
+        # Direct capability search first.
+        candidate = registry.find_tool_by_capability(requested_name)
+        if candidate is not None:
+            return candidate
+
+        # Known aliases used by plans.
+        alias_order: list[str] = []
+        if normalized in {"database_query", "ci_lookup", "ci_search", "ci_aggregate"}:
+            alias_order.extend(["direct_query", "database_query", "ci_lookup", "ci_search"])
+        if "document" in normalized:
+            alias_order.extend(["document_search", "document"])
+
+        for alias in alias_order:
+            candidate = registry.find_tool_by_capability(alias)
+            if candidate is not None:
+                return candidate
+            try:
+                return registry.get_tool(alias)
+            except ValueError:
+                continue
+
+        return None
 
     def _merge_params(
         self, step: ToolChainStep, prev_results: dict[str, StepResult]

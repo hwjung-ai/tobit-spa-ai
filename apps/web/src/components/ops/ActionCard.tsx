@@ -46,7 +46,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
 
   const executeActionMutation = useMutation({
     mutationFn: async ({ action, params }: { action: ActionType; params: ActionParams }) => {
-      const response = await authenticatedFetch(`/api/ops/actions`, {
+      const response = await authenticatedFetch<{ data?: unknown; message?: string }>(`/api/ops/actions`, {
         method: "POST",
         body: JSON.stringify({
           action,
@@ -55,11 +55,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
           params,
         }),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Action failed");
-      }
-      return body.data;
+      return response?.data;
     },
     onSuccess: () => {
       setIsOpen(false);

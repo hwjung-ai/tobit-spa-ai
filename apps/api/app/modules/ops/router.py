@@ -44,6 +44,7 @@ from app.modules.inspector.span_tracker import (
 )
 from app.modules.ops.routes.ask import ask_ops as modular_ask_ops
 
+from .routes.ask_stream import ask_ops_stream as modular_ask_ops_stream
 from .schemas import (
     IsolatedStageTestRequest,
     OpsQueryRequest,
@@ -71,6 +72,9 @@ logger = get_logger(__name__)
 
 # Single source of truth for /ops/ask implementation
 router.add_api_route("/ask", modular_ask_ops, methods=["POST"])
+
+# Single source of truth for /ops/ask/stream implementation
+router.add_api_route("/ask/stream", modular_ask_ops_stream, methods=["POST"])
 
 
 def _generate_references_from_tool_calls(

@@ -318,7 +318,7 @@ export default function CatalogsContent() {
                 />
 
                 <CatalogViewerPanel
-                  schema={selectedCatalog as unknown as Record<string, unknown>}
+                  schema={selectedCatalog}
                   onRefresh={() => {
                     void handleRefresh();
                   }}

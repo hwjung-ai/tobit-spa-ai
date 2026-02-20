@@ -28,17 +28,9 @@ interface ChunkInfo {
   chunk_id: string;
   document_id: string;
   page: number | null;
+  page_number?: number | null;
   text: string;
   snippet: string;
-}
-
-interface Reference {
-  document_id: string;
-  document_title: string;
-  chunk_id: string;
-  page: number | null;
-  snippet: string;
-  score?: number;
 }
 
 interface DocumentMeta {

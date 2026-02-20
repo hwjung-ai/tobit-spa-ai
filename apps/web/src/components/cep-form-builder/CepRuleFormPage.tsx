@@ -57,6 +57,13 @@ interface CepRuleFormData {
   actions: Action[];
 }
 
+interface SimulationResult {
+  matched: boolean;
+  conditionResults: Record<string, boolean>;
+  triggeredActions: string[];
+  explanation: string;
+}
+
 interface CepRuleFormPageProps {
   onSave?: (data: CepRuleFormData) => Promise<void>;
   onCancel?: () => void;
@@ -169,7 +176,7 @@ export function CepRuleFormPage({
 
   const handleSimulate = useCallback(
     async (testPayload: Record<string, unknown>) => {
-      const response = await authenticatedFetch("/api/cep/rules/preview", {
+      const response = await authenticatedFetch<SimulationResult>("/api/cep/rules/preview", {
         method: "POST",
         body: JSON.stringify({
           trigger_spec: formData.triggerSpec,
@@ -178,12 +185,7 @@ export function CepRuleFormPage({
           test_payload: testPayload,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("시뮬레이션 API 호출 실패");
-      }
-
-      return response.json();
+      return response;
     },
     [formData]
   );
@@ -239,7 +241,7 @@ export function CepRuleFormPage({
           });
         }}
         onTriggerSpecChange={(spec) =>
-          setFormData({ ...formData, triggerSpec: spec })
+          setFormData({ ...formData, triggerSpec: spec as unknown as Record<string, unknown> })
         }
       />
 
@@ -259,7 +261,7 @@ export function CepRuleFormPage({
       <WindowingSection
         windowConfig={formData.windowConfig}
         onWindowConfigChange={(config) =>
-          setFormData({ ...formData, windowConfig: config })
+          setFormData({ ...formData, windowConfig: config as unknown as Record<string, unknown> })
         }
       />
 

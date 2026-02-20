@@ -110,7 +110,7 @@ class OpsSSEHandler:
         event: {event_type}
         data: {json_string}
         """
-        return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+        return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False, default=str)}\n\n"
     
     def _progress_event(
         self,

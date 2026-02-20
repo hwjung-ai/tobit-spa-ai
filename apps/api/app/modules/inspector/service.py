@@ -189,6 +189,57 @@ def _asset_ref(asset: Dict[str, Any] | None) -> str | None:
     return None
 
 
+def _asset_display_name(value: Any) -> str:
+    if isinstance(value, dict):
+        for key in ("name", "policy_type", "mapping_type", "tool_name", "asset_id"):
+            candidate = value.get(key)
+            if isinstance(candidate, str) and candidate.strip():
+                return candidate.strip().lower()
+    if isinstance(value, str):
+        return value.strip().lower()
+    return ""
+
+
+def _sanitize_stage_applied_assets(
+    stage_name: str, stage_applied_map: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Normalize per-stage applied assets for inspector rendering."""
+    sanitized: Dict[str, Any] = {}
+    for key, value in (stage_applied_map or {}).items():
+        if key in {"query", "queries", "screen", "screens"}:
+            continue
+        if key.startswith("query:") or key.startswith("screen:"):
+            continue
+        sanitized[key] = value
+
+    # plan_budget is a validate-stage policy. Hide it from other stages.
+    if stage_name != "validate":
+        for key in list(sanitized.keys()):
+            lower_key = str(key).lower()
+            if lower_key.startswith("policy:") and "plan_budget" in lower_key:
+                sanitized.pop(key, None)
+        if "policy" in sanitized:
+            if "plan_budget" in _asset_display_name(sanitized.get("policy")):
+                sanitized.pop("policy", None)
+
+    # Remove duplicate compound keys when base key already points to same asset.
+    for base in ("prompt", "policy", "mapping", "source", "catalog", "resolver"):
+        base_value = sanitized.get(base)
+        if base_value is None:
+            continue
+        base_name = _asset_display_name(base_value)
+        if not base_name:
+            continue
+        for key in list(sanitized.keys()):
+            if not key.startswith(f"{base}:"):
+                continue
+            suffix = key.split(":", 1)[1].strip().lower()
+            if suffix == base_name:
+                sanitized.pop(key, None)
+
+    return sanitized
+
+
 _INTERNAL_TOOL_ALIASES = {"primary", "aggregate", "history", "graph"}
 
 
@@ -204,7 +255,7 @@ def _extract_plan_alias_tool_types(trace: TbExecutionTrace) -> Dict[str, str]:
         return {}
 
     alias_map: Dict[str, str] = {}
-    for alias in ("primary", "secondary", "aggregate", "history", "graph", "auto"):
+    for alias in ("primary", "secondary", "aggregate", "history", "graph", "auto", "document"):
         block = plan.get(alias)
         if not isinstance(block, dict):
             continue
@@ -274,6 +325,51 @@ def _extract_tool_names(trace: TbExecutionTrace) -> List[str]:
         seen.add(name)
         deduped.append(name)
     return deduped
+
+
+def _extract_execute_tool_sequence(trace: TbExecutionTrace) -> List[str]:
+    """Extract ordered actual tool sequence used in execute stage."""
+    alias_map = _extract_plan_alias_tool_types(trace)
+    ordered: List[str] = []
+
+    for stage_output in trace.stage_outputs or []:
+        if not isinstance(stage_output, dict):
+            continue
+        if str(stage_output.get("stage") or "") != "execute":
+            continue
+        result = stage_output.get("result")
+        if not isinstance(result, dict):
+            continue
+
+        execution_results = result.get("execution_results")
+        if not isinstance(execution_results, list):
+            base_result = result.get("base_result")
+            if isinstance(base_result, dict):
+                execution_results = base_result.get("execution_results")
+        if not isinstance(execution_results, list):
+            continue
+
+        for item in execution_results:
+            if not isinstance(item, dict):
+                continue
+            resolved = _normalize_tool_name_with_plan(
+                item.get("tool_name") if isinstance(item.get("tool_name"), str) else None,
+                alias_map,
+            )
+            if resolved:
+                ordered.append(resolved)
+        break
+
+    # Fallback to execution_steps when execute stage output is not available.
+    if not ordered:
+        for step in trace.execution_steps or []:
+            if not isinstance(step, dict):
+                continue
+            resolved = _normalize_tool_name_with_plan(step.get("tool_name"), alias_map)
+            if resolved:
+                ordered.append(resolved)
+
+    return ordered
 
 
 def normalize_trace_for_inspector(
@@ -370,6 +466,8 @@ def normalize_trace_for_inspector(
 
     applied_assets["tools"] = sanitized_tools
 
+    execute_tool_sequence = _extract_execute_tool_sequence(trace)
+
     normalized_stage_inputs: List[Dict[str, Any]] = []
     for stage_input in data.get("stage_inputs") or []:
         if not isinstance(stage_input, dict):
@@ -377,15 +475,18 @@ def normalize_trace_for_inspector(
         stage_name = str(stage_input.get("stage") or "")
         stage_applied = stage_input.get("applied_assets")
         stage_applied_map = stage_applied if isinstance(stage_applied, dict) else {}
-
-        # Hide deprecated per-stage keys if they exist in legacy traces.
-        filtered: Dict[str, Any] = {}
-        for key, value in stage_applied_map.items():
-            if key in {"query", "queries", "screen", "screens"}:
-                continue
-            filtered[key] = value
-
-        stage_input["applied_assets"] = filtered
+        stage_applied_sanitized = _sanitize_stage_applied_assets(
+            stage_name, stage_applied_map
+        )
+        if stage_name == "execute" and execute_tool_sequence:
+            stage_applied_sanitized = {
+                key: value
+                for key, value in stage_applied_sanitized.items()
+                if not str(key).startswith("tool:")
+            }
+            for index, tool_name in enumerate(execute_tool_sequence, start=1):
+                stage_applied_sanitized[f"tool:{index:02d}"] = tool_name
+        stage_input["applied_assets"] = stage_applied_sanitized
 
         normalized_stage_inputs.append(stage_input)
 
@@ -416,7 +517,9 @@ def normalize_trace_for_inspector(
             stage_applied_map = stage_applied if isinstance(stage_applied, dict) else {}
             if "prompt" not in stage_applied_map:
                 stage_applied_map["prompt"] = planner_prompt
-                stage_input["applied_assets"] = stage_applied_map
+                stage_input["applied_assets"] = _sanitize_stage_applied_assets(
+                    "route_plan", stage_applied_map
+                )
             break
 
     has_budget_policy = any(
@@ -562,8 +665,8 @@ def normalize_trace_for_inspector(
                     staged["catalog"] = applied_assets["catalog"]
                 if graph_relation_mapping:
                     staged["mapping"] = graph_relation_mapping
-                for name in tool_names:
-                    staged[f"tool:{name}"] = name
+                for index, name in enumerate(execute_tool_sequence or tool_names, start=1):
+                    staged[f"tool:{index:02d}"] = name
             elif stage_name == "compose":
                 if compose_prompt:
                     staged["prompt"] = compose_prompt
@@ -572,7 +675,9 @@ def normalize_trace_for_inspector(
                 if isinstance(applied_assets.get("resolver"), dict):
                     staged["resolver"] = applied_assets["resolver"]
 
-            stage_input["applied_assets"] = staged
+            stage_input["applied_assets"] = _sanitize_stage_applied_assets(
+                stage_name, staged
+            )
 
     # Partial legacy stage snapshots: backfill only missing slots per stage.
     if has_stage_inputs:
@@ -612,11 +717,22 @@ def normalize_trace_for_inspector(
                 ):
                     stage_applied_map["mapping"] = graph_relation_mapping
                 has_tool = any(str(key).startswith("tool:") for key in stage_applied_map.keys())
-                if not has_tool and tool_names:
-                    for name in tool_names:
-                        stage_applied_map[f"tool:{name}"] = name
+                sequence = execute_tool_sequence or tool_names
+                if sequence:
+                    stage_applied_map = {
+                        key: value
+                        for key, value in stage_applied_map.items()
+                        if not str(key).startswith("tool:")
+                    }
+                    for index, name in enumerate(sequence, start=1):
+                        stage_applied_map[f"tool:{index:02d}"] = name
+                elif not has_tool and tool_names:
+                    for index, name in enumerate(tool_names, start=1):
+                        stage_applied_map[f"tool:{index:02d}"] = name
 
-            stage_input["applied_assets"] = stage_applied_map
+            stage_input["applied_assets"] = _sanitize_stage_applied_assets(
+                stage_name, stage_applied_map
+            )
 
     data["applied_assets"] = applied_assets
     data["stage_inputs"] = normalized_stage_inputs

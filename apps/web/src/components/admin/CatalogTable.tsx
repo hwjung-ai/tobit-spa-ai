@@ -13,7 +13,12 @@ interface CatalogAsset {
   description?: string;
   status: string;
   version: number;
-  content?: Record<string, unknown>;
+  content?: {
+    catalog?: {
+      scan_status?: string;
+      tables?: Array<Record<string, unknown>>;
+    };
+  };
   created_at?: string;
   updated_at?: string;
 }

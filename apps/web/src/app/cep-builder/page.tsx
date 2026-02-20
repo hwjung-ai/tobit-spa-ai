@@ -42,6 +42,29 @@ import {
 import { recordCopilotMetric } from "../../lib/copilot/metrics";
 import { CepTourLauncher } from "../../components/cep-builder/CepTourLauncher";
 
+type FormWindowConfig = {
+  type?: "tumbling" | "sliding" | "session";
+  size?: string;
+  slide?: string;
+  timeout?: string;
+};
+
+type FormAggregation = {
+  id: string;
+  type: "count" | "sum" | "avg" | "min" | "max" | "std" | "percentile";
+  fieldName?: string;
+  outputName?: string;
+  percentile?: number;
+};
+
+type FormEnrichment = {
+  id: string;
+  type: "lookup" | "aggregate" | "ml_model";
+  source?: string;
+  key?: string;
+  outputField?: string;
+};
+
 export default function CepBuilderPage() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const [rules, setRules] = useState<CepRule[]>([]);
@@ -89,10 +112,9 @@ export default function CepBuilderPage() {
   const [formConditions, setFormConditions] = useState<Condition[]>([]);
   const [formConditionLogic, setFormConditionLogic] = useState<"AND" | "OR" | "NOT">("AND");
   const [formActions, setFormActions] = useState<Action[]>([]);
-  const [formWindowConfig, setFormWindowConfig] = useState<Record<string, unknown>>({});
-  const [formAggregations, setFormAggregations] = useState<Record<string, unknown>[]>([]);
-  const [formGroupByFields, setFormGroupByFields] = useState<string[]>([]);
-  const [formEnrichments, setFormEnrichments] = useState<Record<string, unknown>[]>([]);
+  const [formWindowConfig, setFormWindowConfig] = useState<FormWindowConfig>({});
+  const [formAggregations, setFormAggregations] = useState<FormAggregation[]>([]);
+  const [formEnrichments, setFormEnrichments] = useState<FormEnrichment[]>([]);
 
   const draftStorageId = selectedId ?? "new";
   const finalStorageId = selectedId ?? (ruleName.trim() || "new");
@@ -431,7 +453,7 @@ export default function CepBuilderPage() {
 
     // 윈도우 설정 추출
     if (triggerSpec.window_config) {
-      setFormWindowConfig(triggerSpec.window_config as Record<string, unknown>);
+      setFormWindowConfig(triggerSpec.window_config as FormWindowConfig);
     } else {
       setFormWindowConfig({});
     }
@@ -444,6 +466,9 @@ export default function CepBuilderPage() {
           id:
             ((triggerSpec.aggregation as Record<string, unknown>).id as string) ||
             `agg-${Math.random().toString(36).substr(2, 9)}`,
+          type:
+            ((triggerSpec.aggregation as Record<string, unknown>).type as FormAggregation["type"]) ||
+            "count",
         },
       ]);
     } else {
@@ -456,6 +481,7 @@ export default function CepBuilderPage() {
         (triggerSpec.enrichments as Record<string, unknown>[]).map((e) => ({
           ...e,
           id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`,
+          type: (e.type as FormEnrichment["type"]) || "lookup",
         })),
       );
     } else {
@@ -672,7 +698,7 @@ export default function CepBuilderPage() {
     }
 
     if (triggerSpec.window_config) {
-      setFormWindowConfig(triggerSpec.window_config as Record<string, unknown>);
+      setFormWindowConfig(triggerSpec.window_config as FormWindowConfig);
     } else {
       setFormWindowConfig({});
     }
@@ -684,6 +710,9 @@ export default function CepBuilderPage() {
           id:
             ((triggerSpec.aggregation as Record<string, unknown>).id as string) ||
             `agg-${Math.random().toString(36).substr(2, 9)}`,
+          type:
+            ((triggerSpec.aggregation as Record<string, unknown>).type as FormAggregation["type"]) ||
+            "count",
         },
       ]);
     } else {
@@ -695,6 +724,7 @@ export default function CepBuilderPage() {
         (triggerSpec.enrichments as Record<string, unknown>[]).map((e) => ({
           ...e,
           id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`,
+          type: (e.type as FormEnrichment["type"]) || "lookup",
         })),
       );
     } else {
@@ -1024,11 +1054,11 @@ export default function CepBuilderPage() {
     <div className="max-h-[600px] overflow-y-auto custom-scrollbar space-y-4">
       <BasicInfoSection
         ruleName={ruleName}
-        description={ruleDescription}
-        isActive={isActive}
-        onRuleNameChange={setRuleName}
+        ruleDescription={ruleDescription}
+        isEnabled={isActive}
+        onNameChange={setRuleName}
         onDescriptionChange={setRuleDescription}
-        onActiveChange={setIsActive}
+        onEnabledChange={setIsActive}
       />
 
       <TriggerSection
@@ -1063,9 +1093,7 @@ export default function CepBuilderPage() {
 
       <AggregationSection
         aggregations={formAggregations}
-        groupByFields={formGroupByFields}
         onAggregationsChange={setFormAggregations}
-        onGroupByChange={setFormGroupByFields}
       />
 
       <EnrichmentSection enrichments={formEnrichments} onEnrichmentsChange={setFormEnrichments} />
@@ -1422,7 +1450,10 @@ export default function CepBuilderPage() {
             trigger_spec: selectedRule.trigger_spec,
             action_spec: selectedRule.action_spec,
             is_active: selectedRule.is_active,
-            description: selectedRule.description,
+            description:
+              typeof selectedRule.action_spec?.description === "string"
+                ? selectedRule.action_spec.description
+                : "",
           }
         : null,
       draft_status: draftStatus,

@@ -32,7 +32,7 @@ export default function PerformanceMetrics() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await authenticatedFetch("/cep/stats/summary");
+        const response = await authenticatedFetch<{ data?: { stats?: SystemStats } }>("/cep/stats/summary");
         setStats(response.data?.stats || null);
         setError(null);
       } catch (err) {

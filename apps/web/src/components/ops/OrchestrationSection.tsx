@@ -27,6 +27,18 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
     return null;
   }
 
+  const failurePolicy = (() => {
+    switch (orchestrationTrace.strategy) {
+      case "parallel":
+        return "오류 정책: 같은 그룹의 작업은 병렬로 끝까지 실행되고, 실패한 tool만 실패로 기록됩니다.";
+      case "dag":
+        return "오류 정책: 현재 ready 그룹은 병렬 실행되며, 의존성이 충족된 다음 그룹만 진행됩니다.";
+      case "serial":
+      default:
+        return "오류 정책: 순차 실행 중 실패가 발생하면 이후 단계는 중단됩니다.";
+    }
+  })();
+
   const handleGroupToggle = (groupIndex: number) => {
     setExpandedGroups((prev) =>
       prev.includes(groupIndex) ? prev.filter((g) => g !== groupIndex) : [...prev, groupIndex]
@@ -85,6 +97,9 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
       {/* Content */}
       {orchestrationTrace && (
         <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-surface-base p-3 text-xs text-muted-standard">
+            {failurePolicy}
+          </div>
           {viewMode === 'timeline' ? (
             /* Timeline View */
             <OrchestrationVisualization

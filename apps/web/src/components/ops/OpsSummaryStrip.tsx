@@ -31,6 +31,10 @@ interface AggregatedMetrics {
   }>;
 }
 
+interface OpsSummaryStatsResponse {
+  data?: AggregatedMetrics;
+}
+
 export default function OpsSummaryStrip({
   className,
   selectedEntry,
@@ -51,16 +55,8 @@ export default function OpsSummaryStrip({
     setIsLoading(true);
 
     try {
-      const response = await authenticatedFetch<{
-        totalQueries: number;
-        successfulQueries: number;
-        failedQueries: number;
-        avgResponseTime: number;
-        recentActivity: AggregatedMetrics["recentActivity"];
-      }>("/ops/summary/stats");
-
-      // ResponseEnvelope logic: the actual data is in (response as Record<string, unknown>).data
-      const data = (response as Record<string, unknown>).data;
+      const response = await authenticatedFetch<OpsSummaryStatsResponse>("/ops/summary/stats");
+      const data = response.data;
 
       if (!data) {
         throw new Error("No data received from stats endpoint");

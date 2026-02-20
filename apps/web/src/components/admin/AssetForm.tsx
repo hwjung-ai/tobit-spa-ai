@@ -19,25 +19,43 @@ interface AssetFormProps {
 }
 
 export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormProps) {
+    const queryAsset = asset as unknown as { query_cypher?: string | null; query_http?: unknown };
+    const prettyJson = (value: unknown) => JSON.stringify(value, null, 2);
     const [formData, setFormData] = useState({
         name: asset.name,
         description: asset.description || "",
         template: asset.template || "",
-        input_schema: asset.input_schema ? JSON.stringify(asset.input_schema, null, undefined) : "",
-        output_contract: asset.output_contract ? JSON.stringify(asset.output_contract, null, undefined) : "",
-        content: asset.content ? JSON.stringify(asset.content, null, undefined) : "",
-        limits: asset.limits ? JSON.stringify(asset.limits, null, undefined) : "",
+        input_schema: asset.input_schema ? prettyJson(asset.input_schema) : "",
+        output_contract: asset.output_contract ? prettyJson(asset.output_contract) : "",
+        content: asset.content ? prettyJson(asset.content) : "",
+        limits: asset.limits ? prettyJson(asset.limits) : "",
         query_sql: asset.query_sql || "",
-        query_cypher: (asset as Record<string, unknown>).query_cypher || "",
-        query_http: (asset as Record<string, unknown>).query_http ? JSON.stringify((asset as Record<string, unknown>).query_http, null, undefined) : "",
-        query_params: asset.query_params ? JSON.stringify(asset.query_params, null, undefined) : "",
-        query_metadata: asset.query_metadata ? JSON.stringify(asset.query_metadata, null, undefined) : '{"source_type":"postgresql","source_ref":"","tool_type":"","operation":""}',
-        tags: asset.tags ? JSON.stringify(asset.tags, null, undefined) : "",
+        query_cypher: queryAsset.query_cypher || "",
+        query_http: queryAsset.query_http ? prettyJson(queryAsset.query_http) : "",
+        query_params: asset.query_params ? prettyJson(asset.query_params) : "",
+        query_metadata: asset.query_metadata ? prettyJson(asset.query_metadata) : '{"source_type":"postgresql","source_ref":"","tool_type":"","operation":""}',
+        tags: asset.tags ? prettyJson(asset.tags) : "",
     });
 
-    const queryMetadata = useMemo(() => {
+    const queryMetadata = useMemo<{
+        source_type: SourceType;
+        source_ref: string;
+        tool_type: string;
+        operation: string;
+    }>(() => {
         try {
-            return JSON.parse(formData.query_metadata || "{}");
+            const parsed = JSON.parse(formData.query_metadata || "{}") as Partial<{
+                source_type: SourceType;
+                source_ref: string;
+                tool_type: string;
+                operation: string;
+            }>;
+            return {
+                source_type: parsed.source_type ?? "postgresql",
+                source_ref: parsed.source_ref ?? "",
+                tool_type: parsed.tool_type ?? "",
+                operation: parsed.operation ?? "",
+            };
         } catch {
             return { source_type: "postgresql" as SourceType, source_ref: "", tool_type: "", operation: "" };
         }

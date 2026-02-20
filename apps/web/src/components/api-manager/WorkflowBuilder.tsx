@@ -114,7 +114,6 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
   const addNode = (type: "sql" | "http" | "python") => {
     const newNode = createNode(type);
     setNodes((nds) => [...nds, newNode]);
-    setSelectedNodeType(null);
   };
 
   const removeNode = (nodeId: string) => {
