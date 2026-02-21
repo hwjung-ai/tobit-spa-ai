@@ -1,6 +1,6 @@
 # API User Guide
 
-**Last Updated**: 2026-02-15
+**Last Updated**: 2026-02-20
 **Production Readiness**: 92%
 
 ## 문서의 성격

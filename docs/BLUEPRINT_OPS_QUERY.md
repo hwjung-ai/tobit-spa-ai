@@ -1,8 +1,26 @@
-# OPS Query System Blueprint (v3 Security & Modular)
+# OPS Query System Blueprint (v4 LLM Orchestration)
 
-> **Last Updated**: 2026-02-15
+> **Last Updated**: 2026-02-20
 > **Status**: ✅ **Production Ready**
 > **Production Readiness**: 95%
+
+## 최근 변경사항 (2026-02-17 ~ 2026-02-20)
+
+### OPS Orchestration 안정화
+- OPS SSE flow 및 Inspector mapping visibility 개선
+- Stage assets 정규화 및 legacy compat alias 제거
+- LLM 기반 동적 도구 선택 시스템 완성
+
+### OPS 모드 라우팅 완전 수정
+- Mode parameter 전체 파이프라인에서 작동 (request → router → planner → plan → history)
+- "all" 모드 선택 시 full orchestration 실행 (모든 specs 활성화)
+- Document search 통합 (orchestration의 일부, 고립되지 않음)
+- UI Mode 태그 정상 표시 (metadata_info에 올바른 mode 저장)
+
+### Document Search Tool 완성
+- body_template 추가 및 하이브리드 검색 정상 작동
+- OPS orchestration에서 문서 검색 호출
+- 6가지 모드 모두 정상 작동 검증
 
 ## 1. 목적
 
